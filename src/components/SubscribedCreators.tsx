@@ -1,4 +1,3 @@
-
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { CreatorCard } from "@/components/CreatorCard";
@@ -8,10 +7,6 @@ import { safeString, isQueryError, ensureUserIdSet } from "@/utils/supabase/type
 
 // Define types for database tables
 type ProfileRow = Database['public']['Tables']['profiles']['Row'];
-
-// Define subscription type using type safety
-type SubscriptionRow = Database['public']['Tables']['creator_subscriptions']['Row'];
-type SubscriptionKey = keyof SubscriptionRow;
 
 // Define safe creator type
 interface Creator {
@@ -57,7 +52,7 @@ export const SubscribedCreators = () => {
               banner_url
             )
           `)
-          .eq("user_id" as SubscriptionKey, userId)
+          .eq("user_id", userId)
           .order("created_at", { ascending: false });
           
         if (error || !data || !Array.isArray(data)) {

@@ -1,121 +1,151 @@
+
 import { useState } from "react";
-import { LiveSession } from "@/types/surveillance";
-import { ModerationAction } from "@/types/moderation";
-import { useToast } from "@/hooks/use-toast";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { SearchFilter } from "./components/SearchFilterBar";
-import { SessionHeader } from "./components/SessionHeader";
-import { SessionTable } from "./components/SessionTable";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { formatDistanceToNow } from "date-fns";
+import { MediaPreviewDialog } from "./components/MediaPreviewDialog";
+import { LiveSession } from "@/types/surveillance";
 
 interface SessionListProps {
-  sessions?: LiveSession[];
+  sessions: LiveSession[];
   isLoading: boolean;
-  onMonitorSession: (session: LiveSession) => Promise<boolean>;
   error: string | null;
-  onShowMediaPreview?: (session: LiveSession) => void;
-  onModerate?: (session: LiveSession, action: ModerationAction, editedContent?: string) => Promise<void>;
-  actionInProgress?: string | null;
-  onRefresh?: () => void;
+  onMonitorSession?: (session: LiveSession) => Promise<boolean>;
+  actionInProgress: string | null;
+  onRefresh: () => void;
 }
 
-export const SessionList = ({ 
-  sessions = [],
-  isLoading,
-  onMonitorSession,
-  error,
-  onShowMediaPreview,
-  onModerate,
+export function SessionList({ 
+  sessions, 
+  isLoading, 
+  error, 
+  onMonitorSession, 
   actionInProgress,
   onRefresh
-}: SessionListProps) => {
-  const [selectedSession, setSelectedSession] = useState<LiveSession | null>(null);
-  const [viewDialogOpen, setViewDialogOpen] = useState(false);
-  const [searchFilter, setSearchFilter] = useState<SearchFilter>({ query: '' });
-  const { toast } = useToast();
+}: SessionListProps) {
+  const [selectedMediaSession, setSelectedMediaSession] = useState<LiveSession | null>(null);
+  const [showMediaDialog, setShowMediaDialog] = useState(false);
 
-  const handleSearch = (filters: SearchFilter) => {
-    setSearchFilter(filters);
-  };
-
-  const handleRefresh = () => {
-    if (onRefresh) {
-      onRefresh();
-    } else {
-      toast({
-        title: "Sessions Refreshed!",
-        description: "The session list has been updated.",
-      });
+  // Format relative time
+  const formatRelativeTime = (dateString: string) => {
+    try {
+      return formatDistanceToNow(new Date(dateString), { addSuffix: true });
+    } catch (error) {
+      return "Unknown time";
     }
   };
-
-  // Filter sessions based on search query
-  const filteredSessions = sessions.filter(session => {
-    const searchQuery = searchFilter.query.toLowerCase();
-    if (!searchQuery) return true;
-    
-    const titleMatch = session.title?.toLowerCase().includes(searchQuery);
-    const usernameMatch = session.username?.toLowerCase().includes(searchQuery);
-    const contentMatch = session.content?.toLowerCase().includes(searchQuery);
-    
-    return titleMatch || usernameMatch || contentMatch;
-  });
-
+  
+  // Handle monitoring session
+  const handleMonitor = async (session: LiveSession) => {
+    if (onMonitorSession) {
+      await onMonitorSession(session);
+    }
+  };
+  
+  // Open media preview dialog
+  const handleOpenMediaPreview = (session: LiveSession) => {
+    setSelectedMediaSession(session);
+    setShowMediaDialog(true);
+  };
+  
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center p-8">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-solid border-current border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]"></div>
+        <p className="ml-2">Loading sessions...</p>
+      </div>
+    );
+  }
+  
+  if (error) {
+    return (
+      <div className="text-center p-8">
+        <p className="text-red-500 mb-4">{error}</p>
+        <Button onClick={onRefresh}>Try Again</Button>
+      </div>
+    );
+  }
+  
+  if (!sessions || sessions.length === 0) {
+    return (
+      <div className="text-center p-8">
+        <p>No active sessions found</p>
+        <Button onClick={onRefresh} className="mt-4">Refresh</Button>
+      </div>
+    );
+  }
+  
   return (
-    <div className="space-y-4">
-      <SessionHeader 
-        onRefresh={handleRefresh} 
-        onSearch={handleSearch}
-      />
-      
-      <ScrollArea className="rounded-md border h-[400px]">
-        <SessionTable
-          sessions={filteredSessions}
-          isLoading={isLoading}
-          error={error}
-          onMonitorSession={onMonitorSession}
-          onRefresh={handleRefresh}
-          onShowMediaPreview={onShowMediaPreview}
-          onModerate={onModerate}
-          actionInProgress={actionInProgress}
-        />
-      </ScrollArea>
-
-      <Dialog open={viewDialogOpen} onOpenChange={setViewDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Session Details</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-3">
-            {selectedSession && (
-              <>
-                <div>
-                  <h3 className="font-medium">Title</h3>
-                  <p>{selectedSession.title || 'Untitled'}</p>
+    <div className="grid grid-cols-1 gap-4">
+      {sessions.map((session) => (
+        <Card key={session.id} className="p-4 relative hover:bg-accent/5 transition-colors">
+          <div className="flex items-center gap-4">
+            {/* User Avatar */}
+            <Avatar className="h-12 w-12 border border-border">
+              <AvatarImage src={session.avatar_url} alt={session.username || "User"} />
+              <AvatarFallback>{session.username?.[0] || "U"}</AvatarFallback>
+            </Avatar>
+            
+            {/* Session Info */}
+            <div className="flex-1">
+              <div className="flex items-center gap-2">
+                <h3 className="font-medium">{session.username || "Anonymous User"}</h3>
+                <Badge variant={session.status === "active" ? "default" : "secondary"}>
+                  {session.status}
+                </Badge>
+              </div>
+              
+              <div className="text-sm text-muted-foreground space-y-1">
+                <p className="line-clamp-1">
+                  {session.title || session.content?.substring(0, 50) || `${session.type} session`}
+                </p>
+                <div className="flex items-center text-xs space-x-2">
+                  <span className="inline-flex items-center">
+                    {session.created_at && (
+                      <span>Started {formatRelativeTime(session.created_at)}</span>
+                    )}
+                  </span>
+                  {session.viewer_count !== undefined && (
+                    <span className="inline-flex items-center">
+                      <span className="mx-1">•</span>
+                      {session.viewer_count} viewers
+                    </span>
+                  )}
                 </div>
-                <div>
-                  <h3 className="font-medium">Creator</h3>
-                  <p>{selectedSession.username || selectedSession.user_id || 'Unknown'}</p>
-                </div>
-                {selectedSession.content && (
-                  <div>
-                    <h3 className="font-medium">Content</h3>
-                    <p>{selectedSession.content}</p>
-                  </div>
-                )}
-                {selectedSession.created_at && (
-                  <div>
-                    <h3 className="font-medium">Created At</h3>
-                    <p>{new Date(selectedSession.created_at).toLocaleString()}</p>
-                  </div>
-                )}
-              </>
-            )}
+              </div>
+            </div>
+            
+            {/* Actions */}
+            <div className="flex items-center gap-2">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => handleOpenMediaPreview(session)}
+              >
+                Preview
+              </Button>
+              {onMonitorSession && (
+                <Button
+                  variant="default"
+                  size="sm"
+                  onClick={() => handleMonitor(session)}
+                  disabled={actionInProgress === session.id}
+                >
+                  {actionInProgress === session.id ? "Monitoring..." : "Monitor"}
+                </Button>
+              )}
+            </div>
           </div>
-          <Button onClick={() => setViewDialogOpen(false)}>Close</Button>
-        </DialogContent>
-      </Dialog>
+        </Card>
+      ))}
+      
+      <MediaPreviewDialog 
+        session={selectedMediaSession} 
+        open={showMediaDialog}
+        onOpenChange={setShowMediaDialog}
+      />
     </div>
   );
-};
+}

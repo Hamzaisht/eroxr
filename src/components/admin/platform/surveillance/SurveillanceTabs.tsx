@@ -1,3 +1,4 @@
+
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { useSurveillance } from "./SurveillanceContext";
 import { AlertsList } from "./AlertsList";
@@ -70,8 +71,6 @@ export const SurveillanceTabs = ({ liveAlerts, onSelectAlert }: SurveillanceTabs
         return liveSessions.filter(session => session.type === 'chat');
       case 'bodycontact':
         return liveSessions.filter(session => session.type === 'bodycontact');
-      case 'content':
-        return liveSessions.filter(session => session.type === 'content');
       default:
         return liveSessions;
     }

@@ -1,222 +1,181 @@
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-  DialogClose,
-} from "@/components/ui/dialog";
+
+import React, { useState } from "react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ExternalLink } from "lucide-react";
-import { format } from "date-fns";
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { SurveillanceContentItem } from "@/types/surveillance";
-import { useCallback, useEffect, useState } from "react";
-import { useModerationActions } from "@/hooks/useModerationActions";
-import { FileText, Video, Image, Clock, DollarSign, File } from "lucide-react";
+import { formatDistanceToNow } from "date-fns";
 
 interface ContentDetailDialogProps {
+  item: SurveillanceContentItem | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  session: SurveillanceContentItem | null;
 }
 
-export function ContentDetailDialog({
-  open,
-  onOpenChange,
-  session
-}: ContentDetailDialogProps) {
-  const contentId = session?.id || null;
-  const { handleModeration } = useModerationActions();
-  const [contentInteractions, setContentInteractions] = useState<{
-    viewers: any[];
-    likers: any[];
-    buyers: any[];
-  }>({
-    viewers: [],
-    likers: [],
-    buyers: []
-  });
+export function ContentDetailDialog({ item, open, onOpenChange }: ContentDetailDialogProps) {
+  const [actionNotes, setActionNotes] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
-  const getContentTypeIcon = (contentItem: SurveillanceContentItem) => {
-    const contentType = contentItem.content_type || contentItem.type || 'unknown';
-    
-    switch (contentType.toLowerCase()) {
-      case 'post':
-        return <FileText className="h-4 w-4 mr-2" />;
-      case 'video':
-        return <Video className="h-4 w-4 mr-2" />;
-      case 'image':
-        return <Image className="h-4 w-4 mr-2" />;
-      case 'story':
-        return <Clock className="h-4 w-4 mr-2" />;
-      case 'ppv':
-        return <DollarSign className="h-4 w-4 mr-2" />;
-      default:
-        return <File className="h-4 w-4 mr-2" />;
-    }
-  };
-
-  const getStatusBadge = (contentItem: SurveillanceContentItem) => {
-    const status = contentItem.status || 'published';
-    
-    switch (status.toLowerCase()) {
-      case 'draft':
-        return <Badge variant="outline">Draft</Badge>;
-      case 'pending':
-        return <Badge variant="secondary">Pending</Badge>;
-      case 'published':
-        return <Badge variant="default">Published</Badge>;
-      case 'flagged':
-        return <Badge variant="destructive">Flagged</Badge>;
-      default:
-        return <Badge variant="outline">{status}</Badge>;
-    }
-  };
-
-  const fetchContentInteractions = useCallback(async (contentId: string, contentType: string) => {
+  if (!item) return null;
+  
+  // Format relative time
+  const formatRelativeTime = (dateString: string) => {
     try {
-      // Mock implementation - would be replaced with real fetch
-      console.log(`Fetching interactions for ${contentType} with ID ${contentId}`);
-      setContentInteractions({
-        viewers: [],
-        likers: [],
-        buyers: []
-      });
+      return formatDistanceToNow(new Date(dateString), { addSuffix: true });
     } catch (error) {
-      console.error("Error fetching content interactions:", error);
+      return "Unknown time";
     }
-  }, []);
+  };
   
-  useEffect(() => {
-    if (session && open && contentId) {
-      fetchContentInteractions(contentId, session.content_type);
+  // Handle action submission
+  const handleSubmitAction = async (action: string) => {
+    setIsSubmitting(true);
+    
+    try {
+      // Mock action handling
+      console.log(`Taking action "${action}" on content ${item.id}:`, {
+        notes: actionNotes,
+        itemId: item.id,
+        action
+      });
+      
+      // In a real app, you would make an API call here
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // Close dialog after successful submission
+      onOpenChange(false);
+    } catch (error) {
+      console.error("Error taking action:", error);
+    } finally {
+      setIsSubmitting(false);
     }
-  }, [session, open, contentId, fetchContentInteractions]);
+  };
   
-  if (!session) return null;
+  // Render media preview based on content type
+  const renderMediaPreview = () => {
+    switch (item.type) {
+      case "image":
+        return item.media_url && item.media_url[0] ? (
+          <img 
+            src={item.media_url[0]} 
+            alt={item.title} 
+            className="w-full h-64 object-contain bg-black/50 rounded-md"
+          />
+        ) : null;
+      case "video":
+        return item.video_url ? (
+          <video 
+            src={item.video_url} 
+            controls 
+            className="w-full h-64 object-contain bg-black/50 rounded-md"
+          />
+        ) : null;
+      case "audio":
+        return item.media_url && item.media_url[0] ? (
+          <audio 
+            src={item.media_url[0]} 
+            controls 
+            className="w-full mt-4"
+          />
+        ) : null;
+      case "text":
+        return (
+          <div className="border rounded-md p-4 mt-2 bg-muted/20">
+            <p className="whitespace-pre-wrap">{item.description}</p>
+          </div>
+        );
+      default:
+        return null;
+    }
+  };
   
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[750px]">
+      <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Content Details</DialogTitle>
-          <DialogDescription>
-            Detailed information about the selected content.
-          </DialogDescription>
+          <DialogTitle className="flex items-center gap-2">
+            <span>{item.title}</span>
+            {item.flagged && <Badge variant="destructive">Flagged</Badge>}
+          </DialogTitle>
         </DialogHeader>
         
-        <div className="grid gap-4 py-4">
-          {/* Basic info */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="space-y-4">
+          {/* Media Preview */}
+          {renderMediaPreview()}
+          
+          {/* Content Details */}
+          <div className="grid grid-cols-2 gap-4">
             <div>
-              <h3 className="text-sm font-medium mb-2">Creator</h3>
-              <div className="flex items-center space-x-3">
-                <Avatar className="h-8 w-8">
-                  <AvatarImage src={session.avatar_url || undefined} alt={session.username} />
-                  <AvatarFallback>{session.username?.charAt(0)?.toUpperCase() || '?'}</AvatarFallback>
-                </Avatar>
-                <div>
-                  <p className="text-sm font-medium">{session.username}</p>
-                  <p className="text-xs text-gray-500">ID: {session.creator_id || session.user_id}</p>
-                </div>
-              </div>
+              <Label className="text-sm text-muted-foreground">Creator</Label>
+              <p>{item.creator_username || "Anonymous"}</p>
             </div>
-            
             <div>
-              <h3 className="text-sm font-medium mb-2">Content Info</h3>
-              <div className="space-y-1">
-                <p className="text-sm">
-                  <span className="font-medium">Type:</span> {session.content_type}
-                </p>
-                <p className="text-sm">
-                  <span className="font-medium">Created:</span> {format(new Date(session.created_at), 'MMM d, yyyy h:mm a')}
-                </p>
-                {session.visibility && (
-                  <p className="text-sm">
-                    <span className="font-medium">Visibility:</span> {session.visibility}
-                  </p>
-                )}
-                {session.status && (
-                  <p className="text-sm">
-                    <span className="font-medium">Status:</span> <Badge variant="secondary">{session.status}</Badge>
-                  </p>
-                )}
-              </div>
+              <Label className="text-sm text-muted-foreground">Created</Label>
+              <p>{formatRelativeTime(item.created_at)}</p>
+            </div>
+            <div>
+              <Label className="text-sm text-muted-foreground">Content Type</Label>
+              <p className="capitalize">{item.type}</p>
+            </div>
+            <div>
+              <Label className="text-sm text-muted-foreground">Status</Label>
+              <p className="capitalize">{item.status || "Pending"}</p>
             </div>
           </div>
           
-          {/* Content details */}
-          <div>
-            <h3 className="text-sm font-medium mb-2">Content</h3>
-            <div className="space-y-2">
-              <p className="text-sm">
-                <span className="font-medium">Title:</span> {session.title}
-              </p>
-              <p className="text-sm">
-                <span className="font-medium">Description:</span> {session.description}
-              </p>
-            </div>
-          </div>
-          
-          {/* Media gallery */}
-          {session.media_url && (
-            <div className="grid grid-cols-2 gap-2 mt-4">
-              {Array.isArray(session.media_url) ? (
-                session.media_url.map((url, index) => (
-                  <div key={index} className="aspect-square overflow-hidden rounded-md">
-                    <img 
-                      src={url} 
-                      alt={`Media ${index + 1}`} 
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                ))
-              ) : (
-                <div className="aspect-square overflow-hidden rounded-md">
-                  <img 
-                    src={session.media_url} 
-                    alt="Media content" 
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-              )}
+          {/* Flag Reason */}
+          {item.flagged && item.reason && (
+            <div>
+              <Label className="text-sm text-muted-foreground">Flag Reason</Label>
+              <div className="border border-destructive/30 bg-destructive/10 rounded-md p-3 mt-1">
+                {item.reason}
+              </div>
             </div>
           )}
           
-          {/* Interactions (mock data for now) */}
+          {/* Action Notes */}
           <div>
-            <h3 className="text-sm font-medium mb-2">Interactions</h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
-                <p className="text-sm font-medium">Viewers</p>
-                <p className="text-sm">{contentInteractions.viewers.length}</p>
-              </div>
-              <div>
-                <p className="text-sm font-medium">Likes</p>
-                <p className="text-sm">{contentInteractions.likers.length}</p>
-              </div>
-              <div>
-                <p className="text-sm font-medium">Buyers</p>
-                <p className="text-sm">{contentInteractions.buyers.length}</p>
-              </div>
+            <Label htmlFor="action-notes">Notes</Label>
+            <Textarea
+              id="action-notes"
+              placeholder="Add notes about this content..."
+              value={actionNotes}
+              onChange={(e) => setActionNotes(e.target.value)}
+              className="mt-1"
+            />
+          </div>
+          
+          {/* Action Buttons */}
+          <div className="flex justify-between pt-4 border-t">
+            <div className="space-x-2">
+              <Button 
+                variant="destructive" 
+                onClick={() => handleSubmitAction("remove")}
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? "Processing..." : "Remove Content"}
+              </Button>
+              <Button 
+                variant="outline" 
+                onClick={() => handleSubmitAction("warn")}
+                disabled={isSubmitting}
+              >
+                Warn Creator
+              </Button>
+            </div>
+            <div>
+              <Button 
+                variant="outline" 
+                onClick={() => handleSubmitAction("approve")}
+                disabled={isSubmitting}
+              >
+                Mark as Reviewed
+              </Button>
             </div>
           </div>
         </div>
-        
-        <DialogFooter>
-          <Button type="submit">
-            <ExternalLink className="h-4 w-4 mr-2" />
-            View Content
-          </Button>
-          <DialogClose asChild>
-            <Button type="button" variant="secondary">
-              Close
-            </Button>
-          </DialogClose>
-        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

@@ -1,112 +1,144 @@
 
-import { useState, useEffect, useCallback } from "react";
-import { useGhostMode } from "@/hooks/useGhostMode";
-import { LiveSession, SurveillanceTab } from "@/types/surveillance";
-import { useSupabaseClient } from "@supabase/auth-helpers-react";
-import { useSurveillance } from "../SurveillanceContext";
-import { useFallbackData } from "./useFallbackData";
-import { useSurveillanceQueries } from "./useSurveillanceQueries";
+import { useState, useEffect } from 'react';
+import { LiveSession } from '@/types/surveillance';
+import { supabase } from '@/integrations/supabase/client';
+import { useSurveillance } from '../SurveillanceContext';
 
 export function useSurveillanceData() {
-  const { isGhostMode, liveAlerts, refreshAlerts } = useGhostMode();
-  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const { setError } = useSurveillance();
   const [liveSessions, setLiveSessions] = useState<LiveSession[]>([]);
-  const [error, setError] = useState<string | null>(null);
-  const { activeTab } = useSurveillance();
-
-  const supabase = useSupabaseClient();
-  const { generateFallbackData } = useFallbackData();
-  const { fetchStreams, fetchMessages } = useSurveillanceQueries();
-
-  const refreshData = useCallback(async () => {
-    if (!isGhostMode) {
-      setLiveSessions([]);
-      setIsLoading(false);
-      return;
-    }
-
-    // Start by setting some initial data to prevent flashing
-    if (liveSessions.length === 0) {
-      setLiveSessions(generateFallbackData());
-    }
-    
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setLocalError] = useState<string | null>(null);
+  
+  // Function to fetch live sessions
+  const fetchLiveSessions = async () => {
     setIsLoading(true);
-    setError(null);
-
+    setLocalError(null);
+    
     try {
-      console.log("Fetching surveillance data...");
+      // Mock data for development - in a real app you'd fetch from Supabase
+      const mockSessions: LiveSession[] = [
+        {
+          id: "123e4567-e89b-12d3-a456-426614174000",
+          username: "creator1",
+          avatar_url: "https://i.pravatar.cc/150?u=1",
+          user_id: "user-123",
+          type: "stream",
+          status: "active",
+          room_id: "room-123",
+          title: "Live Gaming Stream",
+          description: "Playing the latest games",
+          viewer_count: 125,
+          started_at: new Date().toISOString(),
+          thumbnail_url: "https://picsum.photos/seed/stream1/300/200",
+          created_at: new Date().toISOString(),
+          is_active: true,
+          content: "Live gaming content",
+          media_url: ["https://picsum.photos/seed/stream1/800/600"],
+          content_type: "image/jpeg"
+        },
+        {
+          id: "223e4567-e89b-12d3-a456-426614174001",
+          username: "creator2",
+          avatar_url: "https://i.pravatar.cc/150?u=2",
+          user_id: "user-456",
+          type: "chat",
+          status: "active",
+          room_id: "room-456",
+          title: "Private Chat Session",
+          started_at: new Date().toISOString(),
+          created_at: new Date().toISOString(),
+          is_active: true,
+          content: "Private chat content",
+          media_url: ["https://picsum.photos/seed/chat1/800/600"],
+          content_type: "image/jpeg"
+        },
+        {
+          id: "323e4567-e89b-12d3-a456-426614174002",
+          username: "creator3",
+          avatar_url: "https://i.pravatar.cc/150?u=3",
+          user_id: "user-789",
+          type: "call",
+          status: "active",
+          room_id: "room-789",
+          title: "Video Call Session",
+          started_at: new Date().toISOString(),
+          created_at: new Date().toISOString(),
+          is_active: true,
+          content: "Private video call",
+          media_url: ["https://picsum.photos/seed/call1/800/600"],
+          content_type: "video/mp4"
+        },
+        {
+          id: "423e4567-e89b-12d3-a456-426614174003",
+          username: "creator4",
+          avatar_url: "https://i.pravatar.cc/150?u=4",
+          user_id: "user-101",
+          type: "bodycontact",
+          status: "active",
+          room_id: "room-101",
+          title: "Dating Profile Activity",
+          started_at: new Date().toISOString(),
+          created_at: new Date().toISOString(),
+          is_active: true,
+          content: "Dating profile activity",
+          media_url: ["https://picsum.photos/seed/dating1/800/600"],
+          content_type: "image/jpeg"
+        }
+      ];
       
-      // Execute the appropriate fetch based on active tab
-      let data: LiveSession[] = [];
-      
-      if (activeTab === "streams") {
-        data = await fetchStreams();
-      } else if (activeTab === "chats") {
-        data = await fetchMessages();
-      } else {
-        // Fetch all data for other tabs
-        const streams = await fetchStreams();
-        const messages = await fetchMessages();
-        data = [...streams, ...messages];
-      }
-      
-      // If no data is returned, use fallback data
-      if (data.length === 0) {
-        data = generateFallbackData();
-      }
-      
-      setLiveSessions(data);
-    } catch (err: any) {
-      console.error("Error in surveillance data hook:", err.message);
-      setError("Failed to load surveillance data");
-      
-      // Even in case of error, provide fallback data
-      setLiveSessions(generateFallbackData());
+      setLiveSessions(mockSessions);
+    } catch (err) {
+      console.error("Error fetching surveillance data:", err);
+      const errorMessage = "Failed to load surveillance data";
+      setLocalError(errorMessage);
+      setError(errorMessage);
     } finally {
       setIsLoading(false);
     }
-  }, [isGhostMode, supabase, activeTab, fetchStreams, fetchMessages, generateFallbackData, liveSessions.length]);
-
-  // Initial data fetch
+  };
+  
+  // Initial fetch
   useEffect(() => {
-    refreshData();
+    fetchLiveSessions();
     
-    // Set up realtime subscription for the relevant tables
-    if (isGhostMode) {
-      const messagesChannel = supabase
-        .channel('surveillance-messages')
-        .on('postgres_changes', { 
-          event: '*', 
-          schema: 'public', 
-          table: 'direct_messages' 
-        }, () => refreshData())
+    // Set up realtime subscription
+    const setupRealtimeSubscription = async () => {
+      const channel = supabase
+        .channel('surveillance-updates')
+        .on('presence', { event: 'sync' }, () => {
+          console.log('Presence sync');
+        })
+        .on('presence', { event: 'join' }, ({ key, newPresences }) => {
+          console.log('Presence join:', key, newPresences);
+          fetchLiveSessions();
+        })
+        .on('presence', { event: 'leave' }, ({ key, leftPresences }) => {
+          console.log('Presence leave:', key, leftPresences);
+          fetchLiveSessions();
+        })
         .subscribe();
-        
-      const streamsChannel = supabase
-        .channel('surveillance-streams')
-        .on('postgres_changes', { 
-          event: '*', 
-          schema: 'public', 
-          table: 'live_streams' 
-        }, () => refreshData())
-        .subscribe();
-        
+      
+      // Clean up subscription
       return () => {
-        supabase.removeChannel(messagesChannel);
-        supabase.removeChannel(streamsChannel);
+        supabase.removeChannel(channel);
       };
-    }
-  }, [refreshData, isGhostMode, supabase]);
-
-  // Include all the data and methods needed by components
+    };
+    
+    setupRealtimeSubscription();
+    
+    // Set up refresh interval
+    const intervalId = setInterval(fetchLiveSessions, 60000); // Refresh every minute
+    
+    return () => {
+      clearInterval(intervalId);
+    };
+  }, []);
+  
   return {
-    isLoading,
     liveSessions,
-    liveAlerts,
+    isLoading,
     error,
-    refreshData,
-    activeTab,
-    // Include properties from surveillance context for compatibility
-    ...useSurveillance()
+    refreshData: fetchLiveSessions
   };
 }

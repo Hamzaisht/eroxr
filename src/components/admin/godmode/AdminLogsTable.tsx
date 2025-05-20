@@ -3,13 +3,8 @@ import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { safeString, isQueryError } from "@/utils/supabase/typeSafeOperations";
-import { Database } from "@/integrations/supabase/types/database.types";
 
-// Define type for admin log rows with strong typing
-type AdminLogRow = Database['public']['Tables']['admin_logs']['Row'];
-type AdminLogKey = keyof AdminLogRow;
-
-// Define type for profile with username
+// Define type for admin log
 interface AdminLog {
   id: string;
   admin_id: string;
@@ -45,7 +40,7 @@ export const AdminLogsTable = () => {
           created_at,
           profiles:admin_id(username)
         `)
-        .order('created_at' as AdminLogKey, { ascending: false })
+        .order('created_at', { ascending: false })
         .limit(100);
 
       if (error) {

@@ -1,163 +1,133 @@
 
-import { createContext, useContext, useState, ReactNode, useEffect, useCallback } from "react";
-import { LiveAlert } from "@/types/alerts";
-import { LiveSession, SurveillanceTab, LiveSessionType } from "@/types/surveillance";
-import { useSupabaseClient } from "@supabase/auth-helpers-react";
-import { useStreamsSurveillance } from "./hooks/useStreamsSurveillance";
-import { useCallsSurveillance } from "./hooks/useCallsSurveillance";
-import { useChatsSurveillance } from "./hooks/useChatsSurveillance";
-import { useBodyContactSurveillance } from "./hooks/useBodyContactSurveillance";
+import { createContext, useContext, useState, ReactNode } from "react";
+import { LiveSession, SurveillanceTab } from "@/types/surveillance";
 
-// Define the surveillance context type
 interface SurveillanceContextType {
-  liveSessions: LiveSession[];
-  liveAlerts: LiveAlert[];
-  isLoading: boolean;
-  error: string | null;
   activeTab: SurveillanceTab;
   setActiveTab: (tab: SurveillanceTab) => void;
-  refreshSessions: () => Promise<void>;
-  refreshAlerts: () => Promise<boolean>; // Changed to match implementation
-  handleStartSurveillance: (session: LiveSession) => Promise<boolean>;
-  fetchLiveSessions: () => Promise<void>;
+  error: string | null;
+  setError: (error: string | null) => void;
+  liveSessions: LiveSession[];
+  setLiveSessions: (sessions: LiveSession[]) => void;
+  selectedSession: LiveSession | null;
+  setSelectedSession: (session: LiveSession | null) => void;
+  isMonitoring: boolean;
+  setIsMonitoring: (isMonitoring: boolean) => void;
+  monitoringSession: string | null;
+  setMonitoringSession: (sessionId: string | null) => void;
+  filterSessions: (type?: string) => LiveSession[];
+  startMonitoring: (sessionId: string) => Promise<boolean>;
+  stopMonitoring: () => void;
 }
 
-// Create the context
 const SurveillanceContext = createContext<SurveillanceContextType | undefined>(undefined);
 
-// Hook to use the surveillance context
-export function useSurveillance() {
-  const context = useContext(SurveillanceContext);
-  if (!context) {
-    throw new Error("useSurveillance must be used within a SurveillanceProvider");
-  }
-  return context;
-}
-
-// Provider props
-interface SurveillanceProviderProps {
-  children: ReactNode;
-  liveAlerts: LiveAlert[];
-  refreshAlerts: () => Promise<boolean>; // Changed to match implementation
-  startSurveillance: (session: LiveSession) => Promise<boolean>;
-}
-
-// Provider component
-export function SurveillanceProvider({
-  children,
-  liveAlerts,
-  refreshAlerts,
-  startSurveillance
-}: SurveillanceProviderProps) {
-  const [liveSessions, setLiveSessions] = useState<LiveSession[]>([]);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
+export function SurveillanceProvider({ children }: { children: ReactNode }) {
+  const [activeTab, setActiveTab] = useState<SurveillanceTab>('streams');
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<SurveillanceTab>("streams");
-  const supabase = useSupabaseClient();
-  
-  const { fetchStreams } = useStreamsSurveillance();
-  const { fetchCalls } = useCallsSurveillance();
-  const { fetchChatSessions } = useChatsSurveillance();
-  const { fetchBodyContact } = useBodyContactSurveillance();
-  
-  // Fetch sessions from Supabase based on active tab
-  const fetchLiveSessions = useCallback(async () => {
-    setIsLoading(true);
-    setError(null);
-    
-    try {
-      let data: LiveSession[] = [];
-      
-      switch (activeTab) {
-        case 'streams':
-          data = await fetchStreams();
-          break;
-          
-        case 'calls':
-          data = await fetchCalls();
-          break;
-          
-        case 'chats':
-          // Add required LiveSession properties to chat sessions
-          const chatSessions = await fetchChatSessions();
-          data = chatSessions.map(session => ({
-            ...session,
-            started_at: session.created_at || new Date().toISOString(),
-            is_active: session.status === 'active' || session.status === 'live',
-          }));
-          break;
-          
-        case 'bodycontact':
-          // Add required LiveSession properties to bodycontact sessions
-          const bodyContactSessions = await fetchBodyContact();
-          data = bodyContactSessions.map(session => ({
-            ...session,
-            started_at: session.created_at || session.last_active || new Date().toISOString(),
-            is_active: session.status === 'active' || session.status === 'live' || true,
-          }));
-          break;
-          
-        default:
-          break;
-      }
-      
-      // Ensure all items comply with the LiveSession interface
-      const validatedData = data.map(item => ({
-        ...item,
-        // Set default values for required fields if they're missing
-        started_at: item.started_at || item.created_at || new Date().toISOString(),
-        is_active: item.is_active !== undefined ? item.is_active : 
-                  (item.status === 'live' || item.status === 'active'),
-        media_url: Array.isArray(item.media_url) ? item.media_url : 
-                   item.media_url ? [item.media_url] : [],
-        created_at: item.created_at || item.started_at || new Date().toISOString(),
-        // Ensure type is a valid enum value
-        type: (item.type as LiveSessionType)
-      }));
-      
-      console.log(`Fetched ${validatedData.length} ${activeTab} for surveillance`);
-      setLiveSessions(validatedData);
-    } catch (error) {
-      console.error(`Error fetching ${activeTab}:`, error);
-      setError(`Could not load ${activeTab} data. Please try again.`);
-      setLiveSessions([]);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [activeTab, fetchStreams, fetchCalls, fetchChatSessions, fetchBodyContact]);
-  
-  // Refresh all sessions
-  const refreshSessions = useCallback(async () => {
-    await fetchLiveSessions();
-  }, [fetchLiveSessions]);
+  const [liveSessions, setLiveSessions] = useState<LiveSession[]>([]);
+  const [selectedSession, setSelectedSession] = useState<LiveSession | null>(null);
+  const [isMonitoring, setIsMonitoring] = useState(false);
+  const [monitoringSession, setMonitoringSession] = useState<string | null>(null);
 
-  // Fetch data on mount and when tab changes
-  useEffect(() => {
-    fetchLiveSessions();
-  }, [activeTab, fetchLiveSessions]);
-  
-  // Start surveillance handler
-  const handleStartSurveillance = async (session: LiveSession) => {
-    return await startSurveillance(session);
+  // Filter sessions based on type
+  const filterSessions = (type?: string) => {
+    if (!type) return liveSessions;
+    return liveSessions.filter(session => session.type === type);
   };
-  
-  // Context value
-  const value: SurveillanceContextType = {
-    liveSessions,
-    liveAlerts,
-    isLoading,
-    error,
-    activeTab,
-    setActiveTab,
-    refreshSessions,
-    refreshAlerts,
-    handleStartSurveillance,
-    fetchLiveSessions
+
+  // Start monitoring a session
+  const startMonitoring = async (sessionId: string): Promise<boolean> => {
+    try {
+      const session = liveSessions.find(s => s.id === sessionId);
+      if (!session) {
+        setError("Session not found");
+        return false;
+      }
+
+      setSelectedSession(session);
+      setIsMonitoring(true);
+      setMonitoringSession(sessionId);
+      return true;
+    } catch (error) {
+      console.error("Error starting monitoring:", error);
+      setError("Failed to start monitoring");
+      return false;
+    }
   };
-  
+
+  // Stop monitoring
+  const stopMonitoring = () => {
+    setIsMonitoring(false);
+    setMonitoringSession(null);
+  };
+
+  // Mock live sessions for development
+  const mockSessions: LiveSession[] = [
+    {
+      id: "123e4567-e89b-12d3-a456-426614174000",
+      username: "creator1",
+      avatar_url: "https://i.pravatar.cc/150?u=1",
+      user_id: "user-123",
+      type: "stream",
+      status: "active",
+      room_id: "room-123",
+      title: "Live Gaming Stream",
+      description: "Playing the latest games",
+      viewer_count: 125,
+      started_at: new Date().toISOString(),
+      thumbnail_url: "https://picsum.photos/seed/stream1/300/200",
+      created_at: new Date().toISOString(),
+      is_active: true,
+      content: "Live gaming content",
+      media_url: ["https://picsum.photos/seed/stream1/800/600"]
+    },
+    {
+      id: "223e4567-e89b-12d3-a456-426614174001",
+      username: "creator2",
+      avatar_url: "https://i.pravatar.cc/150?u=2",
+      user_id: "user-456",
+      type: "chat",
+      status: "active",
+      room_id: "room-456",
+      title: "Private Chat Session",
+      started_at: new Date().toISOString(),
+      created_at: new Date().toISOString(),
+      is_active: true,
+      content: "Private chat content",
+      media_url: ["https://picsum.photos/seed/chat1/800/600"]
+    }
+  ];
+
   return (
-    <SurveillanceContext.Provider value={value}>
+    <SurveillanceContext.Provider
+      value={{
+        activeTab,
+        setActiveTab,
+        error,
+        setError,
+        liveSessions: mockSessions, // Use mock data for development
+        setLiveSessions,
+        selectedSession,
+        setSelectedSession,
+        isMonitoring,
+        setIsMonitoring,
+        monitoringSession,
+        setMonitoringSession,
+        filterSessions,
+        startMonitoring,
+        stopMonitoring
+      }}
+    >
       {children}
     </SurveillanceContext.Provider>
   );
 }
+
+export const useSurveillance = () => {
+  const context = useContext(SurveillanceContext);
+  if (context === undefined) {
+    throw new Error("useSurveillance must be used within a SurveillanceProvider");
+  }
+  return context;
+};

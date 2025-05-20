@@ -1,110 +1,169 @@
 
-import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
-import { SurveillanceContentItem } from "@/types/surveillance";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useState } from "react";
+import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
-import { SessionModerationActions } from "./moderation/ModerationActions";
+import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { formatDistanceToNow } from "date-fns";
+import { SurveillanceContentItem, ContentType } from "@/types/surveillance";
+import { ContentDetailDialog } from "./ContentDetailDialog";
 
-export interface ContentSurveillanceListProps {
+interface ContentSurveillanceListProps {
   items: SurveillanceContentItem[];
   isLoading: boolean;
-  onViewContent: (content: SurveillanceContentItem) => void;
-  emptyMessage?: string;
-  error?: any;
-  title?: string;
+  contentType: ContentType;
+  error?: string | null;
+  onRefresh?: () => void;
 }
 
-export const ContentSurveillanceList = ({ 
-  items, 
-  isLoading, 
-  onViewContent,
-  emptyMessage = "No content found",
+export function ContentSurveillanceList({
+  items,
+  isLoading,
+  contentType,
   error,
-  title = "Content"
-}: ContentSurveillanceListProps) => {
+  onRefresh
+}: ContentSurveillanceListProps) {
+  const [selectedItem, setSelectedItem] = useState<SurveillanceContentItem | null>(null);
+  const [showDetailDialog, setShowDetailDialog] = useState(false);
+  
+  // Format relative time
+  const formatRelativeTime = (dateString: string) => {
+    try {
+      return formatDistanceToNow(new Date(dateString), { addSuffix: true });
+    } catch (error) {
+      return "Unknown time";
+    }
+  };
+  
+  // Open detail dialog
+  const handleOpenDetail = (item: SurveillanceContentItem) => {
+    setSelectedItem(item);
+    setShowDetailDialog(true);
+  };
+  
+  // Get severity badge variant
+  const getSeverityVariant = (severity?: string) => {
+    switch (severity) {
+      case 'critical':
+        return 'destructive';
+      case 'high':
+        return 'destructive';
+      case 'medium':
+        return 'warning';
+      case 'low':
+        return 'outline';
+      default:
+        return 'secondary';
+    }
+  };
+  
+  // Get status badge variant
+  const getStatusVariant = (status?: string) => {
+    switch (status) {
+      case 'pending':
+        return 'outline';
+      case 'reviewed':
+        return 'secondary';
+      case 'removed':
+        return 'destructive';
+      default:
+        return 'secondary';
+    }
+  };
+  
   if (isLoading) {
     return (
-      <div className="space-y-3">
-        <Skeleton className="h-8 w-full" />
-        <Skeleton className="h-20 w-full" />
-        <Skeleton className="h-20 w-full" />
+      <div className="flex items-center justify-center p-8">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-solid border-current border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]"></div>
+        <p className="ml-2">Loading content...</p>
       </div>
     );
   }
-
+  
   if (error) {
-    return <div className="text-red-500">Error loading content: {error.message}</div>;
+    return (
+      <div className="text-center p-8">
+        <p className="text-red-500 mb-4">{error}</p>
+        {onRefresh && <Button onClick={onRefresh}>Try Again</Button>}
+      </div>
+    );
   }
-
+  
+  if (!items || items.length === 0) {
+    return (
+      <div className="text-center p-8">
+        <p>No {contentType} content found</p>
+        {onRefresh && <Button onClick={onRefresh} className="mt-4">Refresh</Button>}
+      </div>
+    );
+  }
+  
   return (
-    <div className="space-y-4">
-      <h3 className="text-lg font-medium">{title}</h3>
+    <>
+      <div className="grid grid-cols-1 gap-4">
+        {items.map((item) => (
+          <Card key={item.id} className="p-4 relative hover:bg-accent/5 transition-colors">
+            <div className="flex items-center gap-4">
+              {/* Creator Avatar */}
+              <Avatar className="h-12 w-12 border border-border">
+                <AvatarImage src={item.creator_avatar} alt={item.creator_username || "User"} />
+                <AvatarFallback>{(item.creator_username || "U")[0]}</AvatarFallback>
+              </Avatar>
+              
+              {/* Content Info */}
+              <div className="flex-1">
+                <div className="flex items-center gap-2">
+                  <h3 className="font-medium">{item.title}</h3>
+                  {item.flagged && (
+                    <Badge variant="destructive">Flagged</Badge>
+                  )}
+                  {item.severity && (
+                    <Badge variant={getSeverityVariant(item.severity)}>
+                      {item.severity}
+                    </Badge>
+                  )}
+                  {item.status && (
+                    <Badge variant={getStatusVariant(item.status)}>
+                      {item.status}
+                    </Badge>
+                  )}
+                </div>
+                
+                <div className="text-sm text-muted-foreground space-y-1">
+                  <p className="line-clamp-1">
+                    {item.description || `${contentType} content`}
+                  </p>
+                  <div className="flex items-center text-xs space-x-2">
+                    <span>By {item.creator_username || "Anonymous"}</span>
+                    <span className="inline-flex items-center">
+                      <span className="mx-1">•</span>
+                      {formatRelativeTime(item.created_at)}
+                    </span>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Actions */}
+              <div className="flex items-center gap-2">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => handleOpenDetail(item)}
+                >
+                  View Details
+                </Button>
+              </div>
+            </div>
+          </Card>
+        ))}
+      </div>
       
-      {items.length === 0 ? (
-        <div className="text-center py-8 text-muted-foreground">{emptyMessage}</div>
-      ) : (
-        <div className="rounded-md border">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Creator</TableHead>
-                <TableHead>Content</TableHead>
-                <TableHead>Published</TableHead>
-                <TableHead>Stats</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {items.map((content) => (
-                <TableRow key={content.id}>
-                  <TableCell>
-                    <div className="flex items-center space-x-2">
-                      <Avatar className="h-6 w-6">
-                        <AvatarImage src={content.creator_avatar_url} alt={content.creator_username} />
-                        <AvatarFallback>{content.creator_username?.[0] || 'U'}</AvatarFallback>
-                      </Avatar>
-                      <span className="text-sm font-medium">{content.creator_username}</span>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="max-w-xs truncate">
-                      {content.title ? (
-                        <span className="font-medium">{content.title}</span>
-                      ) : (
-                        <span className="text-sm">{content.content}</span>
-                      )}
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    {formatDistanceToNow(new Date(content.created_at), { addSuffix: true })}
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex space-x-2 text-xs text-muted-foreground">
-                      <span>{content.views || 0} views</span>
-                      <span>•</span>
-                      <span>{content.likes || 0} likes</span>
-                    </div>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex justify-end space-x-2">
-                      <Button 
-                        size="sm" 
-                        variant="outline"
-                        onClick={() => onViewContent(content)}
-                      >
-                        View
-                      </Button>
-                      <SessionModerationActions session={content} />
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
-      )}
-    </div>
+      {/* Detail Dialog */}
+      <ContentDetailDialog 
+        item={selectedItem} 
+        open={showDetailDialog}
+        onOpenChange={setShowDetailDialog}
+      />
+    </>
   );
 }

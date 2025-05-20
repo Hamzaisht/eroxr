@@ -1,87 +1,161 @@
 
 import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useContentSurveillance } from "./hooks/useContentSurveillance";
-import { ContentSurveillanceList } from "./components/ContentSurveillanceList";
 import { SurveillanceContentItem, ContentType } from "@/types/surveillance";
+import { ContentSurveillanceList } from "./components/ContentSurveillanceList";
 
-interface ContentSurveillanceListProps {
-  items: SurveillanceContentItem[];
-  isLoading: boolean;
-  onViewContent: (content: SurveillanceContentItem) => void;
-  emptyMessage?: string;
-  error?: any;
-  title?: string;
-}
-
-export const ContentSurveillanceTabs = () => {
-  const [activeTab, setActiveTab] = useState<ContentType>('post');
-  const { 
-    posts, 
-    stories, 
-    videos, 
-    audios, 
-    isLoading
-  } = useContentSurveillance();
+export function ContentSurveillanceTabs() {
+  const [activeTab, setActiveTab] = useState<ContentType>('image');
+  const [isLoading, setIsLoading] = useState(false);
   
-  // Define placeholder functions if they don't exist in useContentSurveillance
-  const handleViewContentDetails = (content: SurveillanceContentItem) => {
-    console.log("View content details:", content);
-    // Implement actual functionality here if needed
+  // Mock data for different content types
+  const mockImageItems: SurveillanceContentItem[] = [
+    {
+      id: "img-123",
+      title: "Sample Image",
+      description: "A sample image upload",
+      type: "image",
+      creator_id: "user-123",
+      creator_username: "imagecreator",
+      creator_avatar: "https://i.pravatar.cc/150?u=img1",
+      created_at: new Date().toISOString(),
+      flagged: false,
+      media_url: ["https://picsum.photos/seed/img1/800/600"],
+      severity: "medium",
+      status: "pending"
+    },
+    {
+      id: "img-456",
+      title: "Flagged Image",
+      description: "An image that was flagged",
+      type: "image",
+      creator_id: "user-456", 
+      creator_username: "problematicuser",
+      creator_avatar: "https://i.pravatar.cc/150?u=img2",
+      created_at: new Date().toISOString(),
+      flagged: true,
+      reason: "Inappropriate content",
+      media_url: ["https://picsum.photos/seed/img2/800/600"],
+      severity: "high",
+      status: "reviewed"
+    }
+  ];
+  
+  const mockVideoItems: SurveillanceContentItem[] = [
+    {
+      id: "vid-123",
+      title: "Sample Video",
+      description: "A sample video upload",
+      type: "video",
+      creator_id: "user-789",
+      creator_username: "videocreator",
+      creator_avatar: "https://i.pravatar.cc/150?u=vid1",
+      created_at: new Date().toISOString(),
+      flagged: false,
+      video_url: "https://example.com/video.mp4",
+      media_url: ["https://picsum.photos/seed/vid1/800/600"],
+      severity: "low",
+      status: "pending"
+    }
+  ];
+  
+  const mockTextItems: SurveillanceContentItem[] = [
+    {
+      id: "txt-123",
+      title: "Sample Text Post",
+      description: "This is a text post with some sample content for moderation.",
+      type: "text",
+      creator_id: "user-101",
+      creator_username: "writer",
+      creator_avatar: "https://i.pravatar.cc/150?u=txt1",
+      created_at: new Date().toISOString(),
+      flagged: false,
+      severity: "low",
+      status: "pending"
+    }
+  ];
+  
+  const mockAudioItems: SurveillanceContentItem[] = [
+    {
+      id: "aud-123",
+      title: "Sample Audio",
+      description: "A sample audio recording",
+      type: "audio",
+      creator_id: "user-202",
+      creator_username: "podcaster",
+      creator_avatar: "https://i.pravatar.cc/150?u=aud1",
+      created_at: new Date().toISOString(),
+      flagged: false,
+      media_url: ["https://example.com/audio.mp3"],
+      severity: "medium",
+      status: "pending"
+    }
+  ];
+  
+  // Get content items based on active tab
+  const getContentItems = () => {
+    switch (activeTab) {
+      case 'image':
+        return mockImageItems;
+      case 'video':
+        return mockVideoItems;
+      case 'text':
+        return mockTextItems;
+      case 'audio':
+        return mockAudioItems;
+      default:
+        return [];
+    }
+  };
+  
+  // Handle tab change
+  const handleTabChange = (value: string) => {
+    setActiveTab(value as ContentType);
   };
   
   return (
-    <Tabs 
-      defaultValue="post" 
-      onValueChange={(value) => setActiveTab(value as ContentType)}
-      className="w-full"
-    >
-      <TabsList className="mb-4 bg-slate-800/80 backdrop-blur-lg">
-        <TabsTrigger value="post">Posts</TabsTrigger>
-        <TabsTrigger value="story">Stories</TabsTrigger>
-        <TabsTrigger value="video">Videos</TabsTrigger>
-        <TabsTrigger value="audio">Audio</TabsTrigger>
-      </TabsList>
+    <Tabs value={activeTab} onValueChange={handleTabChange}>
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-xl font-bold">Content Surveillance</h2>
+        <TabsList>
+          <TabsTrigger value="image">Images</TabsTrigger>
+          <TabsTrigger value="video">Videos</TabsTrigger>
+          <TabsTrigger value="text">Text Posts</TabsTrigger>
+          <TabsTrigger value="audio">Audio</TabsTrigger>
+        </TabsList>
+      </div>
       
-      <TabsContent value="post">
+      <TabsContent value="image">
         <ContentSurveillanceList 
-          items={posts}
-          isLoading={isLoading}
-          onViewContent={handleViewContentDetails}
-          emptyMessage="No posts found for surveillance"
-          title="Recent Posts"
-        />
-      </TabsContent>
-      
-      <TabsContent value="story">
-        <ContentSurveillanceList 
-          items={stories}
-          isLoading={isLoading}
-          onViewContent={handleViewContentDetails}
-          emptyMessage="No stories found for surveillance"
-          title="Recent Stories"
+          items={mockImageItems} 
+          isLoading={isLoading} 
+          contentType="image"
         />
       </TabsContent>
       
       <TabsContent value="video">
         <ContentSurveillanceList 
-          items={videos}
-          isLoading={isLoading}
-          onViewContent={handleViewContentDetails}
-          emptyMessage="No videos found for surveillance"
-          title="Recent Videos"
+          items={mockVideoItems} 
+          isLoading={isLoading} 
+          contentType="video"
+        />
+      </TabsContent>
+      
+      <TabsContent value="text">
+        <ContentSurveillanceList 
+          items={mockTextItems} 
+          isLoading={isLoading} 
+          contentType="text"
         />
       </TabsContent>
       
       <TabsContent value="audio">
         <ContentSurveillanceList 
-          items={audios}
-          isLoading={isLoading}
-          onViewContent={handleViewContentDetails}
-          emptyMessage="No audio content found for surveillance"
-          title="Recent Audio Content"
+          items={mockAudioItems} 
+          isLoading={isLoading} 
+          contentType="audio"
         />
       </TabsContent>
     </Tabs>
   );
-};
+}
