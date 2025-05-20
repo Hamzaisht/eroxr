@@ -23,21 +23,28 @@ const Home = () => {
   const session = useSession();
   const { toast } = useToast();
   const isMobile = useMediaQuery("(max-width: 768px)");
-  
-  console.log('Home - session?.user?.id:', session?.user?.id);
 
   useEffect(() => {
     const checkPayingCustomerStatus = async () => {
       if (!session?.user?.id) return;
       
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('is_paying_customer')
-        .eq('id', session.user.id)
-        .single();
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('is_paying_customer')
+          .eq('id', session.user.id)
+          .single();
       
-      if (!error && data) {
-        setIsPayingCustomer(data.is_paying_customer);
+        if (error) {
+          console.error('Error fetching profile data:', error);
+          return;
+        }
+      
+        if (data) {
+          setIsPayingCustomer(data.is_paying_customer);
+        }
+      } catch (err) {
+        console.error('Exception in checkPayingCustomerStatus:', err);
       }
     };
 
