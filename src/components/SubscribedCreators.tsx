@@ -54,10 +54,10 @@ export const SubscribedCreators = () => {
       
       // Transform data to match expected types
       return data?.map((item): Subscription => ({
-        id: item.id,
-        creator_id: item.creator_id,
-        user_id: item.user_id,
-        created_at: item.created_at,
+        id: item.id as string,
+        creator_id: item.creator_id as string,
+        user_id: item.user_id as string,
+        created_at: item.created_at as string,
         creator: item.creator as Creator
       })) || [];
     },

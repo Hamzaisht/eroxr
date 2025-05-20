@@ -66,8 +66,27 @@ export function TempDemoContent() {
 
         if (profiles) {
           // Cast the data properly with a transformation for type safety
-          const typedProfiles = profiles.map((profile): ProfileData => ({
-            ...profile
+          const typedProfiles = profiles.map((profile) => ({
+            id: profile.id as string,
+            username: profile.username,
+            avatar_url: profile.avatar_url,
+            created_at: profile.created_at,
+            updated_at: profile.updated_at,
+            is_age_verified: profile.is_age_verified,
+            date_of_birth: profile.date_of_birth,
+            id_verification_status: profile.id_verification_status,
+            bio: profile.bio,
+            location: profile.location,
+            interests: profile.interests,
+            social_links: profile.social_links,
+            profile_visibility: profile.profile_visibility,
+            is_paying_customer: profile.is_paying_customer,
+            banner_url: profile.banner_url,
+            first_name: profile.first_name,
+            last_name: profile.last_name,
+            is_suspended: profile.is_suspended,
+            suspended_at: profile.suspended_at,
+            status: profile.status
           }));
           setData(typedProfiles);
         }
