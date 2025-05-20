@@ -63,6 +63,7 @@ export const SessionDetails = ({ session }: SessionDetailsProps) => {
         </div>
       )}
       
+      {/* Only show location and tags if they exist in the session object */}
       {session.type === 'bodycontact' && session.location && (
         <div className="text-sm text-gray-400 mt-1">
           <div className="flex items-center space-x-2">

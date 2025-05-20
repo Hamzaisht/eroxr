@@ -63,13 +63,13 @@ export const SurveillanceTabs = ({ liveAlerts, onSelectAlert }: SurveillanceTabs
     if (!liveSessions || liveSessions.length === 0) return [];
     
     switch (activeTab) {
-      case 'streams':
+      case SurveillanceTab.STREAMS:
         return liveSessions.filter(session => session.type === 'stream');
-      case 'calls':
+      case SurveillanceTab.CALLS:
         return liveSessions.filter(session => session.type === 'call');
-      case 'chats':
+      case SurveillanceTab.CHATS:
         return liveSessions.filter(session => session.type === 'chat');
-      case 'bodycontact':
+      case SurveillanceTab.BODYCONTACT:
         return liveSessions.filter(session => session.type === 'bodycontact');
       default:
         return liveSessions;
@@ -101,7 +101,7 @@ export const SurveillanceTabs = ({ liveAlerts, onSelectAlert }: SurveillanceTabs
       
       {/* Live Session Tabs */}
       <SessionTabContent 
-        value="streams"
+        value={SurveillanceTab.STREAMS}
         activeTab={activeTab}
         sessions={filteredSessions}
         isLoading={isLoading}
@@ -112,7 +112,7 @@ export const SurveillanceTabs = ({ liveAlerts, onSelectAlert }: SurveillanceTabs
       />
       
       <SessionTabContent 
-        value="calls"
+        value={SurveillanceTab.CALLS}
         activeTab={activeTab}
         sessions={filteredSessions}
         isLoading={isLoading}
@@ -123,7 +123,7 @@ export const SurveillanceTabs = ({ liveAlerts, onSelectAlert }: SurveillanceTabs
       />
       
       <SessionTabContent 
-        value="chats"
+        value={SurveillanceTab.CHATS}
         activeTab={activeTab}
         sessions={filteredSessions}
         isLoading={isLoading}
@@ -134,7 +134,7 @@ export const SurveillanceTabs = ({ liveAlerts, onSelectAlert }: SurveillanceTabs
       />
       
       <SessionTabContent 
-        value="bodycontact"
+        value={SurveillanceTab.BODYCONTACT}
         activeTab={activeTab}
         sessions={filteredSessions}
         isLoading={isLoading}
@@ -145,16 +145,16 @@ export const SurveillanceTabs = ({ liveAlerts, onSelectAlert }: SurveillanceTabs
       />
       
       {/* Content Surveillance Tab */}
-      <TabsContent value="content">
+      <TabsContent value={SurveillanceTab.CONTENT}>
         <ContentSurveillanceTabs />
       </TabsContent>
       
       {/* Earnings Surveillance Tab */}
-      <TabsContent value="earnings">
+      <TabsContent value={SurveillanceTab.EARNINGS}>
         <CreatorEarningsSurveillance />
       </TabsContent>
       
-      <TabsContent value="alerts">
+      <TabsContent value={SurveillanceTab.ALERTS}>
         <AlertsList 
           alerts={liveAlerts} 
           isLoading={isLoading} 

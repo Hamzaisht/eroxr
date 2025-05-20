@@ -4,9 +4,12 @@ export enum SurveillanceTab {
   STREAMS = 'streams',
   MESSAGES = 'messages',
   CALLS = 'calls',
+  CHATS = 'chats',
+  BODYCONTACT = 'bodycontact',
   ALERTS = 'alerts',
   REPORTS = 'reports',
-  CONTENT = 'content'
+  CONTENT = 'content',
+  EARNINGS = 'earnings'
 }
 
 // Define the enum values for session types
@@ -87,6 +90,9 @@ export interface LiveSession {
   participants?: number;
   recipient_avatar?: string;
   session?: any;
+  location?: string; // Added for BodyContact sessions
+  tags?: string[]; // Added for tagged sessions
+  thumbnail_url?: string; // Added for streams
 }
 
 // Define the media source interface
@@ -97,6 +103,12 @@ export interface MediaSource {
   timestamp?: string;
   metadata?: Record<string, any>;
   content_type?: string;
+  poster?: string;
+  thumbnail?: string;
+  thumbnail_url?: string;
+  media_url?: string | string[];
+  video_url?: string;
+  media_type?: string;
 }
 
 // Define the surveillance content item interface
@@ -121,4 +133,10 @@ export interface SurveillanceContentItem {
   reason?: string;
   severity?: string;
   is_active?: boolean;
+  creator_id?: string; // Added to fix errors
+  visibility?: string; // Added to fix errors
+  views?: number; // Added to match usage
+  likes?: number; // Added to match usage
+  comments?: number; // Added to match usage
+  tags?: string[]; // Added to match usage
 }

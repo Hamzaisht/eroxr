@@ -29,7 +29,6 @@ export function useSurveillanceData() {
           description: "Playing the latest games",
           viewer_count: 125,
           started_at: new Date().toISOString(),
-          thumbnail_url: "https://picsum.photos/seed/stream1/300/200",
           created_at: new Date().toISOString(),
           is_active: true,
           content: "Live gaming content",

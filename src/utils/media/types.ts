@@ -1,9 +1,11 @@
+
 // Define media types
 export enum MediaType {
   IMAGE = "image",
   VIDEO = "video",
   AUDIO = "audio",
   DOCUMENT = "document",
+  GIF = "gif",
   UNKNOWN = "unknown"
 }
 
@@ -14,7 +16,14 @@ export enum AvailabilityStatus {
   AWAY = "away",
   BUSY = "busy",
   INVISIBLE = "invisible",
-  OFFLINE = "offline"
+  OFFLINE = "offline",
+  
+  // Also include these for compatibility
+  AVAILABLE = "available",
+  PROCESSING = "processing",
+  FAILED = "failed",
+  REMOVED = "removed",
+  RESTRICTED = "restricted"
 }
 
 // Base MediaSource interface
@@ -45,6 +54,7 @@ export interface MediaOptions {
   controls?: boolean;
   muted?: boolean;
   loop?: boolean;
+  poster?: string;
   showWatermark?: boolean;
   showCloseButton?: boolean;
   creatorId?: string;
@@ -75,13 +85,4 @@ export interface UploadOptions {
   contentCategory?: string;
   autoResetOnCompletion?: boolean;
   resetDelay?: number;
-}
-
-// Availability status for media
-export enum AvailabilityStatus {
-  AVAILABLE = "available",
-  PROCESSING = "processing",
-  FAILED = "failed",
-  REMOVED = "removed",
-  RESTRICTED = "restricted"
 }

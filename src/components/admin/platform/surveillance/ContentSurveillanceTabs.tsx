@@ -16,7 +16,8 @@ export function ContentSurveillanceTabs() {
       description: "A sample image upload",
       content_type: "image",
       type: "image",
-      creator_id: "user-123",
+      user_id: "user-123",
+      creator_id: "user-123", // Fixed property
       creator_username: "imagecreator",
       creator_avatar: "https://i.pravatar.cc/150?u=img1",
       created_at: new Date().toISOString(),
@@ -24,7 +25,6 @@ export function ContentSurveillanceTabs() {
       media_url: ["https://picsum.photos/seed/img1/800/600"],
       severity: "medium",
       status: "pending",
-      user_id: "user-123",
       visibility: "public"
     },
     {
@@ -33,7 +33,8 @@ export function ContentSurveillanceTabs() {
       description: "An image that was flagged",
       content_type: "image",
       type: "image",
-      creator_id: "user-456", 
+      user_id: "user-456",
+      creator_id: "user-456", // Fixed property
       creator_username: "problematicuser",
       creator_avatar: "https://i.pravatar.cc/150?u=img2",
       created_at: new Date().toISOString(),
@@ -42,7 +43,6 @@ export function ContentSurveillanceTabs() {
       media_url: ["https://picsum.photos/seed/img2/800/600"],
       severity: "high",
       status: "reviewed",
-      user_id: "user-456",
       visibility: "public"
     }
   ];
@@ -54,7 +54,8 @@ export function ContentSurveillanceTabs() {
       description: "A sample video upload",
       content_type: "video",
       type: "video",
-      creator_id: "user-789",
+      user_id: "user-789",
+      creator_id: "user-789", // Fixed property
       creator_username: "videocreator",
       creator_avatar: "https://i.pravatar.cc/150?u=vid1",
       created_at: new Date().toISOString(),
@@ -63,7 +64,6 @@ export function ContentSurveillanceTabs() {
       media_url: ["https://picsum.photos/seed/vid1/800/600"],
       severity: "low",
       status: "pending",
-      user_id: "user-789",
       visibility: "public"
     }
   ];
@@ -75,7 +75,8 @@ export function ContentSurveillanceTabs() {
       description: "This is a text post with some sample content for moderation.",
       content_type: "text",
       type: "text",
-      creator_id: "user-101",
+      user_id: "user-101",
+      creator_id: "user-101", // Fixed property
       creator_username: "writer",
       creator_avatar: "https://i.pravatar.cc/150?u=txt1",
       created_at: new Date().toISOString(),
@@ -83,7 +84,6 @@ export function ContentSurveillanceTabs() {
       media_url: [],
       severity: "low",
       status: "pending",
-      user_id: "user-101",
       visibility: "public"
     }
   ];
@@ -95,7 +95,8 @@ export function ContentSurveillanceTabs() {
       description: "A sample audio recording",
       content_type: "audio",
       type: "audio",
-      creator_id: "user-202",
+      user_id: "user-202",
+      creator_id: "user-202", // Fixed property
       creator_username: "podcaster",
       creator_avatar: "https://i.pravatar.cc/150?u=aud1",
       created_at: new Date().toISOString(),
@@ -103,7 +104,6 @@ export function ContentSurveillanceTabs() {
       media_url: ["https://example.com/audio.mp3"],
       severity: "medium",
       status: "pending",
-      user_id: "user-202",
       visibility: "public"
     }
   ];

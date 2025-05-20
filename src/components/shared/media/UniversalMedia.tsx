@@ -33,8 +33,13 @@ export const UniversalMedia = forwardRef(({
 }: UniversalMediaProps, ref: Ref<HTMLVideoElement | HTMLImageElement>) => {
   // Process the item to ensure it has a url property
   const mediaItem = useMemo(() => {
-    return normalizeMediaSource(item);
-  }, [item]);
+    const normalized = normalizeMediaSource(item);
+    // If poster prop was passed, add it to the mediaSource
+    if (poster) {
+      normalized.poster = poster;
+    }
+    return normalized;
+  }, [item, poster]);
 
   return (
     <MediaRenderer
@@ -44,7 +49,7 @@ export const UniversalMedia = forwardRef(({
       controls={controls}
       muted={muted}
       loop={loop}
-      poster={poster}
+      poster={poster || mediaItem.poster}
       showWatermark={showWatermark}
       onClick={onClick}
       onLoad={onLoad}

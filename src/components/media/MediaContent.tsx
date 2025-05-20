@@ -201,7 +201,6 @@ export const MediaContent = ({
               url={mediaUrlWithCacheBuster}
               className="max-w-full max-h-[80vh]"
               showCloseButton={false}
-              creatorId={creatorId}
               onClose={() => {}}
               autoPlay={true}
               onClick={handleMediaClick}
