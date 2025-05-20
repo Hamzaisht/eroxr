@@ -6,7 +6,7 @@ import { LoadingScreen } from "./components/layout/LoadingScreen";
 import { MainLayout } from "./components/layout/MainLayout";
 import { ScrollToTop } from "./components/ScrollToTop";
 import { ToastProvider } from "./hooks/use-toast";
-import { GhostModeProvider } from "./context/ghost/GhostModeContext";
+import { GhostModeProvider } from "./hooks/useGhostMode";
 
 // Lazy load pages for better performance
 const Index = lazy(() => import("./pages/Index"));

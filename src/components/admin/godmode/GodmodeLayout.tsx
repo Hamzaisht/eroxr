@@ -49,13 +49,16 @@ function GodmodeLayout() {
     created_at: typeof alert.created_at === 'string' ? alert.created_at : new Date().toISOString(),
   })) as LiveAlert[];
   
+  // Fixed the type mismatch by adding a wrapper function
+  const handleRefreshAlerts = async () => { 
+    await refreshAlerts();
+    return true;
+  };
+  
   return (
     <SurveillanceProvider
       liveAlerts={formattedAlerts}
-      refreshAlerts={async () => { 
-        const success = await refreshAlerts();
-        return success;
-      }}
+      refreshAlerts={handleRefreshAlerts}
       startSurveillance={async (session: LiveSession) => {
         return await startSurveillance(session);
       }}

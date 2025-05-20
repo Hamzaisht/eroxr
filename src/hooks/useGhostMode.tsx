@@ -19,9 +19,11 @@ interface GhostModeContextType {
   };
   startSurveillance: (session: LiveSession) => Promise<boolean>;
   stopSurveillance: () => Promise<boolean>;
-  liveAlerts: LiveAlert[] | null;
-  refreshAlerts: () => Promise<void>;
+  liveAlerts: LiveAlert[];
+  refreshAlerts: () => Promise<boolean>;
   syncGhostModeFromSupabase: () => Promise<void>;
+  ghostedProfile: any | null;
+  setGhostedProfile: (profile: any | null) => void;
 }
 
 const GhostModeContext = createContext<GhostModeContextType | undefined>(undefined);
@@ -30,9 +32,11 @@ export const GhostModeProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const [isGhostMode, setIsGhostMode] = useState(false);
   const [canUseGhostMode, setCanUseGhostMode] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [liveAlerts, setLiveAlerts] = useState<LiveAlert[] | null>(null);
+  const [ghostedProfile, setGhostedProfile] = useState<any | null>(null);
+  const [liveAlerts, setLiveAlerts] = useState<LiveAlert[]>([]);
   const session = useSession();
   const supabaseClient = useSupabaseClient();
+  
   const [activeSurveillance, setActiveSurveillance] = useState<{
     isWatching: boolean;
     session: LiveSession | null;
@@ -133,7 +137,7 @@ export const GhostModeProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     }
   };
   
-  const refreshAlerts = async (): Promise<void> => {
+  const refreshAlerts = async (): Promise<boolean> => {
     setIsLoading(true);
     try {
       const { data, error } = await supabaseClient
@@ -144,12 +148,15 @@ export const GhostModeProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       if (error) {
         console.error("Error fetching alerts:", error);
         setLiveAlerts([]);
+        return false;
       } else {
-        setLiveAlerts(data);
+        setLiveAlerts(data || []);
+        return true;
       }
     } catch (error) {
       console.error("Error refreshing alerts:", error);
       setLiveAlerts([]);
+      return false;
     } finally {
       setIsLoading(false);
     }
@@ -167,7 +174,9 @@ export const GhostModeProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       stopSurveillance,
       liveAlerts,
       refreshAlerts,
-      syncGhostModeFromSupabase
+      syncGhostModeFromSupabase,
+      ghostedProfile,
+      setGhostedProfile
     }}>
       {children}
     </GhostModeContext.Provider>
@@ -176,7 +185,7 @@ export const GhostModeProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
 export const useGhostMode = () => {
   const context = useContext(GhostModeContext);
-  if (!context) {
+  if (context === undefined) {
     throw new Error('useGhostMode must be used within a GhostModeProvider');
   }
   return context;
