@@ -46,18 +46,23 @@ export function UserMenu() {
     queryFn: async () => {
       if (!session?.user?.id) return null;
       
-      const { data, error } = await supabase
-        .from('profiles')
-        .select("*")
-        .eq("id" as keyof ProfileRow, session.user.id)
-        .maybeSingle();
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select("*")
+          .eq("id", session.user.id)
+          .maybeSingle();
+          
+        if (error) {
+          console.error('Error fetching profile:', error);
+          return null;
+        }
         
-      if (error || !data) {
-        console.error('Error fetching profile:', error);
+        return data as ProfileRow | null;
+      } catch (error) {
+        console.error('Exception fetching profile:', error);
         return null;
       }
-      
-      return data as ProfileRow;
     },
     enabled: !!session?.user?.id,
   });
