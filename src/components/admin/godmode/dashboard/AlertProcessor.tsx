@@ -16,7 +16,6 @@ const mapToLiveAlerts = (alerts: Partial<LiveAlert>[]): LiveAlert[] => {
       description: alert.description || '',
       timestamp: alert.timestamp || new Date().toISOString(),
       isRead: alert.isRead || false,
-      // Ensure userId is used instead of user_id
       userId: alert.userId || alert.user_id,
       contentId: alert.contentId || alert.content_id
     };
@@ -28,17 +27,15 @@ const mockAlerts: Partial<LiveAlert>[] = [
   {
     id: "1",
     type: 'security',
-    userId: "user-123", // Changed from user_id to userId
+    userId: "user-123",
     username: "suspicious_user",
     avatar_url: "https://i.pravatar.cc/150?u=1",
     timestamp: new Date().toISOString(),
     created_at: new Date().toISOString(),
-    content_type: "post",
+    content_type: "post", 
     reason: "Inappropriate content",
     severity: "high",
-    contentId: "post-456", // Changed from content_id to contentId
-    message: "This post contains inappropriate images",
-    status: "pending",
+    contentId: "post-456",
     title: "Content Violation",
     description: "Post with inappropriate content detected",
     isRead: false,
@@ -47,7 +44,7 @@ const mockAlerts: Partial<LiveAlert>[] = [
   {
     id: "2",
     type: 'system',
-    userId: "user-234", // Changed from user_id to userId
+    userId: "user-234",
     username: "potential_bot",
     avatar_url: "https://i.pravatar.cc/150?u=2",
     timestamp: new Date(Date.now() - 15 * 60000).toISOString(),
@@ -55,9 +52,7 @@ const mockAlerts: Partial<LiveAlert>[] = [
     content_type: "message",
     reason: "Spam behavior",
     severity: "medium",
-    contentId: "message-789", // Changed from content_id to contentId
-    message: "User sending identical messages to multiple profiles",
-    status: "investigating",
+    contentId: "message-789",
     title: "Potential Spam",
     description: "Multiple identical messages sent in short timeframe",
     isRead: false,

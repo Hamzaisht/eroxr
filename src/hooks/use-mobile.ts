@@ -1,37 +1,49 @@
 
-import { useEffect, useState } from 'react';
+import { useState, useEffect } from 'react';
 
-/**
- * Hook to detect if the current device is a mobile device
- * @param breakpoint Breakpoint width to consider mobile (default: 768px)
- * @returns Boolean indicating if the device is mobile
- */
-export function useIsMobile(breakpoint: number = 768) {
+export const useIsMobile = () => {
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
-    // Check if window exists (browser environment)
-    if (typeof window === 'undefined') return;
-
-    // Initial check
-    const checkIsMobile = () => {
-      setIsMobile(window.innerWidth < breakpoint);
+    const checkIfMobile = () => {
+      setIsMobile(window.innerWidth < 768);
     };
 
-    // Run on mount
-    checkIsMobile();
+    checkIfMobile();
+    window.addEventListener('resize', checkIfMobile);
 
-    // Add event listener for resize
-    window.addEventListener('resize', checkIsMobile);
-
-    // Cleanup
     return () => {
-      window.removeEventListener('resize', checkIsMobile);
+      window.removeEventListener('resize', checkIfMobile);
     };
-  }, [breakpoint]);
+  }, []);
 
   return isMobile;
-}
+};
 
-// Re-export useMediaQuery for backward compatibility
-export { useMediaQuery } from './useMediaQuery';
+export function useBreakpoint() {
+  const [breakpoint, setBreakpoint] = useState({
+    isMobile: false,
+    isTablet: false,
+    isDesktop: false
+  });
+
+  useEffect(() => {
+    const handleResize = () => {
+      const width = window.innerWidth;
+      setBreakpoint({
+        isMobile: width < 640,
+        isTablet: width >= 640 && width < 1024,
+        isDesktop: width >= 1024
+      });
+    };
+
+    handleResize();
+    window.addEventListener('resize', handleResize);
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+    };
+  }, []);
+
+  return breakpoint;
+}

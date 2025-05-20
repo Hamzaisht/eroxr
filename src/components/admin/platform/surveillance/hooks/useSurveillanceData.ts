@@ -25,7 +25,6 @@ export function useSurveillanceData() {
           user_id: "user-123",
           type: "stream",
           status: "active",
-          room_id: "room-123",
           title: "Live Gaming Stream",
           description: "Playing the latest games",
           viewer_count: 125,
@@ -35,7 +34,9 @@ export function useSurveillanceData() {
           is_active: true,
           content: "Live gaming content",
           media_url: ["https://picsum.photos/seed/stream1/800/600"],
-          content_type: "image/jpeg"
+          content_type: "image/jpeg",
+          participants: 125,
+          location: "Stockholm"
         },
         {
           id: "223e4567-e89b-12d3-a456-426614174001",
@@ -44,14 +45,15 @@ export function useSurveillanceData() {
           user_id: "user-456",
           type: "chat",
           status: "active",
-          room_id: "room-456",
           title: "Private Chat Session",
           started_at: new Date().toISOString(),
           created_at: new Date().toISOString(),
           is_active: true,
           content: "Private chat content",
           media_url: ["https://picsum.photos/seed/chat1/800/600"],
-          content_type: "image/jpeg"
+          content_type: "image/jpeg",
+          recipient_username: "user5",
+          message_type: "text"
         },
         {
           id: "323e4567-e89b-12d3-a456-426614174002",
@@ -60,14 +62,15 @@ export function useSurveillanceData() {
           user_id: "user-789",
           type: "call",
           status: "active",
-          room_id: "room-789",
           title: "Video Call Session",
           started_at: new Date().toISOString(),
           created_at: new Date().toISOString(),
           is_active: true,
           content: "Private video call",
           media_url: ["https://picsum.photos/seed/call1/800/600"],
-          content_type: "video/mp4"
+          content_type: "video/mp4",
+          sender_username: "creator3",
+          recipient_username: "user7"
         },
         {
           id: "423e4567-e89b-12d3-a456-426614174003",
@@ -76,14 +79,15 @@ export function useSurveillanceData() {
           user_id: "user-101",
           type: "bodycontact",
           status: "active",
-          room_id: "room-101",
           title: "Dating Profile Activity",
           started_at: new Date().toISOString(),
           created_at: new Date().toISOString(),
           is_active: true,
           content: "Dating profile activity",
           media_url: ["https://picsum.photos/seed/dating1/800/600"],
-          content_type: "image/jpeg"
+          content_type: "image/jpeg",
+          location: "Oslo",
+          tags: ["dating", "social"]
         }
       ];
       

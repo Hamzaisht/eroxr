@@ -84,8 +84,9 @@ export function useContentSurveillance() {
       
       const transformedPosts: SurveillanceContentItem[] = (postsData || []).map(post => ({
         id: post.id,
+        type: "post",
         content_type: "post",
-        user_id: post.creator_id, // Set user_id to creator_id
+        user_id: post.creator_id,
         creator_id: post.creator_id,
         created_at: post.created_at,
         media_url: post.media_url || [],
@@ -97,24 +98,21 @@ export function useContentSurveillance() {
         title: post.title || "",
         description: post.description || "",
         visibility: post.visibility || "public",
-        is_draft: post.is_draft || false,
-        location: post.location || "",
+        status: post.status || "active",
         tags: post.tags || [],
         views: post.views || 0,
         likes: post.likes || 0,
-        comments: post.comments || 0,
-        is_ppv: post.is_ppv || false,
-        ppv_amount: post.ppv_amount,
-        status: post.status || "active"
+        comments: post.comments || 0
       }));
       
       const transformedStories: SurveillanceContentItem[] = (storiesData || []).map(story => ({
         id: story.id,
+        type: "story",
         content_type: "story",
-        user_id: story.creator_id, // Set user_id to creator_id
+        user_id: story.creator_id,
         creator_id: story.creator_id,
         created_at: story.created_at,
-        media_url: story.media_url || [],
+        media_url: story.media_url ? [story.media_url] : [],
         username: story.creator?.username || "Unknown",
         creator_username: story.creator?.username || "Unknown",
         avatar_url: story.creator?.avatar_url,
@@ -123,21 +121,22 @@ export function useContentSurveillance() {
         title: story.title || "",
         description: story.description || "",
         visibility: "public",
-        location: story.location || "",
+        status: story.status || "active",
         tags: story.tags || [],
         views: story.views || 0,
         likes: story.likes || 0,
-        comments: story.comments || 0,
-        status: story.status || "active"
+        comments: story.comments || 0
       }));
       
       const transformedVideos: SurveillanceContentItem[] = (videosData || []).map(video => ({
         id: video.id,
+        type: "video",
         content_type: "video",
-        user_id: video.creator_id, // Set user_id to creator_id
+        user_id: video.creator_id,
         creator_id: video.creator_id,
         created_at: video.created_at,
         media_url: video.media_url || [],
+        video_url: video.video_url,
         username: video.creator?.username || "Unknown",
         creator_username: video.creator?.username || "Unknown",
         avatar_url: video.creator?.avatar_url,
@@ -146,18 +145,18 @@ export function useContentSurveillance() {
         title: video.title || "",
         description: video.description || "",
         visibility: video.visibility || "public",
-        location: video.location || "",
+        status: video.status || "active",
         tags: video.tags || [],
         views: video.views || 0,
         likes: video.likes || 0,
-        comments: video.comments || 0,
-        status: video.status || "active"
+        comments: video.comments || 0
       }));
       
       const transformedAudios: SurveillanceContentItem[] = (audiosData || []).map(audio => ({
         id: audio.id,
+        type: "audio",
         content_type: "audio",
-        user_id: audio.creator_id, // Set user_id to creator_id
+        user_id: audio.creator_id,
         creator_id: audio.creator_id,
         created_at: audio.created_at,
         media_url: audio.media_url || [],
@@ -169,12 +168,11 @@ export function useContentSurveillance() {
         title: audio.title || "",
         description: audio.description || "",
         visibility: "public",
-        location: audio.location || "",
+        status: audio.status || "active",
         tags: audio.tags || [],
         views: audio.views || 0,
         likes: audio.likes || 0,
-        comments: audio.comments || 0,
-        status: audio.status || "active"
+        comments: audio.comments || 0
       }));
       
       setPosts(transformedPosts);

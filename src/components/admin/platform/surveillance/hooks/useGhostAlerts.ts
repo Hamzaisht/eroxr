@@ -10,7 +10,7 @@ export function useGhostAlerts(isGhostMode: boolean) {
   const refreshAlerts = useCallback(async () => {
     if (!isGhostMode) {
       setLiveAlerts([]);
-      return;
+      return false;
     }
     
     try {
@@ -43,8 +43,9 @@ export function useGhostAlerts(isGhostMode: boolean) {
       // Transform reports to LiveAlert format
       const reportAlerts: LiveAlert[] = (reportsData || []).map(report => ({
         id: report.id,
-        type: "violation", 
-        alert_type: "violation", // Changed from "report" to "violation"
+        type: 'violation',
+        alert_type: 'violation',
+        userId: report.reported_id,
         user_id: report.reported_id,
         username: report.reported?.username || 'Unknown',
         avatar_url: report.reported?.avatar_url || '',
@@ -53,20 +54,20 @@ export function useGhostAlerts(isGhostMode: boolean) {
         content_type: report.content_type || '',
         reason: report.reason || '',
         severity: report.is_emergency ? 'high' : 'medium',
+        contentId: report.content_id || '',
         content_id: report.content_id || '',
-        message: `${report.reason}: ${report.description || ''}`,
-        status: report.status || '',
         title: `Content Report`,
         description: report.description || 'No description provided',
-        is_viewed: false,
-        urgent: report.is_emergency || false
+        isRead: false,
+        requiresAction: report.is_emergency || false
       }));
       
       // Transform flagged content to LiveAlert format
       const flaggedAlerts: LiveAlert[] = (flaggedData || []).map(flagged => ({
         id: flagged.id,
-        type: "risk", 
-        alert_type: "risk", // Changed from "content" to "risk"
+        type: 'risk',
+        alert_type: 'risk',
+        userId: flagged.user_id || '',
         user_id: flagged.user_id || '',
         username: flagged.user?.username || 'Unknown',
         avatar_url: flagged.user?.avatar_url || '',
@@ -75,13 +76,12 @@ export function useGhostAlerts(isGhostMode: boolean) {
         content_type: flagged.content_type || '',
         reason: flagged.reason || '',
         severity: flagged.severity as 'high' | 'medium' | 'low',
+        contentId: flagged.content_id || '',
         content_id: flagged.content_id || '',
-        message: flagged.reason || '',
-        status: flagged.status || '',
         title: `Flagged ${flagged.content_type}`,
         description: flagged.notes || flagged.reason || '',
-        is_viewed: false,
-        urgent: flagged.severity === 'high'
+        isRead: false,
+        requiresAction: flagged.severity === 'high'
       }));
       
       // Combine all alerts
@@ -89,16 +89,18 @@ export function useGhostAlerts(isGhostMode: boolean) {
       
       // Sort by timestamp, newest first
       allAlerts.sort((a, b) => {
-        const dateA = new Date(a.created_at);
-        const dateB = new Date(b.created_at);
+        const dateA = new Date(a.created_at || a.timestamp);
+        const dateB = new Date(b.created_at || b.timestamp);
         return dateB.getTime() - dateA.getTime();
       });
       
       setLiveAlerts(allAlerts);
       console.log(`Loaded ${allAlerts.length} alerts for ghost mode`);
+      return true;
       
     } catch (error) {
       console.error('Error refreshing alerts:', error);
+      return false;
     }
   }, [isGhostMode, supabase]);
   

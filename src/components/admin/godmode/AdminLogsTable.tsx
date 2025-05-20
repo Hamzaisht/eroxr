@@ -26,7 +26,7 @@ interface AdminLogsTableProps {
   isLoading?: boolean;
 }
 
-export const AdminLogsTable: React.FC<AdminLogsTableProps> = ({ logs = [], isLoading = false }) => {
+const AdminLogsTable: React.FC<AdminLogsTableProps> = ({ logs = [], isLoading = false }) => {
   if (isLoading) {
     return (
       <div className="w-full p-8 text-center">

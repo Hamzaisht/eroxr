@@ -22,6 +22,13 @@ export interface MediaSource {
   url: string | null;
   type: 'image' | 'video' | 'audio' | 'text';
   media_type?: string;
+  poster?: string;
+  thumbnail?: string;
+  // Additional fields for backward compatibility
+  media_url?: string | string[];
+  video_url?: string;
+  media_urls?: string[];
+  video_urls?: string[];
 }
 
 export interface LiveSession {
@@ -30,11 +37,11 @@ export interface LiveSession {
   user_id: string;
   username?: string;
   avatar_url?: string | null;
-  started_at: string; // Required field
+  started_at: string;
   title?: string;
   description?: string;
   status: string;
-  is_active: boolean; // Required field
+  is_active: boolean;
   content?: string;
   media_url?: string[] | string;
   created_at?: string;
@@ -50,6 +57,8 @@ export interface LiveSession {
   tags?: string[];
   viewer_count?: number;
   video_url?: string;
+  room_id?: string; // Added for backward compatibility
+  thumbnail_url?: string; // Added for backward compatibility
 }
 
 export interface SurveillanceContentItem {
@@ -77,27 +86,11 @@ export interface SurveillanceContentItem {
   flagged_reason?: string;
   reason?: string;
   severity?: 'low' | 'medium' | 'high' | 'critical';
+  location?: string;
+  views?: number;
+  likes?: number;
+  comments?: number;
 }
-
-export type ModerationAction = 
-  | 'delete'
-  | 'hide'
-  | 'suspend'
-  | 'warn'
-  | 'approve'
-  | 'flag'
-  | 'reject'
-  | 'review'
-  | 'mark_safe'
-  | 'escalate'
-  | 'view'
-  | 'edit'
-  | 'pause'
-  | 'unpause'
-  | 'shadowban'
-  | 'ban'
-  | 'force_delete'
-  | 'restore';
 
 export interface SessionListProps {
   sessions: LiveSession[];

@@ -29,7 +29,7 @@ export function AdminPagination({
 
   return (
     <div className={`flex items-center justify-center py-4 ${className}`}>
-      <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={onPageChange}>
+      <div>
         <PaginationContent>
           <PaginationItem>
             <PaginationPrevious 
@@ -50,7 +50,7 @@ export function AdminPagination({
             return (
               <PaginationItem key={page}>
                 <PaginationLink
-                  isActive={page === currentPage}
+                  isActive={Number(page) === currentPage}
                   onClick={() => onPageChange(Number(page))}
                 >
                   {page}
@@ -67,13 +67,13 @@ export function AdminPagination({
             />
           </PaginationItem>
         </PaginationContent>
-      </Pagination>
+      </div>
     </div>
   );
 }
 
 // Helper function to generate page numbers with ellipsis for large page counts
-function getPageNumbers(currentPage: number, totalPages: number) {
+function getPageNumbers(currentPage: number, totalPages: number): (number | string)[] {
   const MAX_VISIBLE_PAGES = 5;
   
   if (totalPages <= MAX_VISIBLE_PAGES) {
@@ -81,7 +81,7 @@ function getPageNumbers(currentPage: number, totalPages: number) {
   }
 
   // Always show first and last page
-  const pages = [1];
+  const pages: (number | string)[] = [1];
   
   // Calculate start and end of the visible pages window
   let startPage = Math.max(2, currentPage - 1);

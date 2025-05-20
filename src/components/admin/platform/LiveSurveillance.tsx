@@ -51,9 +51,20 @@ export const LiveSurveillance = () => {
   };
 
   const handleSelectAlert = (alert: LiveAlert) => {
-    // Only try to start surveillance if the alert has a session property
-    if (alert.session) {
-      handleStartWatching(alert.session as LiveSession);
+    // Only try to start surveillance if the alert has appropriate session data
+    if (alert.userId) {
+      // Create a minimal session object from the alert data
+      const sessionFromAlert: LiveSession = {
+        id: alert.id,
+        type: 'user',
+        user_id: alert.userId,
+        username: alert.username || 'Unknown',
+        status: 'active',
+        started_at: alert.timestamp,
+        is_active: true,
+      };
+      
+      handleStartWatching(sessionFromAlert);
     }
   };
 
@@ -61,12 +72,14 @@ export const LiveSurveillance = () => {
     return <GhostModePrompt />;
   }
 
-  // Format alerts to match LiveAlert type from alerts.ts
+  // Format alerts to match LiveAlert type
   const formattedAlerts = liveAlerts.map(alert => ({
     ...alert,
+    isRead: alert.isRead || false,
     alert_type: alert.alert_type || (alert.type === 'violation' ? 'violation' : 
                 alert.type === 'risk' ? 'risk' : 'information') as 'violation' | 'risk' | 'information',
     userId: alert.userId || alert.user_id || '',
+    contentId: alert.contentId || alert.content_id || '',
     username: alert.username || 'Unknown',
     created_at: typeof alert.created_at === 'string' ? alert.created_at : new Date().toISOString(),
   })) as LiveAlert[];
@@ -93,8 +106,7 @@ export const LiveSurveillance = () => {
         <SurveillanceProvider
           liveAlerts={formattedAlerts}
           refreshAlerts={async () => {
-            const success = await refreshAlerts();
-            return success;
+            return await refreshAlerts();
           }}
           startSurveillance={async (session: LiveSession) => {
             return await startSurveillance(session);
@@ -104,15 +116,16 @@ export const LiveSurveillance = () => {
             liveAlerts={formattedAlerts} 
             onSelectAlert={handleSelectAlert}
           />
-          <SessionList 
-            sessions={sessions}
-            isLoading={isLoading}
-            onMonitorSession={handleStartWatching}
-            error={null}
-            actionInProgress={actionInProgress}
-            onRefresh={handleRefresh}
-          />
         </SurveillanceProvider>
+        
+        <SessionList 
+          sessions={sessions}
+          isLoading={isLoading}
+          error={null}
+          onMonitorSession={handleStartWatching}
+          actionInProgress={actionInProgress}
+          onRefresh={handleRefresh}
+        />
       </div>
     </div>
   );
