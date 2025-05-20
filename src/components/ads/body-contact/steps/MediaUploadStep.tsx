@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { AdFormValues } from "../types";
 import { useToast } from "@/hooks/use-toast";
-import { getVideoDuration, validateVideoFormat, generateVideoThumbnail } from "@/utils/videoProcessing";
+import { getVideoDuration, validateVideoFormat } from "@/utils/videoProcessing";
 
 interface MediaUploadStepProps {
   values: AdFormValues;
@@ -193,9 +193,10 @@ export const MediaUploadStep = ({ values, onUpdateValues }: MediaUploadStepProps
         return;
       }
       
-      const thumbnailBlob = await generateVideoThumbnail(file);
-      const thumbnailUrl = URL.createObjectURL(thumbnailBlob);
-      setVideoThumbnails([thumbnailUrl]);
+      // Removed generateVideoThumbnail call
+      // Instead, create a simple default thumbnail URL directly from the video file
+      const defaultThumbnailUrl = URL.createObjectURL(file);
+      setVideoThumbnails([defaultThumbnailUrl]);
       
       cleanupProgressInterval();
       setUploadProgress(100);
