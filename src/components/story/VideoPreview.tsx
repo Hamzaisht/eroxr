@@ -1,102 +1,111 @@
-import { useState, useEffect } from "react";
+import { useRef, useState, useEffect } from 'react';
 import { motion } from "framer-motion";
-import { cn } from "@/lib/utils";
-import { AlertCircle, Loader2, RefreshCw } from "lucide-react";
+import { Play, Pause, Volume2, VolumeX, Maximize2, Minimize2 } from "lucide-react";
 import { UniversalMedia } from "@/components/media/UniversalMedia";
 import { MediaType } from "@/utils/media/types";
 
 interface VideoPreviewProps {
   videoUrl: string;
-  className?: string;
+  currentTime: number;
+  duration: number;
+  isPlaying: boolean;
+  onPlayPause: () => void;
+  onSeek: (time: number) => void;
+  onError: () => void;
 }
 
-export const VideoPreview = ({ videoUrl, className }: VideoPreviewProps) => {
-  const [isLoading, setIsLoading] = useState(true);
-  const [hasError, setHasError] = useState(false);
-  const [retryCount, setRetryCount] = useState(0);
-  const MAX_RETRIES = 2;
-
-  const mediaItem = {
-    video_url: videoUrl,
-    media_type: MediaType.VIDEO
+const VideoPreview = ({
+  videoUrl,
+  currentTime,
+  duration,
+  isPlaying,
+  onPlayPause,
+  onSeek,
+  onError,
+}: VideoPreviewProps) => {
+  const [isMuted, setIsMuted] = useState(true);
+  const [isFullScreen, setIsFullScreen] = useState(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  
+  useEffect(() => {
+    if (videoRef.current) {
+      videoRef.current.currentTime = currentTime;
+    }
+  }, [currentTime]);
+  
+  const toggleMute = () => {
+    setIsMuted(!isMuted);
+    if (videoRef.current) {
+      videoRef.current.muted = !isMuted;
+    }
   };
-
-  const handleLoad = () => {
-    setIsLoading(false);
-    setHasError(false);
+  
+  const toggleFullScreen = () => {
+    if (videoRef.current) {
+      if (!isFullScreen) {
+        videoRef.current.requestFullscreen();
+      } else {
+        document.exitFullscreen();
+      }
+      setIsFullScreen(!isFullScreen);
+    }
+  };
+  
+  const handleSeek = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const seekTime = parseFloat(e.target.value);
+    onSeek(seekTime);
   };
 
   const handleError = () => {
-    console.error('Video preview loading error:', videoUrl);
-    
-    if (retryCount < MAX_RETRIES) {
-      console.log(`Auto-retrying video load (${retryCount + 1}/${MAX_RETRIES})...`);
-      setRetryCount(prev => prev + 1);
-    } else {
-      setHasError(true);
-      setIsLoading(false);
-    }
+    console.error("Video preview error:", videoUrl);
+    onError();
   };
-
-  const handleRetry = () => {
-    setIsLoading(true);
-    setHasError(false);
-    setRetryCount(0);
-  };
-
-  if (hasError) {
-    return (
-      <motion.div 
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        className={cn(
-          "bg-red-500/10 flex flex-col items-center justify-center gap-2",
-          className
-        )}
-      >
-        <AlertCircle className="w-6 h-6 text-red-500" />
-        <span className="text-xs text-red-500">Failed to load video</span>
-        <button 
-          onClick={handleRetry}
-          className="flex items-center text-xs gap-1 px-2 py-1 mt-1 bg-luxury-dark/50 hover:bg-luxury-dark rounded text-luxury-neutral/80"
-        >
-          <RefreshCw className="w-3 h-3" /> Retry
-        </button>
-      </motion.div>
-    );
-  }
-
+  
   return (
-    <>
-      {isLoading && (
-        <motion.div 
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className={cn(
-            "bg-luxury-dark/60 flex flex-col items-center justify-center",
-            className
-          )}
-        >
-          <Loader2 className="w-6 h-6 animate-spin text-luxury-primary" />
-        </motion.div>
-      )}
-      <motion.div
-        className={cn(
-          className,
-          isLoading ? "hidden" : "block"
-        )}
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-      >
+    <div className="relative w-full overflow-hidden rounded-lg aspect-video bg-black">
+      <div className="absolute bottom-0 left-0 w-full p-4 bg-gradient-to-t from-black/80 to-transparent z-10 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <button onClick={onPlayPause} className="p-1 rounded-full bg-white/10 hover:bg-white/20">
+            {isPlaying ? <Pause className="w-4 h-4 text-white" /> : <Play className="w-4 h-4 text-white" />}
+          </button>
+          <input
+            type="range"
+            min="0"
+            max={duration}
+            step="0.1"
+            value={currentTime}
+            onChange={handleSeek}
+            className="w-24 md:w-48 h-1 bg-gray-200 rounded-full appearance-none cursor-pointer"
+          />
+          <span className="text-xs text-gray-300">{currentTime.toFixed(0)}s / {duration.toFixed(0)}s</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <button onClick={toggleMute} className="p-1 rounded-full bg-white/10 hover:bg-white/20">
+            {isMuted ? <VolumeX className="w-4 h-4 text-white" /> : <Volume2 className="w-4 h-4 text-white" />}
+          </button>
+          <button onClick={toggleFullScreen} className="p-1 rounded-full bg-white/10 hover:bg-white/20">
+            {isFullScreen ? <Minimize2 className="w-4 h-4 text-white" /> : <Maximize2 className="w-4 h-4 text-white" />}
+          </button>
+        </div>
+      </div>
+      
+      {videoUrl && (
         <UniversalMedia
-          item={mediaItem}
+          item={{
+            url: videoUrl,
+            type: MediaType.VIDEO
+          }}
           className="w-full h-full object-cover"
-          onLoad={handleLoad}
-          onError={handleError}
-          autoPlay={true}
           controls={false}
+          autoPlay={isPlaying}
+          muted={true}
+          loop={false}
+          onError={handleError}
         />
-      </motion.div>
-    </>
+      )}
+      
+    </div>
   );
 };
+
+export default VideoPreview;

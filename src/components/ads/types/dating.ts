@@ -6,12 +6,12 @@ export interface DatingAd {
   title: string;
   description: string;
   user_id: string;
-  username?: string;
-  avatarUrl?: string;
-  videoUrl?: string;
-  isVerified?: boolean;
-  isPremium?: boolean;
-  views?: number;
+  username: string;
+  avatarUrl: string;
+  videoUrl: string;
+  isVerified: boolean;
+  isPremium: boolean;
+  views: number;
   
   // Age properties
   age_range: {

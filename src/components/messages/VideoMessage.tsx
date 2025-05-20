@@ -25,8 +25,8 @@ export const VideoMessage = ({ messageId, videoUrl, isViewed, onView }: VideoMes
   const session = useSession();
 
   const mediaItem = { 
-    video_url: videoUrl,
-    media_type: MediaType.VIDEO
+    url: videoUrl, 
+    type: MediaType.VIDEO
   };
 
   useEffect(() => {

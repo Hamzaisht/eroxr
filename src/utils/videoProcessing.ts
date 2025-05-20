@@ -1,75 +1,46 @@
 
 /**
- * Validate if a file is a valid video format
- * @param file File to validate
- */
-export async function validateVideoFormat(file: File): Promise<boolean> {
-  if (!file) return false;
-
-  const validVideoTypes = ['video/mp4', 'video/webm', 'video/ogg', 'video/quicktime'];
-
-  // Check MIME type
-  if (!validVideoTypes.includes(file.type)) {
-    console.warn(`Invalid video MIME type: ${file.type}`);
-    return false;
-  }
-
-  // Check file size
-  if (file.size === 0) {
-    console.warn('Video file is empty');
-    return false;
-  }
-
-  try {
-    // Try to get video metadata as ultimate validation
-    const duration = await getVideoDuration(file);
-    return duration > 0;
-  } catch (error) {
-    console.error('Error validating video format:', error);
-    return false;
-  }
-}
-
-/**
- * Get video duration using URL.createObjectURL
+ * Generates a thumbnail for a video file
  * @param file Video file
- */
-export function getVideoDuration(file: File): Promise<number> {
-  return new Promise((resolve, reject) => {
-    // Create a temporary URL for the file
-    const url = URL.createObjectURL(file);
-    const video = document.createElement('video');
-    
-    // Listen for metadata loaded event
-    video.addEventListener('loadedmetadata', () => {
-      // Clean up and resolve with duration
-      URL.revokeObjectURL(url);
-      resolve(video.duration);
-    });
-    
-    // Listen for error events
-    video.addEventListener('error', (e) => {
-      URL.revokeObjectURL(url);
-      reject(new Error(`Error loading video metadata: ${e}`));
-    });
-    
-    // Set the source and attempt to load
-    video.src = url;
-    video.load();
-    
-    // Set a timeout in case the video doesn't load properly
-    setTimeout(() => {
-      URL.revokeObjectURL(url);
-      reject(new Error('Timeout while loading video metadata'));
-    }, 5000);
-  });
-}
-
-/**
- * Generate a thumbnail from a video file
- * @param file Video file to generate thumbnail from
- * @returns Promise resolving to thumbnail data URL
+ * @returns Promise resolving to thumbnail URL
  */
 export function generateVideoThumbnail(file: File): Promise<string> {
   return Promise.resolve("/default-thumbnail.png");
+}
+
+/**
+ * Validates that a file is a valid video format
+ * @param file File to validate
+ * @returns Promise resolving to boolean indicating validity
+ */
+export function validateVideoFormat(file: File): Promise<boolean> {
+  // Basic check that it's a video mimetype
+  if (!file.type.startsWith('video/')) {
+    return Promise.resolve(false);
+  }
+  
+  return Promise.resolve(true);
+}
+
+/**
+ * Gets the duration of a video file
+ * @param file Video file
+ * @returns Promise resolving to duration in seconds
+ */
+export function getVideoDuration(file: File): Promise<number> {
+  return new Promise((resolve) => {
+    const video = document.createElement('video');
+    video.preload = 'metadata';
+    
+    video.onloadedmetadata = () => {
+      window.URL.revokeObjectURL(video.src);
+      resolve(video.duration);
+    };
+    
+    video.onerror = () => {
+      resolve(0); // Default duration if we can't determine
+    };
+    
+    video.src = URL.createObjectURL(file);
+  });
 }

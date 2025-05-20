@@ -1,82 +1,73 @@
 
-import { MediaType, AvailabilityStatus } from './types';
+import { MediaType } from '@/types/media';
 
 /**
- * Re-export MediaType and AvailabilityStatus enum
+ * Determines if a file type is an image
+ * @param type MIME type to check
  */
-export { MediaType, AvailabilityStatus } from './types';
-
-/**
- * Determine the MediaType from a file
- */
-export function getMediaTypeFromFile(file: File): MediaType {
-  if (!file) return MediaType.UNKNOWN;
-  
-  if (file.type.startsWith('image/')) {
-    if (file.type === 'image/gif') return MediaType.GIF;
-    return MediaType.IMAGE;
-  }
-  
-  if (file.type.startsWith('video/')) return MediaType.VIDEO;
-  if (file.type.startsWith('audio/')) return MediaType.AUDIO;
-  
-  return MediaType.UNKNOWN;
+export function isImageType(type: string): boolean {
+  return type.startsWith('image/');
 }
 
 /**
- * Determine MediaType from a URL or extension
+ * Determines if a file type is a video
+ * @param type MIME type to check
  */
-export function getMediaTypeFromUrl(url: string): MediaType {
-  if (!url) return MediaType.UNKNOWN;
-  
-  // Check for data URLs
-  if (url.startsWith('data:image/')) return MediaType.IMAGE;
-  if (url.startsWith('data:video/')) return MediaType.VIDEO;
-  if (url.startsWith('data:audio/')) return MediaType.AUDIO;
-  
-  // Get file extension for regular URLs
-  const extension = url.split('.').pop()?.toLowerCase();
-  if (!extension) return MediaType.UNKNOWN;
-  
-  // Check image extensions
-  if (['jpg', 'jpeg', 'png', 'webp', 'bmp', 'svg'].includes(extension)) {
-    return MediaType.IMAGE;
+export function isVideoType(type: string): boolean {
+  return type.startsWith('video/');
+}
+
+/**
+ * Determines if a file type is an audio file
+ * @param type MIME type to check
+ */
+export function isAudioType(type: string): boolean {
+  return type.startsWith('audio/');
+}
+
+/**
+ * Maps a MIME type to a MediaType enum value
+ * @param mimeType MIME type to map
+ */
+export function mimeTypeToMediaType(mimeType: string): MediaType {
+  if (isImageType(mimeType)) {
+    return mimeType === 'image/gif' ? MediaType.GIF : MediaType.IMAGE;
   }
   
-  // Special case for GIF
-  if (extension === 'gif') return MediaType.GIF;
-  
-  // Check video extensions
-  if (['mp4', 'webm', 'ogg', 'mov', 'avi', 'mkv', 'm4v'].includes(extension)) {
+  if (isVideoType(mimeType)) {
     return MediaType.VIDEO;
   }
   
-  // Check audio extensions
-  if (['mp3', 'wav', 'ogg', 'aac', 'm4a'].includes(extension)) {
+  if (isAudioType(mimeType)) {
     return MediaType.AUDIO;
+  }
+  
+  if (mimeType.includes('pdf') || mimeType.includes('document') || mimeType.includes('application/')) {
+    return MediaType.DOCUMENT;
   }
   
   return MediaType.UNKNOWN;
 }
 
 /**
- * Check if a URL points to an image file
+ * Gets file extension from a MIME type
+ * @param mimeType MIME type
+ * @returns File extension (without dot)
  */
-export function isImageUrl(url: string): boolean {
-  return getMediaTypeFromUrl(url) === MediaType.IMAGE || 
-         getMediaTypeFromUrl(url) === MediaType.GIF;
-}
-
-/**
- * Check if a URL points to a video file
- */
-export function isVideoUrl(url: string): boolean {
-  return getMediaTypeFromUrl(url) === MediaType.VIDEO;
-}
-
-/**
- * Check if a URL points to an audio file
- */
-export function isAudioUrl(url: string): boolean {
-  return getMediaTypeFromUrl(url) === MediaType.AUDIO;
+export function getExtensionFromMimeType(mimeType: string): string {
+  const mappings: Record<string, string> = {
+    'image/jpeg': 'jpg',
+    'image/jpg': 'jpg',
+    'image/png': 'png',
+    'image/gif': 'gif',
+    'image/webp': 'webp',
+    'video/mp4': 'mp4',
+    'video/webm': 'webm',
+    'video/quicktime': 'mov',
+    'audio/mpeg': 'mp3',
+    'audio/wav': 'wav',
+    'application/pdf': 'pdf'
+  };
+  
+  return mappings[mimeType] || mimeType.split('/').pop() || 'unknown';
 }

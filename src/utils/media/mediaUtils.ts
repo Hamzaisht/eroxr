@@ -21,6 +21,15 @@ export function extractMediaUrl(source: MediaSource | string | null | undefined)
 }
 
 /**
+ * Creates a unique file path for uploaded media files
+ * @param filename Original filename
+ * @returns A unique filepath with timestamp
+ */
+export function createUniqueFilePath(filename: string): string {
+  return `media/${Date.now()}-${filename}`;
+}
+
+/**
  * Normalize a media source to ensure it has the expected properties
  * @param item The media item to normalize
  * @returns A normalized MediaSource object

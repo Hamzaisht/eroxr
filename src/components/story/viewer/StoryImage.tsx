@@ -18,9 +18,9 @@ export const StoryImage = ({ mediaUrl, username, isPaused, creatorId, onError }:
   const [loadError, setLoadError] = useState(false);
   
   const mediaItem = {
-    media_url: mediaUrl,
-    creator_id: creatorId,
-    media_type: MediaType.IMAGE
+    url: mediaUrl,
+    type: MediaType.IMAGE,
+    creator_id: creatorId
   };
   
   useEffect(() => {

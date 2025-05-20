@@ -1,72 +1,99 @@
-
-import { useState } from "react";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { motion } from "framer-motion";
+import { cn } from "@/lib/utils";
+import { Avatar } from "@/components/ui/avatar";
+import { Image } from "next/image";
 import { UniversalMedia } from "@/components/media/UniversalMedia";
-import { formatDistanceToNow } from "date-fns";
+import { MediaType } from "@/utils/media/types";
 
 interface StoryCardProps {
-  storyId: string;
-  creatorId: string;
-  mediaUrl?: string;
-  videoUrl?: string;
-  username?: string;
+  username: string;
   avatarUrl?: string;
-  createdAt: string;
+  mediaUrl?: string;
+  mediaType?: 'image' | 'video';
+  creatorId: string;
+  type?: 'circle' | 'square';
+  status?: 'online' | 'offline';
+  isSelf?: boolean;
+  onClick?: () => void;
 }
 
 export const StoryCard = ({
-  storyId,
-  creatorId,
-  mediaUrl,
-  videoUrl,
   username,
   avatarUrl,
-  createdAt,
+  mediaUrl,
+  mediaType,
+  creatorId,
+  type = 'circle',
+  status,
+  isSelf = false,
+  onClick,
 }: StoryCardProps) => {
-  const [isHovered, setIsHovered] = useState(false);
+  const size = type === 'circle' ? 60 : 80;
   
-  // Format the time to a human-readable format
-  const formattedTime = formatDistanceToNow(new Date(createdAt), {
-    addSuffix: true,
-  });
-
+  const handleClick = () => {
+    if (onClick) {
+      onClick();
+    }
+  };
+  
   return (
-    <motion.div
-      className="flex-shrink-0 w-20 sm:w-24 cursor-pointer"
-      whileHover={{ scale: 1.05 }}
-      whileTap={{ scale: 0.95 }}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
+    <div
+      className={cn(
+        "relative flex flex-col items-center justify-center",
+        type === 'circle' ? 'w-[70px] h-[70px]' : 'w-[90px] h-[110px]',
+        isSelf ? 'cursor-pointer' : 'cursor-default'
+      )}
+      onClick={handleClick}
     >
-      <div className="relative aspect-[9/16] rounded-lg overflow-hidden border border-white/10 mb-1 bg-black/30">
-        {mediaUrl || videoUrl ? (
-          <UniversalMedia
-            item={{ url: mediaUrl || videoUrl || "", media_type: videoUrl ? "video" : "image" }}
-            className="w-full h-full object-cover"
-            autoPlay={isHovered}
-            controls={false}
-            muted={true}
-            loop={true}
-          />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-purple-500/30 to-pink-500/30">
-            <span className="text-white/70 text-xs">No media</span>
+      <div className="absolute z-10 bottom-0 left-1/2 -translate-x-1/2 w-fit">
+        <p className="text-xs text-nowrap text-center text-gray-400">{username}</p>
+      </div>
+      
+      <div className={cn(
+        "relative flex items-center justify-center overflow-hidden",
+        type === 'circle' ? 'w-[60px] h-[60px]' : 'w-[80px] h-[80px]',
+        type === 'circle' ? 'rounded-full' : 'rounded-md',
+        status === 'online' ? 'ring-4 ring-green-500 ring-offset-2' : '',
+        status === 'offline' ? 'ring-2 ring-gray-400 ring-offset-1' : ''
+      )}>
+        {avatarUrl && (
+          <div className={cn(
+            "absolute inset-0",
+            type === 'circle' ? 'rounded-full' : 'rounded-md'
+          )}>
+            <Image
+              src={avatarUrl}
+              alt={`${username}'s avatar`}
+              width={size}
+              height={size}
+              className="object-cover w-full h-full rounded-full"
+            />
+          </div>
+        )}
+        
+        {mediaUrl && mediaType && (
+          <div className={cn(
+            "absolute inset-0",
+            type === 'circle' ? 'rounded-full' : 'rounded-md'
+          )}>
+            <UniversalMedia
+              item={{
+                url: mediaUrl,
+                type: mediaType === 'video' ? MediaType.VIDEO : MediaType.IMAGE
+              }}
+              className="object-cover w-full h-full rounded-full"
+              autoPlay={false}
+              controls={false}
+              muted={true}
+            />
           </div>
         )}
       </div>
       
-      <div className="flex flex-col items-center">
-        <Avatar className="h-8 w-8 border border-white/20">
-          <AvatarImage src={avatarUrl} alt={username || "User"} />
-          <AvatarFallback className="text-xs">
-            {username?.charAt(0) || "?"}
-          </AvatarFallback>
-        </Avatar>
-        <span className="text-xs mt-1 text-center text-white/80 truncate max-w-full">
-          {username || "User"}
-        </span>
-      </div>
-    </motion.div>
+      {isSelf && (
+        <div className="absolute bottom-0 right-0 flex items-center justify-center w-6 h-6 bg-blue-500 rounded-full">
+          +
+        </div>
+      )}
+    </div>
   );
 };

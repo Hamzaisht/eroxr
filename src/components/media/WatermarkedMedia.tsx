@@ -21,10 +21,9 @@ export const WatermarkedMedia: React.FC<WatermarkedMediaProps> = ({
   imageProps
 }) => {
   const mediaItem = {
-    media_url: type === MediaType.IMAGE ? src : undefined,
-    video_url: type === MediaType.VIDEO ? src : undefined,
-    media_type: type,
-    creator_id: creatorId,
+    url: src,
+    type: type,
+    creator_id: creatorId
   };
   
   return (
