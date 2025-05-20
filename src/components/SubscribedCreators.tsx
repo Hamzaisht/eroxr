@@ -44,22 +44,24 @@ export const SubscribedCreators = () => {
             banner_url
           )
         `)
-        .eq("user_id", userId as string)
+        .eq("user_id" as keyof Database['public']['Tables']['creator_subscriptions']['Row'], userId as string)
         .order("created_at", { ascending: false });
         
-      if (error) {
+      if (error || !data) {
         console.error("Error fetching subscriptions:", error);
         return [];
       }
       
-      // Transform data to match expected types
-      return data?.map((item): Subscription => ({
+      // Transform data to match expected types, ensuring we only map valid rows
+      return data.filter((item): item is Database['public']['Tables']['creator_subscriptions']['Row'] & {
+        creator: Database['public']['Tables']['profiles']['Row'] | null;
+      } => "id" in item && "creator_id" in item).map((item) => ({
         id: item.id as string,
         creator_id: item.creator_id as string,
         user_id: item.user_id as string,
         created_at: item.created_at as string,
         creator: item.creator as Creator
-      })) || [];
+      }));
     },
     enabled: !!userId,
   });

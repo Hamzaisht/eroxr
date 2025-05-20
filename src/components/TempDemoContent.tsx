@@ -65,29 +65,33 @@ export function TempDemoContent() {
         }
 
         if (profiles) {
-          // Cast the data properly with a transformation for type safety
-          const typedProfiles = profiles.map((profile) => ({
-            id: profile.id as string,
-            username: profile.username,
-            avatar_url: profile.avatar_url,
-            created_at: profile.created_at,
-            updated_at: profile.updated_at,
-            is_age_verified: profile.is_age_verified,
-            date_of_birth: profile.date_of_birth,
-            id_verification_status: profile.id_verification_status,
-            bio: profile.bio,
-            location: profile.location,
-            interests: profile.interests,
-            social_links: profile.social_links,
-            profile_visibility: profile.profile_visibility,
-            is_paying_customer: profile.is_paying_customer,
-            banner_url: profile.banner_url,
-            first_name: profile.first_name,
-            last_name: profile.last_name,
-            is_suspended: profile.is_suspended,
-            suspended_at: profile.suspended_at,
-            status: profile.status
-          }));
+          // Filter valid profiles and map to properly typed objects
+          const typedProfiles = profiles
+            .filter((profile): profile is Database['public']['Tables']['profiles']['Row'] => 
+              profile && "id" in profile
+            )
+            .map((profile) => ({
+              id: profile.id as string,
+              username: profile.username,
+              avatar_url: profile.avatar_url,
+              created_at: profile.created_at,
+              updated_at: profile.updated_at,
+              is_age_verified: profile.is_age_verified,
+              date_of_birth: profile.date_of_birth,
+              id_verification_status: profile.id_verification_status,
+              bio: profile.bio,
+              location: profile.location,
+              interests: profile.interests,
+              social_links: profile.social_links,
+              profile_visibility: profile.profile_visibility,
+              is_paying_customer: profile.is_paying_customer,
+              banner_url: profile.banner_url,
+              first_name: profile.first_name,
+              last_name: profile.last_name,
+              is_suspended: profile.is_suspended,
+              suspended_at: profile.suspended_at,
+              status: profile.status
+            }));
           setData(typedProfiles);
         }
       } catch (error: any) {
@@ -119,7 +123,7 @@ export function TempDemoContent() {
                 <CardDescription>{item?.id || 'No Email'}</CardDescription>
               </CardHeader>
               <CardContent>
-                <p>ID: {item?.id || 'Unknown'}</p>
+                <p>ID: {String(item?.id) || 'Unknown'}</p>
                 <p>Created At: {item?.created_at || 'No Creation Date'}</p>
               </CardContent>
               <CardFooter>

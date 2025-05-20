@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import {
   DropdownMenu,
@@ -75,8 +76,8 @@ export function UserMenu() {
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
-        .eq('id', session.user.id as string)
-        .single();
+        .eq('id' as keyof Database['public']['Tables']['profiles']['Row'], session.user.id as string)
+        .maybeSingle();
         
       if (error) {
         console.error('Error fetching profile:', error);

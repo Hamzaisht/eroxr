@@ -56,8 +56,8 @@ export function asUserSubscriptionStatus(val: string): "active" | "inactive" | "
 /**
  * Type-safe helper for column names
  */
-export function asColumnName<T extends Record<string, any>>(columnName: keyof T): keyof T {
-  return columnName;
+export function asColumnName<T extends Record<string, any>>(columnName: keyof T): string {
+  return columnName as string;
 }
 
 /**
@@ -142,7 +142,7 @@ export function safeDataAccess<T, F>(data: T | null | undefined, fallback: F): T
  */
 export function safeCast<T>(data: any): T[] {
   if (!data || isErrorObject(data)) return [];
-  return data as T[];
+  return (data as any[]).filter(item => item && typeof item === 'object') as T[];
 }
 
 /**
