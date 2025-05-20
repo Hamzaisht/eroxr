@@ -10,7 +10,7 @@ export function useDatingAds(
   selectedCountry: any,
   selectedCity: string | null,
   selectedSeeker: string | null,
-  selectedLookingFor: string | null,
+  selectedLookingFor: string[] | null,
   selectedTag: string | null,
   setDatingAds: (ads: DatingAd[] | undefined) => void,
   setIsLoading: (v: boolean) => void
@@ -29,7 +29,7 @@ export function useDatingAds(
       country: selectedCountry,
       city: selectedCity,
       relationship_status: selectedSeeker,
-      looking_for: selectedLookingFor ? [selectedLookingFor] : undefined,
+      looking_for: selectedLookingFor,
       tags: selectedTag ? [selectedTag] : undefined,
     },
   });

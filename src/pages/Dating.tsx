@@ -142,7 +142,7 @@ const Dating = () => {
       selectedSeeker={selectedSeeker}
       setSelectedSeeker={setSelectedSeeker}
       selectedLookingFor={selectedLookingFor}
-      setSelectedLookingFor={setSelectedLookingFor as (lookingFor: string[] | null) => void}
+      setSelectedLookingFor={setSelectedLookingFor}
       selectedTag={selectedTag}
       setSelectedTag={setSelectedTag}
       activeTab={activeTab}

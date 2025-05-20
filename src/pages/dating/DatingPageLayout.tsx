@@ -2,10 +2,37 @@
 import { useState } from "react";
 import DatingMainContent from "../DatingMainContent";
 import { DatingFiltersPanelProps } from "../DatingMainContent";
+import { DatingAd, FilterOptions } from "@/types/dating";
+import { Dispatch, SetStateAction } from "react";
+import { NavigateFunction } from "react-router-dom";
 
 // Create a proper type for the component props
 interface DatingPageLayoutProps extends Partial<DatingFiltersPanelProps> {
-  // Add any additional props if needed
+  datingAds?: DatingAd[];
+  isLoading?: boolean;
+  userProfile?: DatingAd | null;
+  filterOptions?: FilterOptions;
+  setFilterOptions?: Dispatch<SetStateAction<FilterOptions>>;
+  selectedCountry?: any;
+  setSelectedCountry?: (country: any) => void;
+  selectedCity?: string | null;
+  setSelectedCity?: (city: string | null) => void;
+  selectedSeeker?: string | null;
+  setSelectedSeeker?: (seeker: string | null) => void;
+  selectedLookingFor?: string[] | null;
+  setSelectedLookingFor?: (lookingFor: string[] | null) => void;
+  selectedTag?: string | null;
+  setSelectedTag?: (tag: string | null) => void;
+  activeTab?: string;
+  setActiveTab?: (tab: string) => void;
+  handleAdCreationSuccess?: () => void;
+  handleTagClick?: (tag: string) => void;
+  handleResetFilters?: () => void;
+  handleFilterToggle?: () => void;
+  defaultSearchCategories?: any[];
+  nordicCountries?: any[];
+  headerRef?: any;
+  navigate?: NavigateFunction;
 }
 
 export const DatingPageLayout = (props: DatingPageLayoutProps) => {
@@ -41,7 +68,7 @@ export const DatingPageLayout = (props: DatingPageLayoutProps) => {
   };
 
   return (
-    <DatingMainContent />
+    <DatingMainContent {...props} />
   );
 };
 

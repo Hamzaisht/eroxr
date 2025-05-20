@@ -3,7 +3,7 @@
 
 import { motion, AnimatePresence } from 'framer-motion';
 import { DatingAd } from '@/types/dating';
-import { VideoProfileCard } from '../video-profile-card';
+import { VideoProfileCard } from './VideoProfileCard';
 
 interface CarouselContainerProps {
   ads: DatingAd[];
@@ -55,6 +55,7 @@ export const CarouselContainer = ({ ads, currentIndex, isActive }: CarouselConta
               <VideoProfileCard 
                 ad={enrichedAd} 
                 isActive={index === currentIndex && isActive}
+                isPreviewMode={false}
                 isAnimation={true}
               />
             </motion.div>
