@@ -5,7 +5,7 @@ import { SurveillanceContentItem, ContentType } from "@/types/surveillance";
 import { ContentSurveillanceList } from "./components/ContentSurveillanceList";
 
 export function ContentSurveillanceTabs() {
-  const [activeTab, setActiveTab] = useState<ContentType>('image');
+  const [activeTab, setActiveTab] = useState<string>('image');
   const [isLoading, setIsLoading] = useState(false);
   
   // Mock data for different content types
@@ -14,6 +14,7 @@ export function ContentSurveillanceTabs() {
       id: "img-123",
       title: "Sample Image",
       description: "A sample image upload",
+      content_type: "image",
       type: "image",
       creator_id: "user-123",
       creator_username: "imagecreator",
@@ -22,12 +23,15 @@ export function ContentSurveillanceTabs() {
       flagged: false,
       media_url: ["https://picsum.photos/seed/img1/800/600"],
       severity: "medium",
-      status: "pending"
+      status: "pending",
+      user_id: "user-123",
+      visibility: "public"
     },
     {
       id: "img-456",
       title: "Flagged Image",
       description: "An image that was flagged",
+      content_type: "image",
       type: "image",
       creator_id: "user-456", 
       creator_username: "problematicuser",
@@ -37,7 +41,9 @@ export function ContentSurveillanceTabs() {
       reason: "Inappropriate content",
       media_url: ["https://picsum.photos/seed/img2/800/600"],
       severity: "high",
-      status: "reviewed"
+      status: "reviewed",
+      user_id: "user-456",
+      visibility: "public"
     }
   ];
   
@@ -46,6 +52,7 @@ export function ContentSurveillanceTabs() {
       id: "vid-123",
       title: "Sample Video",
       description: "A sample video upload",
+      content_type: "video",
       type: "video",
       creator_id: "user-789",
       creator_username: "videocreator",
@@ -55,7 +62,9 @@ export function ContentSurveillanceTabs() {
       video_url: "https://example.com/video.mp4",
       media_url: ["https://picsum.photos/seed/vid1/800/600"],
       severity: "low",
-      status: "pending"
+      status: "pending",
+      user_id: "user-789",
+      visibility: "public"
     }
   ];
   
@@ -64,6 +73,7 @@ export function ContentSurveillanceTabs() {
       id: "txt-123",
       title: "Sample Text Post",
       description: "This is a text post with some sample content for moderation.",
+      content_type: "text",
       type: "text",
       creator_id: "user-101",
       creator_username: "writer",
@@ -72,7 +82,9 @@ export function ContentSurveillanceTabs() {
       flagged: false,
       media_url: [],
       severity: "low",
-      status: "pending"
+      status: "pending",
+      user_id: "user-101",
+      visibility: "public"
     }
   ];
   
@@ -81,6 +93,7 @@ export function ContentSurveillanceTabs() {
       id: "aud-123",
       title: "Sample Audio",
       description: "A sample audio recording",
+      content_type: "audio",
       type: "audio",
       creator_id: "user-202",
       creator_username: "podcaster",
@@ -89,7 +102,9 @@ export function ContentSurveillanceTabs() {
       flagged: false,
       media_url: ["https://example.com/audio.mp3"],
       severity: "medium",
-      status: "pending"
+      status: "pending",
+      user_id: "user-202",
+      visibility: "public"
     }
   ];
   
@@ -111,7 +126,7 @@ export function ContentSurveillanceTabs() {
   
   // Handle tab change
   const handleTabChange = (value: string) => {
-    setActiveTab(value as ContentType);
+    setActiveTab(value);
   };
   
   return (

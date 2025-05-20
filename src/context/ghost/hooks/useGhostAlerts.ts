@@ -1,6 +1,7 @@
+
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { LiveAlert, LiveSession } from '@/types/surveillance';
+import { LiveAlert } from '@/types/surveillance';
 
 interface UseGhostAlertsResult {
   liveAlerts: LiveAlert[];
@@ -39,7 +40,7 @@ export const useGhostAlerts = (): UseGhostAlertsResult => {
       setIsRefreshing(false);
       return false;
     }
-  }, [supabase]);
+  }, []);
 
   useEffect(() => {
     // Initial fetch of alerts
@@ -61,11 +62,10 @@ export const useGhostAlerts = (): UseGhostAlertsResult => {
     return () => {
       supabase.removeChannel(alertsChannel);
     };
-  }, [refreshAlerts, supabase]);
+  }, [refreshAlerts]);
 
   return {
     liveAlerts,
     refreshAlerts,
   };
 };
-

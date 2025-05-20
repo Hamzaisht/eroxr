@@ -53,7 +53,8 @@ export function useSurveillanceData() {
           media_url: ["https://picsum.photos/seed/chat1/800/600"],
           content_type: "image/jpeg",
           recipient_username: "user5",
-          message_type: "text"
+          message_type: "text",
+          sender_username: "creator2"
         },
         {
           id: "323e4567-e89b-12d3-a456-426614174002",

@@ -6,11 +6,7 @@ export interface DatingAd {
   title: string;
   description: string;
   user_id: string;
-  username?: string;
-  avatarUrl?: string;
-  videoUrl?: string;
-  isVerified?: boolean;
-  isPremium?: boolean;
+  username: string;
   views: number;
   
   // Age properties
@@ -40,7 +36,9 @@ export interface DatingAd {
   tags: string[];
   media_url?: string[] | string;
   video_url?: string;
+  videoUrl?: string;
   avatar_url?: string;
+  avatarUrl?: string;
   
   // Profile completion
   profile_completion_score?: number;
@@ -61,7 +59,9 @@ export interface DatingAd {
   status?: string;
   is_active?: boolean;
   is_premium?: boolean;
+  isPremium?: boolean;
   is_verified?: boolean;
+  isVerified?: boolean;
   online?: boolean;
   last_active?: string;
   view_count?: number;
