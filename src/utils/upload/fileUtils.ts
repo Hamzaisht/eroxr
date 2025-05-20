@@ -50,3 +50,49 @@ export function formatFileSize(bytes: number): string {
   
   return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
 }
+
+/**
+ * Run diagnostic checks on a file to ensure it meets requirements
+ * @param file File to check
+ * @param options Options for validation
+ * @returns Object with validation results
+ */
+export function runFileDiagnostic(file: File, options: {
+  maxSizeInMB?: number;
+  allowedTypes?: string[];
+} = {}): { valid: boolean; errors: string[] } {
+  const errors: string[] = [];
+  
+  // Check file size if maxSize is provided
+  if (options.maxSizeInMB) {
+    const maxSizeInBytes = options.maxSizeInMB * 1024 * 1024;
+    if (file.size > maxSizeInBytes) {
+      errors.push(`File size exceeds maximum allowed size of ${options.maxSizeInMB} MB`);
+    }
+  }
+  
+  // Check file type if allowedTypes is provided
+  if (options.allowedTypes && options.allowedTypes.length > 0) {
+    const fileExtension = file.name.split('.').pop()?.toLowerCase();
+    const mimeTypeBase = file.type.split('/')[0];
+    const mimeTypeFull = file.type;
+    
+    const isAllowedType = options.allowedTypes.some(type => {
+      // Check if type matches MIME type base (image, video, etc.)
+      if (type.includes('/')) {
+        return mimeTypeFull === type;
+      }
+      // Check if type matches file extension
+      return fileExtension === type.toLowerCase().replace('.', '');
+    });
+    
+    if (!isAllowedType) {
+      errors.push(`File type not allowed. Allowed types: ${options.allowedTypes.join(', ')}`);
+    }
+  }
+  
+  return {
+    valid: errors.length === 0,
+    errors
+  };
+}

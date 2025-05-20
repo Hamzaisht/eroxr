@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { LiveAlert } from "@/types/alerts";
 import { supabase } from "@/integrations/supabase/client";
@@ -81,23 +80,15 @@ export const useAlertProcessor = () => {
         .limit(10);
 
       // Format alerts
-      const formattedAlerts: LiveAlert[] = [
-        ...(flaggedContent || []).map((content: any) => {
-          const baseAlert = formatFlaggedContentAsAlert(content);
-          return {
-            ...baseAlert,
-            type: 'system',
-            isRead: false
-          } as LiveAlert;
-        }),
-        ...(reports || []).map((report: any) => {
-          const baseAlert = formatReportAsAlert(report);
-          return {
-            ...baseAlert,
-            type: 'security',
-            isRead: false
-          } as LiveAlert;
-        })
+      const formattedAlerts = [
+        ...(flaggedContent || []).map((content: any) => formatSystemAlertToLiveAlert({
+          ...formatFlaggedContentAsAlert(content),
+          type: 'system'
+        })),
+        ...(reports || []).map((report: any) => formatSystemAlertToLiveAlert({
+          ...formatReportAsAlert(report),
+          type: 'security'
+        }))
       ];
 
       // Sort by severity

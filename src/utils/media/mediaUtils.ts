@@ -1,140 +1,147 @@
 
-import { MediaSource } from "@/types/media";
+import { MediaSource, MediaType } from './types';
 
 /**
- * Determines the media type from a file or URL
- * @param url Media file URL
- * @returns The detected MediaType
+ * Determine the type of media from a URL or MIME type
  */
-export function determineMediaType(url: string): string {
-  if (!url) return 'unknown';
-
-  const lowerCaseUrl = url.toLowerCase();
+export function determineMediaType(url: string): MediaType {
+  if (!url) return MediaType.UNKNOWN;
   
-  // Check for image extensions
-  if (lowerCaseUrl.match(/\.(jpg|jpeg|png|gif|webp|svg|avif)$/)) {
-    return 'image';
+  // Check for video file extensions
+  if (/\.(mp4|webm|mov|avi|wmv|flv|mkv)$/i.test(url)) {
+    return MediaType.VIDEO;
   }
   
-  // Check for video extensions
-  if (lowerCaseUrl.match(/\.(mp4|webm|ogg|mov|avi|wmv|flv|mkv)$/)) {
-    return 'video';
+  // Check for image file extensions
+  if (/\.(jpg|jpeg|png|gif|svg|webp|bmp)$/i.test(url)) {
+    return MediaType.IMAGE;
   }
   
-  // Check for audio extensions
-  if (lowerCaseUrl.match(/\.(mp3|wav|ogg|m4a|aac|flac)$/)) {
-    return 'audio';
+  // Check for audio file extensions
+  if (/\.(mp3|wav|ogg|aac|flac)$/i.test(url)) {
+    return MediaType.AUDIO;
   }
   
-  // Check for document extensions
-  if (lowerCaseUrl.match(/\.(pdf|doc|docx|xls|xlsx|ppt|pptx|txt)$/)) {
-    return 'document';
+  // Check for document file extensions
+  if (/\.(pdf|doc|docx|xls|xlsx|txt|csv|ppt|pptx)$/i.test(url)) {
+    return MediaType.DOCUMENT;
   }
   
-  // Default to unknown if can't determine
-  return 'unknown';
+  return MediaType.UNKNOWN;
 }
 
 /**
- * Creates a unique file path for uploads
- * @param userId User ID for the upload
- * @param file The file being uploaded
- * @returns A unique file path
+ * Extract media URL from various sources
  */
-export function createUniqueFilePath(userId: string, file: File): string {
-  const timestamp = Date.now();
-  const random = Math.random().toString(36).substring(2, 9);
-  const extension = file.name.split('.').pop();
+export function extractMediaUrl(source: string | MediaSource): string {
+  if (!source) return '';
   
-  return `${userId}/${timestamp}-${random}.${extension}`;
-}
-
-/**
- * Extract the media URL from a MediaSource object or string
- * @param source MediaSource object or direct URL string
- * @returns The extracted URL as a string
- */
-export function extractMediaUrl(source: MediaSource | string): string | null {
-  if (!source) return null;
-  
-  // If it's already a string, just return it
-  if (typeof source === "string") {
+  if (typeof source === 'string') {
     return source;
   }
   
-  // If it has a url property, use that
+  // Extract from MediaSource object
   if (source.url) {
     return source.url;
   }
   
-  // For backward compatibility, try other properties
-  // We need to use type assertion here to handle the backward compatibility properties
-  const sourceWithCompat = source as any;
-  
-  if (sourceWithCompat.video_url) {
-    return sourceWithCompat.video_url;
+  // Handle legacy properties
+  if (source.video_url) {
+    return source.video_url;
   }
   
-  if (sourceWithCompat.media_url) {
-    return sourceWithCompat.media_url;
+  if (source.media_url) {
+    if (Array.isArray(source.media_url) && source.media_url.length > 0) {
+      return source.media_url[0];
+    }
+    return source.media_url as string;
   }
   
-  // If media_urls array is provided, return the first one
-  if (sourceWithCompat.media_urls && sourceWithCompat.media_urls.length > 0) {
-    return sourceWithCompat.media_urls[0];
+  if (source.media_urls && Array.isArray(source.media_urls) && source.media_urls.length > 0) {
+    return source.media_urls[0];
   }
   
-  // If video_urls array is provided, return the first one
-  if (sourceWithCompat.video_urls && sourceWithCompat.video_urls.length > 0) {
-    return sourceWithCompat.video_urls[0];
+  if (source.video_urls && Array.isArray(source.video_urls) && source.video_urls.length > 0) {
+    return source.video_urls[0];
   }
   
-  return null;
+  return '';
 }
 
 /**
- * Normalizes a media source to ensure it has a consistent structure
- * @param source The source to normalize (string URL or MediaSource object)
- * @returns A normalized MediaSource object
+ * Create a unique file path for uploading
  */
-export function normalizeMediaSource(source: string | MediaSource | any): MediaSource {
-  // If it's a string, convert it to a MediaSource object
+export function createUniqueFilePath(folderPath: string, fileName: string): string {
+  const timestamp = Date.now();
+  const randomString = Math.random().toString(36).substring(2, 8);
+  
+  // Extract file extension
+  const extension = fileName.split('.').pop() || '';
+  
+  // Create file name without extension
+  const baseName = fileName.replace(`.${extension}`, '');
+  
+  // Create a cleaned up name (remove special characters)
+  const cleanName = baseName
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, '-')
+    .replace(/-+/g, '-')
+    .substring(0, 30);
+  
+  // Return the unique path
+  return `${folderPath}/${cleanName}-${timestamp}-${randomString}.${extension}`;
+}
+
+/**
+ * Normalize media source to ensure it has the required properties
+ */
+export function normalizeMediaSource(source: string | MediaSource): MediaSource {
   if (typeof source === 'string') {
+    // If source is just a string (URL), convert it to a MediaSource object
+    const mediaType = determineMediaType(source);
     return {
       url: source,
-      type: determineMediaType(source)
+      type: mediaType
     };
   }
-
-  // If it's already a MediaSource with url property, return it
-  if (source && source.url) {
-    return source;
-  }
-
-  // For backward compatibility, handle legacy formats
-  let url = '';
-  let type = source?.type || 'unknown';
   
-  // Try to get the URL from various possible properties
-  if (source?.video_url) {
-    url = source.video_url;
-    type = 'video';
-  } else if (source?.media_url) {
-    url = source.media_url;
-    type = determineMediaType(source.media_url);
-  } else if (source?.media_urls && source.media_urls.length > 0) {
-    url = source.media_urls[0];
-    type = determineMediaType(url);
-  } else if (source?.video_urls && source.video_urls.length > 0) {
-    url = source.video_urls[0];
-    type = 'video';
-  }
-
-  // Create a normalized MediaSource object
-  return {
-    url,
-    type,
-    creator_id: source?.creator_id || '',
-    contentCategory: source?.contentCategory || undefined
+  // For MediaSource objects, ensure required properties exist
+  const normalizedSource: MediaSource = {
+    url: '',
+    type: MediaType.UNKNOWN,
+    ...source
   };
+  
+  // Handle legacy properties and make sure url is set
+  if (!normalizedSource.url) {
+    if (source.video_url) {
+      normalizedSource.url = source.video_url;
+      normalizedSource.type = MediaType.VIDEO;
+    } else if (source.media_url) {
+      if (Array.isArray(source.media_url) && source.media_url.length > 0) {
+        normalizedSource.url = source.media_url[0];
+      } else {
+        normalizedSource.url = source.media_url as string;
+      }
+      
+      if (!normalizedSource.type || normalizedSource.type === MediaType.UNKNOWN) {
+        normalizedSource.type = determineMediaType(normalizedSource.url);
+      }
+    } else if (source.media_urls && Array.isArray(source.media_urls) && source.media_urls.length > 0) {
+      normalizedSource.url = source.media_urls[0];
+      if (!normalizedSource.type || normalizedSource.type === MediaType.UNKNOWN) {
+        normalizedSource.type = determineMediaType(normalizedSource.url);
+      }
+    } else if (source.video_urls && Array.isArray(source.video_urls) && source.video_urls.length > 0) {
+      normalizedSource.url = source.video_urls[0];
+      normalizedSource.type = MediaType.VIDEO;
+    }
+  }
+  
+  // If type is not explicitly set, try to determine it from the URL
+  if (!normalizedSource.type || normalizedSource.type === MediaType.UNKNOWN) {
+    normalizedSource.type = determineMediaType(normalizedSource.url);
+  }
+  
+  return normalizedSource;
 }

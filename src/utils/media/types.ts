@@ -1,52 +1,51 @@
 
-import { MediaSource as GlobalMediaSource, MediaType } from '@/types/media';
-
-export { MediaType };
-
-export enum AvailabilityStatus {
-  ONLINE = "online",
-  AWAY = "away",
-  BUSY = "busy",
-  OFFLINE = "offline",
-  INVISIBLE = "invisible"
+// Define media types
+export enum MediaType {
+  IMAGE = "image",
+  VIDEO = "video",
+  AUDIO = "audio",
+  DOCUMENT = "document",
+  UNKNOWN = "unknown"
 }
 
-// Extend the global MediaSource with backward compatibility properties
-export interface MediaSource extends GlobalMediaSource {
-  // These are for backward compatibility and should be phased out
-  media_url?: string;
+// Base MediaSource interface
+export interface MediaSource {
+  // Standard properties
+  url: string;
+  type: MediaType | string;
+  
+  // Optional standard properties
+  creator_id?: string;
+  contentCategory?: string;
+  thumbnail_url?: string;
+  poster?: string;
+  
+  // Legacy properties (for backward compatibility)
+  media_url?: string | string[];
   video_url?: string;
   media_urls?: string[];
   video_urls?: string[];
-  creator_id?: string;
-  media_type?: MediaType;
+  media_type?: MediaType | string;
   thumbnail?: string;
-  poster?: string;
-  thumbnail_url?: string;
-  contentCategory?: string;
+  content_type?: string;
 }
 
-export type MediaOptions = {
+export interface MediaOptions {
   className?: string;
   autoPlay?: boolean;
   controls?: boolean;
   muted?: boolean;
   loop?: boolean;
-  poster?: string;
   showWatermark?: boolean;
   showCloseButton?: boolean;
+  creatorId?: string;
+  onClose?: () => void;
   onClick?: () => void;
   onLoad?: () => void;
   onError?: (error: any) => void;
   onEnded?: () => void;
   onTimeUpdate?: (currentTime: number, duration: number) => void;
 }
-
-export type UniversalMediaProps = {
-  item: MediaSource | string;
-  alt?: string;
-  maxRetries?: number;
-} & MediaOptions;
 
 export interface UploadResult {
   success: boolean;
@@ -67,4 +66,13 @@ export interface UploadOptions {
   contentCategory?: string;
   autoResetOnCompletion?: boolean;
   resetDelay?: number;
+}
+
+// Availability status for media
+export enum AvailabilityStatus {
+  AVAILABLE = "available",
+  PROCESSING = "processing",
+  FAILED = "failed",
+  REMOVED = "removed",
+  RESTRICTED = "restricted"
 }

@@ -1,91 +1,93 @@
-
-import React, { useState } from "react";
-import { Card, CardContent, CardFooter } from "@/components/ui/card";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
-import { Heart, MessageSquare, Share2 } from "lucide-react";
+import { useState } from "react";
+import { Link } from "react-router-dom";
+import { cn } from "@/lib/utils";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { VerifiedMark } from "@/components/shared/VerifiedMark";
+import { Heart, MessageSquare, Eye } from "lucide-react";
 import { UniversalMedia } from "@/components/media/UniversalMedia";
-import { MediaItem } from "./types";
 import { MediaType } from "@/utils/media/types";
 
 interface EroboardCardProps {
-  item: MediaItem;
-  view: "grid" | "columns";
+  post: {
+    id: string;
+    creator: {
+      id: string;
+      username: string;
+      avatar_url: string;
+    };
+    content: string;
+    description: string;
+    media_url: string | null | string[];
+    video_url: string | null;
+    thumbnail_url: string | null;
+    media_type: MediaType;
+    likes_count: number;
+    comments_count: number;
+    view_count: number;
+    created_at: string;
+  };
 }
 
-export const EroboardCard = ({ item, view }: EroboardCardProps) => {
-  const [isLiked, setIsLiked] = useState(false);
-  const [likeCount, setLikeCount] = useState(item.likeCount);
+export const EroboardCard = ({ post }: EroboardCardProps) => {
+  const [isHovered, setIsHovered] = useState(false);
   
-  const handleLike = () => {
-    if (isLiked) {
-      setLikeCount(prev => prev - 1);
-    } else {
-      setLikeCount(prev => prev + 1);
-    }
-    setIsLiked(!isLiked);
-  };
-
-  const cardHeight = view === "grid" ? "h-[300px]" : "h-[400px]";
-  const imageHeight = view === "grid" ? "h-[200px]" : "h-[300px]";
-
   return (
-    <Card className="bg-luxury-darker/40 border-luxury-primary/10 overflow-hidden hover:border-luxury-primary/30 transition-all duration-300">
-      <div className={`relative ${imageHeight} overflow-hidden`}>
+    <div
+      className="relative rounded-lg overflow-hidden bg-luxury-darker border border-luxury-primary/5 hover:border-luxury-primary/20 transition-colors"
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
+      {/* Media Section */}
+      <div className="relative aspect-video w-full">
         <UniversalMedia
           item={{
-            media_url: item.type === MediaType.IMAGE ? item.url : undefined,
-            video_url: item.type === MediaType.VIDEO ? item.url : undefined,
-            thumbnail_url: item.thumbnail,
-            media_type: item.type
+            url: post.video_url || (post.media_url && Array.isArray(post.media_url) ? post.media_url[0] : post.media_url as string),
+            type: post.media_type || MediaType.VIDEO,
+            thumbnail_url: post.thumbnail_url
           }}
           className="w-full h-full object-cover"
-          controls={item.type === MediaType.VIDEO}
+          controls={false}
+          autoPlay={isHovered}
+          loop={true}
           muted={true}
-          autoPlay={false}
         />
       </div>
       
-      <CardContent className="p-4 pb-0">
-        <div className="flex items-center justify-between mb-2">
-          <div className="flex items-center gap-2">
-            <Avatar className="h-8 w-8">
-              <AvatarImage src={item.creator.avatar} />
-              <AvatarFallback>{item.creator.name[0]}</AvatarFallback>
-            </Avatar>
-            <div>
-              <p className="text-sm font-medium text-luxury-neutral">{item.creator.name}</p>
-            </div>
-          </div>
+      {/* Content Section */}
+      <div className="p-4">
+        {/* Header with Avatar and Username */}
+        <div className="flex items-center gap-2 mb-2">
+          <Avatar className="h-6 w-6">
+            <AvatarImage src={post.creator.avatar_url} alt={post.creator.username} />
+            <AvatarFallback>{post.creator.username.substring(0, 2)}</AvatarFallback>
+          </Avatar>
+          <Link to={`/user/${post.creator.id}`} className="flex items-center gap-1 text-sm font-medium hover:underline">
+            {post.creator.username}
+            <VerifiedMark size="sm" />
+          </Link>
         </div>
         
-        <h3 className="font-semibold text-luxury-neutral truncate">{item.title}</h3>
-      </CardContent>
-      
-      <CardFooter className="p-4 pt-2">
-        <div className="flex items-center justify-between w-full">
-          <div className="flex items-center gap-4">
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              className={`${isLiked ? 'text-red-500' : 'text-luxury-neutral/70'} hover:text-red-500`}
-              onClick={handleLike}
-            >
-              <Heart className="h-5 w-5" />
-            </Button>
-            <span className="text-sm text-luxury-neutral/70">{likeCount}</span>
-            
-            <Button variant="ghost" size="icon" className="text-luxury-neutral/70">
-              <MessageSquare className="h-5 w-5" />
-            </Button>
-            <span className="text-sm text-luxury-neutral/70">{item.commentCount}</span>
+        {/* Post Description */}
+        <p className="text-sm text-luxury-neutral line-clamp-2">{post.description || post.content}</p>
+        
+        {/* Footer with Stats */}
+        <div className="flex items-center justify-between mt-3 text-xs text-luxury-neutral/80">
+          <div className="flex items-center gap-2">
+            <button className="flex items-center gap-1 hover:text-luxury-primary transition-colors">
+              <Heart className="h-3.5 w-3.5" />
+              <span>{post.likes_count}</span>
+            </button>
+            <button className="flex items-center gap-1 hover:text-luxury-primary transition-colors">
+              <MessageSquare className="h-3.5 w-3.5" />
+              <span>{post.comments_count}</span>
+            </button>
           </div>
-          
-          <Button variant="ghost" size="icon" className="text-luxury-neutral/70">
-            <Share2 className="h-5 w-5" />
-          </Button>
+          <div className="flex items-center gap-1">
+            <Eye className="h-3.5 w-3.5" />
+            <span>{post.view_count}</span>
+          </div>
         </div>
-      </CardFooter>
-    </Card>
+      </div>
+    </div>
   );
 };
