@@ -1,10 +1,11 @@
 
 import { motion } from 'framer-motion';
-import { Video } from 'lucide-react';
+import { Video, AlertCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { DatingAd } from '../types/dating';
+import { DatingAd } from '@/types/dating';
 import { UniversalMedia } from '@/components/media/UniversalMedia';
 import { MediaType } from '@/types/media';
+import { useState } from 'react';
 
 interface VideoContentProps {
   ad: DatingAd;
@@ -14,6 +15,8 @@ interface VideoContentProps {
 }
 
 export const VideoContent = ({ ad, isActive, isHovered, isAnimation = false }: VideoContentProps) => {
+  const [hasError, setHasError] = useState(false);
+  
   const variants = {
     idle: { scale: 1.01, opacity: 0.9 },
     active: { scale: 1, opacity: 1 }
@@ -21,11 +24,14 @@ export const VideoContent = ({ ad, isActive, isHovered, isAnimation = false }: V
 
   const videoUrl = ad.video_url || ad.videoUrl;
   
-  console.log("VideoContent - video_url:", videoUrl);
+  const handleError = () => {
+    setHasError(true);
+    console.error("Video loading error for ad:", ad.id);
+  };
 
   return (
     <div className="relative aspect-video w-full h-[60vh] overflow-hidden bg-black">
-      {videoUrl ? (
+      {videoUrl && !hasError ? (
         <motion.div 
           className="w-full h-full flex items-center justify-center"
           variants={isAnimation ? variants : undefined}
@@ -43,6 +49,8 @@ export const VideoContent = ({ ad, isActive, isHovered, isAnimation = false }: V
             )}
             autoPlay={isHovered || isActive}
             controls={false}
+            onError={handleError}
+            maxRetries={2}
           />
           
           {/* Overlay for animation effects */}
@@ -55,8 +63,28 @@ export const VideoContent = ({ ad, isActive, isHovered, isAnimation = false }: V
           />
         </motion.div>
       ) : (
-        <div className="w-full h-full flex items-center justify-center bg-luxury-darker/50">
-          <Video className="w-16 h-16 text-luxury-neutral/30" />
+        <div className="w-full h-full flex flex-col items-center justify-center bg-luxury-darker/50">
+          {hasError ? (
+            <>
+              <AlertCircle className="w-12 h-12 text-red-500/70 mb-2" />
+              <p className="text-luxury-neutral/70">Failed to load video</p>
+            </>
+          ) : (
+            <Video className="w-16 h-16 text-luxury-neutral/30" />
+          )}
+          
+          {ad.avatar_url && (
+            <div className="absolute inset-0 z-0 opacity-20">
+              <img 
+                src={ad.avatar_url} 
+                alt="Profile background" 
+                className="w-full h-full object-cover"
+                onError={(e) => {
+                  (e.target as HTMLImageElement).style.display = 'none';
+                }}
+              />
+            </div>
+          )}
         </div>
       )}
     </div>

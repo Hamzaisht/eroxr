@@ -1,11 +1,12 @@
 
-import { forwardRef, Ref, useMemo } from 'react';
+import { forwardRef, Ref, useMemo, useState } from 'react';
 import { MediaRenderer } from './MediaRenderer';
-import { MediaSource, MediaType } from '@/types/media';
+import { MediaType } from '@/types/media';
 import { normalizeMediaSource } from '@/utils/media/mediaUtils';
+import { useToast } from "@/hooks/use-toast";
 
 interface UniversalMediaProps {
-  item: MediaSource | string;
+  item: any;
   className?: string;
   autoPlay?: boolean;
   controls?: boolean;
@@ -13,10 +14,9 @@ interface UniversalMediaProps {
   loop?: boolean;
   poster?: string;
   showWatermark?: boolean;
-  showCloseButton?: boolean;
   onClick?: () => void;
   onLoad?: () => void;
-  onError?: (error: any) => void;
+  onError?: (error?: any) => void;
   onEnded?: () => void;
   onTimeUpdate?: (currentTime: number, duration: number) => void;
   alt?: string;
@@ -32,7 +32,6 @@ export const UniversalMedia = forwardRef(({
   loop = false,
   poster,
   showWatermark = false,
-  showCloseButton = false,
   onClick,
   onLoad,
   onError,
@@ -41,39 +40,45 @@ export const UniversalMedia = forwardRef(({
   alt = "Media content",
   maxRetries = 2
 }: UniversalMediaProps, ref: Ref<HTMLVideoElement | HTMLImageElement>) => {
+  const { toast } = useToast();
+  const [retryCount, setRetryCount] = useState(0);
+  
   // Process the item to ensure it has a url property
   const mediaItem = useMemo(() => {
-    const source = normalizeMediaSource(item);
-    // If poster prop was passed, add it to the mediaSource
-    if (poster && typeof source === 'object') {
-      source.poster = poster;
-    }
-    
-    // Convert string type to proper MediaType enum
-    if (typeof source.type === 'string') {
-      switch(source.type) {
-        case 'image': 
-          source.type = MediaType.IMAGE;
-          break;
-        case 'video':
-          source.type = MediaType.VIDEO;
-          break;
-        case 'audio':
-          source.type = MediaType.AUDIO;
-          break;
-        case 'document':
-          source.type = MediaType.DOCUMENT;
-          break;
-        case 'gif':
-          source.type = MediaType.GIF;
-          break;
-        default:
-          source.type = MediaType.UNKNOWN;
+    try {
+      const normalized = normalizeMediaSource(item);
+      // If poster prop was passed, add it to the mediaSource
+      if (poster) {
+        normalized.poster = poster;
       }
+      return normalized;
+    } catch (error) {
+      console.error("Error normalizing media source:", error, item);
+      return { url: '', type: MediaType.UNKNOWN };
+    }
+  }, [item, poster]);
+  
+  const handleError = (error?: any) => {
+    console.error("Media loading error:", error, mediaItem);
+    
+    // Track retry count
+    const newRetryCount = retryCount + 1;
+    setRetryCount(newRetryCount);
+    
+    // If we've exceeded max retries, display toast error
+    if (newRetryCount >= maxRetries) {
+      toast({
+        title: "Error loading media",
+        description: "Failed to load media content after multiple attempts",
+        variant: "destructive",
+      });
     }
     
-    return source;
-  }, [item, poster]);
+    // Call the original error handler if provided
+    if (onError) {
+      onError(error);
+    }
+  };
 
   return (
     <MediaRenderer
@@ -83,17 +88,16 @@ export const UniversalMedia = forwardRef(({
       controls={controls}
       muted={muted}
       loop={loop}
-      poster={poster || (typeof mediaItem === 'object' ? mediaItem.poster : undefined)}
+      poster={poster || (mediaItem && typeof mediaItem === 'object' && 'poster' in mediaItem ? mediaItem.poster : undefined)}
       showWatermark={showWatermark}
-      showCloseButton={showCloseButton}
       onClick={onClick}
       onLoad={onLoad}
-      onError={onError}
+      onError={handleError}
       onEnded={onEnded}
       onTimeUpdate={onTimeUpdate}
-      allowRetry={true}
-      maxRetries={maxRetries}
       ref={ref}
+      allowRetry={retryCount < maxRetries}
+      maxRetries={maxRetries}
     />
   );
 });
