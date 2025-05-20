@@ -1,52 +1,49 @@
 
 /**
- * Media types for the application
+ * Media type enum
  */
 export enum MediaType {
-  IMAGE = "image",
-  VIDEO = "video",
-  AUDIO = "audio",
-  DOCUMENT = "document",
-  GIF = "gif",
-  UNKNOWN = "unknown"
+  IMAGE = 'image',
+  VIDEO = 'video',
+  AUDIO = 'audio',
+  DOCUMENT = 'document',
+  UNKNOWN = 'unknown',
+  GIF = 'gif'
 }
 
 /**
- * User availability status
- */
-export enum AvailabilityStatus {
-  ONLINE = "online",
-  AWAY = "away",
-  BUSY = "busy",
-  INVISIBLE = "invisible",
-  OFFLINE = "offline"
-}
-
-/**
- * Media source interface for universal media component
+ * Media source interface
  */
 export interface MediaSource {
   url: string;
-  type: MediaType | string;
-  
-  // Optional standard properties
-  creator_id?: string;
-  contentCategory?: string;
-  thumbnail_url?: string;
-  poster?: string;
-  
-  // Legacy properties (for backward compatibility)
-  media_url?: string | string[];
+  type: string;
+  media_url?: string;
   video_url?: string;
   media_urls?: string[];
   video_urls?: string[];
-  media_type?: string; // Backward compatibility for type
+  creator_id?: string;
+  media_type?: string;
   thumbnail?: string;
+  poster?: string;
+  thumbnail_url?: string;
+  contentCategory?: string;
   content_type?: string;
 }
 
 /**
- * Media options interface for media components
+ * Upload result interface
+ */
+export interface UploadResult {
+  url: string;
+  path: string;
+  fileType: string;
+  fileName: string;
+  error?: string;
+  success: boolean;
+}
+
+/**
+ * Media options interface
  */
 export interface MediaOptions {
   className?: string;
@@ -55,10 +52,6 @@ export interface MediaOptions {
   muted?: boolean;
   loop?: boolean;
   poster?: string;
-  showWatermark?: boolean;
-  showCloseButton?: boolean;
-  creatorId?: string;
-  onClose?: () => void;
   onClick?: () => void;
   onLoad?: () => void;
   onError?: (error: any) => void;

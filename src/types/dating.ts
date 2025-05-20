@@ -1,6 +1,6 @@
 
 /**
- * Dating Ad interface - represents the core dating ad data structure
+ * Dating Ad interface - represents the core dating ad structure
  */
 export interface DatingAd {
   // Core properties
@@ -13,14 +13,14 @@ export interface DatingAd {
   username?: string;
   avatarUrl?: string;
   videoUrl?: string;
-  avatar_url?: string; // For backward compatibility
-  video_url?: string; // For backward compatibility
+  avatar_url?: string;
+  video_url?: string;
   
   // Verification and status
   isVerified?: boolean;
   isPremium?: boolean;
-  is_verified?: boolean; // For backward compatibility 
-  is_premium?: boolean; // For backward compatibility
+  is_verified?: boolean;
+  is_premium?: boolean;
   is_active?: boolean;
   
   // Engagement metrics
@@ -57,8 +57,10 @@ export interface DatingAd {
   languages?: string[];
   occupation?: string;
   about_me?: string;
+  seeking_description?: string;
+  preferred_age_range?: { lower: number; upper: number } | null;
   
-  // Reference to user object (if needed)
+  // Reference to user object
   user?: {
     id?: string;
     username?: string;

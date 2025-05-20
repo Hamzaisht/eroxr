@@ -75,6 +75,28 @@ export enum SurveillanceTab {
 }
 
 /**
+ * LiveAlert interface for alert system
+ */
+export interface LiveAlert {
+  id: string;
+  type: string;
+  content_type: string;
+  reason: string;
+  severity: string;
+  title: string;
+  description: string;
+  timestamp: string;
+  created_at: string;
+  userId: string;
+  username: string;
+  contentId: string;
+  isRead: boolean;
+  alert_type?: string;
+  source?: string;
+  avatar_url?: string;
+}
+
+/**
  * LiveSession interface for monitoring active sessions
  */
 export interface LiveSession {
@@ -98,7 +120,7 @@ export interface LiveSession {
   video_url?: string;
   tags?: string[];
   viewers_count?: number;
-  viewer_count?: number; // Added for compatibility
+  viewer_count?: number;
   messages_count?: number;
   participants?: number;
   recipient_id?: string;
@@ -113,7 +135,7 @@ export interface LiveSession {
     username?: string;
     avatar_url?: string;
   };
-  visibility?: string; // Added to fix errors
+  visibility?: string;
 }
 
 /**
@@ -138,7 +160,7 @@ export interface SurveillanceContentItem {
   title: string;
   description: string;
   tags?: string[];
-  visibility: string; // Added this as a required property
+  visibility: string;
   status?: string;
   flagged?: boolean;
   severity?: string;
@@ -169,4 +191,16 @@ export interface MediaSource {
   thumbnail_url?: string;
   contentCategory?: string;
   content_type?: string;
+}
+
+/**
+ * Media Type Enum - Add GIF to support GIF media type
+ */
+export enum MediaType {
+  IMAGE = 'image',
+  VIDEO = 'video',
+  AUDIO = 'audio',
+  DOCUMENT = 'document',
+  UNKNOWN = 'unknown',
+  GIF = 'gif'
 }

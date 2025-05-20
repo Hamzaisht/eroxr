@@ -1,66 +1,47 @@
 
+import { v4 as uuidv4 } from 'uuid';
+
 /**
- * Run file diagnostics to check size, type, and potential issues
+ * Creates a unique file path for upload
+ * @param file The file to create a path for
+ * @param prefix Optional prefix for the path
+ * @returns A unique path string
  */
-export const runFileDiagnostic = (file: File): { valid: boolean; error?: string; details?: any } => {
-  if (!file) {
-    return { valid: false, error: 'No file provided' };
-  }
+export const createUniqueFilePath = (file: File, prefix: string = ''): string => {
+  // Get file extension
+  const fileExtension = file.name.split('.').pop()?.toLowerCase() || '';
 
-  // Check file size (max 100MB)
-  const maxSize = 100 * 1024 * 1024; // 100MB
-  if (file.size > maxSize) {
-    return {
-      valid: false,
-      error: `File size exceeds the maximum limit of 100MB. Current size: ${(file.size / (1024 * 1024)).toFixed(2)}MB`,
-      details: { size: file.size, maxSize }
-    };
-  }
-
-  // Check file type
-  const validImageTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
-  const validVideoTypes = ['video/mp4', 'video/quicktime', 'video/webm'];
-  const validAudioTypes = ['audio/mp3', 'audio/mpeg', 'audio/wav', 'audio/ogg'];
+  // Create a UUID-based filename
+  const uniqueId = uuidv4();
+  const timestamp = Date.now();
   
-  const isImage = validImageTypes.includes(file.type);
-  const isVideo = validVideoTypes.includes(file.type);
-  const isAudio = validAudioTypes.includes(file.type);
-  
-  if (!isImage && !isVideo && !isAudio) {
-    return {
-      valid: false,
-      error: `Unsupported file type: ${file.type}. Please upload an image, video, or audio file.`,
-      details: { type: file.type, supported: [...validImageTypes, ...validVideoTypes, ...validAudioTypes] }
-    };
-  }
-
-  return { 
-    valid: true,
-    details: {
-      size: file.size,
-      type: file.type,
-      isImage,
-      isVideo,
-      isAudio,
-      name: file.name,
-      lastModified: file.lastModified
-    }
-  };
+  // Construct path with optional prefix, timestamp, and uuid
+  const path = prefix 
+    ? `${prefix}/${timestamp}_${uniqueId}.${fileExtension}` 
+    : `${timestamp}_${uniqueId}.${fileExtension}`;
+    
+  return path;
 };
 
 /**
- * Create a file preview URL for displaying in the UI
+ * Converts a file to a base64 data URL
+ * @param file The file to convert
+ * @returns A promise that resolves to the data URL
  */
-export const createFilePreview = (file: File): string => {
-  if (!file) return '';
-  return URL.createObjectURL(file);
+export const fileToDataUrl = (file: File): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
 };
 
 /**
- * Revoke the file preview URL when it's no longer needed
+ * Gets a file's MIME type
+ * @param file The file
+ * @returns The MIME type string
  */
-export const revokeFilePreview = (previewUrl: string): void => {
-  if (previewUrl) {
-    URL.revokeObjectURL(previewUrl);
-  }
+export const getFileMimeType = (file: File): string => {
+  return file.type;
 };
