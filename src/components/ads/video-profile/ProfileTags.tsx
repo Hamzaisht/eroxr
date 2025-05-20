@@ -1,7 +1,6 @@
 
-import { Badge } from "@/components/ui/badge";
-import { DatingAd } from "@/types/dating";
-import { getLowerAgeValue, getUpperAgeValue } from "@/utils/dating/ageRangeHelper";
+import { XCircle } from "lucide-react";
+import { DatingAd, getAgeRangeValues } from "@/types/dating";
 
 interface ProfileTagsProps {
   ad: DatingAd;
@@ -9,57 +8,39 @@ interface ProfileTagsProps {
 }
 
 export const ProfileTags = ({ ad, onTagClick }: ProfileTagsProps) => {
-  // Helper to handle tag clicks
-  const handleTagClick = (tag: string) => {
-    if (onTagClick) {
-      onTagClick(tag);
-    }
-  };
-
+  // Handle missing ad
+  if (!ad) return null;
+  
+  const ageRange = getAgeRangeValues(ad.age_range);
+  
   return (
-    <div className="flex flex-wrap gap-1.5 mt-2">
-      {/* Age Range Badge */}
-      {ad.age_range && (
-        <Badge 
-          variant="secondary"
-          className="text-xs bg-black/40 hover:bg-black/60"
-          onClick={() => handleTagClick(`age-${getLowerAgeValue(ad.age_range)}-${getUpperAgeValue(ad.age_range)}`)}
-        >
-          {getLowerAgeValue(ad.age_range)}-{getUpperAgeValue(ad.age_range)}
-        </Badge>
-      )}
+    <div className="flex flex-wrap gap-2 mt-3">
+      {/* Age range tag */}
+      <span className="px-3 py-1 rounded-full bg-luxury-primary/10 text-luxury-primary/90 text-xs inline-flex items-center">
+        <span>{ageRange.lower}-{ageRange.upper} years</span>
+      </span>
       
-      {/* Relationship Status */}
-      {ad.relationship_status && (
-        <Badge 
-          variant="secondary"
-          className="text-xs bg-black/40 hover:bg-black/60"
-          onClick={() => handleTagClick(ad.relationship_status || '')}
-        >
-          {ad.relationship_status}
-        </Badge>
-      )}
+      {/* Location tag */}
+      <span className="px-3 py-1 rounded-full bg-luxury-primary/10 text-luxury-primary/90 text-xs inline-flex items-center">
+        <span>{ad.location || `${ad.city || ''}, ${ad.country || ''}`}</span>
+      </span>
       
-      {/* Tags */}
-      {ad.tags?.slice(0, 3).map((tag) => (
-        <Badge
-          key={tag}
-          variant="secondary"
-          className="text-xs bg-black/40 hover:bg-black/60"
-          onClick={() => handleTagClick(tag)}
+      {/* Dynamically show some tags from ad */}
+      {ad.tags?.slice(0, 3).map(tag => (
+        <span 
+          key={tag} 
+          className="px-3 py-1 rounded-full bg-luxury-primary/10 text-luxury-primary/90 text-xs inline-flex items-center cursor-pointer hover:bg-luxury-primary/20 transition-colors"
+          onClick={() => onTagClick && onTagClick(tag)}
         >
-          {tag}
-        </Badge>
+          <span>#{tag}</span>
+        </span>
       ))}
       
-      {/* Show more badge if there are more tags */}
+      {/* Show more tags indicator if there are more than shown */}
       {ad.tags && ad.tags.length > 3 && (
-        <Badge 
-          variant="secondary" 
-          className="text-xs bg-black/40 hover:bg-black/60"
-        >
-          +{ad.tags.length - 3}
-        </Badge>
+        <span className="px-3 py-1 rounded-full bg-luxury-primary/5 text-luxury-neutral/60 text-xs inline-flex items-center">
+          <span>+{ad.tags.length - 3} more</span>
+        </span>
       )}
     </div>
   );

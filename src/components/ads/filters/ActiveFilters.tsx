@@ -1,5 +1,5 @@
 
-import { FilterOptions } from "../types/dating";
+import { FilterOptions } from "@/types/dating";
 import { type Database } from "@/integrations/supabase/types";
 import { FilterBadge } from "./FilterBadge";
 
@@ -30,9 +30,9 @@ export const ActiveFilters = ({
     selectedCity || 
     selectedSeeker || 
     selectedTag || 
-    filterOptions.minAge !== 18 || 
-    filterOptions.maxAge !== 99 ||
-    filterOptions.maxDistance !== 50 ||
+    (filterOptions.minAge !== undefined && filterOptions.minAge !== 18) || 
+    (filterOptions.maxAge !== undefined && filterOptions.maxAge !== 99) ||
+    (filterOptions.maxDistance !== undefined && filterOptions.maxDistance !== 50) ||
     filterOptions.isVerified ||
     filterOptions.isPremium;
   
@@ -70,9 +70,10 @@ export const ActiveFilters = ({
         )}
         
         {/* Age range filter */}
-        {(filterOptions.minAge !== 18 || filterOptions.maxAge !== 99) && (
+        {((filterOptions.minAge !== undefined && filterOptions.minAge !== 18) || 
+          (filterOptions.maxAge !== undefined && filterOptions.maxAge !== 99)) && (
           <FilterBadge 
-            label={`Age: ${filterOptions.minAge}-${filterOptions.maxAge}`}
+            label={`Age: ${filterOptions.minAge || 18}-${filterOptions.maxAge || 99}`}
             onClear={(e) => handleFilterClear(e, 'age')}
           />
         )}
@@ -94,7 +95,7 @@ export const ActiveFilters = ({
         )}
         
         {/* Distance filter */}
-        {filterOptions.maxDistance !== 50 && (
+        {filterOptions.maxDistance !== undefined && filterOptions.maxDistance !== 50 && (
           <FilterBadge 
             label={`Distance: ${filterOptions.maxDistance}km`}
             onClear={(e) => handleFilterClear(e, 'distance')}

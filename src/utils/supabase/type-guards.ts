@@ -2,9 +2,6 @@
 import { User } from '@supabase/supabase-js';
 import { Database } from '../integrations/supabase/types/database.types';
 
-// Define PostgrestFilterBuilder type since it's missing from supabase-js export
-type PostgrestFilterBuilder<T> = any;
-
 // Define ProfileStatus type (used in UserMenu components)
 export type ProfileStatus = 'online' | 'offline' | 'away' | 'busy';
 
@@ -14,23 +11,23 @@ export function getSafeProfile(profile: any) {
 }
 
 // Safe filter functions for database queries
-export function safeProfileFilter(query: PostgrestFilterBuilder<any>) {
+export function safeProfileFilter(query: any) {
   return query;
 }
 
-export function safeReportFilter(query: PostgrestFilterBuilder<any>) {
+export function safeReportFilter(query: any) {
   return query;
 }
 
-export function safeDatingAdFilter(query: PostgrestFilterBuilder<any>) {
+export function safeDatingAdFilter(query: any) {
   return query;
 }
 
-export function safeLiveStreamFilter(query: PostgrestFilterBuilder<any>) {
+export function safeLiveStreamFilter(query: any) {
   return query;
 }
 
-export function safeIdVerificationFilter(query: PostgrestFilterBuilder<any>) {
+export function safeIdVerificationFilter(query: any) {
   return query;
 }
 

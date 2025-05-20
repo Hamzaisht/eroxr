@@ -1,15 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { 
-  asColumnName,
-  asIdVerificationStatus, 
-  asLiveStreamStatus, 
-  asProfileIsSuspended, 
-  asProfileStatus, 
-  asReportStatus,
-  asColumnValue 
-} from "@/utils/supabase/helpers";
-import { 
   safeProfileFilter, 
   safeReportFilter, 
   safeLiveStreamFilter, 
@@ -66,12 +57,30 @@ export const Dashboard = () => {
   const { data: stats, isLoading } = useQuery({
     queryKey: ['admin-platform-stats'],
     queryFn: async () => {
-      const [suspendedCol, suspendedVal] = safeProfileFilter('is_suspended', false);
-      const [suspendedCol2, suspendedVal2] = safeProfileFilter('is_suspended', true);
-      const [reportStatusCol, reportStatusVal] = safeReportFilter('status', 'pending');
-      const [verificationStatusCol, verificationStatusVal] = safeIdVerificationFilter('status', 'pending');
-      const [streamStatusCol, streamStatusVal] = safeLiveStreamFilter('status', 'live');
-      const [onlineStatusCol, onlineStatusVal] = safeProfileFilter('status', 'online');
+      // Get query modifiers from safe filter functions
+      const suspendedProfileQuery = safeProfileFilter(
+        supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('is_suspended', false)
+      );
+      
+      const bannedProfileQuery = safeProfileFilter(
+        supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('is_suspended', true)
+      );
+      
+      const pendingReportsQuery = safeReportFilter(
+        supabase.from('reports').select('*', { count: 'exact', head: true }).eq('status', 'pending')
+      );
+      
+      const pendingVerificationsQuery = safeIdVerificationFilter(
+        supabase.from('id_verifications').select('*', { count: 'exact', head: true }).eq('status', 'pending')
+      );
+      
+      const activeStreamsQuery = safeLiveStreamFilter(
+        supabase.from('live_streams').select('*', { count: 'exact', head: true }).eq('status', 'live')
+      );
+      
+      const onlineUsersQuery = safeProfileFilter(
+        supabase.from('profiles').select('id').eq('status', 'online')
+      );
 
       const [
         { count: activeUsers },
@@ -86,17 +95,17 @@ export const Dashboard = () => {
         { count: activeStreams },
         { data: onlineUsers },
       ] = await Promise.all([
-        supabase.from('profiles').select('*', { count: 'exact', head: true }).eq(suspendedCol, suspendedVal),
-        supabase.from('profiles').select('*', { count: 'exact', head: true }).eq(suspendedCol2, suspendedVal2),
+        suspendedProfileQuery,
+        bannedProfileQuery,
         supabase.from('posts').select('*', { count: 'exact', head: true }),
         supabase.from('direct_messages').select('*', { count: 'exact', head: true }),
-        supabase.from('reports').select('*', { count: 'exact', head: true }).eq(reportStatusCol, reportStatusVal),
+        pendingReportsQuery,
         supabase.from('security_violations').select('*', { count: 'exact', head: true }),
         supabase.from('posts').select('*', { count: 'exact', head: true }).not('media_url', 'eq', '{}'),
         supabase.from('posts').select('*', { count: 'exact', head: true }).not('video_urls', 'eq', '{}'),
-        supabase.from('id_verifications').select('*', { count: 'exact', head: true }).eq(verificationStatusCol, verificationStatusVal),
-        supabase.from('live_streams').select('*', { count: 'exact', head: true }).eq(streamStatusCol, streamStatusVal),
-        supabase.from('profiles').select('id').eq(onlineStatusCol, onlineStatusVal),
+        pendingVerificationsQuery,
+        activeStreamsQuery,
+        onlineUsersQuery,
       ]);
 
       return {

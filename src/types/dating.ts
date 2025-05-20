@@ -74,6 +74,8 @@ export interface DatingAd {
 // Additional types for filtering and searching
 export interface FilterOptions {
   ageRange?: [number, number];
+  minAge?: number;
+  maxAge?: number;
   gender?: string;
   relationship_status?: string;
   body_type?: string;
@@ -81,8 +83,35 @@ export interface FilterOptions {
   tags?: string[];
   country?: string;
   city?: string;
+  keyword?: string;
+  username?: string;
+  isVerified?: boolean;
+  isPremium?: boolean;
+  minDistance?: number;
+  maxDistance?: number;
+  verifiedOnly?: boolean;
+  premiumOnly?: boolean;
 }
 
-export type SearchCategory = 'all' | 'nearby' | 'popular' | 'new' | 'premium' | 'verified';
+export interface SearchCategoryType {
+  seeker: string;
+  lookingFor: string;
+  label?: string;
+}
+
+export type SearchCategory = SearchCategoryType | 'all' | 'nearby' | 'popular' | 'new' | 'premium' | 'verified';
 
 export type DatingAdAction = 'view' | 'like' | 'message' | 'report' | 'block' | 'save';
+
+// Utility function to handle accessing age range properties safely
+export function getAgeRangeValues(ageRange: { lower: number; upper: number } | [number, number] | undefined): { lower: number; upper: number } {
+  if (!ageRange) {
+    return { lower: 18, upper: 99 };
+  }
+  
+  if (Array.isArray(ageRange)) {
+    return { lower: ageRange[0], upper: ageRange[1] };
+  }
+  
+  return ageRange;
+}

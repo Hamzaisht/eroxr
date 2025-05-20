@@ -1,6 +1,6 @@
 
 import { ReactNode, MouseEvent, TouchEvent } from 'react';
-import { SearchCategory } from "../types/dating";
+import { SearchCategory, SearchCategoryType } from '@/types/dating';
 import { User, Users, Heart, CheckCircle, Star, Sparkles, Flame } from "lucide-react";
 
 export interface SearchCategoriesProps {
@@ -41,13 +41,28 @@ export const SearchCategories = ({
     return false;
   };
 
-  // Group categories by seeker type
-  const categoryGroups: Record<string, SearchCategory[]> = {};
-  searchCategories.forEach(category => {
-    if (!categoryGroups[category.seeker]) {
-      categoryGroups[category.seeker] = [];
+  // Process categories to ensure they are all of correct format
+  const processedCategories = searchCategories.map(category => {
+    if (typeof category === 'string') {
+      // Handle string categories (e.g., 'all', 'premium', etc.)
+      return {
+        seeker: category,
+        lookingFor: 'any',
+        label: category.charAt(0).toUpperCase() + category.slice(1)
+      };
     }
-    categoryGroups[category.seeker].push(category);
+    return category as SearchCategoryType;
+  });
+
+  // Group categories by seeker type
+  const categoryGroups: Record<string, SearchCategoryType[]> = {};
+  processedCategories.forEach(category => {
+    if (typeof category === 'object') {
+      if (!categoryGroups[category.seeker]) {
+        categoryGroups[category.seeker] = [];
+      }
+      categoryGroups[category.seeker].push(category);
+    }
   });
 
   return (
@@ -84,7 +99,7 @@ export const SearchCategories = ({
                   <div className="mb-1.5">
                     {getCategoryIcon(category)}
                   </div>
-                  <span className="text-xs font-medium">
+                  <span className="text-sm font-medium">
                     {formatCategoryLabel(category)}
                   </span>
                   
@@ -131,7 +146,7 @@ function getCategoryGroupLabel(seeker: string): string {
 }
 
 // Function to get appropriate icon for category
-function getCategoryIcon(category: SearchCategory): ReactNode {
+function getCategoryIcon(category: SearchCategoryType): ReactNode {
   const iconSize = 18;
   const iconClassName = "opacity-90";
 
@@ -162,7 +177,9 @@ function getCategoryIcon(category: SearchCategory): ReactNode {
 }
 
 // Format category labels
-function formatCategoryLabel(category: SearchCategory): string {
+function formatCategoryLabel(category: SearchCategoryType): string {
+  if (category.label) return category.label;
+  
   if (category.seeker === "verified") return "Verified";
   if (category.seeker === "premium") return "Premium";
   

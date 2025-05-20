@@ -1,5 +1,5 @@
 
-import { FilterOptions } from "../types/dating";
+import { FilterOptions } from "@/types/dating";
 import { type Database } from "@/integrations/supabase/types";
 
 type NordicCountry = Database['public']['Enums']['nordic_country'];
