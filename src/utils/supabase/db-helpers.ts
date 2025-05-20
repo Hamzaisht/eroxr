@@ -6,6 +6,7 @@ import { isQueryError } from "@/utils/supabase/typeSafeOperations";
 
 type ProfileRow = Database['public']['Tables']['profiles']['Row'];
 type ProfileUpdate = Database['public']['Tables']['profiles']['Update'];
+type PostInsert = Database['public']['Tables']['posts']['Insert'];
 
 /**
  * Update a user's profile status safely
@@ -62,6 +63,36 @@ export async function getProfileById(userId: string): Promise<ProfileRow | null>
     return data as ProfileRow;
   } catch (error) {
     console.error("Exception fetching profile:", error);
+    return null;
+  }
+}
+
+/**
+ * Create a new post with proper type checking and error handling
+ * @param postData The post data to insert
+ * @returns The created post data or null if failed
+ */
+export async function createPost(postData: PostInsert): Promise<Database['public']['Tables']['posts']['Row'] | null> {
+  try {
+    const { data, error } = await supabase
+      .from('posts')
+      .insert(postData)
+      .select()
+      .single();
+      
+    if (error) {
+      console.error("Error creating post:", error);
+      return null;
+    }
+    
+    // Check if data exists and isn't an error
+    if (!data || isQueryError(data)) {
+      return null;
+    }
+    
+    return data;
+  } catch (error) {
+    console.error("Exception creating post:", error);
     return null;
   }
 }

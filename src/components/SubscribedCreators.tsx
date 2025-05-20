@@ -6,10 +6,6 @@ import { useSession } from "@supabase/auth-helpers-react";
 import { Database } from "@/integrations/supabase/types/database.types";
 import { safeString } from "@/utils/supabase/typeSafeOperations";
 
-// Define proper types for profiles and subscriptions tables
-type ProfileRow = Database['public']['Tables']['profiles']['Row'];
-type SubscriptionRow = Database['public']['Tables']['creator_subscriptions']['Row'];
-
 // Define safe creator type
 interface Creator {
   id: string;
@@ -51,8 +47,8 @@ export const SubscribedCreators = () => {
               banner_url
             )
           `)
-          .eq("user_id" as keyof SubscriptionRow, userId as string)
-          .order("created_at" as keyof SubscriptionRow, { ascending: false });
+          .eq("user_id", userId as string)
+          .order("created_at", { ascending: false });
           
         if (error) {
           console.error("Error fetching subscriptions:", error);
