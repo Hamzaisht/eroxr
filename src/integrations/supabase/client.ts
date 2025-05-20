@@ -24,7 +24,26 @@ export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, sup
 // Add debug logging for authentication state changes
 supabase.auth.onAuthStateChange((event, session) => {
   console.log('Auth state changed:', event, session ? 'User authenticated' : 'No session');
+  
+  // Set user ID in session for RLS optimization when a user logs in
+  if (session?.user?.id) {
+    setUserIdForRls(session.user.id);
+  }
 });
+
+// Function to set user ID for RLS policies
+export const setUserIdForRls = async (userId: string) => {
+  try {
+    const { error } = await supabase.rpc('set_request_user_id');
+    if (error) {
+      console.error('Error setting user ID for RLS:', error);
+    } else {
+      console.log('User ID set for RLS optimization');
+    }
+  } catch (error) {
+    console.error('Exception setting user ID for RLS:', error);
+  }
+};
 
 // Export a function to get session synchronously from localStorage
 export const getLocalSession = () => {

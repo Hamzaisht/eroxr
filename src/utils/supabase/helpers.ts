@@ -1,4 +1,3 @@
-
 import { Database } from "@/integrations/supabase/types/database.types";
 import { AvailabilityStatus } from "@/utils/media/types";
 
@@ -58,6 +57,21 @@ export function asUserSubscriptionStatus(val: string): "active" | "inactive" | "
  */
 export function asColumnName<T extends Record<string, any>>(columnName: keyof T): string {
   return columnName as string;
+}
+
+/**
+ * Helper function to call the set_request_user_id RPC function
+ * This should be called before making authenticated database queries
+ */
+export async function ensureUserIdSet(): Promise<void> {
+  try {
+    const { data, error } = await supabase.rpc('set_request_user_id');
+    if (error) {
+      console.error("Failed to set user ID for RLS optimization:", error);
+    }
+  } catch (error) {
+    console.error("Exception setting user ID for RLS:", error);
+  }
 }
 
 /**

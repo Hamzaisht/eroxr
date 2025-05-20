@@ -3,6 +3,7 @@ import { useSession } from "@supabase/auth-helpers-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
+import { ensureUserIdSet } from "@/utils/supabase/typeSafeOperations";
 
 export const useSaveAction = () => {
   const session = useSession();
@@ -20,6 +21,9 @@ export const useSaveAction = () => {
     }
 
     try {
+      // Ensure user ID is set for RLS optimization
+      await ensureUserIdSet();
+      
       // Check if already saved
       const { data: existingSave, error: checkError } = await supabase
         .from("post_saves")

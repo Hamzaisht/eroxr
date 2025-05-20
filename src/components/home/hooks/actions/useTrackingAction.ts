@@ -2,6 +2,7 @@
 import { useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { ensureUserIdSet } from '@/utils/supabase/typeSafeOperations';
 
 export const useTrackingAction = () => {
   const { toast } = useToast();
@@ -14,6 +15,9 @@ export const useTrackingAction = () => {
     }
     
     try {
+      // Ensure user ID is set for RLS optimization
+      await ensureUserIdSet();
+      
       console.log(`Tracking view for content: ${contentId}`);
       
       // Get the current count directly using select
@@ -74,6 +78,9 @@ export const useTrackingAction = () => {
     }
     
     try {
+      // Ensure user ID is set for RLS optimization
+      await ensureUserIdSet();
+      
       // Get the current count directly using select
       const { data: currentData, error: fetchError } = await supabase
         .from('posts')

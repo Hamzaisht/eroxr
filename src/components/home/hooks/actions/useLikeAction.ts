@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { useSoundEffects } from "@/hooks/use-sound-effects";
+import { ensureUserIdSet } from "@/utils/supabase/typeSafeOperations";
 
 export const useLikeAction = () => {
   const session = useSession();
@@ -22,6 +23,9 @@ export const useLikeAction = () => {
     }
 
     try {
+      // Ensure user ID is set for RLS optimization
+      await ensureUserIdSet();
+      
       // Check if already liked
       const { data: existingLike, error: checkError } = await supabase
         .from("post_likes")

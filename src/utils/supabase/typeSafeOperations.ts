@@ -1,6 +1,6 @@
-
 import { Database } from "@/integrations/supabase/types/database.types";
 import { PostgrestFilterBuilder } from "@supabase/postgrest-js";
+import { supabase } from "@/integrations/supabase/client";
 
 // Define commonly used types
 export type ProfileRow = Database['public']['Tables']['profiles']['Row'];
@@ -16,6 +16,21 @@ export type AdminLogRow = 'admin_logs' extends keyof Database['public']['Tables'
 export type FlaggedContentRow = 'flagged_content' extends keyof Database['public']['Tables'] 
   ? Database['public']['Tables']['flagged_content']['Row'] 
   : { id: string; content_id: string; content_type: string; reason: string; severity: string; status: string; };
+
+/**
+ * Helper function to call the set_request_user_id RPC function
+ * This should be called before making authenticated database queries
+ */
+export async function ensureUserIdSet(): Promise<void> {
+  try {
+    const { error } = await supabase.rpc('set_request_user_id');
+    if (error) {
+      console.error("Failed to set user ID for RLS optimization:", error);
+    }
+  } catch (error) {
+    console.error("Exception setting user ID for RLS:", error);
+  }
+}
 
 /**
  * Type guard function to check if an object is a ProfileRow

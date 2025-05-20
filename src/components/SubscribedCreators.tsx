@@ -1,10 +1,9 @@
-
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { CreatorCard } from "@/components/CreatorCard";
 import { useSession } from "@supabase/auth-helpers-react";
 import { Database } from "@/integrations/supabase/types/database.types";
-import { safeString, isQueryError } from "@/utils/supabase/typeSafeOperations";
+import { safeString, isQueryError, ensureUserIdSet } from "@/utils/supabase/typeSafeOperations";
 
 // Define types for database tables
 type ProfileRow = Database['public']['Tables']['profiles']['Row'];
@@ -43,6 +42,9 @@ export const SubscribedCreators = () => {
     queryKey: ["subscriptions", userId],
     queryFn: async () => {
       if (!userId) return [];
+      
+      // Ensure user ID is set for RLS optimization
+      await ensureUserIdSet();
       
       // Check if creator_subscriptions table exists in database schema
       try {
