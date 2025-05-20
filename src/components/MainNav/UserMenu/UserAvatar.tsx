@@ -10,7 +10,12 @@ interface UserAvatarProps {
   onStatusChange?: (status: AvailabilityStatus) => void;
 }
 
-export const UserAvatar = ({ avatarUrl, email, status = AvailabilityStatus.OFFLINE, onStatusChange }: UserAvatarProps) => {
+export const UserAvatar = ({ 
+  avatarUrl, 
+  email, 
+  status = AvailabilityStatus.OFFLINE, 
+  onStatusChange 
+}: UserAvatarProps) => {
   const handleStatusClick = (e: React.MouseEvent) => {
     if (onStatusChange) {
       e.stopPropagation();

@@ -21,7 +21,6 @@ import {
   HelpCircle,
   LucideIcon,
   CircleUserRound,
-  Dot,
 } from "lucide-react";
 import {
   AlertDialog,

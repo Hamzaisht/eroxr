@@ -1,4 +1,3 @@
-
 // Define media types
 export enum MediaType {
   IMAGE = "image",
@@ -6,6 +5,16 @@ export enum MediaType {
   AUDIO = "audio",
   DOCUMENT = "document",
   UNKNOWN = "unknown"
+}
+
+// Updated AvailabilityStatus enum with uppercase constants 
+// to match how it's being accessed in the components
+export enum AvailabilityStatus {
+  ONLINE = "online",
+  AWAY = "away",
+  BUSY = "busy",
+  INVISIBLE = "invisible",
+  OFFLINE = "offline"
 }
 
 // Base MediaSource interface

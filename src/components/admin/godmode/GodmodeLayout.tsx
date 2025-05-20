@@ -38,12 +38,13 @@ function GodmodeLayout() {
     return <Navigate to="/" state={{ from: location }} replace />;
   }
 
-  // Instead of trying to cast, adapt the API return to match what SurveillanceProvider expects
+  // Format alerts to ensure they have required properties
   const formattedAlerts = liveAlerts.map(alert => ({
     ...alert,
     alert_type: alert.alert_type || (alert.type === 'violation' ? 'violation' : 
                 alert.type === 'risk' ? 'risk' : 'information') as 'violation' | 'risk' | 'information',
     userId: alert.userId || alert.user_id || '',
+    contentId: alert.contentId || alert.content_id || '',
     username: alert.username || 'Unknown',
     created_at: typeof alert.created_at === 'string' ? alert.created_at : new Date().toISOString(),
   })) as LiveAlert[];

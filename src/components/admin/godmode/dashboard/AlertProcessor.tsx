@@ -1,7 +1,8 @@
+
 import { useEffect, useState } from "react";
 import { LiveAlert } from "@/types/alerts";
 import { supabase } from "@/integrations/supabase/client";
-import { formatFlaggedContentAsAlert, formatReportAsAlert } from "@/context/ghost/utils/alertFormatters";
+import { formatFlaggedContentAsAlert, formatReportAsAlert, formatSystemAlertToLiveAlert } from "@/context/ghost/utils/alertFormatters";
 
 // Helper to map from raw alerts to typed alerts
 const mapToLiveAlerts = (alerts: Partial<LiveAlert>[]): LiveAlert[] => {
@@ -14,10 +15,13 @@ const mapToLiveAlerts = (alerts: Partial<LiveAlert>[]): LiveAlert[] => {
       title: alert.title || 'Alert',
       description: alert.description || '',
       timestamp: alert.timestamp || new Date().toISOString(),
+      created_at: alert.created_at || new Date().toISOString(),
       isRead: alert.isRead || false,
-      userId: alert.userId || alert.user_id,
-      contentId: alert.contentId || alert.content_id
-    };
+      userId: alert.userId || alert.user_id || '',
+      contentId: alert.contentId || alert.content_id || '',
+      username: alert.username || '',
+      alert_type: (alert.alert_type as 'violation' | 'risk' | 'information') || 'information'
+    } as LiveAlert;
   });
 };
 
@@ -28,34 +32,28 @@ const mockAlerts: Partial<LiveAlert>[] = [
     type: 'security',
     userId: "user-123",
     username: "suspicious_user",
-    avatar_url: "https://i.pravatar.cc/150?u=1",
     timestamp: new Date().toISOString(),
     created_at: new Date().toISOString(),
-    content_type: "post", 
-    reason: "Inappropriate content",
     severity: "high",
     contentId: "post-456",
     title: "Content Violation",
     description: "Post with inappropriate content detected",
     isRead: false,
-    requiresAction: true
+    alert_type: "violation"
   },
   {
     id: "2",
     type: 'system',
     userId: "user-234",
     username: "potential_bot",
-    avatar_url: "https://i.pravatar.cc/150?u=2",
     timestamp: new Date(Date.now() - 15 * 60000).toISOString(),
     created_at: new Date(Date.now() - 15 * 60000).toISOString(),
-    content_type: "message",
-    reason: "Spam behavior",
     severity: "medium",
     contentId: "message-789",
     title: "Potential Spam",
     description: "Multiple identical messages sent in short timeframe",
     isRead: false,
-    requiresAction: false
+    alert_type: "risk"
   },
 ];
 

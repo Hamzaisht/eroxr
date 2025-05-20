@@ -67,14 +67,16 @@ export function formatSystemAlertToLiveAlert(alert: any): LiveAlert {
     id: alert.id || String(Math.random()),
     type: alert.type || 'system',
     severity: mapPriorityToSeverity(alert.priority || 'medium'),
-    title: alert.message || 'System Alert',
-    description: alert.details || '',
+    title: alert.message || alert.title || 'System Alert',
+    description: alert.details || alert.description || '',
     timestamp: alert.timestamp || new Date().toISOString(),
     created_at: alert.created_at || new Date().toISOString(),
-    userId: alert.userId || alert.user_id,
+    userId: alert.userId || alert.user_id || '',
     username: alert.username || 'System',
-    contentId: alert.contentId || alert.content_id,
+    contentId: alert.contentId || alert.content_id || '',
     isRead: alert.isRead || alert.read || false,
-    alert_type: alert.alert_type || 'information'
+    alert_type: alert.alert_type || 'information',
+    source: alert.source || null,
+    avatar_url: alert.avatar_url || null
   };
 }
