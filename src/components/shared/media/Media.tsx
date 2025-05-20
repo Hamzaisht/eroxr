@@ -1,9 +1,8 @@
-
 import { useState, useEffect, forwardRef } from 'react';
 import { AlertCircle, Loader2 } from 'lucide-react';
 import { MediaType, MediaSource } from '@/utils/media/types';
 import { determineMediaType, extractMediaUrl } from '@/utils/media/mediaUtils';
-import { getPlayableMediaUrl } from '@/utils/media/mediaUrlUtils';
+import { getPlayableMediaUrl } from '@/utils/media/urlUtils';
 
 type MediaProps = {
   source: MediaSource | string;

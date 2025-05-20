@@ -1,9 +1,7 @@
-
 import { useState, useEffect, forwardRef } from 'react';
 import { MediaType, MediaSource, MediaRendererProps } from '@/utils/media/types';
 import { MediaDisplay } from './MediaDisplay';
-import { extractMediaUrl } from '@/utils/media/mediaUtils';
-import { normalizeMediaSource } from '@/utils/media/mediaUtils';
+import { extractMediaUrl, normalizeMediaSource } from '@/utils/media/mediaUtils';
 
 /**
  * A smart media renderer that handles various media types

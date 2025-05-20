@@ -1,6 +1,5 @@
-
 import { MediaType } from './types';
-import { extractMediaUrl } from './urlUtils';
+import { extractMediaUrl } from './mediaUtils';
 
 /**
  * Media orchestrator configuration
