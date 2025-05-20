@@ -39,7 +39,7 @@ export const StoryReel = () => {
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      return safeCast<StoryData>(data);
+      return safeCast<StoryData[]>(data);
     },
   });
 
@@ -51,7 +51,7 @@ export const StoryReel = () => {
       {safeStories.map((story) => (
         <StoryCard
           key={story.id}
-          storyId={story.id}
+          id={story.id}
           creatorId={story.creator_id}
           mediaUrl={story.media_url || undefined}
           videoUrl={story.video_url || undefined}

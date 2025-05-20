@@ -25,7 +25,7 @@ export interface DatingAd {
   age?: number;
   
   // Location properties
-  location?: string;
+  location: string;
   location_type?: string;
   city?: string;
   country?: string;

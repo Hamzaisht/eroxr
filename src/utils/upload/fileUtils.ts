@@ -1,52 +1,112 @@
 
 /**
- * Creates a unique file path for uploaded files
- * @param originalName Original file name
- * @returns Unique file path
+ * File utility functions for media uploads
  */
-export function createUniqueFilePath(originalName: string): string {
-  return `${Date.now()}-${originalName}`;
-}
 
 /**
- * Run diagnostic on a file to ensure it's valid
- * @param file File to check
+ * Runs a diagnostic analysis on a file to check its integrity and details
+ * @param file File to diagnose
  */
 export function runFileDiagnostic(file: File): void {
   if (!file) {
-    console.error("Invalid file: File is null or undefined");
+    console.error('Invalid file provided for diagnostic');
     return;
   }
   
-  console.log("File diagnostic:", {
+  console.log('File diagnostic:', {
     name: file.name,
-    size: file.size,
     type: file.type,
+    size: file.size,
     lastModified: new Date(file.lastModified).toISOString()
   });
-  
-  if (file.size === 0) {
-    console.error("Invalid file: File size is 0 bytes");
-  }
-  
-  if (!file.type) {
-    console.warn("Warning: File has no MIME type");
-  }
 }
 
 /**
- * Creates a temporary object URL for file preview
- * @param file File to preview
- * @returns Object URL for the file
+ * Creates a URL preview from a file
+ * @param file The file to preview
+ * @returns URL string for the preview
  */
 export function createFilePreview(file: File): string {
   return URL.createObjectURL(file);
 }
 
 /**
- * Revokes a previously created object URL to free up memory
- * @param url URL to revoke
+ * Revokes a created file preview URL
+ * @param url The URL to revoke
  */
 export function revokeFilePreview(url: string): void {
-  URL.revokeObjectURL(url);
+  if (url?.startsWith('blob:')) {
+    URL.revokeObjectURL(url);
+  }
+}
+
+/**
+ * Determines if a file is valid for upload
+ * @param file The file to validate
+ * @returns An object with validation result
+ */
+export function validateFileForUpload(file: File): { valid: boolean; error?: string } {
+  if (!file) {
+    return { valid: false, error: 'No file provided' };
+  }
+  
+  // Check if file is empty
+  if (file.size === 0) {
+    return { valid: false, error: 'File is empty' };
+  }
+  
+  // Limit file size (default: 100MB)
+  const MAX_SIZE = 100 * 1024 * 1024; // 100MB
+  if (file.size > MAX_SIZE) {
+    return { 
+      valid: false, 
+      error: `File size exceeds maximum limit of ${(MAX_SIZE / (1024 * 1024)).toFixed(0)}MB` 
+    };
+  }
+  
+  return { valid: true };
+}
+
+/**
+ * Checks if a file is an image
+ * @param file The file to check
+ * @returns Boolean indicating if file is an image
+ */
+export function isImageFile(file: File): boolean {
+  return file.type.startsWith('image/');
+}
+
+/**
+ * Checks if a file is a video
+ * @param file The file to check
+ * @returns Boolean indicating if file is a video
+ */
+export function isVideoFile(file: File): boolean {
+  return file.type.startsWith('video/');
+}
+
+/**
+ * Checks if a file is an audio file
+ * @param file The file to check
+ * @returns Boolean indicating if file is an audio
+ */
+export function isAudioFile(file: File): boolean {
+  return file.type.startsWith('audio/');
+}
+
+/**
+ * Gets a user-friendly size string
+ * @param bytes Size in bytes
+ * @returns Formatted size string (e.g., "1.5 MB")
+ */
+export function getFormattedFileSize(bytes: number): string {
+  if (bytes < 1024) {
+    return `${bytes} B`;
+  } else if (bytes < 1024 * 1024) {
+    return `${(bytes / 1024).toFixed(1)} KB`;
+  } else if (bytes < 1024 * 1024 * 1024) {
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  } else {
+    return `${(bytes / (1024 * 1024 * 1024)).toFixed(1)} GB`;
+  }
 }

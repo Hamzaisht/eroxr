@@ -209,11 +209,12 @@ export const QuickMatch = ({ ads, userProfile }: QuickMatchProps) => {
               <VideoProfileCard 
                 ad={{
                   ...currentAd,
-                  avatarUrl: currentAd.avatar_url,
-                  videoUrl: currentAd.video_url,
-                  isVerified: Boolean(currentAd.is_verified),
-                  isPremium: Boolean(currentAd.is_premium),
+                  avatarUrl: currentAd.avatar_url || currentAd.avatarUrl,
+                  videoUrl: currentAd.video_url || currentAd.videoUrl,
+                  isVerified: Boolean(currentAd.is_verified || currentAd.isVerified),
+                  isPremium: Boolean(currentAd.is_premium || currentAd.isPremium),
                   tags: currentAd.tags || [],
+                  location: currentAd.location || currentAd.city || 'Unknown location'
                 }} 
                 isActive={true} 
               />

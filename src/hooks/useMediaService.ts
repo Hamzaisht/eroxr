@@ -14,13 +14,16 @@ const isVideoUrl = (url: string): boolean => {
 export const useMediaService = () => {
   // Convert any media source to a standard format
   const normalizeMediaSource = useCallback((source: any): MediaSource => {
-    if (!source) return {};
+    if (!source) return {
+      url: '',
+      type: MediaType.UNKNOWN
+    };
 
     // If it's already a string, assume it's a direct URL
     if (typeof source === "string") {
       return {
         url: source,
-        media_type: isVideoUrl(source) ? MediaType.VIDEO : MediaType.IMAGE,
+        type: isVideoUrl(source) ? MediaType.VIDEO : MediaType.IMAGE,
       };
     }
 
@@ -31,10 +34,10 @@ export const useMediaService = () => {
     if (!mediaSource.url) {
       if (mediaSource.video_url) {
         mediaSource.url = mediaSource.video_url;
-        mediaSource.media_type = MediaType.VIDEO;
+        mediaSource.type = MediaType.VIDEO;
       } else if (mediaSource.media_url) {
         mediaSource.url = mediaSource.media_url;
-        mediaSource.media_type = isVideoUrl(mediaSource.media_url)
+        mediaSource.type = isVideoUrl(mediaSource.media_url)
           ? MediaType.VIDEO
           : MediaType.IMAGE;
       }
@@ -57,7 +60,7 @@ export const useMediaService = () => {
     if (source.poster) return source.poster;
 
     // If there's a thumbnail, use it
-    if (source.thumbnail_url) return source.thumbnail_url;
+    if (source.thumbnail) return source.thumbnail;
 
     return null;
   }, []);

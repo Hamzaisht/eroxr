@@ -75,7 +75,8 @@ export function UserMenu() {
   // Initialize status from profile data
   useEffect(() => {
     if (safeProfile?.status) {
-      setCurrentStatus(convertToStatus(safeProfile.status));
+      const statusValue = convertToStatus(safeProfile.status);
+      setCurrentStatus(statusValue);
     }
   }, [safeProfile]);
 

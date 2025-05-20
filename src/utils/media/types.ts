@@ -52,3 +52,12 @@ export interface UploadResult {
   fileType?: string;
   metadata?: Record<string, any>;
 }
+
+export interface UploadOptions {
+  maxSizeInMB?: number;
+  allowedTypes?: string[];
+  folderPath?: string;
+  bucket?: string;
+  metadata?: Record<string, any>;
+  onProgress?: (progress: number) => void;
+}
