@@ -1,10 +1,11 @@
+
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { CreatorCard } from "@/components/CreatorCard";
 import { useSession } from "@supabase/auth-helpers-react";
 import { safeCast } from "@/utils/supabase/helpers";
 import { Database } from "@/integrations/supabase/types/database.types";
-import { safeCreatorSubscriptionFilter } from "@/utils/supabase/type-guards";
+import { safeSubscriptionFilter } from "@/utils/supabase/type-guards";
 
 interface Creator {
   id: string;
