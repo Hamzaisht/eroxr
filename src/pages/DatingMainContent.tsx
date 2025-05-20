@@ -1,5 +1,3 @@
-
-// Updating the relevant parts only to fix type errors
 import { useState, useEffect, useMemo } from "react";
 import { DatingFiltersPanel } from "../components/dating/DatingFiltersPanel";
 import { DatingContent } from "../components/dating/DatingContent";
@@ -19,8 +17,8 @@ export interface DatingFiltersPanelProps {
   setMinAge: (age: number) => void;
   maxAge: number;
   setMaxAge: (age: number) => void;
-  selectedTags: string[];
-  setSelectedTags: (tags: string[]) => void;
+  selectedTag: string | null;
+  setSelectedTag: (tag: string | null) => void;
   selectedLookingFor: string[];
   setSelectedLookingFor: (lookingFor: string[]) => void;
   isFilterApplied: boolean;
@@ -32,8 +30,6 @@ export interface DatingFiltersPanelProps {
   setSelectedVerified: (verified: boolean) => void;
   selectedPremium: boolean;
   setSelectedPremium: (premium: boolean) => void;
-  selectedTag: string | null;
-  setSelectedTag: (tag: string | null) => void;
   distanceRange: [number, number];
   setDistanceRange: (range: [number, number]) => void;
 }
@@ -266,8 +262,8 @@ export default function DatingMainContent(props: any) {
         setMinAge={props.setMinAge || setMinAge}
         maxAge={props.maxAge || maxAge}
         setMaxAge={props.setMaxAge || setMaxAge}
-        selectedTags={props.selectedTags || selectedTags}
-        setSelectedTags={props.setSelectedTags || setSelectedTags}
+        selectedTag={props.selectedTag || selectedTag}
+        setSelectedTag={props.setSelectedTag || setSelectedTag}
         selectedLookingFor={props.selectedLookingFor || selectedLookingFor}
         setSelectedLookingFor={props.setSelectedLookingFor || setSelectedLookingFor}
         isFilterApplied={props.isFilterApplied || isFilterApplied}
@@ -279,8 +275,6 @@ export default function DatingMainContent(props: any) {
         setSelectedVerified={props.setSelectedVerified || setSelectedVerified}
         selectedPremium={props.selectedPremium || selectedPremium}
         setSelectedPremium={props.setSelectedPremium || setSelectedPremium}
-        selectedTag={props.selectedTag || selectedTag}
-        setSelectedTag={props.setSelectedTag || setSelectedTag}
         distanceRange={props.distanceRange || distanceRange}
         setDistanceRange={props.setDistanceRange || setDistanceRange}
       />
