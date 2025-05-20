@@ -120,8 +120,9 @@ export const ErosMode = () => {
         query = query.ilike('reason', `%${searchQuery}%`);
       }
 
+      // Use type-safe helper for status filtering
       if (statusFilter !== "all") {
-        const [statusColumn, statusValue] = safeReportFilter('status', statusFilter);
+        const [statusColumn, statusValue] = safeReportFilter('status', statusFilter as any);
         query = query.eq(statusColumn, statusValue);
       }
 
@@ -131,17 +132,25 @@ export const ErosMode = () => {
       if (error) throw error;
 
       // Type-safely process each report
-      const safeReports: ReportItem[] = Array.isArray(reports) ? 
-        reports.filter(exists).map(report => ({
-          id: safeGet(report, 'id') || '',
-          created_at: safeGet(report, 'created_at') || '',
-          reason: safeGet(report, 'reason') || '',
-          content_id: safeGet(report, 'content_id') || '',
-          content_type: safeGet(report, 'content_type') || '',
-          is_emergency: !!safeGet(report, 'is_emergency'),
-          status: safeGet(report, 'status') || '',
-          profiles: safeGet(report, 'profiles') || null
-        })) : [];
+      const safeReports: ReportItem[] = [];
+      
+      if (Array.isArray(reports)) {
+        for (const report of reports) {
+          if (exists(report)) {
+            // Build a safe report object using optional chaining and default values
+            safeReports.push({
+              id: safeGet(report, 'id') || '',
+              created_at: safeGet(report, 'created_at') || '',
+              reason: safeGet(report, 'reason') || '',
+              content_id: safeGet(report, 'content_id') || '',
+              content_type: safeGet(report, 'content_type') || '',
+              is_emergency: !!safeGet(report, 'is_emergency'),
+              status: safeGet(report, 'status') || '',
+              profiles: safeGet(report, 'profiles') || null
+            });
+          }
+        }
+      }
 
       return {
         items: safeReports,
@@ -197,7 +206,7 @@ export const ErosMode = () => {
         action_type: actionType,
         target_id: selectedReport.id,
         target_type: 'report',
-        details: { action: actionType }
+        details: { reason: actionReason }
       });
       
       const { error: logError } = await supabase

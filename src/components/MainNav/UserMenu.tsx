@@ -110,8 +110,11 @@ export function UserMenu() {
           break;
       }
       
-      // Use safe type helpers
-      const updates = safeProfileUpdate({ status: dbStatus });
+      // Create a safe update object
+      const updates = safeProfileUpdate({ 
+        status: dbStatus 
+      });
+      
       const [idColumn, idValue] = safeProfileFilter('id', session.user.id);
       
       const { error } = await supabase

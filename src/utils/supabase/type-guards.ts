@@ -34,6 +34,12 @@ export type LiveStreamUpdate = Tables['live_streams']['Update'];
 export type IdVerificationRow = Tables['id_verifications']['Row'];
 export type IdVerificationUpdate = Tables['id_verifications']['Update'];
 
+export type UserSubscriptionRow = Tables['user_subscriptions']['Row'];
+export type UserSubscriptionUpdate = Tables['user_subscriptions']['Update'];
+
+export type CreatorSubscriptionRow = Tables['creator_subscriptions']['Row'];
+export type CreatorSubscriptionUpdate = Tables['creator_subscriptions']['Update'];
+
 // Profile status type definition
 export type ProfileStatus = 'online' | 'offline' | 'away' | 'busy';
 
@@ -109,6 +115,9 @@ export function safeCreatorSubscriptionFilter<K extends keyof Tables['creator_su
 ): [string, any] {
   return [column as string, value];
 }
+
+// Adding alias for creator_subscriptions filter since this is being used in the code
+export const safeSubscriptionFilter = safeCreatorSubscriptionFilter;
 
 export function safeUserSubscriptionUpdate(data: Tables['user_subscriptions']['Update']): Tables['user_subscriptions']['Update'] {
   return data;

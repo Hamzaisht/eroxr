@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -59,7 +60,12 @@ export function TempDemoContent() {
           throw error;
         }
 
-        setData(profiles || []);
+        // Safely transform the data to ensure we have valid profile objects
+        const safeProfiles = Array.isArray(profiles) ? 
+          profiles.filter(profile => profile !== null && typeof profile === 'object') : 
+          [];
+          
+        setData(safeProfiles);
       } catch (error: any) {
         toast({
           title: "Error",
@@ -85,12 +91,12 @@ export function TempDemoContent() {
           {data.map((item, index) => (
             <Card key={index}>
               <CardHeader>
-                <CardTitle>{item.username || 'No Username'}</CardTitle>
-                <CardDescription>{item.email || 'No Email'}</CardDescription>
+                <CardTitle>{item?.username || 'No Username'}</CardTitle>
+                <CardDescription>{item?.email || 'No Email'}</CardDescription>
               </CardHeader>
               <CardContent>
-                <p>ID: {item && 'id' in item ? item.id : undefined}</p>
-                <p>Created At: {item.created_at || 'No Creation Date'}</p>
+                <p>ID: {item && 'id' in item ? item.id : 'Unknown'}</p>
+                <p>Created At: {item?.created_at || 'No Creation Date'}</p>
               </CardContent>
               <CardFooter>
                 <Button>View Details</Button>

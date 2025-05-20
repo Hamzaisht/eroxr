@@ -47,6 +47,7 @@ export function CreatePostDialog({ open, onOpenChange }: CreatePostDialogProps) 
     try {
       setIsSubmitting(true);
 
+      // Create a validated post data object using the type-safe helper
       const postData: PostInsert = {
         creator_id: session.user.id,
         content,
@@ -54,9 +55,12 @@ export function CreatePostDialog({ open, onOpenChange }: CreatePostDialogProps) 
         visibility: 'public',
       };
 
+      // Use the type-safe helper to ensure data conforms to expected types
+      const safeData = safePostInsert(postData);
+
       const { data, error } = await supabase
         .from('posts')
-        .insert(safePostInsert(postData))
+        .insert(safeData)
         .select();
 
       if (error) {
