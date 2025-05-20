@@ -1,51 +1,39 @@
 
-import { useState, useEffect } from "react";
-import { DatingAd } from "@/types/dating";
-import { VideoContent } from "./VideoContent";
-import { ProfileBadges } from "./ProfileBadges";
-import { ProfileInfo } from "./ProfileInfo";
-import { AdActions } from "./AdActions";
+import React from 'react';
+import { DatingAd } from '@/types/dating';
+import { ProfileInfo } from './ProfileInfo';
+import { VideoContent } from './VideoContent';
+import { ProfileBadges } from './ProfileBadges';
 
 export interface VideoProfileCardProps {
   ad: DatingAd;
-  isActive?: boolean;
   isPreviewMode?: boolean;
   isAnimation?: boolean;
+  isActive?: boolean; // Add the isActive prop to fix the type error
 }
 
-export const VideoProfileCard = ({ ad, isActive = false, isPreviewMode = false, isAnimation = false }: VideoProfileCardProps) => {
-  const [isPlaying, setIsPlaying] = useState(false);
-
-  useEffect(() => {
-    // Activate video based on active state
-    if (isActive) {
-      const timer = setTimeout(() => {
-        setIsPlaying(true);
-      }, 300);
-      return () => clearTimeout(timer);
-    } else {
-      setIsPlaying(false);
-    }
-  }, [isActive]);
-
+export const VideoProfileCard = ({ 
+  ad, 
+  isPreviewMode = false,
+  isAnimation = false,
+  isActive = false 
+}: VideoProfileCardProps) => {
   return (
-    <div className={`relative w-full h-full max-w-md mx-auto overflow-hidden rounded-xl bg-luxury-darker ${
-      isAnimation ? 'shadow-2xl' : ''
-    }`}>
+    <div className={`relative w-full max-w-sm mx-auto overflow-hidden rounded-2xl shadow-xl transition-all ${isAnimation ? 'h-[600px]' : 'h-auto'}`}>
+      {/* Video Content */}
       <VideoContent 
-        videoUrl={ad.videoUrl || ad.video_url || ""} 
-        avatarUrl={ad.avatarUrl || ad.avatar_url || ""} 
-        isPlaying={isPlaying}
+        ad={ad} 
+        isActive={isActive} 
+        isPreviewMode={isPreviewMode} 
       />
       
-      <ProfileBadges 
-        isPremium={ad.isPremium || ad.is_premium || false}
-        isVerified={ad.isVerified || ad.is_verified || false}
-      />
-      
-      <ProfileInfo ad={ad} isPreviewMode={!isActive} />
-      
-      {isActive && <AdActions ad={ad} />}
+      {/* Profile Info */}
+      <div className="absolute bottom-0 left-0 right-0 z-10 p-4 bg-gradient-to-t from-black/90 to-transparent">
+        <ProfileBadges ad={ad} />
+        <ProfileInfo ad={ad} />
+      </div>
     </div>
   );
 };
+
+export default VideoProfileCard;

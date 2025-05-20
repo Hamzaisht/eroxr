@@ -1,4 +1,3 @@
-
 // Updating the relevant parts only to fix type errors
 import { useState, useEffect, useMemo } from "react";
 import { DatingFiltersPanel } from "../components/dating/DatingFiltersPanel";
@@ -41,7 +40,7 @@ export interface DatingContentProps {
   handleFilterToggle: () => void;
 }
 
-export default function DatingMainContent() {
+export default function DatingMainContent(props: any) {
   const [datingAds, setDatingAds] = useState<DatingAd[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedTab, setSelectedTab] = useState("all");
@@ -243,38 +242,38 @@ export default function DatingMainContent() {
       
       {/* Filter Section */}
       <DatingFiltersPanel
-        isFilterCollapsed={isFilterCollapsed}
-        setIsFilterCollapsed={setIsFilterCollapsed}
-        showFilters={showFilters}
-        selectedCountry={selectedCountry}
-        setSelectedCountry={setSelectedCountry}
-        selectedGender={selectedGender}
-        setSelectedGender={setSelectedGender}
-        minAge={minAge}
-        setMinAge={setMinAge}
-        maxAge={maxAge}
-        setMaxAge={setMaxAge}
-        selectedTags={selectedTags}
-        setSelectedTags={setSelectedTags}
-        selectedLookingFor={selectedLookingFor}
-        setSelectedLookingFor={setSelectedLookingFor}
-        isFilterApplied={isFilterApplied}
-        handleApplyFilters={handleApplyFilters}
-        handleResetFilters={handleResetFilters}
-        selectedCity={selectedCity}
-        setSelectedCity={setSelectedCity}
+        isFilterCollapsed={props.isFilterCollapsed || isFilterCollapsed}
+        setIsFilterCollapsed={props.setIsFilterCollapsed || setIsFilterCollapsed}
+        showFilters={props.showFilters || showFilters}
+        selectedCountry={props.selectedCountry || selectedCountry}
+        setSelectedCountry={props.setSelectedCountry || setSelectedCountry}
+        selectedGender={props.selectedGender || selectedGender}
+        setSelectedGender={props.setSelectedGender || setSelectedGender}
+        minAge={props.minAge || minAge}
+        setMinAge={props.setMinAge || setMinAge}
+        maxAge={props.maxAge || maxAge}
+        setMaxAge={props.setMaxAge || setMaxAge}
+        selectedTags={props.selectedTags || selectedTags}
+        setSelectedTags={props.setSelectedTags || setSelectedTags}
+        selectedLookingFor={props.selectedLookingFor || selectedLookingFor}
+        setSelectedLookingFor={props.setSelectedLookingFor || setSelectedLookingFor}
+        isFilterApplied={props.isFilterApplied || isFilterApplied}
+        handleApplyFilters={props.handleApplyFilters || handleApplyFilters}
+        handleResetFilters={props.handleResetFilters || handleResetFilters}
+        selectedCity={props.selectedCity || selectedCity}
+        setSelectedCity={props.setSelectedCity || setSelectedCity}
       />
       
       {/* Content Section */}
       <DatingContent 
-        datingAds={filteredAds || []}
-        isLoading={isLoading}
-        activeTab={selectedTab}
-        userProfile={userProfile}
-        handleAdCreationSuccess={fetchDatingAds}
-        handleTagClick={handleTagClick}
-        handleTabChange={setSelectedTab}
-        handleFilterToggle={toggleFilters}
+        datingAds={props.datingAds || filteredAds || []}
+        isLoading={props.isLoading || isLoading}
+        activeTab={props.activeTab || selectedTab}
+        userProfile={props.userProfile || userProfile}
+        handleAdCreationSuccess={props.handleAdCreationSuccess || fetchDatingAds}
+        handleTagClick={props.handleTagClick || handleTagClick}
+        handleTabChange={props.setActiveTab || setSelectedTab}
+        handleFilterToggle={props.handleFilterToggle || toggleFilters}
       />
     </div>
   );

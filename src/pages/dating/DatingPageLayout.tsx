@@ -33,6 +33,8 @@ interface DatingPageLayoutProps extends Partial<DatingFiltersPanelProps> {
   nordicCountries?: any[];
   headerRef?: any;
   navigate?: NavigateFunction;
+  showFilters?: boolean;
+  setShowFilters?: (show: boolean) => void;
 }
 
 export const DatingPageLayout = (props: DatingPageLayoutProps) => {
@@ -67,8 +69,33 @@ export const DatingPageLayout = (props: DatingPageLayoutProps) => {
     setShowFilters(!showFilters);
   };
 
+  // Combine props with local state for complete data passing
+  const combinedProps = {
+    ...props,
+    isFilterCollapsed,
+    setIsFilterCollapsed,
+    showFilters: props.showFilters !== undefined ? props.showFilters : showFilters,
+    setShowFilters: props.setShowFilters || setShowFilters,
+    selectedGender,
+    setSelectedGender,
+    minAge,
+    setMinAge,
+    maxAge, 
+    setMaxAge,
+    selectedTags,
+    setSelectedTags,
+    selectedLookingFor: props.selectedLookingFor || selectedLookingFor,
+    setSelectedLookingFor: props.setSelectedLookingFor || setSelectedLookingFor,
+    isFilterApplied,
+    handleApplyFilters,
+    handleResetFilters: props.handleResetFilters || handleResetFilters,
+    handleFilterToggle: props.handleFilterToggle || handleFilterToggle,
+    selectedCity: props.selectedCity || selectedCity,
+    setSelectedCity: props.setSelectedCity || setSelectedCity
+  };
+
   return (
-    <DatingMainContent {...props} />
+    <DatingMainContent {...combinedProps} />
   );
 };
 
