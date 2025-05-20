@@ -45,7 +45,7 @@ export const UniversalMedia = forwardRef(({
   const mediaItem = useMemo(() => {
     const normalized = normalizeMediaSource(item);
     // If poster prop was passed, add it to the mediaSource
-    if (poster) {
+    if (poster && typeof normalized === 'object') {
       normalized.poster = poster;
     }
     return normalized;
@@ -59,7 +59,7 @@ export const UniversalMedia = forwardRef(({
       controls={controls}
       muted={muted}
       loop={loop}
-      poster={poster || mediaItem.poster}
+      poster={poster || (mediaItem as any).poster}
       showWatermark={showWatermark}
       showCloseButton={showCloseButton}
       onClick={onClick}

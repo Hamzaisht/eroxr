@@ -67,7 +67,7 @@ export interface LiveSession {
   title?: string;
   description?: string;
   started_at: string;
-  status: 'active' | 'idle' | 'ended' | 'flagged' | 'live';
+  status: SessionStatus | string;
   metadata?: Record<string, any>;
   participant_count?: number;
   content_id?: string;
@@ -110,11 +110,11 @@ export interface LiveAlert {
   created_at: string;
   content_type?: string;
   reason?: string;
-  severity: 'high' | 'medium' | 'low' | 'critical';  // Make severity required
+  severity: 'high' | 'medium' | 'low' | 'critical';
   contentId?: string;
   content_id?: string;
-  title?: string;
-  description?: string;
+  title: string;
+  description: string;
   isRead?: boolean;
   requiresAction?: boolean;
   session?: LiveSession;

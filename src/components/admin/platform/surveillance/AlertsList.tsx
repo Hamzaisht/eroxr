@@ -4,11 +4,12 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { formatDistanceToNow } from "date-fns";
 import { LiveAlert } from "@/types/alerts";
+import { LiveAlert as SurveillanceAlert } from "@/types/surveillance";
 
 interface AlertsListProps {
-  alerts: LiveAlert[];
+  alerts: LiveAlert[] | SurveillanceAlert[];
   isLoading: boolean;
-  onSelect?: (alert: LiveAlert) => void;
+  onSelect?: (alert: LiveAlert | SurveillanceAlert) => void;
 }
 
 export function AlertsList({ alerts, isLoading, onSelect }: AlertsListProps) {

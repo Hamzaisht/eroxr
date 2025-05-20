@@ -18,6 +18,6 @@ export interface LiveAlert {
   content_id?: string;
   session?: any;
   source?: string;
-  avatar_url?: string;  // Added for compatibility
-  requiresAction?: boolean;  // Added for compatibility
+  avatar_url?: string;
+  requiresAction?: boolean;
 }

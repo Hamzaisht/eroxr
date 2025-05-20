@@ -117,7 +117,7 @@ export const MessageContent = ({ message, isCurrentUser, onMediaClick }: Message
           item={{
             url: url,
             type: MediaType.AUDIO,
-            media_type: MediaType.AUDIO,
+            media_url: url,
             creator_id: message.sender_id || undefined
           }}
           className="w-full"

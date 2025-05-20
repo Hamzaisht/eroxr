@@ -156,7 +156,7 @@ export const SurveillanceTabs = ({ liveAlerts, onSelectAlert }: SurveillanceTabs
       
       <TabsContent value={SurveillanceTab.ALERTS}>
         <AlertsList 
-          alerts={liveAlerts} 
+          alerts={liveAlerts as any} 
           isLoading={isLoading} 
           onSelect={onSelectAlert}
         />

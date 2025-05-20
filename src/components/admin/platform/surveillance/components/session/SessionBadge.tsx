@@ -11,24 +11,34 @@ export const SessionBadge = ({ session }: SessionBadgeProps) => {
   const getBadgeVariant = () => {
     if (!session.status) return "secondary";
     
-    if (session.status === SessionStatus.ACTIVE || session.status === "active" || 
-        session.status === SessionStatus.LIVE || session.status === "live") {
-      return "success";
+    // Convert string status to enum if needed
+    const status = typeof session.status === 'string' 
+      ? session.status.toLowerCase() 
+      : session.status;
+    
+    // Check for active or live status
+    if (status === SessionStatus.ACTIVE || status === 'active' ||
+        status === SessionStatus.LIVE || status === 'live') {
+      return "default"; // Changed from success to default as success isn't a valid variant
     }
     
-    if (session.status === SessionStatus.IDLE || session.status === "idle") {
+    // Check for idle status
+    if (status === SessionStatus.IDLE || status === 'idle') {
       return "secondary";
     }
     
-    if (session.status === SessionStatus.ENDED || session.status === "ended") {
+    // Check for ended status
+    if (status === SessionStatus.ENDED || status === 'ended') {
       return "destructive";
     }
     
-    if (session.status === SessionStatus.FLAGGED || session.status === "flagged") {
+    // Check for flagged status
+    if (status === SessionStatus.FLAGGED || status === 'flagged') {
       return "destructive";
     }
     
-    if (session.status === SessionStatus.PAUSED || session.status === "paused") {
+    // Check for paused status
+    if (status === SessionStatus.PAUSED || status === 'paused') {
       return "warning";
     }
     
