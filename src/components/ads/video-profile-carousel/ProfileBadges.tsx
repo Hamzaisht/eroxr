@@ -1,34 +1,29 @@
 
+import React from 'react';
 import { Badge } from "@/components/ui/badge";
-import { DatingAd } from "@/types/dating";
-import { CheckCircle, Star } from "lucide-react";
+import { Check, Crown } from "lucide-react";
+import { ProfileBadgesProps } from './types';
 
-export interface ProfileBadgesProps {
-  ad: DatingAd;
-}
-
-export const ProfileBadges = ({ ad }: ProfileBadgesProps) => {
-  // Use either is_verified or isVerified property
-  const isVerified = ad.is_verified !== undefined ? ad.is_verified : ad.isVerified;
-  
-  // Use either is_premium or isPremium property
-  const isPremium = ad.is_premium !== undefined ? ad.is_premium : ad.isPremium;
+export function ProfileBadges({ ad }: ProfileBadgesProps) {
+  const isPremium = ad.isPremium || ad.is_premium;
+  const isVerified = ad.isVerified || ad.is_verified;
   
   return (
-    <div className="flex space-x-2 mb-2">
-      {isVerified && (
-        <Badge variant="outline" className="bg-green-500/20 border-green-500 text-white flex items-center gap-1 px-2">
-          <CheckCircle className="h-3 w-3" />
-          <span>Verified</span>
-        </Badge>
-      )}
-      
+    <div className="absolute top-4 left-0 right-0 z-20 px-4 flex justify-between items-center">
+      <div className="flex items-center gap-2">
+        {isVerified && (
+          <Badge variant="secondary" className="flex items-center gap-1 bg-blue-600/90 hover:bg-blue-700 text-white">
+            <Check className="h-3 w-3" />
+            <span>Verified</span>
+          </Badge>
+        )}
+      </div>
       {isPremium && (
-        <Badge variant="outline" className="bg-amber-500/20 border-amber-500 text-white flex items-center gap-1 px-2">
-          <Star className="h-3 w-3" />
+        <Badge variant="secondary" className="flex items-center gap-1 bg-amber-600/90 hover:bg-amber-700 text-white">
+          <Crown className="h-3 w-3" />
           <span>Premium</span>
         </Badge>
       )}
     </div>
   );
-};
+}

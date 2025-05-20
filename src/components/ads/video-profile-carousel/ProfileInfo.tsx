@@ -1,55 +1,51 @@
 
-import { Button } from '@/components/ui/button';
-import { Heart, MessageCircle, Share2 } from 'lucide-react';
-import { DatingAd } from '../types/dating';
-import { getAgeRangeValues } from '@/utils/dating/ageRangeUtils';
+import React from 'react';
+import { Badge } from "@/components/ui/badge";
+import { MapPin, Calendar } from "lucide-react";
+import { ProfileInfoProps } from './types';
 
-interface ProfileInfoProps {
-  ad: DatingAd;
-  isPreviewMode?: boolean;
-}
-
-export const ProfileInfo = ({ ad, isPreviewMode = false }: ProfileInfoProps) => {
-  const ageRange = getAgeRangeValues(ad.age_range);
-
+export function ProfileInfo({ ad, isPreviewMode = false }: ProfileInfoProps) {
   return (
-    <div className="absolute bottom-0 left-0 right-0 p-4 z-20 bg-gradient-to-t from-black to-transparent">
-      <div className="flex justify-between items-start">
-        <div>
-          <h3 className="text-xl font-bold text-white">{ad.title || ad.username}</h3>
-          <p className="text-sm text-gray-300">{ad.location || `${ad.city || ''}, ${ad.country || ''}`}</p>
-          
-          <div className="flex items-center gap-2 mt-1">
-            <span className="text-xs bg-white/20 backdrop-blur-sm px-2 py-0.5 rounded-full text-white">
-              Age {ad.age || `${ageRange.lower}-${ageRange.upper}`}
-            </span>
-            
-            {ad.tags && ad.tags.length > 0 && (
-              <span className="text-xs bg-white/20 backdrop-blur-sm px-2 py-0.5 rounded-full text-white">
-                #{ad.tags[0]}
-              </span>
-            )}
-            
-            {ad.tags && ad.tags.length > 1 && (
-              <span className="text-xs text-gray-400">+{ad.tags.length - 1} more</span>
-            )}
-          </div>
+    <div className={`flex flex-col gap-1 ${isPreviewMode ? "py-2" : "py-4"}`}>
+      <div className="flex items-baseline justify-between">
+        <h3 className="font-bold text-white text-lg truncate">{ad.title || 'Untitled Profile'}</h3>
+        {ad.age && <span className="text-white/90 text-sm">{ad.age} y/o</span>}
+      </div>
+      
+      <div className="flex items-center text-sm text-white/80 gap-2">
+        <div className="flex items-center gap-1">
+          <MapPin className="h-3.5 w-3.5" />
+          <span>{ad.location || ad.city || 'Unknown location'}</span>
         </div>
-        
-        {!isPreviewMode && (
-          <div className="flex gap-2">
-            <Button size="icon" variant="ghost" className="bg-white/10 text-white hover:bg-white/20">
-              <Heart className="h-4 w-4" />
-            </Button>
-            <Button size="icon" variant="ghost" className="bg-white/10 text-white hover:bg-white/20">
-              <MessageCircle className="h-4 w-4" />
-            </Button>
-            <Button size="icon" variant="ghost" className="bg-white/10 text-white hover:bg-white/20">
-              <Share2 className="h-4 w-4" />
-            </Button>
+        {ad.last_active && (
+          <div className="flex items-center gap-1">
+            <Calendar className="h-3.5 w-3.5" />
+            <span>{new Date(ad.last_active).toLocaleDateString()}</span>
           </div>
         )}
       </div>
+      
+      {ad.tags && ad.tags.length > 0 && (
+        <div className="flex flex-wrap gap-1 mt-2">
+          {ad.tags.slice(0, isPreviewMode ? 2 : 4).map((tag, index) => (
+            <Badge 
+              key={`${tag}-${index}`}
+              variant="outline" 
+              className="text-xs bg-black/30 text-white border-white/30"
+            >
+              {tag}
+            </Badge>
+          ))}
+          {ad.tags.length > (isPreviewMode ? 2 : 4) && (
+            <Badge 
+              variant="outline" 
+              className="text-xs bg-black/30 text-white border-white/30"
+            >
+              +{ad.tags.length - (isPreviewMode ? 2 : 4)}
+            </Badge>
+          )}
+        </div>
+      )}
     </div>
   );
-};
+}

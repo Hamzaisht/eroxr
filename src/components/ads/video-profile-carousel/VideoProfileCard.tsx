@@ -1,16 +1,9 @@
 
 import React from 'react';
-import { DatingAd } from '@/types/dating';
-import { ProfileInfo } from './ProfileInfo';
+import { VideoProfileCardProps } from './types';
 import { VideoContent } from './VideoContent';
 import { ProfileBadges } from './ProfileBadges';
-
-export interface VideoProfileCardProps {
-  ad: DatingAd;
-  isPreviewMode?: boolean;
-  isAnimation?: boolean;
-  isActive?: boolean;
-}
+import { ProfileInfo } from './ProfileInfo';
 
 export const VideoProfileCard = ({ 
   ad, 
@@ -24,13 +17,14 @@ export const VideoProfileCard = ({
       <VideoContent 
         ad={ad} 
         isActive={isActive} 
-        isPreviewMode={isPreviewMode} 
+        isPreviewMode={isPreviewMode}
+        isAnimation={isAnimation}
       />
       
       {/* Profile Info */}
       <div className="absolute bottom-0 left-0 right-0 z-10 p-4 bg-gradient-to-t from-black/90 to-transparent">
         <ProfileBadges ad={ad} />
-        <ProfileInfo ad={ad} />
+        <ProfileInfo ad={ad} isPreviewMode={isPreviewMode} />
       </div>
     </div>
   );
