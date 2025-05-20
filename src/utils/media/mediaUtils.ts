@@ -43,29 +43,26 @@ export function normalizeMediaSource(item: MediaSource | string): MediaSource {
     };
   }
 
-  // Ensure the object has a URL property
-  if (!item.url && (item.media_url || item.video_url)) {
-    const url = item.media_url || item.video_url || '';
-    const type = item.type || determineMediaType(url);
+  // Create a new object to avoid mutating the original
+  const normalized: MediaSource = { ...item };
 
-    return {
-      ...item,
-      url,
-      type,
-    };
+  // Handle legacy properties
+  if (!normalized.url) {
+    // Try to extract URL from various properties
+    normalized.url = normalized.media_url || normalized.video_url || '';
   }
 
-  // If item already has URL and type, return it as is
-  if (item.url && item.type) {
-    return item;
+  // Handle legacy type
+  if (!normalized.type && normalized.media_type) {
+    normalized.type = normalized.media_type;
   }
 
-  // Fallback - create a default MediaSource
-  return {
-    url: extractMediaUrl(item) || '',
-    type: item.type || MediaType.UNKNOWN,
-    thumbnail: item.thumbnail || undefined,
-  };
+  // Determine type if not set
+  if (!normalized.type) {
+    normalized.type = determineMediaType(normalized.url);
+  }
+
+  return normalized;
 }
 
 /**

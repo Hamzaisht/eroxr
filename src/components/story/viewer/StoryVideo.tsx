@@ -20,9 +20,8 @@ export const StoryVideo = forwardRef<HTMLVideoElement, StoryVideoProps>(
     
     const mediaItem = {
       url: videoUrl,
-      video_url: videoUrl,
-      creator_id: creatorId,
-      media_type: MediaType.VIDEO
+      type: MediaType.VIDEO,
+      creator_id: creatorId
     };
     
     const handleError = () => {

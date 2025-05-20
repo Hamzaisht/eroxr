@@ -13,6 +13,7 @@ export interface MediaRendererProps {
   loop?: boolean;
   poster?: string;
   showWatermark?: boolean;
+  showCloseButton?: boolean;
   onClick?: () => void;
   onLoad?: () => void;
   onError?: (error: any) => void;
@@ -32,6 +33,7 @@ export const MediaRenderer = forwardRef<HTMLVideoElement | HTMLImageElement, Med
   loop = false,
   poster,
   showWatermark = false,
+  showCloseButton = false,
   onClick,
   onLoad,
   onError,

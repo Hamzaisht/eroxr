@@ -18,6 +18,8 @@ export interface MediaSource extends GlobalMediaSource {
   video_url?: string;
   media_urls?: string[];
   video_urls?: string[];
+  creator_id?: string;
+  media_type?: MediaType;
 }
 
 export type MediaOptions = {
@@ -28,6 +30,7 @@ export type MediaOptions = {
   loop?: boolean;
   poster?: string;
   showWatermark?: boolean;
+  showCloseButton?: boolean;
   onClick?: () => void;
   onLoad?: () => void;
   onError?: (error: any) => void;

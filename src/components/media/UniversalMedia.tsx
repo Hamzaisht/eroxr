@@ -13,6 +13,7 @@ interface UniversalMediaProps {
   loop?: boolean;
   poster?: string;
   showWatermark?: boolean;
+  showCloseButton?: boolean;
   onClick?: () => void;
   onLoad?: () => void;
   onError?: (error: any) => void;
@@ -31,6 +32,7 @@ export const UniversalMedia = forwardRef(({
   loop = false,
   poster,
   showWatermark = false,
+  showCloseButton = false,
   onClick,
   onLoad,
   onError,
@@ -54,6 +56,7 @@ export const UniversalMedia = forwardRef(({
       loop={loop}
       poster={poster || mediaItem.poster}
       showWatermark={showWatermark}
+      showCloseButton={showCloseButton}
       onClick={onClick}
       onLoad={onLoad}
       onError={onError}

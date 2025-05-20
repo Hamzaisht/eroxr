@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { UniversalMedia } from './UniversalMedia';
-import { MediaType } from '@/utils/media/types';
+import { MediaType } from '@/types/media';
 
 interface WatermarkedMediaProps {
   src: string;

@@ -1,6 +1,6 @@
 
 import { useState, useRef, useEffect } from 'react';
-import { Play, Volume2, VolumeX } from 'lucide-react';
+import { Play, Volume2, VolumeX, X } from 'lucide-react';
 
 interface VideoPlayerProps {
   url: string;
@@ -11,6 +11,8 @@ interface VideoPlayerProps {
   loop?: boolean;
   playOnHover?: boolean;
   poster?: string;
+  showCloseButton?: boolean;
+  onClose?: () => void;
   onPlay?: () => void;
   onPause?: () => void;
   onError?: () => void;
@@ -26,6 +28,8 @@ export const VideoPlayer = ({
   loop = true,
   playOnHover = false,
   poster,
+  showCloseButton = false,
+  onClose,
   onPlay,
   onPause,
   onError,
@@ -108,6 +112,11 @@ export const VideoPlayer = ({
     }
   };
   
+  const handleClose = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (onClose) onClose();
+  };
+  
   return (
     <div 
       className={`relative ${className}`}
@@ -158,6 +167,15 @@ export const VideoPlayer = ({
             )}
           </button>
         </div>
+      )}
+      
+      {showCloseButton && (
+        <button
+          className="absolute top-2 right-2 bg-black/50 rounded-full p-1.5 text-white hover:bg-black/70 transition-colors z-10"
+          onClick={handleClose}
+        >
+          <X className="w-4 h-4" />
+        </button>
       )}
     </div>
   );
