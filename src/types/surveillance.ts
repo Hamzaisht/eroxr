@@ -28,7 +28,8 @@ export enum SessionStatus {
   IDLE = 'idle',
   ENDED = 'ended',
   FLAGGED = 'flagged',
-  PAUSED = 'paused'
+  PAUSED = 'paused',
+  LIVE = 'live'
 }
 
 // Define the enum values for content types
@@ -66,7 +67,7 @@ export interface LiveSession {
   title?: string;
   description?: string;
   started_at: string;
-  status: 'active' | 'idle' | 'ended';
+  status: 'active' | 'idle' | 'ended' | 'flagged' | 'live';
   metadata?: Record<string, any>;
   participant_count?: number;
   content_id?: string;
@@ -90,9 +91,33 @@ export interface LiveSession {
   participants?: number;
   recipient_avatar?: string;
   session?: any;
+  user?: any;
   location?: string; // Added for BodyContact sessions
   tags?: string[]; // Added for tagged sessions
   thumbnail_url?: string; // Added for streams
+}
+
+// Define the LiveAlert interface
+export interface LiveAlert {
+  id: string;
+  type: 'violation' | 'risk' | 'information';
+  alert_type: 'violation' | 'risk' | 'information';
+  user_id: string;
+  userId?: string;
+  username: string;
+  avatar_url?: string;
+  timestamp: string;
+  created_at: string;
+  content_type?: string;
+  reason?: string;
+  severity?: 'high' | 'medium' | 'low';
+  contentId?: string;
+  content_id?: string;
+  title?: string;
+  description?: string;
+  isRead?: boolean;
+  requiresAction?: boolean;
+  session?: LiveSession;
 }
 
 // Define the media source interface
@@ -119,6 +144,7 @@ export interface SurveillanceContentItem {
   content?: string;
   created_at: string;
   user_id: string;
+  creator_id?: string; // Added to fix errors
   creator_username?: string;
   creator_avatar_url?: string;
   creator_avatar?: string;
@@ -133,7 +159,6 @@ export interface SurveillanceContentItem {
   reason?: string;
   severity?: string;
   is_active?: boolean;
-  creator_id?: string; // Added to fix errors
   visibility?: string; // Added to fix errors
   views?: number; // Added to match usage
   likes?: number; // Added to match usage

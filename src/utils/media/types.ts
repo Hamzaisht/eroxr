@@ -37,6 +37,7 @@ export interface MediaSource {
   contentCategory?: string;
   thumbnail_url?: string;
   poster?: string;
+  thumbnail?: string;
   
   // Legacy properties (for backward compatibility)
   media_url?: string | string[];
@@ -44,7 +45,6 @@ export interface MediaSource {
   media_urls?: string[];
   video_urls?: string[];
   media_type?: MediaType | string;
-  thumbnail?: string;
   content_type?: string;
 }
 

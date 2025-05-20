@@ -2,7 +2,7 @@
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { useSurveillance } from "./SurveillanceContext";
 import { AlertsList } from "./AlertsList";
-import { LiveAlert } from "@/types/alerts";
+import { LiveAlert } from "@/types/surveillance";
 import { ContentSurveillanceTabs } from "./ContentSurveillanceTabs";
 import { CreatorEarningsSurveillance } from "./CreatorEarningsSurveillance";
 import { useState } from "react";

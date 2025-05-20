@@ -17,7 +17,6 @@ export function ContentSurveillanceTabs() {
       content_type: "image",
       type: "image",
       user_id: "user-123",
-      creator_id: "user-123", // Fixed property
       creator_username: "imagecreator",
       creator_avatar: "https://i.pravatar.cc/150?u=img1",
       created_at: new Date().toISOString(),
@@ -34,7 +33,6 @@ export function ContentSurveillanceTabs() {
       content_type: "image",
       type: "image",
       user_id: "user-456",
-      creator_id: "user-456", // Fixed property
       creator_username: "problematicuser",
       creator_avatar: "https://i.pravatar.cc/150?u=img2",
       created_at: new Date().toISOString(),
@@ -55,7 +53,6 @@ export function ContentSurveillanceTabs() {
       content_type: "video",
       type: "video",
       user_id: "user-789",
-      creator_id: "user-789", // Fixed property
       creator_username: "videocreator",
       creator_avatar: "https://i.pravatar.cc/150?u=vid1",
       created_at: new Date().toISOString(),
@@ -76,7 +73,6 @@ export function ContentSurveillanceTabs() {
       content_type: "text",
       type: "text",
       user_id: "user-101",
-      creator_id: "user-101", // Fixed property
       creator_username: "writer",
       creator_avatar: "https://i.pravatar.cc/150?u=txt1",
       created_at: new Date().toISOString(),
@@ -96,7 +92,6 @@ export function ContentSurveillanceTabs() {
       content_type: "audio",
       type: "audio",
       user_id: "user-202",
-      creator_id: "user-202", // Fixed property
       creator_username: "podcaster",
       creator_avatar: "https://i.pravatar.cc/150?u=aud1",
       created_at: new Date().toISOString(),

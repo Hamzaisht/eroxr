@@ -34,7 +34,7 @@ export interface DatingAd {
   // Profile details
   tags: string[];  // Making this required to resolve the type conflict
   location?: string;
-  age?: number;
+  age?: number;  // Changed to optional
   gender?: string;
   seeking?: string[];
   last_active?: string;

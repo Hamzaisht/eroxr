@@ -1,71 +1,116 @@
 
 import { useState, useEffect, useCallback } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { useSupabaseClient } from '@supabase/auth-helpers-react';
 import { LiveAlert } from '@/types/surveillance';
 
-interface UseGhostAlertsResult {
-  liveAlerts: LiveAlert[];
-  refreshAlerts: () => Promise<boolean>;
-}
-
-export const useGhostAlerts = (): UseGhostAlertsResult => {
+export function useGhostAlerts(isGhostMode: boolean) {
   const [liveAlerts, setLiveAlerts] = useState<LiveAlert[]>([]);
-  const [isRefreshing, setIsRefreshing] = useState(false);
-
-  const refreshAlerts = useCallback(async (): Promise<boolean> => {
-    setIsRefreshing(true);
-    try {
-      const { data: alerts, error } = await supabase
-        .from('alerts')
-        .select('*')
-        .order('timestamp', { ascending: false });
-
-      if (error) {
-        console.error("Error fetching alerts:", error);
-        setIsRefreshing(false);
-        return false;
-      }
-
-      if (alerts) {
-        // Type assertion to LiveAlert[]
-        setLiveAlerts(alerts as LiveAlert[]);
-      } else {
-        setLiveAlerts([]);
-      }
-
-      setIsRefreshing(false);
-      return true;
-    } catch (err) {
-      console.error("Unexpected error refreshing alerts:", err);
-      setIsRefreshing(false);
+  const supabase = useSupabaseClient();
+  
+  const refreshAlerts = useCallback(async () => {
+    if (!isGhostMode) {
+      setLiveAlerts([]);
       return false;
     }
-  }, []);
-
+    
+    try {
+      console.log('Refreshing alerts data for ghost mode');
+      
+      // Fetch reports
+      const { data: reportsData, error: reportsError } = await supabase
+        .from('reports')
+        .select('*, reporter:reporter_id(username, avatar_url), reported:reported_id(username, avatar_url)')
+        .eq('status', 'pending')
+        .order('created_at', { ascending: false })
+        .limit(20);
+        
+      if (reportsError) {
+        console.error('Error fetching reports:', reportsError);
+      }
+      
+      // Fetch flagged content
+      const { data: flaggedData, error: flaggedError } = await supabase
+        .from('flagged_content')
+        .select('*, user:user_id(username, avatar_url)')
+        .eq('status', 'flagged')
+        .order('flagged_at', { ascending: false })
+        .limit(20);
+        
+      if (flaggedError) {
+        console.error('Error fetching flagged content:', flaggedError);
+      }
+      
+      // Transform reports to LiveAlert format
+      const reportAlerts: LiveAlert[] = (reportsData || []).map(report => ({
+        id: report.id,
+        type: 'violation',
+        alert_type: 'violation',
+        userId: report.reported_id,
+        user_id: report.reported_id,
+        username: report.reported?.username || 'Unknown',
+        avatar_url: report.reported?.avatar_url || '',
+        timestamp: report.created_at,
+        created_at: report.created_at,
+        content_type: report.content_type || '',
+        reason: report.reason || '',
+        severity: report.is_emergency ? 'high' : 'medium',
+        contentId: report.content_id || '',
+        content_id: report.content_id || '',
+        title: `Content Report`,
+        description: report.description || 'No description provided',
+        isRead: false,
+        requiresAction: report.is_emergency || false
+      }));
+      
+      // Transform flagged content to LiveAlert format
+      const flaggedAlerts: LiveAlert[] = (flaggedData || []).map(flagged => ({
+        id: flagged.id,
+        type: 'risk',
+        alert_type: 'risk',
+        userId: flagged.user_id || '',
+        user_id: flagged.user_id || '',
+        username: flagged.user?.username || 'Unknown',
+        avatar_url: flagged.user?.avatar_url || '',
+        timestamp: flagged.flagged_at,
+        created_at: flagged.flagged_at,
+        content_type: flagged.content_type || '',
+        reason: flagged.reason || '',
+        severity: flagged.severity as 'high' | 'medium' | 'low',
+        contentId: flagged.content_id || '',
+        content_id: flagged.content_id || '',
+        title: `Flagged ${flagged.content_type}`,
+        description: flagged.notes || flagged.reason || '',
+        isRead: false,
+        requiresAction: flagged.severity === 'high'
+      }));
+      
+      // Combine all alerts
+      const allAlerts = [...reportAlerts, ...flaggedAlerts];
+      
+      // Sort by timestamp, newest first
+      allAlerts.sort((a, b) => {
+        const dateA = new Date(a.created_at || a.timestamp);
+        const dateB = new Date(b.created_at || b.timestamp);
+        return dateB.getTime() - dateA.getTime();
+      });
+      
+      setLiveAlerts(allAlerts);
+      console.log(`Loaded ${allAlerts.length} alerts for ghost mode`);
+      return true;
+      
+    } catch (error) {
+      console.error('Error refreshing alerts:', error);
+      return false;
+    }
+  }, [isGhostMode, supabase]);
+  
   useEffect(() => {
-    // Initial fetch of alerts
-    refreshAlerts();
-
-    // Setup real-time subscription
-    const alertsChannel = supabase
-      .channel('alerts-changes')
-      .on('postgres_changes', {
-        event: '*',
-        schema: 'public',
-        table: 'alerts',
-      }, (payload) => {
-        console.log('New alert activity:', payload);
-        refreshAlerts();
-      })
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(alertsChannel);
-    };
-  }, [refreshAlerts]);
-
-  return {
-    liveAlerts,
-    refreshAlerts,
-  };
-};
+    if (isGhostMode) {
+      refreshAlerts();
+    } else {
+      setLiveAlerts([]);
+    }
+  }, [isGhostMode, refreshAlerts]);
+  
+  return { liveAlerts, refreshAlerts };
+}

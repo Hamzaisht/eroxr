@@ -22,12 +22,12 @@ export const CarouselContainer = ({ ads, currentIndex, isActive }: CarouselConta
       <div className="absolute inset-0 flex items-center justify-center">
         {ads.map((ad, index) => {
           // Ensure all required props are present
-          const enrichedAd: DatingAd = {
+          const enrichedAd = {
             ...ad,
             tags: ad.tags || [],
             isPremium: ad.is_premium !== undefined ? ad.is_premium : ad.isPremium,
             isVerified: ad.is_verified !== undefined ? ad.is_verified : ad.isVerified,
-            avatarUrl: ad.avatarUrl || ad.avatar_url,
+            avatarUrl: ad.avatarUrl || ad.avatar_url || "",
             videoUrl: ad.videoUrl || ad.video_url
           };
           

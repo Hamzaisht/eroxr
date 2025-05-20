@@ -68,9 +68,10 @@ export const MessageContent = ({ message, isCurrentUser, onMediaClick }: Message
         ) : (
           <UniversalMedia
             item={{
+              url: url,
+              type: MediaType.IMAGE,
               media_url: url,
-              creator_id: message.sender_id,
-              media_type: MediaType.IMAGE
+              creator_id: message.sender_id
             }}
             className="w-full max-h-60 object-cover"
             showWatermark={false}
@@ -92,9 +93,10 @@ export const MessageContent = ({ message, isCurrentUser, onMediaClick }: Message
       <div key={`vid-${index}`} className="relative">
         <UniversalMedia
           item={{
+            url: url,
+            type: MediaType.VIDEO,
             video_url: url,
-            creator_id: message.sender_id,
-            media_type: MediaType.VIDEO
+            creator_id: message.sender_id
           }}
           className="w-full max-h-60 object-cover"
           showWatermark={false}
@@ -114,8 +116,9 @@ export const MessageContent = ({ message, isCurrentUser, onMediaClick }: Message
         <UniversalMedia
           item={{
             url: url,
-            creator_id: message.sender_id,
-            media_type: MediaType.AUDIO
+            type: MediaType.AUDIO,
+            media_type: MediaType.AUDIO,
+            creator_id: message.sender_id
           }}
           className="w-full"
           showWatermark={false}
@@ -132,9 +135,10 @@ export const MessageContent = ({ message, isCurrentUser, onMediaClick }: Message
       <div className="w-full overflow-hidden rounded-lg">
         <UniversalMedia
           item={{
+            url: message.video_url,
+            type: MediaType.VIDEO, 
             video_url: message.video_url,
-            creator_id: message.sender_id,
-            media_type: MediaType.VIDEO
+            creator_id: message.sender_id
           }}
           className="w-full max-h-60 object-cover"
           showWatermark={false}
