@@ -1,7 +1,7 @@
 
 export interface LiveAlert {
   id: string;
-  type: 'violation' | 'risk' | 'information';
+  type: 'violation' | 'risk' | 'information' | 'security' | 'system';
   alert_type: 'violation' | 'risk' | 'information';
   severity: 'low' | 'medium' | 'high' | 'critical';
   title: string;
@@ -17,4 +17,5 @@ export interface LiveAlert {
   user_id?: string;
   content_id?: string;
   session?: any;
+  source?: string;
 }

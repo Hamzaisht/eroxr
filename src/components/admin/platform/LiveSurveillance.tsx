@@ -5,7 +5,7 @@ import { SessionList } from "./surveillance/SessionList";
 import { SurveillanceTabs } from "./surveillance/SurveillanceTabs";
 import { GhostModePrompt } from "./surveillance/GhostModePrompt";
 import { SurveillanceProvider } from "./surveillance/SurveillanceContext";
-import { LiveSession } from "@/types/surveillance";
+import { LiveSession, SessionType } from "@/types/surveillance";
 import { LiveAlert } from "@/types/alerts";
 import { useLiveSurveillanceData } from "./surveillance/hooks/useLiveSurveillanceData";
 import { SurveillanceAlerts } from "./surveillance/components/SurveillanceAlerts";
@@ -56,12 +56,12 @@ export const LiveSurveillance = () => {
       // Create a minimal session object from the alert data
       const sessionFromAlert: LiveSession = {
         id: alert.id,
-        type: 'user',
+        type: SessionType.USER,  // Use the enum value instead of string
         user_id: alert.userId,
         username: alert.username || 'Unknown',
         status: 'active',
         started_at: alert.timestamp,
-        created_at: alert.created_at || alert.timestamp || new Date().toISOString(), // Make sure we always have created_at
+        created_at: alert.created_at || alert.timestamp || new Date().toISOString(),
         is_active: true,
       };
       

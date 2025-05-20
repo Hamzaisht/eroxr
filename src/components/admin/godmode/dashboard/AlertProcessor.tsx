@@ -10,7 +10,7 @@ const mapToLiveAlerts = (alerts: Partial<LiveAlert>[]): LiveAlert[] => {
     // Ensure each alert has all required properties
     return {
       id: alert.id || String(Math.random()),
-      type: alert.type || 'system',
+      type: alert.type || 'information',
       severity: alert.severity || 'medium',
       title: alert.title || 'Alert',
       description: alert.description || '',
@@ -29,7 +29,7 @@ const mapToLiveAlerts = (alerts: Partial<LiveAlert>[]): LiveAlert[] => {
 const mockAlerts: Partial<LiveAlert>[] = [
   {
     id: "1",
-    type: 'security',
+    type: 'violation', // Changed from 'security' to 'violation'
     userId: "user-123",
     username: "suspicious_user",
     timestamp: new Date().toISOString(),
@@ -43,7 +43,7 @@ const mockAlerts: Partial<LiveAlert>[] = [
   },
   {
     id: "2",
-    type: 'system',
+    type: 'information', // Changed from 'system' to 'information'
     userId: "user-234",
     username: "potential_bot",
     timestamp: new Date(Date.now() - 15 * 60000).toISOString(),
