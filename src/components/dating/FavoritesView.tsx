@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { DatingAd } from '@/components/ads/types/dating';
@@ -10,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Heart, Trash2, MessageCircle, Clock } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { FullscreenAdViewer } from '@/components/ads/video-profile/FullscreenAdViewer';
+import { getAgeRangeValues } from '@/utils/dating/ageRangeUtils';
 
 interface FavoritesViewProps {
   userProfile: DatingAd | null;
@@ -135,90 +135,94 @@ export const FavoritesView = ({ userProfile }: FavoritesViewProps) => {
       <h2 className="text-xl font-semibold text-luxury-primary">Your Favorites</h2>
       
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {favorites.map((profile) => (
-          <motion.div
-            key={profile.id}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3 }}
-            className="relative bg-luxury-darker/50 backdrop-blur-sm border border-luxury-primary/10 rounded-xl overflow-hidden"
-          >
-            <div 
-              className="cursor-pointer"
-              onClick={() => setSelectedProfile(profile)}
+        {favorites.map((profile) => {
+          const ageRange = getAgeRangeValues(profile.age_range);
+          
+          return (
+            <motion.div
+              key={profile.id}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3 }}
+              className="relative bg-luxury-darker/50 backdrop-blur-sm border border-luxury-primary/10 rounded-xl overflow-hidden"
             >
-              <div className="relative h-40 bg-gradient-to-b from-luxury-primary/5 to-luxury-dark/30">
-                <Avatar className="absolute top-4 left-4 w-20 h-20 border-2 border-luxury-primary/20">
-                  <AvatarImage src={profile.avatar_url || undefined} alt={profile.title} />
-                  <AvatarFallback className="bg-luxury-primary/20 text-luxury-primary text-xl">
-                    {profile.title?.charAt(0).toUpperCase()}
-                  </AvatarFallback>
-                </Avatar>
-              </div>
-              
-              <div className="p-4">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <h3 className="text-lg font-medium text-white">{profile.title}</h3>
-                    <p className="text-sm text-luxury-neutral">{profile.city}, {profile.country}</p>
-                    <div className="flex items-center mt-1 text-xs text-luxury-neutral">
-                      <Clock className="h-3 w-3 mr-1" />
-                      <span>{profile.last_active ? formatDistanceToNow(new Date(profile.last_active), { addSuffix: true }) : 'Unknown'}</span>
-                    </div>
-                  </div>
-                  <div className="flex flex-col items-end gap-1">
-                    <span className="text-xs font-medium bg-luxury-primary/10 text-luxury-primary px-2 py-1 rounded-full">
-                      {profile.relationship_status}
-                    </span>
-                    <span className="text-xs font-medium bg-luxury-primary/10 text-luxury-primary px-2 py-1 rounded-full">
-                      {profile.age_range.lower}-{profile.age_range.upper}
-                    </span>
-                  </div>
+              <div 
+                className="cursor-pointer"
+                onClick={() => setSelectedProfile(profile)}
+              >
+                <div className="relative h-40 bg-gradient-to-b from-luxury-primary/5 to-luxury-dark/30">
+                  <Avatar className="absolute top-4 left-4 w-20 h-20 border-2 border-luxury-primary/20">
+                    <AvatarImage src={profile.avatar_url || undefined} alt={profile.title} />
+                    <AvatarFallback className="bg-luxury-primary/20 text-luxury-primary text-xl">
+                      {profile.title?.charAt(0).toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
                 </div>
                 
-                {profile.tags && profile.tags.length > 0 && (
-                  <div className="flex flex-wrap gap-1 mt-3">
-                    {profile.tags.slice(0, 3).map((tag, i) => (
-                      <span 
-                        key={i} 
-                        className="text-xs bg-luxury-primary/5 border border-luxury-primary/10 text-luxury-neutral px-2 py-0.5 rounded-full"
-                      >
-                        {tag}
+                <div className="p-4">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <h3 className="text-lg font-medium text-white">{profile.title}</h3>
+                      <p className="text-sm text-luxury-neutral">{profile.city}, {profile.country}</p>
+                      <div className="flex items-center mt-1 text-xs text-luxury-neutral">
+                        <Clock className="h-3 w-3 mr-1" />
+                        <span>{profile.last_active ? formatDistanceToNow(new Date(profile.last_active), { addSuffix: true }) : 'Unknown'}</span>
+                      </div>
+                    </div>
+                    <div className="flex flex-col items-end gap-1">
+                      <span className="text-xs font-medium bg-luxury-primary/10 text-luxury-primary px-2 py-1 rounded-full">
+                        {profile.relationship_status}
                       </span>
-                    ))}
-                    {profile.tags.length > 3 && (
-                      <span className="text-xs bg-luxury-primary/5 border border-luxury-primary/10 text-luxury-neutral px-2 py-0.5 rounded-full">
-                        +{profile.tags.length - 3}
+                      <span className="text-xs font-medium bg-luxury-primary/10 text-luxury-primary px-2 py-1 rounded-full">
+                        {ageRange.lower}-{ageRange.upper}
                       </span>
-                    )}
+                    </div>
                   </div>
-                )}
+                  
+                  {profile.tags && profile.tags.length > 0 && (
+                    <div className="flex flex-wrap gap-1 mt-3">
+                      {profile.tags.slice(0, 3).map((tag, i) => (
+                        <span 
+                          key={i} 
+                          className="text-xs bg-luxury-primary/5 border border-luxury-primary/10 text-luxury-neutral px-2 py-0.5 rounded-full"
+                        >
+                          {tag}
+                        </span>
+                      ))}
+                      {profile.tags.length > 3 && (
+                        <span className="text-xs bg-luxury-primary/5 border border-luxury-primary/10 text-luxury-neutral px-2 py-0.5 rounded-full">
+                          +{profile.tags.length - 3}
+                        </span>
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
-            
-            <div className="flex border-t border-luxury-primary/10">
-              <Button
-                variant="ghost"
-                size="sm"
-                className="flex-1 rounded-none py-3 text-luxury-neutral hover:text-red-500 hover:bg-red-500/10"
-                onClick={() => handleRemoveFavorite(profile.id)}
-              >
-                <Trash2 className="h-4 w-4 mr-2" />
-                Remove
-              </Button>
               
-              <Button
-                variant="ghost"
-                size="sm"
-                className="flex-1 rounded-none py-3 text-luxury-neutral hover:text-luxury-primary hover:bg-luxury-primary/10"
-                onClick={() => handleMessageProfile(profile)}
-              >
-                <MessageCircle className="h-4 w-4 mr-2" />
-                Message
-              </Button>
-            </div>
-          </motion.div>
-        ))}
+              <div className="flex border-t border-luxury-primary/10">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="flex-1 rounded-none py-3 text-luxury-neutral hover:text-red-500 hover:bg-red-500/10"
+                  onClick={() => handleRemoveFavorite(profile.id)}
+                >
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Remove
+                </Button>
+                
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="flex-1 rounded-none py-3 text-luxury-neutral hover:text-luxury-primary hover:bg-luxury-primary/10"
+                  onClick={() => handleMessageProfile(profile)}
+                >
+                  <MessageCircle className="h-4 w-4 mr-2" />
+                  Message
+                </Button>
+              </div>
+            </motion.div>
+          );
+        })}
       </div>
       
       {selectedProfile && (

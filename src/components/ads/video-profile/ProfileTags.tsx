@@ -1,6 +1,7 @@
 
 import { XCircle } from "lucide-react";
-import { DatingAd, getAgeRangeValues } from "@/types/dating";
+import { DatingAd } from "@/types/dating";
+import { getAgeRangeValues } from "@/utils/dating/ageRangeUtils";
 
 interface ProfileTagsProps {
   ad: DatingAd;

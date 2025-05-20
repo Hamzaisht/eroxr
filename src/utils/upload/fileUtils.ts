@@ -1,60 +1,57 @@
 
+// Helper functions for file uploads
+
 /**
- * Creates a unique file path for storage based on user ID and file
+ * Creates a preview URL from a file
  */
-export const createUniqueFilePath = (userId: string, file: File | string): string => {
-  const timestamp = Date.now();
-  let fileExt = 'jpg'; // Default extension
+export function createFilePreview(file: File): string {
+  return URL.createObjectURL(file);
+}
+
+/**
+ * Revokes a preview URL to free browser memory
+ */
+export function revokeFilePreview(preview: string): void {
+  URL.revokeObjectURL(preview);
+}
+
+/**
+ * Runs diagnostic checks on a file to ensure it meets requirements
+ */
+export function runFileDiagnostic(file: File, options?: { 
+  maxSizeMB?: number;
+  allowedTypes?: string[];
+}): { valid: boolean; message?: string } {
+  const maxSizeMB = options?.maxSizeMB || 50; // Default 50MB
+  const allowedTypes = options?.allowedTypes || ['image/*', 'video/*'];
   
-  if (typeof file === 'object' && file instanceof File) {
-    fileExt = file.name.split('.').pop() || 'jpg';
-  } else if (typeof file === 'string') {
-    // Try to extract extension from string (URL or base64)
-    const matches = file.match(/\.([0-9a-z]+)(?:[\?#]|$)/i);
-    if (matches && matches[1]) {
-      fileExt = matches[1];
+  // Check file size
+  const fileSizeMB = file.size / (1024 * 1024);
+  if (fileSizeMB > maxSizeMB) {
+    return {
+      valid: false,
+      message: `File too large (${fileSizeMB.toFixed(2)}MB). Maximum size is ${maxSizeMB}MB.`
+    };
+  }
+  
+  // Check file type
+  const fileType = file.type;
+  const isAllowedType = allowedTypes.some(type => {
+    if (type.endsWith('/*')) {
+      const category = type.split('/')[0];
+      return fileType.startsWith(`${category}/`);
     }
+    return fileType === type;
+  });
+  
+  if (!isAllowedType) {
+    return {
+      valid: false,
+      message: `File type not allowed. Allowed types: ${allowedTypes.join(', ')}`
+    };
   }
   
-  return `${userId}/${timestamp}-${Math.random().toString(36).substring(2, 9)}.${fileExt}`;
-};
-
-/**
- * Runs diagnostic checks on a file object
- */
-export const runFileDiagnostic = (file: File | Blob): { valid: boolean, error?: string } => {
-  if (!file) {
-    return { valid: false, error: 'No file provided' };
-  }
-  
-  if (!(file instanceof File) && !(file instanceof Blob)) {
-    return { valid: false, error: 'Invalid file object type' };
-  }
-  
-  if (file.size === 0) {
-    return { valid: false, error: 'File is empty (0 bytes)' };
-  }
-  
-  return { valid: true };
-};
-
-/**
- * Create a preview URL for a file
- */
-export const createFilePreview = (file: File): string => {
-  try {
-    return URL.createObjectURL(file);
-  } catch (error) {
-    console.error('Error creating file preview:', error);
-    return '';
-  }
-};
-
-/**
- * Revoke a file preview URL to prevent memory leaks
- */
-export const revokeFilePreview = (url: string): void => {
-  if (url && url.startsWith('blob:')) {
-    URL.revokeObjectURL(url);
-  }
-};
+  return {
+    valid: true
+  };
+}

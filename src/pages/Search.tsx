@@ -1,144 +1,152 @@
-// Update only the CreatorCard usage to fix the type errors
-import { useState, useEffect } from "react";
-import { useSearchParams } from "react-router-dom";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { CreatorCard } from "@/components/CreatorCard";
-import { Search as SearchIcon } from "lucide-react";
 
-// Define CreatorCardProps interface to match what's expected by CreatorCard
-interface CreatorCardProps {
-  creator: {
-    id: string;
-    username: string;
-    avatarUrl: string;
-    bannerUrl: string;
-    bio: string;
-    subscriberCount: number;
-  }
-}
+import React, { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
+import { useSearchParams } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
+import { CreatorCard } from '@/components/CreatorCard';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Search as SearchIcon } from 'lucide-react';
 
 export default function Search() {
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [query, setQuery] = useState(searchParams.get('q') || '');
   const [results, setResults] = useState<any[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const itemsPerPage = 12;
-
-  const [searchParams] = useSearchParams();
+  const [isLoading, setIsLoading] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const resultsPerPage = 12;
 
   useEffect(() => {
-    const query = searchParams.get("q") || "";
-    setSearchQuery(query);
+    const searchQuery = searchParams.get('q');
+    if (searchQuery) {
+      setQuery(searchQuery);
+      performSearch(searchQuery);
+    } else {
+      loadPopularCreators();
+    }
   }, [searchParams]);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      if (!searchQuery) {
-        setResults([]);
-        return;
-      }
-
-      setLoading(true);
-      try {
-        // Simulate fetching data from an API
-        await new Promise((resolve) => setTimeout(resolve, 500));
-
-        const mockResults = Array.from({ length: itemsPerPage }, (_, i) => ({
-          id: `creator-${page}-${i}`,
-          name: `Creator ${searchQuery} ${page}-${i}`,
-          image: `https://source.unsplash.com/random/100x100?sig=${page * itemsPerPage + i}`,
-          banner: "https://source.unsplash.com/random/800x200",
-          description: `A cool creator who searches for ${searchQuery}`,
-          subscribers: Math.floor(Math.random() * 1000),
-        }));
-
-        setResults(mockResults);
-        setTotalPages(5); // Simulate total pages
-      } catch (error) {
-        console.error("Failed to fetch data", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
-  }, [searchQuery, page, itemsPerPage]);
-
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchQuery(e.target.value);
-    setPage(1); // Reset page when search query changes
+  const performSearch = async (searchTerm: string) => {
+    setIsLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id, username, avatar_url, banner_url, bio, subscriber_count')
+        .ilike('username', `%${searchTerm}%`)
+        .order('subscriber_count', { ascending: false })
+        .limit(resultsPerPage);
+      
+      if (error) throw error;
+      setResults(data || []);
+    } catch (error) {
+      console.error('Search error:', error);
+      setResults([]);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const handlePageChange = (newPage: number) => {
-    setPage(newPage);
+  const loadPopularCreators = async () => {
+    setIsLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id, username, avatar_url, banner_url, bio, subscriber_count')
+        .order('subscriber_count', { ascending: false })
+        .limit(resultsPerPage);
+      
+      if (error) throw error;
+      setResults(data || []);
+    } catch (error) {
+      console.error('Error loading popular creators:', error);
+      setResults([]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (query.trim()) {
+      setSearchParams({ q: query });
+    } else {
+      setSearchParams({});
+    }
   };
 
   return (
-    <div className="container mx-auto py-6">
-      {/* Search Form */}
-      <div className="flex items-center space-x-2 mb-4">
-        <Input
-          type="text"
-          placeholder="Search creators..."
-          value={searchQuery}
-          onChange={handleSearchChange}
-          className="flex-grow"
-        />
-        <Button>
-          <SearchIcon className="w-4 h-4 mr-2" />
-          Search
-        </Button>
-      </div>
+    <div className="container py-8">
+      <h1 className="text-3xl font-bold mb-4">Search</h1>
       
-      <Tabs defaultValue="all" className="w-full mt-6">
-        <TabsList>
-          <TabsTrigger value="all">All</TabsTrigger>
-          <TabsTrigger value="creators">Creators</TabsTrigger>
-          <TabsTrigger value="categories">Categories</TabsTrigger>
-        </TabsList>
-        
-        <TabsContent value="all">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {results?.map((creator) => (
+      {/* Search Form */}
+      <form onSubmit={handleSearch} className="mb-6">
+        <div className="relative">
+          <Input
+            type="text"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search for creators..."
+            className="bg-luxury-darker/50 border-luxury-primary/20 pl-10"
+          />
+          <SearchIcon className="absolute left-3 top-2.5 h-5 w-5 text-gray-500" />
+          <Button type="submit" className="absolute right-1 top-1">
+            Search
+          </Button>
+        </div>
+      </form>
+      
+      {/* Results */}
+      <div className="mb-4">
+        <h2 className="text-xl font-semibold mb-2">
+          {searchParams.get('q') ? `Results for "${searchParams.get('q')}"` : 'Popular Creators'}
+        </h2>
+        {isLoading ? (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {[...Array(6)].map((_, i) => (
+              <div key={i} className="bg-luxury-darker/50 h-48 rounded-lg animate-pulse"></div>
+            ))}
+          </div>
+        ) : results.length === 0 ? (
+          <div className="text-center py-10">
+            <p className="text-gray-500">No results found.</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {results.map((creator) => (
               <CreatorCard
                 key={creator.id}
-                creator={{
-                  id: creator.id,
-                  username: creator.name,
-                  avatarUrl: creator.image,
-                  bannerUrl: creator.banner,
-                  bio: creator.description,
-                  subscriberCount: creator.subscribers
-                }}
+                id={creator.id}
+                name={creator.username}
+                image={creator.avatar_url}
+                banner={creator.banner_url || ""}
+                description={creator.bio}
+                subscribers={creator.subscriber_count || 0}
+                creatorId={creator.id}
               />
             ))}
           </div>
-          {/* Pagination */}
-          <div className="flex justify-center mt-8">
-            {Array.from({ length: totalPages }, (_, i) => (
-              <Button
-                key={i}
-                variant={page === i + 1 ? "default" : "outline"}
-                onClick={() => handlePageChange(i + 1)}
-                disabled={loading}
-              >
-                {i + 1}
-              </Button>
-            ))}
-          </div>
-        </TabsContent>
-        
-        <TabsContent value="creators">
-          <p>Specific creator results will go here.</p>
-        </TabsContent>
-        
-        <TabsContent value="categories">
-          <p>Category-specific results will go here.</p>
-        </TabsContent>
-      </Tabs>
+        )}
+      </div>
+      
+      {/* Pagination */}
+      {results.length > 0 && (
+        <div className="flex justify-center mt-8">
+          <Button 
+            variant="outline"
+            disabled={currentPage === 1} 
+            onClick={() => setCurrentPage(currentPage - 1)}
+            className="mr-2"
+          >
+            Previous
+          </Button>
+          <Button 
+            variant="outline"
+            onClick={() => setCurrentPage(currentPage + 1)}
+          >
+            Next
+          </Button>
+        </div>
+      )}
     </div>
   );
 }

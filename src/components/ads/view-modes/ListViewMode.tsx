@@ -1,113 +1,116 @@
 
-import { DatingAd, getAgeRangeValues } from "@/types/dating"; 
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { getAgeRangeValues } from "@/utils/dating/ageRangeUtils";
 import { VerifiedBadge } from "../badges/VerifiedBadge";
 import { PremiumBadge } from "../badges/PremiumBadge";
 import { DistanceBadge } from "../badges/DistanceBadge";
 import { MessageButton } from "../buttons/MessageButton";
 import { LikeButton } from "../buttons/LikeButton";
 import { ViewButton } from "../buttons/ViewButton";
+import { DatingAd } from "../types/dating";
 
-interface ListViewModeProps {
+export interface ListViewModeProps {
   ads: DatingAd[];
-  onTagClick: (tag: string) => void;
   isLoading?: boolean;
-  onAdAction: (adId: string, action: string) => void;
+  userProfile?: DatingAd | null;
+  onViewProfile?: (ad: DatingAd) => void;
+  onLikeProfile?: (ad: DatingAd, liked: boolean) => void;
+  onMessageProfile?: (ad: DatingAd) => void;
 }
 
-export const ListViewMode = ({
-  ads,
-  onTagClick,
-  isLoading = false,
-  onAdAction
+export const ListViewMode = ({ 
+  ads, 
+  isLoading = false, 
+  userProfile = null,
+  onViewProfile,
+  onLikeProfile,
+  onMessageProfile
 }: ListViewModeProps) => {
   if (isLoading) {
     return (
-      <div className="space-y-4">
-        {[1, 2, 3].map((i) => (
-          <div key={i} className="bg-luxury-dark/50 backdrop-blur-sm rounded-xl border border-luxury-primary/10 overflow-hidden h-32 animate-pulse"></div>
-        ))}
+      <div className="flex justify-center items-center h-64">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-luxury-primary"></div>
       </div>
     );
   }
-
-  if (ads.length === 0) {
+  
+  if (!ads || ads.length === 0) {
     return (
-      <div className="text-center py-8">
-        <p className="text-luxury-neutral/70">No ads match your criteria</p>
+      <div className="text-center py-10 bg-luxury-darker/30 rounded-lg border border-luxury-primary/10">
+        <p className="text-luxury-neutral">No profiles found matching your criteria.</p>
       </div>
     );
   }
-
+  
   return (
     <div className="space-y-4">
       {ads.map((ad) => {
         const ageRange = getAgeRangeValues(ad.age_range);
+        
         return (
-          <div key={ad.id} className="bg-luxury-dark/50 backdrop-blur-sm rounded-xl border border-luxury-primary/10 overflow-hidden">
-            <div className="flex p-4 gap-4">
-              {/* Avatar section */}
-              <div className="flex-shrink-0">
-                <div className="relative h-20 w-20">
-                  <img
-                    src={ad.avatarUrl || ad.avatar_url}
-                    alt={ad.title}
-                    className="h-full w-full object-cover rounded-lg"
-                  />
-                </div>
-              </div>
-              
-              {/* Content section */}
-              <div className="flex-grow">
-                <div className="flex justify-between mb-1">
-                  <h3 className="font-medium text-xl">{ad.title}</h3>
-                  <div className="flex gap-1">
-                    {ad.isVerified && <VerifiedBadge />}
-                    {ad.isPremium && <PremiumBadge />}
+          <div 
+            key={ad.id} 
+            className="flex bg-luxury-darker/50 backdrop-blur-sm border border-luxury-primary/10 rounded-xl overflow-hidden hover:border-luxury-primary/30 transition-all"
+          >
+            <div className="w-48 h-48 bg-luxury-darker overflow-hidden flex-shrink-0">
+              <img 
+                src={ad.avatarUrl || ad.avatar_url || "https://via.placeholder.com/200"} 
+                alt={ad.title} 
+                className="w-full h-full object-cover"
+              />
+            </div>
+            
+            <div className="p-4 flex-1">
+              <div className="flex flex-col h-full">
+                <div className="flex justify-between">
+                  <div>
+                    <h3 className="text-xl font-medium text-white">{ad.title || ad.username}</h3>
+                    <p className="text-sm text-luxury-neutral mt-1">{ad.location || `${ad.city || ''}, ${ad.country || ''}`}</p>
+                  </div>
+                  
+                  <div className="flex gap-2">
+                    {(ad.isVerified || ad.is_verified) && <VerifiedBadge />}
+                    {(ad.isPremium || ad.is_premium) && <PremiumBadge />}
                   </div>
                 </div>
                 
-                <div className="flex text-xs text-luxury-neutral gap-2 mb-2">
-                  <span>{ageRange.lower} - {ageRange.upper} years</span>
-                  <span>•</span>
-                  <span>{ad.location || `${ad.city}, ${ad.country}`}</span>
-                  <span>•</span>
+                <div className="flex items-center gap-2 mt-2">
+                  <span className="bg-luxury-primary/10 text-luxury-primary/90 text-xs px-2 py-0.5 rounded-full">
+                    {ageRange.lower}-{ageRange.upper} years
+                  </span>
+                  
                   <DistanceBadge distance={10} />
-                </div>
-                
-                <p className="text-sm text-luxury-neutral/80 line-clamp-1 mb-2">
-                  {ad.description}
-                </p>
-                
-                <div className="flex flex-wrap gap-1 mb-3">
-                  {ad.tags?.slice(0, 3).map((tag) => (
-                    <span
-                      key={tag}
-                      className="px-2 py-0.5 bg-luxury-primary/10 hover:bg-luxury-primary/20 text-luxury-primary/90 rounded text-xs cursor-pointer transition-colors"
-                      onClick={() => onTagClick(tag)}
-                    >
-                      {tag}
-                    </span>
-                  ))}
-                  {ad.tags && ad.tags.length > 3 && (
-                    <span className="px-2 py-0.5 bg-luxury-primary/5 text-luxury-neutral/60 rounded text-xs">
-                      +{ad.tags.length - 3}
+                  
+                  {ad.relationship_status && (
+                    <span className="bg-luxury-primary/10 text-luxury-primary/90 text-xs px-2 py-0.5 rounded-full">
+                      {ad.relationship_status}
                     </span>
                   )}
                 </div>
-              </div>
-              
-              {/* Actions section */}
-              <div className="flex flex-col justify-between items-end">
-                <div className="text-xs text-luxury-neutral/60">
-                  {ad.views} views
-                </div>
-                <div className="flex gap-2">
-                  <ViewButton onClick={() => onAdAction(ad.id, 'view')} />
-                  <LikeButton 
-                    isLiked={false}
-                    onClick={() => onAdAction(ad.id, 'like')}
-                  />
-                  <MessageButton onClick={() => onAdAction(ad.id, 'message')} />
+                
+                <p className="text-sm text-luxury-neutral/80 mt-3 line-clamp-2">
+                  {ad.description || "No description provided."}
+                </p>
+                
+                {ad.tags && ad.tags.length > 0 && (
+                  <div className="flex flex-wrap gap-1 mt-3">
+                    {ad.tags.slice(0, 5).map((tag) => (
+                      <span key={tag} className="bg-luxury-primary/5 text-luxury-neutral text-xs px-2 py-0.5 rounded-full">
+                        #{tag}
+                      </span>
+                    ))}
+                    {ad.tags.length > 5 && (
+                      <span className="bg-luxury-primary/5 text-luxury-neutral/60 text-xs px-2 py-0.5 rounded-full">
+                        +{ad.tags.length - 5} more
+                      </span>
+                    )}
+                  </div>
+                )}
+                
+                <div className="flex gap-2 mt-auto pt-3">
+                  <ViewButton onClick={() => onViewProfile?.(ad)} />
+                  <LikeButton onLike={(liked) => onLikeProfile?.(ad, liked)} />
+                  <MessageButton onClick={() => onMessageProfile?.(ad)} />
                 </div>
               </div>
             </div>

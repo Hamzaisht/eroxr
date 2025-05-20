@@ -36,6 +36,8 @@ export interface MessageBubbleContentProps {
   onDelete?: () => Promise<void>;
   onEdit?: () => void;
   onSnapView?: () => Promise<void>;
+  setEditedContent?: (content: string) => void;
+  onMediaSelect?: (url: string) => void;
 }
 
 export const MessageBubbleContent = ({
@@ -50,7 +52,9 @@ export const MessageBubbleContent = ({
   onReport,
   onDelete,
   onEdit,
-  onSnapView
+  onSnapView,
+  setEditedContent,
+  onMediaSelect
 }: MessageBubbleContentProps) => {
   const [showActions, setShowActions] = useState(false);
   const { user } = useUser();
@@ -66,22 +70,10 @@ export const MessageBubbleContent = ({
     setShowActions(!showActions);
   };
 
-  // Handle action click
-  const handleActionClick = (action: string) => {
-    setShowActions(false);
-    
-    switch (action) {
-      case 'report':
-        onReport && onReport();
-        break;
-      case 'delete':
-        onDelete && onDelete();
-        break;
-      case 'edit':
-        onEdit && onEdit();
-        break;
-      default:
-        break;
+  // Handle input change
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (setEditedContent) {
+      setEditedContent(e.target.value);
     }
   };
 
@@ -101,6 +93,7 @@ export const MessageBubbleContent = ({
               ref={inputRef}
               type="text"
               defaultValue={editedContent}
+              onChange={handleInputChange}
               className="w-full bg-transparent outline-none"
               autoFocus
             />
@@ -140,8 +133,14 @@ export const MessageBubbleContent = ({
       </div>
 
       <MessageActions 
-        onActionClick={handleActionClick} 
+        onActionClick={(action) => {
+          if (action === 'report') onReport?.();
+          if (action === 'delete') onDelete?.();
+          if (action === 'edit') onEdit?.();
+        }}
         onReport={onReport} 
+        onDelete={onDelete}
+        onEdit={onEdit}
         isOwnMessage={isOwnMessage}
         isVisible={showActions}
         toggleVisibility={toggleActions}

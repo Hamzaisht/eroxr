@@ -4,7 +4,7 @@ import { Footer } from "@/components/Footer";
 import { HomeLayout } from "@/components/home/HomeLayout";
 import { DatingHeader } from "@/components/dating/DatingHeader";
 import { DatingToolbar } from "@/components/dating/DatingToolbar";
-import { DatingMainContent } from "../DatingMainContent";
+import DatingMainContent from "../DatingMainContent";
 import { useInView } from "react-intersection-observer";
 import { nordicCountries } from "@/components/dating/utils/datingUtils";
 import { type Database } from "@/integrations/supabase/types";

@@ -1,6 +1,6 @@
 
 import { User } from '@supabase/supabase-js';
-import { Database } from '../integrations/supabase/types/database.types';
+import { Database } from '../../integrations/supabase/types/database.types';
 
 // Define ProfileStatus type (used in UserMenu components)
 export type ProfileStatus = 'online' | 'offline' | 'away' | 'busy';

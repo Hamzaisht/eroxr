@@ -25,7 +25,6 @@ export interface DatingFiltersPanelProps {
   isFilterApplied: boolean;
   handleApplyFilters: () => void;
   handleResetFilters: () => void;
-  showFilterPanel: boolean;
   selectedCity?: string;
   setSelectedCity?: (city: string) => void;
 }
@@ -261,9 +260,8 @@ export default function DatingMainContent() {
         isFilterApplied={isFilterApplied}
         handleApplyFilters={handleApplyFilters}
         handleResetFilters={handleResetFilters}
-        showFilterPanel={showFilterPanel}
-        selectedCity={selectedCity}
-        setSelectedCity={setSelectedCity}
+        selectedCity={selectedCity as string | undefined}
+        setSelectedCity={setSelectedCity as ((city: string) => void) | undefined}
       />
       
       {/* Content Section */}
@@ -271,7 +269,7 @@ export default function DatingMainContent() {
         datingAds={filteredAds}
         isLoading={isLoading}
         activeTab={selectedTab}
-        userProfile={userProfile}
+        userProfile={userProfile as any}
         handleAdCreationSuccess={fetchDatingAds}
         handleTagClick={handleTagClick}
         handleTabChange={setSelectedTab}
