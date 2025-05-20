@@ -11,7 +11,7 @@ import { ContentDetailDialog } from "./ContentDetailDialog";
 interface ContentSurveillanceListProps {
   items: SurveillanceContentItem[];
   isLoading: boolean;
-  contentType: ContentType;
+  contentType: string | ContentType; // Update to accept string or ContentType enum
   error?: string | null;
   onRefresh?: () => void;
 }

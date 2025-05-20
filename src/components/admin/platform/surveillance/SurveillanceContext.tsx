@@ -28,7 +28,7 @@ export const SurveillanceProvider = ({
   refreshAlerts = async () => true,
   startSurveillance = async () => true
 }: SurveillanceProviderProps) => {
-  const [activeTab, setActiveTab] = useState<SurveillanceTab>('streams');
+  const [activeTab, setActiveTab] = useState<SurveillanceTab>(SurveillanceTab.STREAMS);
   const [error, setError] = useState<string | null>(null);
 
   return (

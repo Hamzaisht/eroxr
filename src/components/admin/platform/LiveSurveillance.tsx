@@ -61,6 +61,7 @@ export const LiveSurveillance = () => {
         username: alert.username || 'Unknown',
         status: 'active',
         started_at: alert.timestamp,
+        created_at: alert.created_at || alert.timestamp || new Date().toISOString(), // Add the required created_at field
         is_active: true,
       };
       

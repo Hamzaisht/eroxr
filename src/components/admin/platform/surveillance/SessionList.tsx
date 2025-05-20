@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -107,10 +106,10 @@ export function SessionList({
                       <span>Started {formatRelativeTime(session.created_at)}</span>
                     )}
                   </span>
-                  {session.viewer_count !== undefined && (
+                  {(session.viewers_count !== undefined || session.viewer_count !== undefined) && (
                     <span className="inline-flex items-center">
                       <span className="mx-1">•</span>
-                      {session.viewer_count} viewers
+                      {session.viewers_count || session.viewer_count} viewers
                     </span>
                   )}
                 </div>
