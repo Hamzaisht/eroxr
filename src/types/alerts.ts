@@ -1,22 +1,42 @@
 
-import { LiveSession } from './surveillance';
-
+/**
+ * LiveAlert interface for system alerts and notifications
+ */
 export interface LiveAlert {
   id: string;
-  type: 'violation' | 'risk' | 'information' | 'system' | 'security';
-  severity: 'low' | 'medium' | 'high' | 'critical';
-  title: string;
-  description: string;
-  timestamp: string;
-  created_at: string;
+  type: string;
+  severity: string;
   userId: string;
-  user_id?: string; // For backward compatibility
-  username?: string;
-  contentId?: string;
-  content_id?: string; // For backward compatibility
-  isRead: boolean;
-  alert_type: 'violation' | 'risk' | 'information';
-  session?: LiveSession;
-  source?: any; // For source information
-  avatar_url?: string; // For user avatar
+  username: string;
+  avatar_url?: string | null;
+  created_at: string;
+  contentId: string;
+  content_type: string;
+  reason: string;
+  title?: string;
+  description?: string;
+  isRead?: boolean;
+  source?: string;
+}
+
+/**
+ * Helper function to format system alerts to LiveAlert format
+ */
+export function formatSystemAlertToLiveAlert(alert: any): LiveAlert {
+  return {
+    id: alert.id || `alert-${Date.now()}`,
+    type: alert.type || 'system',
+    severity: alert.severity || 'medium',
+    userId: alert.userId || alert.user_id || '',
+    username: alert.username || 'System',
+    avatar_url: alert.avatar_url || null,
+    created_at: alert.timestamp || alert.created_at || new Date().toISOString(),
+    contentId: alert.contentId || alert.content_id || '',
+    content_type: alert.content_type || 'system',
+    reason: alert.reason || alert.description || '',
+    title: alert.title || 'System Alert',
+    description: alert.description || '',
+    isRead: alert.isRead || false,
+    source: alert.source || 'system'
+  };
 }

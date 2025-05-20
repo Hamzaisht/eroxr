@@ -34,7 +34,7 @@ export const useStorageService = () => {
       const { data, error: uploadError } = await supabase
         .storage
         .from('shorts')
-        .upload(filePath, file as File, {
+        .upload(filePath, file, {
           cacheControl: '3600',
           upsert: false
         });

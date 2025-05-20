@@ -1,6 +1,6 @@
 
 import { Badge } from "@/components/ui/badge";
-import { LiveSession } from "@/types/surveillance";
+import { LiveSession, SessionType, SessionStatus } from "@/types/surveillance";
 
 interface SessionBadgeProps {
   session: LiveSession;

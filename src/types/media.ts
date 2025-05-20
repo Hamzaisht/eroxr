@@ -1,36 +1,60 @@
 
-// Define media types
+/**
+ * Media types for the application
+ */
 export enum MediaType {
   IMAGE = "image",
   VIDEO = "video",
   AUDIO = "audio",
   DOCUMENT = "document",
+  GIF = "gif",
   UNKNOWN = "unknown"
 }
 
-// Base MediaSource interface
+/**
+ * User availability status
+ */
+export enum AvailabilityStatus {
+  ONLINE = "online",
+  AWAY = "away",
+  BUSY = "busy",
+  INVISIBLE = "invisible",
+  OFFLINE = "offline"
+}
+
+/**
+ * Media source interface for universal media component
+ */
 export interface MediaSource {
   url: string;
   type: MediaType | string;
+  
+  // Optional standard properties
   creator_id?: string;
   contentCategory?: string;
   thumbnail_url?: string;
   poster?: string;
-  // These properties are for backward compatibility
-  media_url?: string;
+  
+  // Legacy properties (for backward compatibility)
+  media_url?: string | string[];
   video_url?: string;
   media_urls?: string[];
   video_urls?: string[];
-  media_type?: MediaType | string;
+  media_type?: string;
   thumbnail?: string;
+  content_type?: string;
 }
 
+/**
+ * Media options interface for media components
+ */
 export interface MediaOptions {
   className?: string;
   autoPlay?: boolean;
   controls?: boolean;
   muted?: boolean;
   loop?: boolean;
+  poster?: string;
   showWatermark?: boolean;
   showCloseButton?: boolean;
   creatorId?: string;
@@ -40,25 +64,4 @@ export interface MediaOptions {
   onError?: (error: any) => void;
   onEnded?: () => void;
   onTimeUpdate?: (currentTime: number, duration: number) => void;
-}
-
-export interface UploadResult {
-  success: boolean;
-  url?: string;
-  error?: string;
-  fileSize?: number;
-  fileType?: string;
-  metadata?: Record<string, any>;
-}
-
-export interface UploadOptions {
-  maxSizeInMB?: number;
-  allowedTypes?: string[];
-  folderPath?: string;
-  bucket?: string;
-  metadata?: Record<string, any>;
-  onProgress?: (progress: number) => void;
-  contentCategory?: string;
-  autoResetOnCompletion?: boolean;
-  resetDelay?: number;
 }

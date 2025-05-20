@@ -1,6 +1,5 @@
 
-import { MediaType } from '@/utils/media/types';
-
+// Type definitions for SessionType, ContentType, and ModerationAction
 export type SessionStatus = 'active' | 'inactive' | 'pending' | 'completed' | 'live' | 'flagged';
 export type SessionType = 'stream' | 'chat' | 'call' | 'bodycontact' | 'user' | 'content';
 export type ContentType = 'image' | 'video' | 'text' | 'audio' | 'post' | 'story' | 'message' | 'profile' | 'comment';
@@ -33,12 +32,14 @@ export type SurveillanceTab =
 
 export interface MediaSource {
   url: string;
-  type: MediaType | string;
+  type: string;
   thumbnail?: string;
   media_url?: string | string[];
   video_url?: string;
   media_type?: string;
   content_type?: string;
+  thumbnail_url?: string;
+  poster?: string;
 }
 
 export interface LiveSession {
@@ -66,6 +67,12 @@ export interface LiveSession {
   sender_username?: string;
   recipient_username?: string;
   message_type?: string;
+  user?: {
+    username?: string;
+    avatar_url?: string;
+  };
+  ghost_mode?: boolean;
+  last_active_at?: string;
 }
 
 export interface SurveillanceContentItem {
@@ -83,6 +90,7 @@ export interface SurveillanceContentItem {
   avatar_url?: string;
   user_id: string;
   created_at: string;
+  updated_at?: string;
   flagged: boolean;
   reason?: string;
   media_url: string[];
@@ -90,4 +98,9 @@ export interface SurveillanceContentItem {
   severity: string;
   status: string;
   visibility: string;
+  views?: number;
+  likes?: number;
+  comments?: number;
+  tags?: string[];
+  location?: string;
 }

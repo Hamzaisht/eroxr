@@ -1,6 +1,6 @@
 
-import { SurveillanceContentItem } from "../../types";
-import { ModerationAction } from "@/types/moderation";
+import { SurveillanceContentItem } from "@/types/surveillance";
+import { ModerationAction } from "@/types/surveillance";
 
 export interface ModerationActionResult {
   success: boolean;

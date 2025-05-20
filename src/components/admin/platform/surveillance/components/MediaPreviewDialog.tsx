@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { LiveSession, MediaSource } from "@/types/surveillance";
+import { MediaType } from "@/types/media";
 
 interface MediaPreviewDialogProps {
   session: LiveSession | null;
@@ -10,11 +11,9 @@ interface MediaPreviewDialogProps {
   onOpenChange: (open: boolean) => void;
 }
 
-type MediaType = 'image' | 'video' | 'audio' | 'text';
-
 export function MediaPreviewDialog({ session, open, onOpenChange }: MediaPreviewDialogProps) {
   const [media, setMedia] = useState<MediaSource | null>(null);
-  const [mediaType, setMediaType] = useState<MediaType>('image');
+  const [mediaType, setMediaType] = useState<MediaType>(MediaType.IMAGE);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -42,21 +41,21 @@ export function MediaPreviewDialog({ session, open, onOpenChange }: MediaPreview
         }
         
         // Determine media type from URL or content_type
-        let detectedType: MediaType = 'image';
+        let detectedType: MediaType = MediaType.IMAGE;
         
         if (session.content_type) {
-          if (session.content_type.includes('video')) detectedType = 'video';
-          else if (session.content_type.includes('audio')) detectedType = 'audio';
-          else if (session.content_type.includes('image')) detectedType = 'image';
-          else detectedType = 'text';
+          if (session.content_type.includes('video')) detectedType = MediaType.VIDEO;
+          else if (session.content_type.includes('audio')) detectedType = MediaType.AUDIO;
+          else if (session.content_type.includes('image')) detectedType = MediaType.IMAGE;
+          else detectedType = MediaType.DOCUMENT;
         } else {
           // Try to determine from URL
           const url = mediaUrl || videoUrl;
           if (url) {
-            if (url.match(/\.(mp4|mov|avi|wmv|flv|webm)$/i)) detectedType = 'video';
-            else if (url.match(/\.(mp3|wav|ogg|m4a)$/i)) detectedType = 'audio';
-            else if (url.match(/\.(jpg|jpeg|png|gif|webp|svg)$/i)) detectedType = 'image';
-            else detectedType = 'text';
+            if (url.match(/\.(mp4|mov|avi|wmv|flv|webm)$/i)) detectedType = MediaType.VIDEO;
+            else if (url.match(/\.(mp3|wav|ogg|m4a)$/i)) detectedType = MediaType.AUDIO;
+            else if (url.match(/\.(jpg|jpeg|png|gif|webp|svg)$/i)) detectedType = MediaType.IMAGE;
+            else detectedType = MediaType.DOCUMENT;
           }
         }
         
@@ -108,7 +107,7 @@ export function MediaPreviewDialog({ session, open, onOpenChange }: MediaPreview
             <div className="flex-1 flex flex-col overflow-hidden">
               {/* Media Preview */}
               <div className="flex-1 flex items-center justify-center bg-black/50 rounded-md overflow-hidden">
-                {mediaType === 'image' && media.url && (
+                {mediaType === MediaType.IMAGE && media.url && (
                   <img 
                     src={media.url} 
                     alt="Media preview" 
@@ -117,7 +116,7 @@ export function MediaPreviewDialog({ session, open, onOpenChange }: MediaPreview
                   />
                 )}
                 
-                {mediaType === 'video' && media.url && (
+                {mediaType === MediaType.VIDEO && media.url && (
                   <video 
                     src={media.url} 
                     controls 
@@ -127,7 +126,7 @@ export function MediaPreviewDialog({ session, open, onOpenChange }: MediaPreview
                   />
                 )}
                 
-                {mediaType === 'audio' && media.url && (
+                {mediaType === MediaType.AUDIO && media.url && (
                   <audio 
                     src={media.url} 
                     controls 
@@ -136,7 +135,7 @@ export function MediaPreviewDialog({ session, open, onOpenChange }: MediaPreview
                   />
                 )}
                 
-                {mediaType === 'text' && (
+                {mediaType === MediaType.DOCUMENT && (
                   <div className="p-4 overflow-auto w-full h-full bg-muted/20">
                     <pre className="whitespace-pre-wrap">{session.content || "No content available"}</pre>
                   </div>
