@@ -12,3 +12,6 @@ export interface ContentInteractions {
   likers: any[];
   buyers: any[];
 }
+
+// Exporting these types for backward compatibility
+export type { SurveillanceContentItem, ModerationAction };

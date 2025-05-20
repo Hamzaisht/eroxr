@@ -19,7 +19,7 @@ export const SessionBadge = ({ session }: SessionBadgeProps) => {
       case 'chat':
         return "outline";
       case 'bodycontact':
-        return session.status === 'flagged' ? "destructive" : "secondary";
+        return session.status === SessionStatus.FLAGGED ? "destructive" : "secondary";
       case 'content':
         return "outline";
       default:

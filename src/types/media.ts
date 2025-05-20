@@ -40,7 +40,7 @@ export interface MediaSource {
   video_url?: string;
   media_urls?: string[];
   video_urls?: string[];
-  media_type?: string;
+  media_type?: string; // Backward compatibility for type
   thumbnail?: string;
   content_type?: string;
 }

@@ -66,7 +66,7 @@ export interface DatingAd {
   };
   
   // For UI integration
-  onTagClick?: (tag: string, e: React.MouseEvent) => void;
+  onTagClick?: (tag: string, e?: React.MouseEvent) => void;
 }
 
 /**
