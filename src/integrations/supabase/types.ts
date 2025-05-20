@@ -2633,6 +2633,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
+      get_active_ads_with_location: {
+        Args: Record<PropertyKey, never>
+        Returns: unknown[]
+      }
       get_current_user_id: {
         Args: Record<PropertyKey, never>
         Returns: string
@@ -2644,6 +2648,10 @@ export type Database = {
           count: number
           percentageincrease: number
         }[]
+      }
+      get_trending_content: {
+        Args: Record<PropertyKey, never>
+        Returns: unknown[]
       }
       increment_counter: {
         Args: { row_id: string; counter_name: string; table_name?: string }

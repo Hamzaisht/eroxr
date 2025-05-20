@@ -1,5 +1,6 @@
-
-import { useState } from 'react';
+import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
+import { getActiveAdsWithLocation } from "@/utils/supabase/typeSafeOperations";
 
 export interface DatingFiltersState {
   isFilterCollapsed: boolean;
@@ -18,6 +19,19 @@ export interface DatingFiltersState {
 }
 
 export function useDatingFilters(initialState?: Partial<DatingFiltersState>) {
+  const [searchParams] = useSearchParams();
+  const [filters, setFilters] = useState({
+    minAge: 18,
+    maxAge: 65,
+    distance: 100,
+    verifiedOnly: false,
+    city: '',
+    country: 'sweden',
+    lookingFor: [],
+    relationshipStatus: [],
+    bodyType: [],
+  });
+
   const [isFilterCollapsed, setIsFilterCollapsed] = useState(initialState?.isFilterCollapsed || true);
   const [showFilters, setShowFilters] = useState(initialState?.showFilters || false);
   const [selectedCountry, setSelectedCountry] = useState<"denmark" | "finland" | "iceland" | "norway" | "sweden">(
@@ -57,6 +71,21 @@ export function useDatingFilters(initialState?: Partial<DatingFiltersState>) {
     setDistanceRange([0, 100]);
   };
 
+  const fetchFilteredAds = async (appliedFilters) => {
+    try {
+      // Use the secure function instead of direct table access
+      const { data, error } = await getActiveAdsWithLocation({
+        filters: appliedFilters
+      });
+      
+      if (error) throw error;
+      return data || [];
+    } catch (error) {
+      console.error("Error fetching filtered ads:", error);
+      return [];
+    }
+  };
+
   return {
     // State
     isFilterCollapsed,
@@ -89,6 +118,9 @@ export function useDatingFilters(initialState?: Partial<DatingFiltersState>) {
     // Actions
     toggleFilters,
     handleApplyFilters,
-    handleResetFilters
+    handleResetFilters,
+    filters,
+    setFilters,
+    fetchFilteredAds
   };
 }
