@@ -10,7 +10,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table"
+} from "@/components/ui/table";
 import {
   Card,
   CardContent,
@@ -18,19 +18,19 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card"
+} from "@/components/ui/card";
 import {
   Tabs,
   TabsContent,
   TabsList,
   TabsTrigger,
-} from "@/components/ui/tabs"
+} from "@/components/ui/tabs";
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
-} from "@/components/ui/accordion"
+} from "@/components/ui/accordion";
 import {
   Command,
   CommandEmpty,
@@ -40,8 +40,9 @@ import {
   CommandList,
   CommandSeparator,
   CommandShortcut,
-} from "@/components/ui/command"
+} from "@/components/ui/command";
 import { Database } from '@/integrations/supabase/types/database.types';
+import { isProfileRow, safeString } from '@/utils/supabase/typeSafeOperations';
 
 // Define a type for profile data
 type ProfileData = Database['public']['Tables']['profiles']['Row'];
@@ -67,11 +68,9 @@ export function TempDemoContent() {
         if (profiles) {
           // Filter valid profiles and map to properly typed objects
           const typedProfiles = profiles
-            .filter((profile): profile is Database['public']['Tables']['profiles']['Row'] => 
-              profile && "id" in profile
-            )
+            .filter(isProfileRow)
             .map((profile) => ({
-              id: profile.id as string,
+              id: safeString(profile.id),
               username: profile.username,
               avatar_url: profile.avatar_url,
               created_at: profile.created_at,

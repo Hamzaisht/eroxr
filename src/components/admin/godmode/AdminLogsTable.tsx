@@ -3,7 +3,12 @@ import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
-import { exists, safeGet } from "@/utils/supabase/type-guards";
+import { safeString } from "@/utils/supabase/typeSafeOperations";
+import { Database } from "@/integrations/supabase/types/database.types";
+
+type AdminLogRow = Database['public']['Tables']['admin_logs']['Row'] & {
+  profiles?: { username?: string } | null;
+};
 
 interface AdminLog {
   id: string;
@@ -15,7 +20,6 @@ interface AdminLog {
   details: any;
   created_at: string;
   admin_name?: string;
-  profiles?: { username?: string } | null;
 }
 
 export const AdminLogsTable = () => {
@@ -46,19 +50,21 @@ export const AdminLogsTable = () => {
       if (error) throw error;
 
       // Safely transform data 
-      const formattedLogs = Array.isArray(data) ? data.filter(exists).map(log => {
+      const formattedLogs = Array.isArray(data) ? data.filter((log): log is AdminLogRow => {
+        return log !== null && typeof log === 'object' && 'id' in log;
+      }).map(log => {
         // Create a safe record with required properties
         const adminLog: AdminLog = {
-          id: String(log.id || ''),
-          admin_id: String(log.admin_id || ''),
-          action: String(log.action || ''),
-          action_type: String(log.action_type || ''),
-          target_type: String(log.target_type || ''),
-          target_id: String(log.target_id || ''),
+          id: safeString(log.id),
+          admin_id: safeString(log.admin_id),
+          action: safeString(log.action),
+          action_type: safeString(log.action_type),
+          target_type: safeString(log.target_type),
+          target_id: safeString(log.target_id || ''),
           details: log.details || {},
-          created_at: String(log.created_at || new Date().toISOString()),
+          created_at: safeString(log.created_at),
           admin_name: (log.profiles && typeof log.profiles === 'object') ? 
-            String(log.profiles?.username || 'Unknown Admin') : 
+            safeString(log.profiles?.username) || 'Unknown Admin' : 
             'Unknown Admin'
         };
         return adminLog;

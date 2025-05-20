@@ -28,6 +28,7 @@ import { AvailabilityIndicator } from "@/components/ui/availability-indicator";
 import { Button } from "@/components/ui/button";
 import { Database } from "@/integrations/supabase/types/database.types";
 import { updateProfileStatus } from "@/utils/supabase/db-helpers";
+import { isProfileRow } from "@/utils/supabase/typeSafeOperations";
 
 export function UserMenu() {
   const [isSigningOut, setIsSigningOut] = useState(false);
@@ -46,7 +47,7 @@ export function UserMenu() {
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
-        .eq('id' as keyof Database['public']['Tables']['profiles']['Row'], session.user.id as string)
+        .eq('id', session.user.id as string)
         .maybeSingle();
         
       if (error) {

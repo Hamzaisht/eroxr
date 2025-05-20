@@ -3,9 +3,10 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { CreatorCard } from "@/components/CreatorCard";
 import { useSession } from "@supabase/auth-helpers-react";
-import { safeCast } from "@/utils/supabase/helpers";
 import { Database } from "@/integrations/supabase/types/database.types";
-import { safeSubscriptionFilter } from "@/utils/supabase/type-guards";
+import { safeString, isSubscriptionRow, isProfileRow } from "@/utils/supabase/typeSafeOperations";
+
+type ProfileRow = Database['public']['Tables']['profiles']['Row'];
 
 interface Creator {
   id: string;
@@ -44,7 +45,7 @@ export const SubscribedCreators = () => {
             banner_url
           )
         `)
-        .eq("user_id" as keyof Database['public']['Tables']['creator_subscriptions']['Row'], userId as string)
+        .eq('user_id', userId as string)
         .order("created_at", { ascending: false });
         
       if (error || !data) {
@@ -53,15 +54,20 @@ export const SubscribedCreators = () => {
       }
       
       // Transform data to match expected types, ensuring we only map valid rows
-      return data.filter((item): item is Database['public']['Tables']['creator_subscriptions']['Row'] & {
-        creator: Database['public']['Tables']['profiles']['Row'] | null;
-      } => "id" in item && "creator_id" in item).map((item) => ({
-        id: item.id as string,
-        creator_id: item.creator_id as string,
-        user_id: item.user_id as string,
-        created_at: item.created_at as string,
-        creator: item.creator as Creator
-      }));
+      return data
+        .filter((item): item is (Database['public']['Tables']['creator_subscriptions']['Row'] & {
+          creator?: ProfileRow | null;
+        }) => {
+          return isSubscriptionRow(item) && 
+                (!item.creator || (item.creator && typeof item.creator === 'object'));
+        })
+        .map((item) => ({
+          id: safeString(item.id),
+          creator_id: safeString(item.creator_id),
+          user_id: safeString(item.user_id),
+          created_at: safeString(item.created_at),
+          creator: item.creator as Creator
+        }));
     },
     enabled: !!userId,
   });
