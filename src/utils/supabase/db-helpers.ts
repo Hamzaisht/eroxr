@@ -25,7 +25,7 @@ export const updateProfileStatus = async (
   const { data, error } = await supabase
     .from('profiles')
     .update({ status })
-    .eq('id', userId);
+    .eq('id', userId as string);
 
   if (error) throw error;
   return data;
@@ -41,7 +41,7 @@ export const updateProfileFields = async (
   const { data, error } = await supabase
     .from('profiles')
     .update(updateData)
-    .eq('id', userId);
+    .eq('id', userId as string);
 
   if (error) throw error;
   return data;
@@ -54,7 +54,7 @@ export const fetchUserProfile = async (userId: string) => {
   const { data, error } = await supabase
     .from('profiles')
     .select('*')
-    .eq('id', userId)
+    .eq('id', userId as string)
     .single();
 
   if (error) throw error;
@@ -71,7 +71,7 @@ export const updateReportStatus = async (
   const { data, error } = await supabase
     .from('reports')
     .update({ status })
-    .eq('id', reportId);
+    .eq('id', reportId as string);
 
   if (error) throw error;
   return data;

@@ -3,6 +3,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
@@ -74,7 +75,7 @@ export function UserMenu() {
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
-        .eq('id', session.user.id)
+        .eq('id', session.user.id as string)
         .single();
         
       if (error) {
@@ -126,7 +127,7 @@ export function UserMenu() {
           dbStatus = "offline";
       }
       
-      await updateProfileStatus(session.user.id, dbStatus);
+      await updateProfileStatus(session.user.id as string, dbStatus);
       
       setCurrentStatus(newStatus);
     } catch (error) {

@@ -44,7 +44,7 @@ export const SubscribedCreators = () => {
             banner_url
           )
         `)
-        .eq("user_id", userId)
+        .eq("user_id", userId as string)
         .order("created_at", { ascending: false });
         
       if (error) {
@@ -52,7 +52,14 @@ export const SubscribedCreators = () => {
         return [];
       }
       
-      return safeCast<Subscription>(data);
+      // Transform data to match expected types
+      return data?.map((item): Subscription => ({
+        id: item.id,
+        creator_id: item.creator_id,
+        user_id: item.user_id,
+        created_at: item.created_at,
+        creator: item.creator as Creator
+      })) || [];
     },
     enabled: !!userId,
   });

@@ -1,6 +1,6 @@
 
-import { Database } from "@/integrations/supabase/types/database.types";
-import { PostgrestFilterBuilder } from "@supabase/supabase-js";
+import { Database } from '@/integrations/supabase/types/database.types';
+import { PostgrestFilterBuilder } from '@supabase/supabase-js';
 
 // Type definitions for database tables
 export type Tables = Database['public']['Tables'];

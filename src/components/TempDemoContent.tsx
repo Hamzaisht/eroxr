@@ -65,7 +65,11 @@ export function TempDemoContent() {
         }
 
         if (profiles) {
-          setData(profiles as ProfileData[]);
+          // Cast the data properly with a transformation for type safety
+          const typedProfiles = profiles.map((profile): ProfileData => ({
+            ...profile
+          }));
+          setData(typedProfiles);
         }
       } catch (error: any) {
         toast({

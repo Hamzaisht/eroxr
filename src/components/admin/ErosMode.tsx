@@ -49,7 +49,7 @@ export function CreatePostDialog({ open, onOpenChange }: CreatePostDialogProps) 
 
       // Create a properly typed payload for the posts table
       const payload: Database['public']['Tables']['posts']['Insert'] = {
-        creator_id: session.user.id,
+        creator_id: session.user.id as string,
         content,
         visibility: 'public',
         is_ppv: false,

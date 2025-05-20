@@ -12,7 +12,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useSession, useSupabaseClient } from "@supabase/auth-helpers-react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
-import { User, Settings, CreditCard, ArrowRightFromLine, CircleUserRound } from "lucide-react";
+import { User, Settings, CreditCard, ArrowRightFromLine, CircleUserRound, Dot } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { 
@@ -46,7 +46,7 @@ export function UserMenu() {
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
-        .eq('id', session.user.id)
+        .eq('id', session.user.id as string)
         .single();
         
       if (error) {
@@ -108,7 +108,7 @@ export function UserMenu() {
           break;
       }
       
-      await updateProfileStatus(session.user.id, dbStatus);
+      await updateProfileStatus(session.user.id as string, dbStatus);
       
       setCurrentStatus(newStatus);
     } catch (error) {

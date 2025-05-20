@@ -49,16 +49,16 @@ export const AdminLogsTable = () => {
       const formattedLogs = Array.isArray(data) ? data.filter(exists).map(log => {
         // Create a safe record with required properties
         const adminLog: AdminLog = {
-          id: safeGet(log, 'id') || '',
-          admin_id: safeGet(log, 'admin_id') || '',
-          action: safeGet(log, 'action') || '',
-          action_type: safeGet(log, 'action_type') || '',
-          target_type: safeGet(log, 'target_type') || '',
-          target_id: safeGet(log, 'target_id') || '',
-          details: safeGet(log, 'details') || {},
-          created_at: safeGet(log, 'created_at') || new Date().toISOString(),
-          admin_name: safeGet(log, 'profiles') && typeof log.profiles === 'object' ? 
-            safeGet(log.profiles, 'username') || 'Unknown Admin' : 
+          id: String(log.id || ''),
+          admin_id: String(log.admin_id || ''),
+          action: String(log.action || ''),
+          action_type: String(log.action_type || ''),
+          target_type: String(log.target_type || ''),
+          target_id: String(log.target_id || ''),
+          details: log.details || {},
+          created_at: String(log.created_at || new Date().toISOString()),
+          admin_name: (log.profiles && typeof log.profiles === 'object') ? 
+            String(log.profiles?.username || 'Unknown Admin') : 
             'Unknown Admin'
         };
         return adminLog;
