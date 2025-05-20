@@ -28,7 +28,8 @@ export const CarouselContainer = ({ ads, currentIndex, isActive }: CarouselConta
             isPremium: ad.is_premium !== undefined ? ad.is_premium : ad.isPremium,
             isVerified: ad.is_verified !== undefined ? ad.is_verified : ad.isVerified,
             avatarUrl: ad.avatarUrl || ad.avatar_url || "",
-            videoUrl: ad.videoUrl || ad.video_url
+            videoUrl: ad.videoUrl || ad.video_url,
+            location: ad.location || "Unknown location", // Default for required location
           };
           
           return (

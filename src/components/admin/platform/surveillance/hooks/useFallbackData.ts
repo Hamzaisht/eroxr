@@ -16,7 +16,7 @@ export function useFallbackData() {
         title: 'Live Demo Stream',
         description: 'This is a demo livestream for testing',
         started_at: new Date().toISOString(),
-        status: SessionStatus.ACTIVE,
+        status: SessionStatus.ACTIVE, // Using enum value now
         viewer_count: 156,
         is_active: true,
         content_type: 'video',
@@ -30,7 +30,7 @@ export function useFallbackData() {
         type: SessionType.CALL,
         title: 'Private Call Session',
         started_at: new Date().toISOString(),
-        status: SessionStatus.ACTIVE,
+        status: SessionStatus.ACTIVE, // Using enum value now
         participants: 2,
         recipient_username: 'CallRecipient',
         is_active: true
@@ -41,7 +41,7 @@ export function useFallbackData() {
         username: 'ChatUser',
         type: SessionType.CHAT,
         started_at: new Date().toISOString(),
-        status: SessionStatus.ACTIVE,
+        status: SessionStatus.ACTIVE, // Using enum value now
         content: 'This is a sample chat message',
         sender_username: 'ChatUser',
         recipient_username: 'ChatRecipient',
@@ -56,7 +56,7 @@ export function useFallbackData() {
         type: SessionType.BODYCONTACT,
         title: 'Body Contact Session',
         started_at: new Date().toISOString(),
-        status: SessionStatus.ACTIVE,
+        status: SessionStatus.ACTIVE, // Using enum value now
         location: 'Stockholm, Sweden',
         tags: ['dating', 'premium', 'verified'],
         is_active: true
@@ -68,7 +68,7 @@ export function useFallbackData() {
         type: SessionType.CONTENT,
         title: 'New Content Upload',
         started_at: new Date().toISOString(),
-        status: SessionStatus.ACTIVE,
+        status: SessionStatus.ACTIVE, // Using enum value now
         content_type: 'video',
         media_url: ['https://example.com/content-thumbnail.jpg'],
         is_active: true

@@ -86,3 +86,22 @@ export interface UploadOptions {
   autoResetOnCompletion?: boolean;
   resetDelay?: number;
 }
+
+// Add utility function for aspect ratio calculations
+export function calculateAspectRatioDimensions(aspectRatio: number, maxWidth: number, maxHeight: number) {
+  let width = maxWidth;
+  let height = width / aspectRatio;
+  
+  if (height > maxHeight) {
+    height = maxHeight;
+    width = height * aspectRatio;
+  }
+  
+  return { width, height };
+}
+
+// Add utility function for playable media URLs
+export function getPlayableMediaUrl(url: string): string {
+  // This can be expanded with more logic if needed
+  return url;
+}

@@ -92,12 +92,12 @@ export interface LiveSession {
   recipient_avatar?: string;
   session?: any;
   user?: any;
-  location?: string; // Added for BodyContact sessions
-  tags?: string[]; // Added for tagged sessions
-  thumbnail_url?: string; // Added for streams
+  location?: string; // For BodyContact sessions
+  tags?: string[]; // For tagged sessions
+  thumbnail_url?: string; // For streams
 }
 
-// Define the LiveAlert interface
+// Make the LiveAlert interface compatible with the one in alerts.ts
 export interface LiveAlert {
   id: string;
   type: 'violation' | 'risk' | 'information';
@@ -110,7 +110,7 @@ export interface LiveAlert {
   created_at: string;
   content_type?: string;
   reason?: string;
-  severity?: 'high' | 'medium' | 'low';
+  severity: 'high' | 'medium' | 'low' | 'critical';  // Make severity required
   contentId?: string;
   content_id?: string;
   title?: string;

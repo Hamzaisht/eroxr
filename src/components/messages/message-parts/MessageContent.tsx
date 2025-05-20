@@ -71,7 +71,7 @@ export const MessageContent = ({ message, isCurrentUser, onMediaClick }: Message
               url: url,
               type: MediaType.IMAGE,
               media_url: url,
-              creator_id: message.sender_id
+              creator_id: message.sender_id || undefined
             }}
             className="w-full max-h-60 object-cover"
             showWatermark={false}
@@ -96,7 +96,7 @@ export const MessageContent = ({ message, isCurrentUser, onMediaClick }: Message
             url: url,
             type: MediaType.VIDEO,
             video_url: url,
-            creator_id: message.sender_id
+            creator_id: message.sender_id || undefined
           }}
           className="w-full max-h-60 object-cover"
           showWatermark={false}
@@ -118,7 +118,7 @@ export const MessageContent = ({ message, isCurrentUser, onMediaClick }: Message
             url: url,
             type: MediaType.AUDIO,
             media_type: MediaType.AUDIO,
-            creator_id: message.sender_id
+            creator_id: message.sender_id || undefined
           }}
           className="w-full"
           showWatermark={false}
@@ -138,7 +138,7 @@ export const MessageContent = ({ message, isCurrentUser, onMediaClick }: Message
             url: message.video_url,
             type: MediaType.VIDEO, 
             video_url: message.video_url,
-            creator_id: message.sender_id
+            creator_id: message.sender_id || undefined
           }}
           className="w-full max-h-60 object-cover"
           showWatermark={false}

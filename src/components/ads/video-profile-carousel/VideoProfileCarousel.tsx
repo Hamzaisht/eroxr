@@ -9,6 +9,11 @@ import { VideoThumbnail } from "@/components/VideoThumbnail";
 import { useMediaQuery } from "@/hooks/use-mobile";
 import { safeDataAccess } from "@/utils/supabase/helpers";
 
+interface ProfileData {
+  username: string;
+  avatar_url: string;
+}
+
 export const VideoProfileCarousel = () => {
   const [activeIndex, setActiveIndex] = useState(0);
   const carouselRef = useRef<HTMLDivElement>(null);
@@ -113,13 +118,13 @@ export const VideoProfileCarousel = () => {
                 <div className="absolute bottom-0 left-0 right-0 p-4 text-white">
                   <div className="flex items-center gap-3">
                     <Avatar className="h-10 w-10 border-2 border-white/50">
-                      <AvatarImage src={profile.profiles?.avatar_url || ''} />
+                      <AvatarImage src={(profile.profiles as ProfileData)?.avatar_url || ''} />
                       <AvatarFallback>
-                        {profile.profiles?.username?.charAt(0) || "U"}
+                        {(profile.profiles as ProfileData)?.username?.charAt(0) || "U"}
                       </AvatarFallback>
                     </Avatar>
                     <div>
-                      <h3 className="font-bold">{profile.profiles?.username || "User"}</h3>
+                      <h3 className="font-bold">{(profile.profiles as ProfileData)?.username || "User"}</h3>
                       <p className="text-sm opacity-90">{profile.title}</p>
                     </div>
                   </div>

@@ -1,56 +1,43 @@
 
 import { Badge } from "@/components/ui/badge";
-import { LiveSession, SessionType, SessionStatus } from "@/types/surveillance";
+import { LiveSession, SessionStatus } from "@/types/surveillance";
 
 interface SessionBadgeProps {
   session: LiveSession;
 }
 
 export const SessionBadge = ({ session }: SessionBadgeProps) => {
-  // Determine badge color based on session type and status
+  // Determine badge variant based on session status
   const getBadgeVariant = () => {
-    if (session.is_paused) return "destructive";
+    if (!session.status) return "secondary";
     
-    switch (session.type) {
-      case SessionType.STREAM:
-        return "default";
-      case SessionType.CALL:
-        return "secondary";
-      case SessionType.CHAT:
-        return "outline";
-      case SessionType.BODYCONTACT:
-        // Check for flagged status using string comparison instead of enum
-        return session.status === "flagged" ? "destructive" : "secondary";
-      case SessionType.CONTENT:
-        return "outline";
-      default:
-        return "secondary";
+    if (session.status === SessionStatus.ACTIVE || session.status === "active" || 
+        session.status === SessionStatus.LIVE || session.status === "live") {
+      return "success";
     }
-  };
-  
-  // Get badge text
-  const getBadgeText = () => {
-    if (session.is_paused) return "PAUSED";
     
-    switch (session.type) {
-      case SessionType.STREAM:
-        return "LIVE";
-      case SessionType.CALL:
-        return "ACTIVE";
-      case SessionType.CHAT:
-        return session.message_type ? String(session.message_type).toUpperCase() : "MESSAGE";
-      case SessionType.BODYCONTACT:
-        return session.status ? String(session.status).toUpperCase() : "ACTIVE";
-      case SessionType.CONTENT:
-        return session.content_type ? String(session.content_type).toUpperCase() : "CONTENT";
-      default:
-        return session.type ? String(session.type).toUpperCase() : "ACTIVE";
+    if (session.status === SessionStatus.IDLE || session.status === "idle") {
+      return "secondary";
     }
+    
+    if (session.status === SessionStatus.ENDED || session.status === "ended") {
+      return "destructive";
+    }
+    
+    if (session.status === SessionStatus.FLAGGED || session.status === "flagged") {
+      return "destructive";
+    }
+    
+    if (session.status === SessionStatus.PAUSED || session.status === "paused") {
+      return "warning";
+    }
+    
+    return "secondary";
   };
   
   return (
-    <Badge variant={getBadgeVariant()}>
-      {getBadgeText()}
+    <Badge variant={getBadgeVariant()} className="ml-2 px-2 py-0.5 text-xs">
+      {session.status}
     </Badge>
   );
 };

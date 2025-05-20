@@ -1,7 +1,7 @@
 
 import { forwardRef, Ref, useMemo } from 'react';
 import { MediaRenderer } from './MediaRenderer';
-import { MediaSource, MediaType } from '@/types/media';
+import { MediaSource, MediaType } from '@/utils/media/types';
 import { normalizeMediaSource } from '@/utils/media/mediaUtils';
 
 interface UniversalMediaProps {
@@ -43,8 +43,13 @@ export const UniversalMedia = forwardRef(({
 }: UniversalMediaProps, ref: Ref<HTMLVideoElement | HTMLImageElement>) => {
   // Process the item to ensure it has a url property
   const mediaItem = useMemo(() => {
-    return normalizeMediaSource(item);
-  }, [item]);
+    const normalized = normalizeMediaSource(item);
+    // If poster prop was passed, add it to the mediaSource
+    if (poster) {
+      normalized.poster = poster;
+    }
+    return normalized;
+  }, [item, poster]);
 
   return (
     <MediaRenderer

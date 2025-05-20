@@ -1,116 +1,104 @@
 
 import { useState, useEffect, useCallback } from 'react';
-import { useSupabaseClient } from '@supabase/auth-helpers-react';
-import { LiveAlert } from '@/types/surveillance';
+import { supabase } from '@/integrations/supabase/client';
+import { LiveAlert } from '@/types/surveillance';  // Import from surveillance types
 
-export function useGhostAlerts(isGhostMode: boolean) {
-  const [liveAlerts, setLiveAlerts] = useState<LiveAlert[]>([]);
-  const supabase = useSupabaseClient();
+export function useGhostAlerts(userId: string | null) {
+  const [alerts, setAlerts] = useState<LiveAlert[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   
-  const refreshAlerts = useCallback(async () => {
-    if (!isGhostMode) {
-      setLiveAlerts([]);
-      return false;
+  const fetchAlerts = useCallback(async () => {
+    if (!userId) {
+      setAlerts([]);
+      setIsLoading(false);
+      return;
     }
     
+    setIsLoading(true);
+    
     try {
-      console.log('Refreshing alerts data for ghost mode');
-      
-      // Fetch reports
-      const { data: reportsData, error: reportsError } = await supabase
+      // Fetch reports where the user is reported
+      const { data: reports, error: reportsError } = await supabase
         .from('reports')
-        .select('*, reporter:reporter_id(username, avatar_url), reported:reported_id(username, avatar_url)')
-        .eq('status', 'pending')
+        .select('*, reporter:reporter_id(username, avatar_url)')
+        .eq('reported_id', userId)
         .order('created_at', { ascending: false })
-        .limit(20);
+        .limit(10);
         
-      if (reportsError) {
-        console.error('Error fetching reports:', reportsError);
-      }
+      if (reportsError) throw reportsError;
       
-      // Fetch flagged content
-      const { data: flaggedData, error: flaggedError } = await supabase
+      // Fetch flagged content from the user
+      const { data: flaggedContent, error: flaggedError } = await supabase
         .from('flagged_content')
-        .select('*, user:user_id(username, avatar_url)')
-        .eq('status', 'flagged')
+        .select('*')
+        .eq('user_id', userId)
         .order('flagged_at', { ascending: false })
-        .limit(20);
+        .limit(10);
         
-      if (flaggedError) {
-        console.error('Error fetching flagged content:', flaggedError);
-      }
+      if (flaggedError) throw flaggedError;
       
-      // Transform reports to LiveAlert format
-      const reportAlerts: LiveAlert[] = (reportsData || []).map(report => ({
+      // Transform data to LiveAlert format
+      const reportAlerts: LiveAlert[] = (reports || []).map(report => ({
         id: report.id,
         type: 'violation',
         alert_type: 'violation',
-        userId: report.reported_id,
         user_id: report.reported_id,
-        username: report.reported?.username || 'Unknown',
-        avatar_url: report.reported?.avatar_url || '',
+        userId: report.reported_id,
+        username: report.reporter?.username || 'Unknown',
+        avatar_url: report.reporter?.avatar_url || '',
         timestamp: report.created_at,
         created_at: report.created_at,
         content_type: report.content_type || '',
         reason: report.reason || '',
-        severity: report.is_emergency ? 'high' : 'medium',
+        severity: 'high',
         contentId: report.content_id || '',
         content_id: report.content_id || '',
-        title: `Content Report`,
-        description: report.description || 'No description provided',
-        isRead: false,
-        requiresAction: report.is_emergency || false
+        title: `Report: ${report.reason}`,
+        description: report.description || 'No description provided'
       }));
       
-      // Transform flagged content to LiveAlert format
-      const flaggedAlerts: LiveAlert[] = (flaggedData || []).map(flagged => ({
-        id: flagged.id,
+      const flaggedAlerts: LiveAlert[] = (flaggedContent || []).map(item => ({
+        id: item.id,
         type: 'risk',
         alert_type: 'risk',
-        userId: flagged.user_id || '',
-        user_id: flagged.user_id || '',
-        username: flagged.user?.username || 'Unknown',
-        avatar_url: flagged.user?.avatar_url || '',
-        timestamp: flagged.flagged_at,
-        created_at: flagged.flagged_at,
-        content_type: flagged.content_type || '',
-        reason: flagged.reason || '',
-        severity: flagged.severity as 'high' | 'medium' | 'low',
-        contentId: flagged.content_id || '',
-        content_id: flagged.content_id || '',
-        title: `Flagged ${flagged.content_type}`,
-        description: flagged.notes || flagged.reason || '',
-        isRead: false,
-        requiresAction: flagged.severity === 'high'
+        user_id: item.user_id || '',
+        userId: item.user_id || '',
+        username: 'System',
+        avatar_url: '',
+        timestamp: item.flagged_at,
+        created_at: item.flagged_at,
+        content_type: item.content_type || '',
+        reason: item.reason || '',
+        severity: 'medium',
+        contentId: item.content_id || '',
+        content_id: item.content_id || '',
+        title: `Flagged: ${item.content_type}`,
+        description: item.notes || item.reason || ''
       }));
       
-      // Combine all alerts
-      const allAlerts = [...reportAlerts, ...flaggedAlerts];
-      
-      // Sort by timestamp, newest first
-      allAlerts.sort((a, b) => {
-        const dateA = new Date(a.created_at || a.timestamp);
-        const dateB = new Date(b.created_at || b.timestamp);
+      // Combine and sort alerts
+      const combinedAlerts = [...reportAlerts, ...flaggedAlerts];
+      combinedAlerts.sort((a, b) => {
+        const dateA = new Date(a.timestamp);
+        const dateB = new Date(b.timestamp);
         return dateB.getTime() - dateA.getTime();
       });
       
-      setLiveAlerts(allAlerts);
-      console.log(`Loaded ${allAlerts.length} alerts for ghost mode`);
-      return true;
-      
+      setAlerts(combinedAlerts);
     } catch (error) {
-      console.error('Error refreshing alerts:', error);
-      return false;
+      console.error('Error fetching ghost alerts:', error);
+    } finally {
+      setIsLoading(false);
     }
-  }, [isGhostMode, supabase]);
+  }, [userId]);
   
   useEffect(() => {
-    if (isGhostMode) {
-      refreshAlerts();
-    } else {
-      setLiveAlerts([]);
-    }
-  }, [isGhostMode, refreshAlerts]);
+    fetchAlerts();
+  }, [fetchAlerts]);
   
-  return { liveAlerts, refreshAlerts };
+  return {
+    alerts,
+    isLoading,
+    refreshAlerts: fetchAlerts
+  };
 }

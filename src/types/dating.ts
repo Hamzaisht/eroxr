@@ -11,7 +11,7 @@ export interface DatingAd {
   
   // User identifiers and profile data
   username: string;
-  avatarUrl?: string;
+  avatarUrl: string;  // Making this required for consistency
   videoUrl?: string;
   avatar_url?: string;
   video_url?: string;
@@ -33,7 +33,7 @@ export interface DatingAd {
   
   // Profile details
   tags: string[];  // Making this required to resolve the type conflict
-  location?: string;
+  location?: string;  // Making this optional as it's used inconsistently
   age?: number;  // Changed to optional
   gender?: string;
   seeking?: string[];

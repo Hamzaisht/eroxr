@@ -5,8 +5,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from '@/lib/utils';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { MediaType } from '@/types/media';
-import { calculateAspectRatioDimensions } from '@/utils/media/mediaUtils';
-import { getPlayableMediaUrl } from '@/utils/media/getPlayableMediaUrl';
+import { calculateAspectRatioDimensions, getPlayableMediaUrl } from '@/utils/media/types';
 
 interface MediaContentProps {
   mediaUrl?: string;
@@ -31,6 +30,7 @@ interface VideoPlayerProps {
   autoPlay?: boolean;
   onError?: () => void;
   onLoad?: () => void;
+  onClick?: () => void;
 }
 
 export function MediaContent({
@@ -93,6 +93,7 @@ export function MediaContent({
           autoPlay={autoPlay}
           onError={() => setHasError(true)}
           onLoad={() => setIsLoaded(true)}
+          onClick={onClick}
         />;
         
       case MediaType.IMAGE:
@@ -227,7 +228,7 @@ export function MediaContent({
   );
 }
 
-function VideoPlayer({ url, className, showCloseButton, onClose, autoPlay, onError, onLoad }: VideoPlayerProps) {
+function VideoPlayer({ url, className, showCloseButton, onClose, autoPlay, onError, onLoad, onClick }: VideoPlayerProps) {
   const [isLoaded, setIsLoaded] = useState(false);
   
   const handleLoadedData = () => {
@@ -240,7 +241,7 @@ function VideoPlayer({ url, className, showCloseButton, onClose, autoPlay, onErr
   };
   
   return (
-    <div className={cn("relative overflow-hidden", className)}>
+    <div className={cn("relative overflow-hidden", className)} onClick={onClick}>
       {!isLoaded && (
         <div className="absolute inset-0 flex items-center justify-center bg-gray-900 bg-opacity-50 animate-pulse">
           <p className="text-white text-opacity-80">Loading video...</p>

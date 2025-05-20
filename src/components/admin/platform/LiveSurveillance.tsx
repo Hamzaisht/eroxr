@@ -6,7 +6,7 @@ import { SurveillanceTabs } from "./surveillance/SurveillanceTabs";
 import { GhostModePrompt } from "./surveillance/GhostModePrompt";
 import { SurveillanceProvider } from "./surveillance/SurveillanceContext";
 import { LiveSession, SessionType } from "@/types/surveillance";
-import { LiveAlert } from "@/types/alerts";
+import { LiveAlert } from "@/types/surveillance"; // Use surveillance LiveAlert to match the context
 import { useLiveSurveillanceData } from "./surveillance/hooks/useLiveSurveillanceData";
 import { SurveillanceAlerts } from "./surveillance/components/SurveillanceAlerts";
 import { ActiveSessionMonitor } from "./surveillance/components/ActiveSessionMonitor";
@@ -64,12 +64,12 @@ export const LiveSurveillance = () => {
 
   const handleSelectAlert = (alert: LiveAlert) => {
     // Only try to start surveillance if the alert has appropriate session data
-    if (alert.userId) {
+    if (alert.userId || alert.user_id) {
       // Create a minimal session object from the alert data
       const sessionFromAlert: LiveSession = {
         id: alert.id,
         type: SessionType.USER,  // Use the enum value instead of string
-        user_id: alert.userId,
+        user_id: alert.userId || alert.user_id || '',
         username: alert.username || 'Unknown',
         status: 'active',
         started_at: alert.timestamp,
@@ -90,16 +90,19 @@ export const LiveSurveillance = () => {
     return <GhostModePrompt />;
   }
 
-  // Format alerts to match LiveAlert type
+  // Format alerts to match LiveAlert type from surveillance.ts
   const formattedAlerts = liveAlerts.map(alert => ({
     ...alert,
     isRead: alert.isRead || false,
     alert_type: alert.alert_type || (alert.type === 'violation' ? 'violation' : 
                 alert.type === 'risk' ? 'risk' : 'information') as 'violation' | 'risk' | 'information',
     userId: alert.userId || alert.user_id || '',
+    user_id: alert.user_id || alert.userId || '',
     contentId: alert.contentId || alert.content_id || '',
+    content_id: alert.content_id || alert.contentId || '',
     username: alert.username || 'Unknown',
     created_at: typeof alert.created_at === 'string' ? alert.created_at : new Date().toISOString(),
+    severity: alert.severity || 'medium', // Ensure severity is set
   })) as LiveAlert[];
 
   return (
