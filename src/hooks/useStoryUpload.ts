@@ -1,197 +1,111 @@
+import { useState, useCallback } from "react";
+import { useToast } from "@/hooks/use-toast";
+import { useSession } from "@supabase/auth-helpers-react";
+import { useRouter } from "next/navigation";
+import { createUniqueFilePath, uploadFileToStorage } from "@/utils/media/mediaUtils";
 
-import { useState, useRef } from 'react';
-import { useSession } from '@supabase/auth-helpers-react';
-import { useToast } from '@/hooks/use-toast';
-import { supabase } from "@/integrations/supabase/client";
-import { createUniqueFilePath } from '@/utils/upload/fileUtils';
-import { validateFileForUpload, isImageFile, isVideoFile } from '@/utils/upload/validators';
+interface UseStoryUploadProps {
+  onUploadComplete?: () => void;
+}
 
-export const useStoryUpload = () => {
+export const useStoryUpload = ({ onUploadComplete }: UseStoryUploadProps = {}) => {
   const [isUploading, setIsUploading] = useState(false);
-  const [progress, setProgress] = useState(0);
-  const [error, setError] = useState<string | null>(null);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const [mediaType, setMediaType] = useState<'image' | 'video' | null>(null);
-  
-  // CRITICAL: Use ref instead of state for file storage
-  const fileRef = useRef<File | null>(null);
-  
-  const session = useSession();
   const { toast } = useToast();
-  
-  const resetState = () => {
-    setIsUploading(false);
-    setProgress(0);
-    setError(null);
-    setPreviewUrl(null);
-    setMediaType(null);
-    fileRef.current = null;
-    
-    // Clean up preview URL
-    if (previewUrl && previewUrl.startsWith('blob:')) {
-      URL.revokeObjectURL(previewUrl);
-    }
-  };
-  
-  const handleFileSelect = async (file: File): Promise<boolean> => {
-    // Reset any previous state
-    setError(null);
-    
-    // Clean up previous preview URL
-    if (previewUrl && previewUrl.startsWith('blob:')) {
-      URL.revokeObjectURL(previewUrl);
-      setPreviewUrl(null);
-    }
-    
-    // CRITICAL: Run comprehensive file diagnostic
-    if (!file) {
-      console.warn('File Diagnostic: No file provided');
-      return false;
-    }
-    
-    // CRITICAL: Store file in ref, not state
-    fileRef.current = file;
-    
-    // Determine media type
-    if (isImageFile(file)) {
-      setMediaType('image');
-    } else if (isVideoFile(file)) {
-      setMediaType('video');
-    } else {
-      setError(`Invalid file type: ${file.type}. Only images and videos are allowed.`);
-      return false;
-    }
-    
-    // Create preview
-    try {
-      const newPreviewUrl = URL.createObjectURL(file);
-      setPreviewUrl(newPreviewUrl);
-      return true;
-    } catch (err) {
-      console.error("Error creating preview:", err);
-      setError("Failed to create file preview");
-      return false;
-    }
-  };
-  
-  const uploadFile = async (file: File) => {
+  const session = useSession();
+  const router = useRouter();
+
+  const uploadStory = useCallback(async (file: File) => {
     if (!session?.user?.id) {
-      setError("You must be logged in to upload stories");
-      return;
-    }
-    
-    // CRITICAL: Strict file validation before upload
-    if (!file || !(file instanceof File) || file.size === 0) {
-      console.error("❌ Invalid File passed to uploader", file);
-      setError("Only raw File instances with data can be uploaded");
-      return;
-    }
-    
-    // Validate file
-    const validation = validateFileForUpload(file);
-    if (!validation.valid) {
-      setError(validation.error || 'Invalid file');
-      return;
-    }
-    
-    setIsUploading(true);
-    setProgress(0);
-    
-    // Track progress with interval
-    const progressInterval = setInterval(() => {
-      setProgress(prev => {
-        if (prev >= 90) {
-          clearInterval(progressInterval);
-          return prev;
-        }
-        return prev + 5;
-      });
-    }, 300);
-    
-    try {
-      // Create unique storage path for the file
-      const path = createUniqueFilePath(session.user.id, file);
-      
-      // Upload to Supabase storage with explicit content type and upsert: true
-      const { data, error: uploadError } = await supabase.storage
-        .from('stories')
-        .upload(path, file, {
-          contentType: file.type,
-          upsert: true,
-          cacheControl: '3600'
-        });
-      
-      clearInterval(progressInterval);
-      setProgress(100);
-      
-      if (uploadError) {
-        throw new Error(uploadError.message);
-      }
-      
-      if (!data || !data.path) {
-        throw new Error("Supabase returned no path for uploaded story media");
-      }
-      
-      // Get the public URL
-      const { data: { publicUrl } } = supabase.storage
-        .from('stories')
-        .getPublicUrl(data.path);
-        
-      if (!publicUrl) {
-        throw new Error("Failed to get public URL for story media");
-      }
-      
-      // Create story entry in database
-      const { error: dbError } = await supabase
-        .from('stories')
-        .insert({
-          creator_id: session.user.id,
-          media_type: mediaType,
-          content_type: mediaType,
-          media_url: mediaType === 'image' ? publicUrl : null,
-          video_url: mediaType === 'video' ? publicUrl : null,
-          is_active: true,
-          expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
-        });
-      
-      if (dbError) {
-        throw new Error(dbError.message);
-      }
-      
       toast({
-        title: "Story uploaded successfully",
-        description: "Your story is now live"
+        title: "Not authenticated",
+        description: "You must be logged in to upload a story.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsUploading(true);
+    try {
+      // Create optimized version of image if it's too large
+      let fileToUpload = file;
+      if (file.type.startsWith('image/') && file.size > 1024 * 1024) {
+        fileToUpload = await optimizeImage(file);
+      }
+
+      // Upload to Supabase storage
+      const bucket = 'stories';
+      const userId = session.user.id;
+      const path = createUniqueFilePath(userId, fileToUpload);
+      const result = await uploadFileToStorage(bucket, path, fileToUpload);
+
+      if (!result.success || !result.url) {
+        throw new Error(result.error || "Failed to upload story");
+      }
+
+      toast({
+        title: "Story uploaded",
+        description: "Your story has been uploaded successfully.",
       });
       
-      // Reset after short delay
-      setTimeout(() => {
-        setIsUploading(false);
-      }, 1000);
-      
+      // Refresh the router to update server components
+      router.refresh();
+
+      if (onUploadComplete) {
+        onUploadComplete();
+      }
     } catch (error: any) {
-      clearInterval(progressInterval);
-      
-      console.error("Story upload error:", error);
-      setError(error.message || "An unknown error occurred");
-      setIsUploading(false);
-      setProgress(0);
-      
+      console.error('Upload error:', error);
       toast({
         title: "Upload failed",
-        description: error.message || "Failed to upload story",
-        variant: "destructive"
+        description: error.message || "Failed to upload story. Please try again.",
+        variant: "destructive",
       });
+    } finally {
+      setIsUploading(false);
     }
+  }, [session?.user?.id, toast, router, onUploadComplete]);
+
+  const optimizeImage = async (file: File): Promise<File> => {
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.src = URL.createObjectURL(file);
+      
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d')!;
+        
+        // Calculate new dimensions while maintaining aspect ratio
+        let width = img.width;
+        let height = img.height;
+        const maxDimension = 1920;
+        
+        if (width > height && width > maxDimension) {
+          height *= maxDimension / width;
+          width = maxDimension;
+        } else if (height > maxDimension) {
+          width *= maxDimension / height;
+          height = maxDimension;
+        }
+        
+        canvas.width = width;
+        canvas.height = height;
+        
+        // Draw and compress image
+        ctx.drawImage(img, 0, 0, width, height);
+        
+        canvas.toBlob((blob) => {
+          if (blob) {
+            resolve(new File([blob], file.name, {
+              type: 'image/jpeg',
+              lastModified: Date.now(),
+            }));
+          }
+        }, 'image/jpeg', 0.85); // Adjust quality as needed
+        
+        URL.revokeObjectURL(img.src);
+      };
+    });
   };
-  
-  return {
-    isUploading,
-    progress,
-    error,
-    previewUrl,
-    mediaType,
-    handleFileSelect,
-    uploadFile,
-    resetState
-  };
+
+  return { uploadStory, isUploading };
 };

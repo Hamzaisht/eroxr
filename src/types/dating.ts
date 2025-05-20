@@ -1,3 +1,4 @@
+
 /**
  * Dating Ad interface - represents the core dating ad structure
  */
@@ -16,8 +17,8 @@ export interface DatingAd {
   video_url?: string;
   
   // Verification and status
-  isVerified: boolean; // Making required with default fallback
-  isPremium: boolean;  // Making required with default fallback
+  isVerified: boolean; // Required with default fallback
+  isPremium: boolean;  // Required with default fallback
   is_verified?: boolean;
   is_premium?: boolean;
   is_active?: boolean;
@@ -68,49 +69,4 @@ export interface DatingAd {
   
   // For UI integration
   onTagClick?: (tag: string, e?: React.MouseEvent) => void;
-}
-
-/**
- * Filter options for dating ads
- */
-export interface FilterOptions {
-  minAge: number;
-  maxAge: number;
-  minDistance?: number;
-  maxDistance?: number;
-  verifiedOnly?: boolean;
-  premiumOnly?: boolean;
-  keyword?: string;
-  username?: string;
-  country?: string;
-  city?: string;
-  userType?: string;
-  tags?: string[];
-  isVerified?: boolean;
-  isPremium?: boolean;
-}
-
-/**
- * Search category for filtering
- */
-export interface SearchCategory {
-  seeker: string;
-  lookingFor: string;
-  label?: string;
-}
-
-/**
- * Dating ad action types
- */
-export interface DatingAdAction {
-  type: 'like' | 'message' | 'view' | 'block';
-  adId: string;
-  userId: string;
-}
-
-// Interface for profile data
-export interface ProfileData {
-  username: string;
-  avatar_url: string;
-  // Add other profile fields as needed
 }

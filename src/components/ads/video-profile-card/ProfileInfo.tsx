@@ -4,9 +4,10 @@ import { useState } from 'react';
 import { Shield, Award, Clock, Map, Calendar } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { DatingAd } from '../types/dating';
+import { DatingAd } from '@/types/dating';
 import { ProfileTags } from './ProfileTags';
 import { ProfileQuickPreview } from '../profile-preview/ProfileQuickPreview';
+import { formatAgeRange } from '@/utils/dating/ageRangeHelper';
 
 interface ProfileInfoProps {
   ad: DatingAd;
@@ -15,7 +16,7 @@ interface ProfileInfoProps {
 
 export const ProfileInfo = ({ ad, isPreviewMode = false }: ProfileInfoProps) => {
   // Format age range for display
-  const ageRangeDisplay = `${ad.age_range.lower}-${ad.age_range.upper}`;
+  const ageRangeDisplay = ad.age_range ? formatAgeRange(ad.age_range) : `Unknown`;
   const [showProfilePreview, setShowProfilePreview] = useState(false);
   
   return (

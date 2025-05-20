@@ -1,4 +1,3 @@
-
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useState, useEffect, useRef } from "react";
 import { cn } from "@/lib/utils";
@@ -237,7 +236,18 @@ export const MessageBubble = ({
           isOwnMessage ? "items-end" : "items-start"
         )}>
           <MessageBubbleContent
-            message={localMessage}
+            message={{
+              ...localMessage,
+              // Convert delivery_status to the format expected by MessageBubbleContent
+              delivery_status: 
+                (localMessage.delivery_status === 'sending' || 
+                 localMessage.delivery_status === 'failed' || 
+                 localMessage.delivery_status === 'delivered' || 
+                 localMessage.delivery_status === 'seen' ||
+                 localMessage.delivery_status === 'sent') 
+                  ? localMessage.delivery_status 
+                  : (localMessage.viewed_at ? 'seen' : 'sent')
+            } as any}
             isOwnMessage={isOwnMessage}
             isEditing={isEditing}
             editedContent={editedContent}

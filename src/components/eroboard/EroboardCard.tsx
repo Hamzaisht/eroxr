@@ -43,7 +43,7 @@ export const EroboardCard = ({ post }: EroboardCardProps) => {
           item={{
             url: post.video_url || (post.media_url && Array.isArray(post.media_url) ? post.media_url[0] : post.media_url as string),
             type: post.media_type || MediaType.VIDEO,
-            thumbnail_url: post.thumbnail_url
+            thumbnail: post.thumbnail_url
           }}
           className="w-full h-full object-cover"
           controls={false}

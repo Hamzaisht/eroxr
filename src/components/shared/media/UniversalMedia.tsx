@@ -1,7 +1,7 @@
 
 import { forwardRef, Ref, useMemo } from 'react';
 import { MediaRenderer } from '@/components/media/MediaRenderer';
-import { MediaSource, MediaType, MediaOptions } from '@/utils/media/types';
+import { MediaSource, MediaType, MediaOptions } from '@/types/media';
 import { extractMediaUrl } from '@/utils/media/mediaUtils';
 import { normalizeMediaSource } from '@/utils/media/mediaUtils';
 
@@ -38,7 +38,7 @@ export const UniversalMedia = forwardRef(({
     if (poster) {
       normalized.poster = poster;
     }
-    return normalized;
+    return normalized as MediaSource;
   }, [item, poster]);
 
   return (

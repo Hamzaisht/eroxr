@@ -1,117 +1,156 @@
-
-import { motion } from "framer-motion";
-import { useQuery } from "@tanstack/react-query";
-import { ProfileHeaderContainer } from "./header/ProfileHeaderContainer";
-import { ProfileTabs } from "./ProfileTabs";
-import { ProfileStats } from "./ProfileStats";
-import { ProfileInfo } from "./ProfileInfo";
-import { supabase } from "@/integrations/supabase/client";
+import { useState, useEffect } from "react";
 import { useSession } from "@supabase/auth-helpers-react";
-import { Loader2, AlertTriangle } from "lucide-react";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { asUUID } from "@/utils/supabase/helpers";
+import { useRouter } from "next/router";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import { supabase } from "@/integrations/supabase/client";
+import { ProfileTabs } from "./ProfileTabs";
+import { FollowButton } from "./FollowButton";
 
 interface ProfileContainerProps {
-  id?: string;
-  isEditing: boolean;
-  setIsEditing: (value: boolean) => void;
+  userId: string;
 }
 
-export const ProfileContainer = ({ id, isEditing, setIsEditing }: ProfileContainerProps) => {
+export function ProfileContainer({ userId }: ProfileContainerProps) {
+  const [profile, setProfile] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isFollowing, setIsFollowing] = useState(false);
+  const [postCount, setPostCount] = useState(0);
+  const [followerCount, setFollowerCount] = useState(0);
+  const [followingCount, setFollowingCount] = useState(0);
   const session = useSession();
-  const isOwnProfile = session?.user?.id === id;
+  const router = useRouter();
 
-  const { data: profile, isLoading, error } = useQuery({
-    queryKey: ["profile", id],
-    queryFn: async () => {
-      if (!id) return null;
-      
+  useEffect(() => {
+    const fetchProfile = async () => {
+      setIsLoading(true);
       try {
-        const { data, error } = await supabase
+        const { data: profileData, error: profileError } = await supabase
           .from("profiles")
           .select("*")
-          .eq("id", asUUID(id))
+          .eq("id", userId)
           .single();
 
-        if (error) throw error;
-        return data;
-      } catch (error) {
-        console.error("Profile fetch error:", error);
-        throw error;
+        if (profileError) {
+          console.error("Error fetching profile:", profileError);
+          return;
+        }
+
+        setProfile(profileData);
+
+        // Fetch post count
+        const { count: posts, error: postsError } = await supabase
+          .from("posts")
+          .select("*", { count: "exact", head: true })
+          .eq("creator_id", userId);
+
+        if (postsError) {
+          console.error("Error fetching post count:", postsError);
+        } else {
+          setPostCount(posts || 0);
+        }
+
+        // Fetch follower count
+        const { count: followers, error: followersError } = await supabase
+          .from("followers")
+          .select("*", { count: "exact", head: true })
+          .eq("following_id", userId);
+
+        if (followersError) {
+          console.error("Error fetching follower count:", followersError);
+        } else {
+          setFollowerCount(followers || 0);
+        }
+
+        // Fetch following count
+        const { count: followings, error: followingsError } = await supabase
+          .from("followers")
+          .select("*", { count: "exact", head: true })
+          .eq("follower_id", userId);
+
+        if (followingsError) {
+          console.error("Error fetching following count:", followingsError);
+        } else {
+          setFollowingCount(followings || 0);
+        }
+      } finally {
+        setIsLoading(false);
       }
-    },
-    enabled: !!id,
-    retry: 2,
-    staleTime: 60000, // Cache for 1 minute
-  });
+    };
+
+    fetchProfile();
+  }, [userId]);
+
+  useEffect(() => {
+    const checkFollowingStatus = async () => {
+      if (!session?.user?.id || !profile?.id) return;
+
+      const { data, error } = await supabase
+        .from("followers")
+        .select("*")
+        .eq("follower_id", session.user.id)
+        .eq("following_id", profile.id)
+        .single();
+
+      if (error) {
+        console.error("Error checking follow status:", error);
+        return;
+      }
+
+      setIsFollowing(!!data);
+    };
+
+    checkFollowingStatus();
+  }, [session?.user?.id, profile?.id]);
 
   if (isLoading) {
     return (
-      <div className="w-full h-screen flex items-center justify-center">
-        <div className="flex flex-col items-center gap-4">
-          <Loader2 className="h-8 w-8 animate-spin text-luxury-primary" />
-          <p className="text-luxury-neutral">Loading profile...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="w-full h-screen flex items-center justify-center px-4">
-        <Alert variant="destructive" className="max-w-md">
-          <AlertTriangle className="h-4 w-4" />
-          <AlertDescription>
-            Error loading profile: {(error as Error).message || "An unknown error occurred"}. 
-            Please try again later.
-          </AlertDescription>
-        </Alert>
+      <div className="flex flex-col items-center space-y-4 p-8">
+        <Skeleton className="h-24 w-24 rounded-full" />
+        <Skeleton className="h-8 w-48" />
+        <Skeleton className="h-6 w-64" />
       </div>
     );
   }
 
   if (!profile) {
     return (
-      <div className="w-full h-screen flex items-center justify-center px-4">
-        <Alert className="max-w-md bg-luxury-darker border-luxury-primary/20">
-          <AlertTriangle className="h-4 w-4" />
-          <AlertDescription>
-            Profile not found. This user may not exist or has been removed.
-          </AlertDescription>
-        </Alert>
+      <div className="flex flex-col items-center space-y-4 p-8">
+        <p className="text-lg text-muted-foreground">
+          User profile not found.
+        </p>
+        <Button onClick={() => router.push("/")}>Go to Home</Button>
       </div>
     );
   }
 
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className="min-h-screen w-full overflow-hidden bg-gradient-to-b from-luxury-dark via-luxury-darker to-luxury-dark"
-    >
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="w-full"
-      >
-        <ProfileHeaderContainer
-          profile={profile}
-          isOwnProfile={isOwnProfile}
-          isEditing={isEditing}
-          setIsEditing={setIsEditing}
+    <div className="flex flex-col space-y-6 p-8">
+      <div className="flex items-center space-x-4">
+        <Avatar className="h-24 w-24">
+          <AvatarImage src={profile.avatar_url} alt={profile.username} />
+          <AvatarFallback>{profile.username?.[0]?.toUpperCase()}</AvatarFallback>
+        </Avatar>
+        <div className="space-y-1">
+          <h2 className="text-2xl font-semibold">{profile.username}</h2>
+          <p className="text-muted-foreground">{profile.bio || "No bio available"}</p>
+        </div>
+      </div>
+      {session?.user?.id !== profile.id && (
+        <FollowButton
+          isFollowing={isFollowing}
+          followerId={session?.user?.id || ""}
+          followingId={profile.id}
+          onFollowStatusChange={setIsFollowing}
         />
-        
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.2 }}
-          className="w-full max-w-none py-6"
-        >
-          <ProfileStats profileId={profile.id} />
-          <ProfileTabs profile={profile} />
-        </motion.div>
-      </motion.div>
-    </motion.div>
+      )}
+      <ProfileTabs 
+        userId={profile?.id || ''} 
+        postCount={postCount} 
+        followerCount={followerCount} 
+        followingCount={followingCount} 
+      />
+    </div>
   );
-};
+}

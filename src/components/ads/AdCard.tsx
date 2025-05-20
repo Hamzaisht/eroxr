@@ -1,3 +1,4 @@
+
 import { formatDistanceToNow } from "date-fns";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -12,8 +13,9 @@ import {
   User
 } from "lucide-react";
 import { motion } from "framer-motion";
-import type { DatingAd } from "./types/dating";
+import type { DatingAd } from "@/types/dating";
 import { cn } from "@/lib/utils";
+import { formatAgeRange } from "@/utils/dating/ageRangeHelper";
 
 interface AdCardProps {
   ad: DatingAd;
@@ -21,7 +23,8 @@ interface AdCardProps {
 
 export const AdCard = ({ ad }: AdCardProps) => {
   const getAgeRange = () => {
-    return `${ad.age_range.lower}-${ad.age_range.upper}`;
+    if (!ad.age_range) return "Not specified";
+    return formatAgeRange(ad.age_range);
   };
 
   const getCompletionColor = () => {

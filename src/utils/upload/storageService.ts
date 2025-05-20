@@ -3,62 +3,43 @@ import { supabase } from '@/integrations/supabase/client';
 
 /**
  * Uploads a file to Supabase storage
- * @param bucket The storage bucket name
- * @param path The file path within the bucket
- * @param file The file to upload
- * @returns Object with success status, path and errors
  */
 export const uploadFileToStorage = async (
-  bucket: string,
-  path: string,
-  file: File
-): Promise<{
-  success: boolean;
-  path?: string;
-  url?: string;
-  error?: string;
-}> => {
+  bucket: string, 
+  filePath: string, 
+  file: File | string
+): Promise<{ success: boolean; url?: string; error?: string }> => {
   try {
-    // Validate the file
-    if (!(file instanceof File)) {
-      return {
-        success: false,
-        error: 'Invalid file object',
-      };
+    // Handle string file input (data URL)
+    let fileToUpload: File | Blob = file as File;
+    
+    // Convert data URL to blob if needed
+    if (typeof file === 'string' && file.startsWith('data:')) {
+      const res = await fetch(file);
+      fileToUpload = await res.blob();
+    } else if (typeof file !== 'object') {
+      return { success: false, error: 'Invalid file format' };
     }
-
-    // Upload with explicit content type and upsert: true
-    const { data: uploadData, error: uploadError } = await supabase.storage
+    
+    const { data, error } = await supabase.storage
       .from(bucket)
-      .upload(path, file, {
+      .upload(filePath, fileToUpload, {
         cacheControl: '3600',
-        upsert: true,
-        contentType: file.type,
+        upsert: false
       });
 
-    if (uploadError) {
-      console.error('Upload error:', uploadError);
-      return {
-        success: false,
-        error: uploadError.message,
-      };
+    if (error) {
+      console.error('Storage upload error:', error);
+      return { success: false, error: error.message };
     }
 
-    // Get the public URL
     const { data: publicUrlData } = supabase.storage
       .from(bucket)
-      .getPublicUrl(uploadData?.path || path);
+      .getPublicUrl(filePath);
 
-    return {
-      success: true,
-      path: uploadData?.path || path,
-      url: publicUrlData?.publicUrl,
-    };
+    return { success: true, url: publicUrlData.publicUrl };
   } catch (error: any) {
-    console.error('Storage upload error:', error);
-    return {
-      success: false,
-      error: error.message || 'Unknown upload error',
-    };
+    console.error('Unexpected upload error:', error);
+    return { success: false, error: error.message || 'Unknown upload error' };
   }
 };

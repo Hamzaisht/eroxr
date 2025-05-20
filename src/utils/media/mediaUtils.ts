@@ -5,9 +5,20 @@ import { MediaSource, MediaType } from '@/types/media';
 /**
  * Creates a unique file path for storage based on user ID and file
  */
-export const createUniqueFilePath = (userId: string, file: File): string => {
+export const createUniqueFilePath = (userId: string, file: File | string): string => {
   const timestamp = Date.now();
-  const fileExt = file.name.split('.').pop() || 'jpg';
+  let fileExt = 'jpg'; // Default extension
+  
+  if (typeof file === 'object' && file instanceof File) {
+    fileExt = file.name.split('.').pop() || 'jpg';
+  } else if (typeof file === 'string') {
+    // Try to extract extension from string (URL or base64)
+    const matches = file.match(/\.([0-9a-z]+)(?:[\?#]|$)/i);
+    if (matches && matches[1]) {
+      fileExt = matches[1];
+    }
+  }
+  
   return `${userId}/${timestamp}-${Math.random().toString(36).substring(2, 9)}.${fileExt}`;
 };
 
@@ -17,12 +28,23 @@ export const createUniqueFilePath = (userId: string, file: File): string => {
 export const uploadFileToStorage = async (
   bucket: string, 
   filePath: string, 
-  file: File
+  file: File | string
 ): Promise<{ success: boolean; url?: string; error?: string }> => {
   try {
+    // Handle string file input (data URL)
+    let fileToUpload: File | Blob = file as File;
+    
+    // Convert data URL to blob if needed
+    if (typeof file === 'string' && file.startsWith('data:')) {
+      const res = await fetch(file);
+      fileToUpload = await res.blob();
+    } else if (typeof file !== 'object') {
+      return { success: false, error: 'Invalid file format' };
+    }
+    
     const { data, error } = await supabase.storage
       .from(bucket)
-      .upload(filePath, file, {
+      .upload(filePath, fileToUpload, {
         cacheControl: '3600',
         upsert: false
       });
@@ -46,14 +68,21 @@ export const uploadFileToStorage = async (
 /**
  * Extract media URL from various formats
  */
-export const extractMediaUrl = (src: string | MediaSource): string => {
+export const extractMediaUrl = (src: string | MediaSource | any): string => {
   if (typeof src === 'string') {
     return src;
   }
   
   if (src && typeof src === 'object') {
+    // Check all the possible URL properties
     if ('url' in src) return src.url;
-    if ('media_url' in src) return src.media_url as string;
+    if ('media_url' in src) {
+      const mediaUrl = src.media_url;
+      if (Array.isArray(mediaUrl) && mediaUrl.length > 0) {
+        return mediaUrl[0];
+      }
+      return mediaUrl as string;
+    }
     if ('video_url' in src) return src.video_url as string;
   }
   
@@ -63,7 +92,7 @@ export const extractMediaUrl = (src: string | MediaSource): string => {
 /**
  * Normalize media source to ensure consistent format
  */
-export const normalizeMediaSource = (source: string | MediaSource): MediaSource => {
+export const normalizeMediaSource = (source: string | MediaSource | any): MediaSource => {
   if (typeof source === 'string') {
     // Determine media type from URL
     const url = source;
@@ -72,19 +101,50 @@ export const normalizeMediaSource = (source: string | MediaSource): MediaSource 
     return { url, type };
   }
   
-  if (source && typeof source === 'object' && 'url' in source) {
-    // Ensure type is correct MediaType enum
-    if (typeof source.type === 'string' && source.type !== 'image' && 
-        source.type !== 'video' && source.type !== 'audio' && 
-        source.type !== 'document' && source.type !== 'gif' && 
-        source.type !== 'unknown') {
+  if (source && typeof source === 'object') {
+    if (!('url' in source) && ('media_url' in source || 'video_url' in source)) {
+      // Convert alternative URL formats to standard format
+      const url = extractMediaUrl(source);
+      const type = source.type || detectMediaType(url);
+      
       return {
         ...source,
-        type: detectMediaType(source.url)
+        url,
+        type
       };
     }
-    // Return existing MediaSource
-    return source;
+    
+    // Ensure type is correct MediaType enum
+    if (typeof source.type === 'string') {
+      let mediaType: MediaType;
+      
+      switch(source.type.toLowerCase()) {
+        case 'image': 
+          mediaType = MediaType.IMAGE;
+          break;
+        case 'video':
+          mediaType = MediaType.VIDEO;
+          break;
+        case 'audio':
+          mediaType = MediaType.AUDIO;
+          break;
+        case 'document':
+          mediaType = MediaType.DOCUMENT;
+          break;
+        case 'gif':
+          mediaType = MediaType.GIF;
+          break;
+        default:
+          mediaType = MediaType.UNKNOWN;
+      }
+      
+      return {
+        ...source,
+        type: mediaType
+      };
+    }
+    
+    return source as MediaSource;
   }
   
   // Fallback
@@ -120,5 +180,5 @@ export const detectMediaType = (url: string): MediaType => {
   return MediaType.UNKNOWN;
 };
 
-// Add alias for backward compatibility
+// Alias for backward compatibility
 export const determineMediaType = detectMediaType;

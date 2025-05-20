@@ -12,15 +12,16 @@ export interface MediaSource {
   url: string;
   type: MediaType;
   thumbnail?: string;
-  poster?: string; // Add poster for video sources
+  poster?: string;
   duration?: number; 
   width?: number;
   height?: number;
   watermark?: boolean;
   creator_id?: string;
   content_type?: string;
-  media_url?: string;
+  media_url?: string | string[];
   video_url?: string;
+  thumbnail_url?: string; // Adding this property to fix EroboardCard
 }
 
 export interface MediaOptions {

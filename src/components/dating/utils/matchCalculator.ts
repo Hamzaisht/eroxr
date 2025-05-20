@@ -1,85 +1,76 @@
 
-import { DatingAd } from '@/components/ads/types/dating';
+import { DatingAd } from '@/types/dating';
+import { getLowerAgeValue, getUpperAgeValue } from '@/utils/dating/ageRangeHelper';
 
 /**
- * Calculates a match percentage between two dating profiles
- * based on common interests, preferences, and compatibility factors
+ * Calculate percentage match between two dating profiles
  */
-export const calculateMatchPercentage = (userProfile: DatingAd | null, targetProfile: DatingAd | null): number => {
-  if (!userProfile || !targetProfile) return 0;
+export function calculateMatchPercentage(userProfile: DatingAd | null, ad: DatingAd): number {
+  if (!userProfile) return 50; // Default match percentage for users without profiles
   
   let score = 0;
-  let possiblePoints = 0;
+  let totalCriteria = 0;
   
-  // Match on interests (max 40 points)
-  if (userProfile.interests && targetProfile.interests) {
-    const commonInterests = userProfile.interests.filter(
-      interest => targetProfile.interests?.includes(interest)
-    );
-    
-    // Award points based on percentage of common interests
-    const interestScore = Math.min(
-      40, 
-      Math.floor((commonInterests.length / Math.max(1, userProfile.interests.length)) * 40)
-    );
-    
-    score += interestScore;
-    possiblePoints += 40;
-  }
-  
-  // Match on relationship preferences (max 30 points)
-  if (userProfile.looking_for.includes(targetProfile.relationship_status) || 
-      userProfile.looking_for.includes('any')) {
-    score += 30;
-  }
-  possiblePoints += 30;
-  
-  // Match on age range (max 20 points)
-  const userAgePreference = userProfile.preferred_age_range || { lower: 18, upper: 99 };
-  const targetAgeRange = targetProfile.age_range;
-  
-  if (targetAgeRange.lower <= userAgePreference.upper && 
-      targetAgeRange.upper >= userAgePreference.lower) {
-    // Calculate how well the ranges overlap
-    const overlap = Math.min(userAgePreference.upper, targetAgeRange.upper) - 
-                   Math.max(userAgePreference.lower, targetAgeRange.lower);
-    const userRange = userAgePreference.upper - userAgePreference.lower;
-    const overlapPercent = Math.min(1, overlap / Math.max(1, userRange));
-    
-    score += Math.floor(overlapPercent * 20);
-    possiblePoints += 20;
-  }
-  
-  // Match on location (max 10 points)
-  if (userProfile.country === targetProfile.country) {
-    score += 5;
-    
-    // Additional points for same city
-    if (userProfile.city === targetProfile.city) {
-      score += 5;
+  // Match by relationship status
+  if (userProfile.relationship_status && ad.relationship_status) {
+    totalCriteria++;
+    if (userProfile.relationship_status === ad.relationship_status) {
+      score++;
     }
   }
-  possiblePoints += 10;
+  
+  // Match by interests overlap
+  if (userProfile.interests?.length && ad.interests?.length) {
+    totalCriteria++;
+    const userInterests = new Set(userProfile.interests);
+    const adInterests = new Set(ad.interests);
+    const commonInterests = [...userInterests].filter(x => adInterests.has(x));
+    if (commonInterests.length > 0) {
+      score += commonInterests.length / Math.max(userInterests.size, adInterests.size);
+    }
+  }
+  
+  // Match by age range preferences
+  if (userProfile.preferred_age_range && ad.age) {
+    totalCriteria++;
+    const lowerAge = getLowerAgeValue(userProfile.preferred_age_range);
+    const upperAge = getUpperAgeValue(userProfile.preferred_age_range);
+    if (ad.age >= lowerAge && ad.age <= upperAge) {
+      score++;
+    }
+  }
+  
+  if (userProfile.age && ad.preferred_age_range) {
+    totalCriteria++;
+    const lowerAge = getLowerAgeValue(ad.preferred_age_range);
+    const upperAge = getUpperAgeValue(ad.preferred_age_range);
+    if (userProfile.age >= lowerAge && userProfile.age <= upperAge) {
+      score++;
+    }
+  }
   
   // Calculate percentage
-  const percentage = Math.round((score / Math.max(1, possiblePoints)) * 100);
-  
-  return percentage;
-};
+  const matchPercentage = totalCriteria > 0
+    ? Math.round((score / totalCriteria) * 100)
+    : 50; // Default to 50% if no criteria matched
+    
+  // Ensure matchPercentage is within bounds
+  return Math.max(20, Math.min(100, matchPercentage));
+}
 
 /**
- * Returns a label describing the match quality
+ * Get a descriptive label based on match percentage
  */
-export const getMatchLabel = (percentage: number): { label: string; color: string } => {
-  if (percentage >= 90) {
+export function getMatchLabel(matchPercentage: number): { label: string; color: string } {
+  if (matchPercentage >= 90) {
     return { label: 'Perfect Match', color: 'text-green-500' };
-  } else if (percentage >= 75) {
-    return { label: 'Great Match', color: 'text-emerald-500' };
-  } else if (percentage >= 60) {
-    return { label: 'Good Match', color: 'text-blue-500' };
-  } else if (percentage >= 40) {
-    return { label: 'Fair Match', color: 'text-yellow-500' };
+  } else if (matchPercentage >= 75) {
+    return { label: 'Great Match', color: 'text-emerald-400' };
+  } else if (matchPercentage >= 60) {
+    return { label: 'Good Match', color: 'text-blue-400' };
+  } else if (matchPercentage >= 40) {
+    return { label: 'Fair Match', color: 'text-yellow-400' };
   } else {
-    return { label: 'Low Compatibility', color: 'text-red-500' };
+    return { label: 'Low Match', color: 'text-gray-400' };
   }
-};
+}

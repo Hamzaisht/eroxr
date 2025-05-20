@@ -1,7 +1,7 @@
 
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { DatingAd } from '../types/dating';
+import { DatingAd } from '@/types/dating';
 import { VideoContent } from './VideoContent';
 import { ProfileBadges } from './ProfileBadges';
 import { ProfileInfo } from './ProfileInfo';
