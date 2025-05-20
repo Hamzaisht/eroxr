@@ -47,3 +47,6 @@ export function useBreakpoint() {
 
   return breakpoint;
 }
+
+// Re-export useMediaQuery from useMediaQuery.ts
+export { useMediaQuery } from './useMediaQuery';

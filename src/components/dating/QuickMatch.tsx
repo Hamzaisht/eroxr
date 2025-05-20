@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { DatingAd } from '@/components/ads/types/dating';
@@ -207,7 +206,15 @@ export const QuickMatch = ({ ads, userProfile }: QuickMatchProps) => {
             transition={{ duration: 0.4 }}
           >
             <div className="relative w-full h-full rounded-xl overflow-hidden">
-              <VideoProfileCard ad={currentAd} isActive={true} />
+              <VideoProfileCard 
+                ad={{
+                  ...currentAd,
+                  avatarUrl: currentAd.avatar_url,
+                  videoUrl: currentAd.video_url,
+                  isVerified: Boolean(currentAd.is_verified)
+                }} 
+                isActive={true} 
+              />
               
               {/* Match percentage badge */}
               <div className="absolute top-4 right-4 bg-gradient-to-r from-luxury-primary to-luxury-accent text-white text-sm font-bold px-3 py-1.5 rounded-full shadow-glow z-20">

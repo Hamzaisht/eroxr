@@ -1,125 +1,42 @@
-import { useState, useEffect, forwardRef } from 'react';
-import { MediaType, MediaSource, MediaRendererProps } from '@/utils/media/types';
-import { MediaDisplay } from './MediaDisplay';
-import { extractMediaUrl } from '@/utils/media/mediaUtils';
+import React, { useRef, useState, useEffect } from 'react';
+import { MediaType } from "@/utils/media/types";
+// Import or define MediaRendererProps directly in this file
+import { ReactNode } from "react";
 
-/**
- * A smart media renderer that handles various media types
- */
-export const MediaRenderer = forwardRef(({
-  src,
-  type,
-  className,
-  autoPlay = false,
-  controls = true,
-  muted = true,
-  loop = false,
-  poster,
-  onClick,
-  onError,
-  onLoad,
-  onEnded,
-  onTimeUpdate,
-  allowRetry = false,
-  maxRetries = 2,
-  showWatermark = false
-}: MediaRendererProps, ref: React.ForwardedRef<HTMLVideoElement | HTMLImageElement>) => {
-  const [mediaUrl, setMediaUrl] = useState<string | null>(null);
-  const [mediaType, setMediaType] = useState<MediaType>(type || MediaType.UNKNOWN);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [retryCount, setRetryCount] = useState(0);
-  
-  // Process the media source to get a usable URL
+// Define the MediaRendererProps interface if it's not exported elsewhere
+export interface MediaRendererProps {
+  children?: ReactNode;
+  mediaType: MediaType;
+  className?: string;
+}
+
+export const MediaRenderer: React.FC<MediaRendererProps> = ({ children, mediaType, className }) => {
+  const [isSupported, setIsSupported] = useState(true);
+  const containerRef = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
-    try {
-      // Extract the URL directly (skipping normalization)
-      const url = typeof src === 'string' ? src : extractMediaUrl(src);
-      
-      if (!url) {
-        throw new Error("Could not extract media URL");
-      }
-      
-      setMediaUrl(url);
-      
-      // Set media type from prop or determine from source
-      if (type) {
-        setMediaType(type);
-      } else if (typeof src === 'object' && src?.media_type) {
-        setMediaType(src.media_type);
-      }
-      
-      setIsLoading(false);
-      setError(null);
-    } catch (err: any) {
-      console.error("Error processing media source:", err);
-      setError(err.message || "Failed to process media");
-      setIsLoading(false);
-    }
-  }, [src, type]);
-  
-  const handleError = () => {
-    if (allowRetry && retryCount < maxRetries) {
-      // Retry loading with a slight delay
-      setRetryCount(count => count + 1);
-      setTimeout(() => {
-        // Force remount by temporarily clearing the URL
-        setMediaUrl(null);
-        setTimeout(() => {
-          // Re-extract URL without normalization
-          const url = typeof src === 'string' ? src : extractMediaUrl(src);
-          if (url) setMediaUrl(url);
-        }, 50);
-      }, 1000);
-      
-      console.log(`Media load retry ${retryCount + 1}/${maxRetries}`);
-    } else {
-      setError("Failed to load media");
-      if (onError) onError();
-    }
-  };
-  
-  const handleLoad = () => {
-    setError(null);
-    if (onLoad) onLoad();
-  };
-  
-  // Show loading or error state
-  if (isLoading) {
-    return (
-      <div className={`flex items-center justify-center bg-black/20 ${className}`}>
-        <div className="animate-pulse">Loading...</div>
-      </div>
-    );
-  }
-  
-  if (error || !mediaUrl) {
-    return (
-      <div className={`flex items-center justify-center bg-black/20 ${className}`}>
-        <div className="text-red-500">{error || "Media unavailable"}</div>
-      </div>
-    );
-  }
-  
-  // Render the appropriate media component
-  return (
-    <MediaDisplay
-      mediaUrl={mediaUrl}
-      mediaType={mediaType}
-      className={className}
-      autoPlay={autoPlay}
-      controls={controls}
-      muted={muted}
-      loop={loop}
-      poster={poster}
-      onClick={onClick}
-      onLoad={handleLoad}
-      onError={handleError}
-      onEnded={onEnded}
-      onTimeUpdate={onTimeUpdate}
-      ref={ref}
-    />
-  );
-});
+    const checkSupport = () => {
+      if (!containerRef.current) return;
 
-MediaRenderer.displayName = 'MediaRenderer';
+      // Basic check - expand this as needed
+      const element = document.createElement(mediaType);
+      setIsSupported(typeof element.canPlayType === "function");
+    };
+
+    checkSupport();
+  }, [mediaType]);
+
+  if (!isSupported) {
+    return (
+      <div className={className}>
+        <p>Unsupported media type: {mediaType}</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className={className} ref={containerRef}>
+      {children}
+    </div>
+  );
+};

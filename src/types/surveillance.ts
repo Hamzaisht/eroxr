@@ -29,6 +29,7 @@ export interface MediaSource {
   video_url?: string;
   media_urls?: string[];
   video_urls?: string[];
+  creator_id?: string;
 }
 
 export interface LiveSession {
@@ -37,7 +38,7 @@ export interface LiveSession {
   user_id: string;
   username?: string;
   avatar_url?: string | null;
-  started_at: string;
+  started_at?: string;
   title?: string;
   description?: string;
   status: string;

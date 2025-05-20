@@ -1,10 +1,9 @@
-
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { isQueryError } from "@/utils/supabase/typeSafeOperations";
-import { AdminLogsTable } from "./AdminLogsTable"; // Import the component correctly
+import AdminLogsTable from './AdminLogsTable'; // Import the component correctly
 
 export const GodmodeDashboardHome = () => {
   const [stats, setStats] = useState({

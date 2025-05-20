@@ -17,9 +17,10 @@ export const VideoControls = ({ videoUrl, avatarUrl, isActive }: VideoControlsPr
 
   const mediaItem: MediaSource = {
     url: videoUrl || avatarUrl || '',
-    type: MediaType.VIDEO,
+    type: 'video',
     // Additional fields for backward compatibility
-    media_url: avatarUrl || ''
+    media_url: avatarUrl || '',
+    video_url: videoUrl || '',
   };
   
   console.log("VideoControls media item:", mediaItem);
