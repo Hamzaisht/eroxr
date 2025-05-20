@@ -18,7 +18,8 @@ export const VideoControls = ({ videoUrl, avatarUrl, isActive }: VideoControlsPr
   const mediaItem = {
     url: videoUrl || avatarUrl || '',
     type: MediaType.VIDEO,
-    // Additional fields for backward compatibility
+    poster: avatarUrl || undefined,
+    // Include these properties for backward compatibility
     media_url: avatarUrl || '',
     video_url: videoUrl || '',
   };

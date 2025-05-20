@@ -211,7 +211,9 @@ export const QuickMatch = ({ ads, userProfile }: QuickMatchProps) => {
                   ...currentAd,
                   avatarUrl: currentAd.avatar_url,
                   videoUrl: currentAd.video_url,
-                  isVerified: Boolean(currentAd.is_verified)
+                  isVerified: Boolean(currentAd.is_verified),
+                  isPremium: Boolean(currentAd.is_premium),
+                  tags: currentAd.tags || [],
                 }} 
                 isActive={true} 
               />

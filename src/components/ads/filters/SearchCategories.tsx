@@ -66,18 +66,18 @@ export const SearchCategories = ({
             {categories.map((category) => {
               const isSelected = 
                 selectedSeeker === category.seeker && 
-                selectedLookingFor === category.looking_for;
+                selectedLookingFor === category.lookingFor;
               
               return (
                 <button
-                  key={`${category.seeker}-${category.looking_for}`}
+                  key={`${category.seeker}-${category.lookingFor}`}
                   type="button" // Explicitly set button type to prevent form submission
                   className={`relative flex flex-col items-center justify-center p-2.5 rounded-lg text-xs transition-all ${
                     isSelected 
                       ? "bg-gradient-to-r from-luxury-primary to-luxury-secondary text-white shadow-md shadow-luxury-primary/25" 
                       : "bg-luxury-darker hover:bg-luxury-dark/80 text-luxury-neutral hover:text-white"
                   }`}
-                  onClick={(e) => handleCategoryClick(e, category.seeker, category.looking_for)}
+                  onClick={(e) => handleCategoryClick(e, category.seeker, category.lookingFor)}
                   onMouseDown={preventFormSubmission}
                   onTouchStart={preventFormSubmission}
                 >
@@ -144,8 +144,8 @@ function getCategoryIcon(category: SearchCategory): ReactNode {
     return <Star size={iconSize} className={iconClassName} />;
   }
 
-  // For regular categories, show icon based on seeker/looking_for combination
-  if (category.looking_for === "any") {
+  // For regular categories, show icon based on seeker/lookingFor combination
+  if (category.lookingFor === "any") {
     return <Flame size={iconSize} className={iconClassName} />;
   }
   
@@ -182,7 +182,7 @@ function formatCategoryLabel(category: SearchCategory): string {
   };
   
   const seeker = seekerMap[category.seeker] || category.seeker;
-  const lookingFor = lookingForMap[category.looking_for] || category.looking_for;
+  const lookingFor = lookingForMap[category.lookingFor] || category.lookingFor;
   
   return `${seeker}4${lookingFor}`;
 }

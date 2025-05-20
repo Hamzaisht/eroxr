@@ -26,7 +26,10 @@ export const UserSearchFields = ({
     } else {
       // Remove username from filter if input is empty
       const { username, ...rest } = filterOptions;
-      setFilterOptions(rest);
+      setFilterOptions({
+        ...rest,
+        username: "" // Set empty string instead of removing to match FilterOptions type
+      });
     }
   };
 
@@ -40,7 +43,10 @@ export const UserSearchFields = ({
     } else {
       // Remove keyword from filter if input is empty
       const { keyword, ...rest } = filterOptions;
-      setFilterOptions(rest);
+      setFilterOptions({
+        ...rest,
+        keyword: "" // Set empty string instead of removing to match FilterOptions type
+      });
     }
   };
 

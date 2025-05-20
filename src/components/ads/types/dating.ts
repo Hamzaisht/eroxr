@@ -61,13 +61,11 @@ export interface DatingAd {
   is_active?: boolean;
   is_premium?: boolean;
   is_verified?: boolean;
-  views?: number;
-  likes?: number;
-  matches?: number;
   online?: boolean;
   last_active?: string;
   view_count?: number;
   message_count?: number;
+  click_count?: number;
   
   // Extended functionality
   user?: {
@@ -87,6 +85,8 @@ export interface FilterOptions {
   premiumOnly: boolean;
   keyword: string;
   username: string;
+  isVerified?: boolean;
+  isPremium?: boolean;
   tags?: string[];
 }
 
@@ -96,6 +96,3 @@ export interface SearchCategory {
   lookingFor: string;
   label?: string;
 }
-
-// Export the types we had previously
-export type { DatingAd, FilterOptions, SearchCategory };

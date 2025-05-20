@@ -2,48 +2,48 @@
 import { SearchCategory } from "@/components/ads/types/dating";
 
 // Shortcut map for search categories
-export const shortcutMap: Record<string, { seeker: string; looking_for: string }> = {
-  "MF4A": { seeker: "couple", looking_for: "any" },
-  "MF4F": { seeker: "couple", looking_for: "female" },
-  "MF4M": { seeker: "couple", looking_for: "male" },
-  "MF4MF": { seeker: "couple", looking_for: "couple" },
-  "MF4T": { seeker: "couple", looking_for: "trans" },
+export const shortcutMap: Record<string, { seeker: string; lookingFor: string }> = {
+  "MF4A": { seeker: "couple", lookingFor: "any" },
+  "MF4F": { seeker: "couple", lookingFor: "female" },
+  "MF4M": { seeker: "couple", lookingFor: "male" },
+  "MF4MF": { seeker: "couple", lookingFor: "couple" },
+  "MF4T": { seeker: "couple", lookingFor: "trans" },
   
-  "F4A": { seeker: "female", looking_for: "any" },
-  "F4M": { seeker: "female", looking_for: "male" },
-  "F4F": { seeker: "female", looking_for: "female" },
-  "F4MF": { seeker: "female", looking_for: "couple" },
-  "F4T": { seeker: "female", looking_for: "trans" },
+  "F4A": { seeker: "female", lookingFor: "any" },
+  "F4M": { seeker: "female", lookingFor: "male" },
+  "F4F": { seeker: "female", lookingFor: "female" },
+  "F4MF": { seeker: "female", lookingFor: "couple" },
+  "F4T": { seeker: "female", lookingFor: "trans" },
   
-  "M4A": { seeker: "male", looking_for: "any" },
-  "M4F": { seeker: "male", looking_for: "female" },
-  "M4M": { seeker: "male", looking_for: "male" },
-  "M4MF": { seeker: "male", looking_for: "couple" },
-  "M4T": { seeker: "male", looking_for: "trans" }
+  "M4A": { seeker: "male", lookingFor: "any" },
+  "M4F": { seeker: "male", lookingFor: "female" },
+  "M4M": { seeker: "male", lookingFor: "male" },
+  "M4MF": { seeker: "male", lookingFor: "couple" },
+  "M4T": { seeker: "male", lookingFor: "trans" }
 };
 
 // Default search categories
 export const defaultSearchCategories: SearchCategory[] = [
-  { seeker: "couple", looking_for: "female" },
-  { seeker: "couple", looking_for: "male" },
-  { seeker: "couple", looking_for: "couple" },
-  { seeker: "couple", looking_for: "trans" },
-  { seeker: "couple", looking_for: "any" },
+  { seeker: "couple", lookingFor: "female" },
+  { seeker: "couple", lookingFor: "male" },
+  { seeker: "couple", lookingFor: "couple" },
+  { seeker: "couple", lookingFor: "trans" },
+  { seeker: "couple", lookingFor: "any" },
   
-  { seeker: "female", looking_for: "male" },
-  { seeker: "female", looking_for: "female" },
-  { seeker: "female", looking_for: "couple" },
-  { seeker: "female", looking_for: "trans" },
-  { seeker: "female", looking_for: "any" },
+  { seeker: "female", lookingFor: "male" },
+  { seeker: "female", lookingFor: "female" },
+  { seeker: "female", lookingFor: "couple" },
+  { seeker: "female", lookingFor: "trans" },
+  { seeker: "female", lookingFor: "any" },
   
-  { seeker: "male", looking_for: "female" },
-  { seeker: "male", looking_for: "male" },
-  { seeker: "male", looking_for: "couple" },
-  { seeker: "male", looking_for: "trans" },
-  { seeker: "male", looking_for: "any" },
+  { seeker: "male", lookingFor: "female" },
+  { seeker: "male", lookingFor: "male" },
+  { seeker: "male", lookingFor: "couple" },
+  { seeker: "male", lookingFor: "trans" },
+  { seeker: "male", lookingFor: "any" },
   
-  { seeker: "verified", looking_for: "any" },
-  { seeker: "premium", looking_for: "any" },
+  { seeker: "verified", lookingFor: "any" },
+  { seeker: "premium", lookingFor: "any" },
 ];
 
 // Default nordic countries
