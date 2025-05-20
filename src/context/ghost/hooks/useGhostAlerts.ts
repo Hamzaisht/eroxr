@@ -54,7 +54,8 @@ export function useGhostAlerts(userId: string | null) {
         contentId: report.content_id || '',
         content_id: report.content_id || '',
         title: `Report: ${report.reason}`,
-        description: report.description || 'No description provided'
+        description: report.description || 'No description provided',
+        isRead: false // Add isRead property
       }));
       
       const flaggedAlerts: LiveAlert[] = (flaggedContent || []).map(item => ({
@@ -73,7 +74,8 @@ export function useGhostAlerts(userId: string | null) {
         contentId: item.content_id || '',
         content_id: item.content_id || '',
         title: `Flagged: ${item.content_type}`,
-        description: item.notes || item.reason || ''
+        description: item.notes || item.reason || '',
+        isRead: false // Add isRead property
       }));
       
       // Combine and sort alerts

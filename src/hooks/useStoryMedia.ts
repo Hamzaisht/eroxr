@@ -1,115 +1,91 @@
-import { useState, useCallback, useEffect } from 'react';
-import { useSession } from '@supabase/auth-helpers-react';
-import { useToast } from '@/hooks/use-toast';
-import { MediaOptions } from '@/utils/media/types';
-import { getPlayableMediaUrl } from '@/utils/media/mediaUrlUtils';
+import { useState, useEffect, useCallback } from "react";
+import { useToast } from "@/hooks/use-toast";
+import { getPlayableMediaUrl } from "@/utils/media/urlUtils";
 
-interface UseStoryMediaOptions extends MediaOptions {
+interface UseStoryMediaOptions {
   onComplete?: () => void;
-  // MediaOptions now includes onError, so it's compatible
+  onError?: () => void;
 }
 
 export const useStoryMedia = (
-  mediaUrl?: string | null, 
-  mediaType: 'image' | 'video' = 'image',
-  isPaused: boolean = false,
-  options?: UseStoryMediaOptions
+  mediaUrl: string | undefined,
+  mediaType: 'video' | 'image',
+  isPaused: boolean,
+  options: UseStoryMediaOptions = {}
 ) => {
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [url, setUrl] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
-  const [retryCount, setRetryCount] = useState(0);
+  const { toast } = useToast();
   
-  const session = useSession();
-  const toast = useToast();
+  const { onComplete, onError } = options;
   
+  const getPlayableUrl = useCallback((url: string | undefined) => {
+    if (!url) return null;
+    return getPlayableMediaUrl(url);
+  }, []);
+
   useEffect(() => {
     if (!mediaUrl) {
       setIsLoading(false);
       setHasError(true);
-      setError("No media URL provided");
+      onError?.();
       return;
     }
     
     setIsLoading(true);
     setHasError(false);
     
-    try {
-      const processedUrl = getPlayableMediaUrl(mediaUrl);
-      setUrl(processedUrl);
-    } catch (err: any) {
-      console.error("Error processing media URL:", err);
-      setError(err.message || "Failed to process media URL");
+    const playableUrl = getPlayableUrl(mediaUrl);
+    if (playableUrl) {
+      setUrl(playableUrl);
+    } else {
       setHasError(true);
+      setIsLoading(false);
+      onError?.();
     }
-  }, [mediaUrl, retryCount]);
+  }, [mediaUrl, getPlayableUrl, onError]);
   
+  useEffect(() => {
+    if (mediaType === 'video' && url && !isPaused) {
+      setIsLoading(false);
+    }
+  }, [isPaused, mediaType, url]);
+
   const handleLoad = useCallback(() => {
-    console.log('Story media loaded successfully');
     setIsLoading(false);
-    
-    if (options?.onComplete && mediaType === 'image') {
-      options.onComplete();
-    }
-  }, [mediaType, options]);
-  
+    setHasError(false);
+    onComplete?.();
+  }, [onComplete]);
+
   const handleError = useCallback(() => {
-    console.error('Failed to load story media:', mediaUrl);
     setIsLoading(false);
     setHasError(true);
-    setError("Failed to load media");
-    
-    if (options?.onError) {
-      options.onError();
-    }
-  }, [mediaUrl, options]);
+    onError?.();
+  }, [onError]);
   
   const retryLoad = useCallback(() => {
-    setRetryCount(prev => prev + 1);
-  }, []);
-  
-  const uploadMedia = useCallback(async (file: File): Promise<{ success: boolean; url?: string; error?: string }> => {
-    if (!session?.user?.id) {
-      return { success: false, error: 'User not authenticated' };
-    }
+    if (!mediaUrl) return;
     
     setIsLoading(true);
-    setError(null);
+    setHasError(false);
     
-    try {
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      const url = `https://example.com/stories/${Date.now()}_${file.name}`;
-      
-      setUrl(url);
-      setIsLoading(false);
-      
-      return { success: true, url };
-    } catch (err: any) {
-      const errorMessage = err.message || 'Failed to upload media';
-      setError(errorMessage);
-      setIsLoading(false);
+    const playableUrl = getPlayableUrl(mediaUrl);
+    if (playableUrl) {
+      setUrl(playableUrl);
+    } else {
       setHasError(true);
-      
-      toast({
-        title: 'Upload failed',
-        description: errorMessage,
-        variant: 'destructive',
-      });
-      
-      return { success: false, error: errorMessage };
+      setIsLoading(false);
+      onError?.();
     }
-  }, [session, toast]);
-  
+  }, [mediaUrl, getPlayableUrl, onError]);
+
   return {
-    isLoading,
-    error,
-    hasError,
-    mediaUrl: url,
     url,
+    isLoading,
+    hasError,
     handleLoad,
     handleError,
-    retryLoad,
-    uploadMedia,
+    retryLoad
   };
 };

@@ -22,7 +22,6 @@ export const ChatMediaGallery = ({ images, videos, userId, onMediaClick }: ChatM
               item={{
                 url: image,
                 type: MediaType.IMAGE,
-                media_url: image,
                 creator_id: userId || undefined
               }}
               className="w-full h-full object-cover rounded-md cursor-pointer"
@@ -46,7 +45,6 @@ export const ChatMediaGallery = ({ images, videos, userId, onMediaClick }: ChatM
               item={{
                 url: video,
                 type: MediaType.VIDEO,
-                media_url: video,
                 creator_id: userId || undefined
               }}
               className="w-full h-full object-cover rounded-md cursor-pointer"

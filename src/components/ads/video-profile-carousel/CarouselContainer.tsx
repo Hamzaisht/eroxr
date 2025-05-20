@@ -22,7 +22,7 @@ export const CarouselContainer = ({ ads, currentIndex, isActive }: CarouselConta
       <div className="absolute inset-0 flex items-center justify-center">
         {ads.map((ad, index) => {
           // Ensure all required props are present
-          const enrichedAd = {
+          const enrichedAd: DatingAd = {
             ...ad,
             tags: ad.tags || [],
             isPremium: ad.is_premium !== undefined ? ad.is_premium : ad.isPremium,
@@ -30,7 +30,8 @@ export const CarouselContainer = ({ ads, currentIndex, isActive }: CarouselConta
             avatarUrl: ad.avatarUrl || ad.avatar_url || "",
             videoUrl: ad.videoUrl || ad.video_url,
             location: ad.location || "Unknown location", // Ensure location is provided
-            age: ad.age || 18, // Provide a default age
+            age: ad.age || 25, // Default age
+            views: ad.views || ad.view_count || 0 // Ensure views is provided
           };
           
           return (

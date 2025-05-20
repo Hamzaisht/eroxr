@@ -13,6 +13,8 @@ export interface MediaSource {
   type: MediaType;
   creator_id?: string;
   timestamp?: string;
+  poster?: string;
+  thumbnail?: string;
   metadata?: Record<string, any>;
 }
 

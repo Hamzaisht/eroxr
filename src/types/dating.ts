@@ -24,7 +24,7 @@ export interface DatingAd {
   is_active?: boolean;
   
   // Engagement metrics
-  views?: number;
+  views?: number;     // Make optional to resolve conflict
   likes?: number;
   messages?: number;
   view_count?: number;
@@ -32,9 +32,9 @@ export interface DatingAd {
   click_count?: number;
   
   // Profile details
-  tags: string[];  // Required
-  location: string; // Required
-  age?: number;     // Make optional to resolve conflict
+  tags: string[];      // Required
+  location: string;    // Required
+  age?: number;        // Make optional to resolve conflict
   gender?: string;
   seeking?: string[];
   last_active?: string;

@@ -53,7 +53,7 @@ export const Media = forwardRef<HTMLVideoElement | HTMLImageElement, MediaProps>
 
       try {
         // Extract URL from source
-        const extractedUrl = extractMediaUrl(source);
+        const extractedUrl = extractMediaUrl(source as any);
         if (!extractedUrl) {
           setError('Could not extract media URL');
           setIsLoading(false);

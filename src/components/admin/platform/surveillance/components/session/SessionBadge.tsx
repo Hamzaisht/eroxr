@@ -17,28 +17,27 @@ export const SessionBadge = ({ session }: SessionBadgeProps) => {
       : session.status;
     
     // Check for active or live status
-    if (status === SessionStatus.ACTIVE || status === 'active' ||
-        status === SessionStatus.LIVE || status === 'live') {
+    if (status === "active" || status === "live") {
       return "default"; // Using default instead of success
     }
     
     // Check for idle status
-    if (status === SessionStatus.IDLE || status === 'idle') {
+    if (status === "idle") {
       return "secondary";
     }
     
     // Check for ended status
-    if (status === SessionStatus.ENDED || status === 'ended') {
+    if (status === "ended") {
       return "destructive";
     }
     
     // Check for flagged status
-    if (status === SessionStatus.FLAGGED || status === 'flagged') {
+    if (status === "flagged") {
       return "destructive";
     }
     
     // Check for paused status
-    if (status === SessionStatus.PAUSED || status === 'paused') {
+    if (status === "paused") {
       return "warning";
     }
     

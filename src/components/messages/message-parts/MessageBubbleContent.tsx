@@ -297,13 +297,12 @@ export const MessageBubbleContent = ({
             >
               <UniversalMedia
                 item={{
-                  media_url: mediaUrl,
-                  media_type: MediaType.IMAGE
+                  url: mediaUrl,
+                  type: MediaType.IMAGE
                 }}
-                className="max-w-full h-auto transition-transform"
-                controls={false}
-                onLoad={handleMediaLoad}
-                onError={handleMediaError}
+                className="w-full max-h-[300px] object-contain cursor-pointer"
+                showWatermark={false}
+                onClick={() => onImageClick?.(mediaUrl)}
               />
             </motion.div>
           )}
@@ -348,13 +347,12 @@ export const MessageBubbleContent = ({
               >
                 <UniversalMedia
                   item={{
-                    media_url: mediaUrl,
-                    media_type: MediaType.IMAGE
+                    url: mediaUrl,
+                    type: MediaType.IMAGE
                   }}
-                  className="max-w-full h-auto max-h-80 object-contain"
-                  controls={false}
-                  onLoad={handleMediaLoad}
-                  onError={handleMediaError}
+                  className="w-full max-h-[300px] object-contain cursor-pointer"
+                  showWatermark={false}
+                  onClick={() => onImageClick?.(mediaUrl)}
                 />
                 
                 <div className="absolute inset-0 flex items-center justify-center bg-black/30">
