@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import {
   DropdownMenu,
@@ -45,6 +44,8 @@ import { Database } from "@/integrations/supabase/types/database.types";
 import { updateProfileStatus } from "@/utils/supabase/db-helpers";
 import { isProfileRow } from "@/utils/supabase/typeSafeOperations";
 
+type ProfileRow = Database['public']['Tables']['profiles']['Row'];
+
 interface UserMenuItemProps {
   label: string;
   icon: LucideIcon;
@@ -76,8 +77,8 @@ export function UserMenu() {
       
       const { data, error } = await supabase
         .from('profiles')
-        .select('*')
-        .eq('id', session.user.id as string)
+        .select("*")
+        .eq("id" as keyof ProfileRow, session.user.id as string)
         .maybeSingle();
         
       if (error) {

@@ -6,9 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { safeString } from "@/utils/supabase/typeSafeOperations";
 import { Database } from "@/integrations/supabase/types/database.types";
 
-type AdminLogRow = Database['public']['Tables']['admin_logs']['Row'] & {
-  profiles?: { username?: string } | null;
-};
+type AdminLogRow = Database['public']['Tables']['admin_logs']['Row'];
 
 interface AdminLog {
   id: string;
@@ -20,6 +18,10 @@ interface AdminLog {
   details: any;
   created_at: string;
   admin_name?: string;
+}
+
+interface ProfileWithUsername {
+  username?: string;
 }
 
 export const AdminLogsTable = () => {
@@ -50,25 +52,29 @@ export const AdminLogsTable = () => {
       if (error) throw error;
 
       // Safely transform data 
-      const formattedLogs = Array.isArray(data) ? data.filter((log): log is AdminLogRow => {
-        return log !== null && typeof log === 'object' && 'id' in log;
-      }).map(log => {
-        // Create a safe record with required properties
-        const adminLog: AdminLog = {
-          id: safeString(log.id),
-          admin_id: safeString(log.admin_id),
-          action: safeString(log.action),
-          action_type: safeString(log.action_type),
-          target_type: safeString(log.target_type),
-          target_id: safeString(log.target_id || ''),
-          details: log.details || {},
-          created_at: safeString(log.created_at),
-          admin_name: (log.profiles && typeof log.profiles === 'object') ? 
-            safeString(log.profiles?.username) || 'Unknown Admin' : 
-            'Unknown Admin'
-        };
-        return adminLog;
-      }) : [];
+      const formattedLogs = Array.isArray(data) ? data
+        .filter((log): log is (AdminLogRow & { profiles?: ProfileWithUsername }) => {
+          return log !== null && 
+                 typeof log === 'object' && 
+                 'id' in log;
+        })
+        .map(log => {
+          // Create a safe record with required properties
+          const adminLog: AdminLog = {
+            id: safeString(log.id),
+            admin_id: safeString(log.admin_id),
+            action: safeString(log.action),
+            action_type: safeString(log.action_type),
+            target_type: safeString(log.target_type || ''),
+            target_id: safeString(log.target_id || ''),
+            details: log.details || {},
+            created_at: safeString(log.created_at),
+            admin_name: (log.profiles && typeof log.profiles === 'object') ? 
+              safeString(log.profiles?.username) || 'Unknown Admin' : 
+              'Unknown Admin'
+          };
+          return adminLog;
+        }) : [];
 
       setLogs(formattedLogs);
     } catch (error: any) {

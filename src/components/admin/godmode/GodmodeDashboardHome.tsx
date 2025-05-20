@@ -2,6 +2,9 @@
 import { useState, useEffect } from "react";
 import { AdminLogsTable } from "./AdminLogsTable";
 import { supabase } from "@/integrations/supabase/client";
+import { Database } from "@/integrations/supabase/types/database.types";
+
+type ProfileRow = Database['public']['Tables']['profiles']['Row'];
 
 export const GodmodeDashboardHome = () => {
   const [totalUsers, setTotalUsers] = useState<number>(0);
@@ -26,7 +29,7 @@ export const GodmodeDashboardHome = () => {
         const { count: creatorsCount } = await supabase
           .from('profiles')
           .select('*', { count: 'exact', head: true })
-          .eq('is_paying_customer', true);
+          .eq("is_paying_customer" as keyof ProfileRow, true);
         
         setTotalCreators(creatorsCount || 0);
         

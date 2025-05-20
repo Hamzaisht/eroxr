@@ -7,6 +7,7 @@ import { Database } from "@/integrations/supabase/types/database.types";
 import { safeString, isSubscriptionRow, isProfileRow } from "@/utils/supabase/typeSafeOperations";
 
 type ProfileRow = Database['public']['Tables']['profiles']['Row'];
+type SubscriptionRow = Database['public']['Tables']['creator_subscriptions']['Row'];
 
 interface Creator {
   id: string;
@@ -45,7 +46,7 @@ export const SubscribedCreators = () => {
             banner_url
           )
         `)
-        .eq('user_id', userId as string)
+        .eq("user_id" as keyof SubscriptionRow, userId as string)
         .order("created_at", { ascending: false });
         
       if (error || !data) {
@@ -55,7 +56,7 @@ export const SubscribedCreators = () => {
       
       // Transform data to match expected types, ensuring we only map valid rows
       return data
-        .filter((item): item is (Database['public']['Tables']['creator_subscriptions']['Row'] & {
+        .filter((item): item is (SubscriptionRow & {
           creator?: ProfileRow | null;
         }) => {
           return isSubscriptionRow(item) && 
