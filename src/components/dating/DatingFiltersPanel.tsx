@@ -18,7 +18,7 @@ interface DatingFiltersPanelProps {
   setSelectedGender: (gender: string | null) => void;
   selectedLookingFor: string[] | null;
   setSelectedLookingFor: (lookingFor: string[] | null) => void;
-  minAge: number; // Changed from ageRange to minAge/maxAge
+  minAge: number;
   setMinAge: (age: number) => void;
   maxAge: number;
   setMaxAge: (age: number) => void;
@@ -32,6 +32,9 @@ interface DatingFiltersPanelProps {
   setSelectedTag: (tag: string | null) => void;
   selectedCity?: string;
   setSelectedCity?: (city: string) => void;
+  isFilterApplied?: boolean;
+  handleApplyFilters?: () => void;
+  handleResetFilters?: () => void;
 }
 
 export function DatingFiltersPanel({
@@ -44,7 +47,7 @@ export function DatingFiltersPanel({
   setSelectedGender,
   selectedLookingFor,
   setSelectedLookingFor,
-  minAge, // Using minAge and maxAge instead of ageRange
+  minAge,
   setMinAge,
   maxAge,
   setMaxAge,
@@ -58,6 +61,9 @@ export function DatingFiltersPanel({
   setSelectedTag,
   selectedCity,
   setSelectedCity,
+  isFilterApplied,
+  handleApplyFilters,
+  handleResetFilters,
 }: DatingFiltersPanelProps) {
   // Common tags that might be used for filtering
   const popularTags = [
