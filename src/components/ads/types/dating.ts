@@ -1,5 +1,5 @@
 
-// Import types from the main types directory but with aliases to avoid conflicts
+// Import types from the main types directory
 import { 
   DatingAd as MainDatingAd, 
   FilterOptions as MainFilterOptions, 
@@ -14,5 +14,3 @@ export type {
   MainSearchCategory as SearchCategory, 
   MainDatingAdAction as DatingAdAction 
 };
-
-// We no longer need the duplicate interface since we're re-exporting the main one

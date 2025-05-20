@@ -1,86 +1,67 @@
 
-import { MediaSource, MediaType } from "@/types/media";
+import { v4 as uuidv4 } from 'uuid';
 
 /**
- * Normalizes a media source to ensure consistent format
+ * Creates a unique file path for upload
+ * @param userId The user ID for the upload
+ * @param file The file to create a path for
+ * @param prefix Optional prefix for the path
+ * @returns A unique path string
  */
-export function normalizeMediaSource(source: MediaSource | string): MediaSource {
-  if (typeof source === 'string') {
-    return {
-      url: source,
-      type: determineMediaType(source)
-    };
-  }
+export const createUniqueFilePath = (userId: string, file: File, prefix: string = ''): string => {
+  // Get file extension
+  const fileExtension = file.name.split('.').pop()?.toLowerCase() || '';
+
+  // Create a UUID-based filename
+  const uniqueId = uuidv4();
+  const timestamp = Date.now();
   
-  // Ensure there's a url property
-  const mediaSource: MediaSource = {
-    ...source,
-    url: source.url || extractMediaUrl(source)
-  };
-  
-  // Ensure there's a type property
-  if (!mediaSource.type) {
-    mediaSource.type = determineMediaType(mediaSource.url);
-  }
-  
-  return mediaSource;
-}
+  // Construct path with user ID, optional prefix, timestamp, and uuid
+  const path = prefix 
+    ? `${userId}/${prefix}/${timestamp}_${uniqueId}.${fileExtension}` 
+    : `${userId}/${timestamp}_${uniqueId}.${fileExtension}`;
+    
+  return path;
+};
 
 /**
- * Extract media URL from various possible source properties
+ * Converts a file to a base64 data URL
+ * @param file The file to convert
+ * @returns A promise that resolves to the data URL
  */
-export function extractMediaUrl(source: MediaSource): string {
-  // Try to get URL from the various possible properties
-  if (source.url) return source.url;
-  if (source.video_url) return source.video_url;
-  
-  if (source.media_url) {
-    if (Array.isArray(source.media_url) && source.media_url.length > 0) {
-      return source.media_url[0];
-    }
-    if (typeof source.media_url === 'string') {
-      return source.media_url;
-    }
-  }
-  
-  // Fallback to empty string if no URL can be found
-  return '';
-}
+export const fileToDataUrl = (file: File): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+};
 
 /**
- * Determine media type from URL extension
+ * Creates a URL for previewing a file
+ * @param file The file to create a preview for
+ * @returns A blob URL for the file
  */
-export function determineMediaType(url: string): MediaType {
-  if (!url) return MediaType.UNKNOWN;
-  
-  const extension = url.split('.').pop()?.toLowerCase();
-  
-  if (!extension) return MediaType.UNKNOWN;
-  
-  // Check for image extensions
-  if (['jpg', 'jpeg', 'png', 'webp', 'svg'].includes(extension)) {
-    return MediaType.IMAGE;
+export const createFilePreview = (file: File): string => {
+  return URL.createObjectURL(file);
+};
+
+/**
+ * Revokes a previously created file preview URL
+ * @param url The URL to revoke
+ */
+export const revokeFilePreview = (url: string): void => {
+  if (url && url.startsWith('blob:')) {
+    URL.revokeObjectURL(url);
   }
-  
-  // Check for GIF
-  if (extension === 'gif') {
-    return MediaType.GIF;
-  }
-  
-  // Check for video extensions
-  if (['mp4', 'webm', 'mov', 'avi', 'mkv'].includes(extension)) {
-    return MediaType.VIDEO;
-  }
-  
-  // Check for audio extensions
-  if (['mp3', 'wav', 'ogg', 'm4a'].includes(extension)) {
-    return MediaType.AUDIO;
-  }
-  
-  // Check for document extensions
-  if (['pdf', 'doc', 'docx', 'txt', 'xls', 'xlsx'].includes(extension)) {
-    return MediaType.DOCUMENT;
-  }
-  
-  return MediaType.UNKNOWN;
-}
+};
+
+/**
+ * Gets a file's MIME type
+ * @param file The file
+ * @returns The MIME type string
+ */
+export const getFileMimeType = (file: File): string => {
+  return file.type;
+};

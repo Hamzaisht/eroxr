@@ -3,7 +3,7 @@
  * Validator functions for file uploads
  */
 
-import { MediaType } from '../media/types';
+import { MediaType } from '@/types/media';
 
 // Supported media types constants
 export const SUPPORTED_IMAGE_TYPES = [
@@ -65,12 +65,23 @@ export const getFileExtension = (file: File | string): string => {
  * Run a comprehensive diagnostic on a file object
  * This helps identify issues with file objects that may cause upload failures
  */
-export const runFileDiagnostic = (file: File): void => {
+export const runFileDiagnostic = (file: File): { valid: boolean, error?: string } => {
   if (!file) {
     console.warn('FILE DIAGNOSTIC: File is null or undefined');
-    return;
+    return { valid: false, error: 'File is null or undefined' };
   }
   
+  if (!(file instanceof File)) {
+    console.warn('FILE DIAGNOSTIC: Not a File instance');
+    return { valid: false, error: 'Not a valid File instance' };
+  }
+  
+  if (file.size === 0) {
+    console.warn('FILE DIAGNOSTIC: File has zero size');
+    return { valid: false, error: 'File has zero size' };
+  }
+  
+  // Log diagnostic info for debugging
   console.log('FILE DIAGNOSTIC:', {
     isFile: file instanceof File,
     name: file.name,
@@ -78,4 +89,6 @@ export const runFileDiagnostic = (file: File): void => {
     type: file.type,
     lastModified: new Date(file.lastModified).toISOString()
   });
+  
+  return { valid: true };
 };

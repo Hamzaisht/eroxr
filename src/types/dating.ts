@@ -10,7 +10,7 @@ export interface DatingAd {
   description: string;
   
   // User identifiers and profile data
-  username?: string;
+  username: string;
   avatarUrl?: string;
   videoUrl?: string;
   avatar_url?: string;

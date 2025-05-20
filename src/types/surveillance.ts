@@ -132,6 +132,7 @@ export interface LiveSession {
   ghost_mode?: boolean;
   last_active_at?: string;
   user?: {
+    id?: string;
     username?: string;
     avatar_url?: string;
   };
