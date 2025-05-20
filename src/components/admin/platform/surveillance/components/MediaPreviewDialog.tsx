@@ -66,7 +66,7 @@ export function MediaPreviewDialog({ session, open, onOpenChange }: MediaPreview
         const mediaSource: MediaSource = {
           url: videoUrl || mediaUrl,
           type: detectedType,
-          media_type: session.content_type
+          content_type: session.content_type
         };
         
         setMedia(mediaSource);
@@ -149,7 +149,7 @@ export function MediaPreviewDialog({ session, open, onOpenChange }: MediaPreview
                 <div className="grid grid-cols-2 gap-2">
                   <div>
                     <p><strong>Type:</strong> {mediaType}</p>
-                    <p><strong>Content Type:</strong> {media.media_type || 'Unknown'}</p>
+                    <p><strong>Content Type:</strong> {media.content_type || 'Unknown'}</p>
                     <p><strong>URL:</strong> {media.url ? `${media.url.substring(0, 40)}...` : 'None'}</p>
                   </div>
                 </div>

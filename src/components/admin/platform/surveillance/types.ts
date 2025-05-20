@@ -2,7 +2,7 @@
 // Import all types from central location
 import type { 
   SurveillanceTab,
-  LiveSessionType,
+  SessionType,
   LiveSession,
   ContentType,
   SurveillanceContentItem,
@@ -12,7 +12,7 @@ import type {
 // Re-export all surveillance types for convenience
 export type { 
   SurveillanceTab,
-  LiveSessionType,
+  SessionType,
   LiveSession,
   ContentType,
   SurveillanceContentItem,

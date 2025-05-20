@@ -1,98 +1,66 @@
 
 /**
- * Creates a URL for previewing a file
- * @param file File to create preview for
- * @returns URL to preview the file
+ * Run file diagnostics to check size, type, and potential issues
  */
-export function createFilePreview(file: File): string {
-  return URL.createObjectURL(file);
-}
-
-/**
- * Revokes a URL created with createFilePreview
- * @param url URL to revoke
- */
-export function revokeFilePreview(url: string): void {
-  if (url && url.startsWith('blob:')) {
-    URL.revokeObjectURL(url);
+export const runFileDiagnostic = (file: File): { valid: boolean; error?: string; details?: any } => {
+  if (!file) {
+    return { valid: false, error: 'No file provided' };
   }
-}
 
-/**
- * Get the file type category (image, video, audio, document)
- * @param file File to check
- * @returns Category string
- */
-export function getFileType(file: File): string {
-  if (file.type.startsWith('image/')) {
-    return 'image';
-  } else if (file.type.startsWith('video/')) {
-    return 'video';
-  } else if (file.type.startsWith('audio/')) {
-    return 'audio';
-  } else {
-    return 'document';
+  // Check file size (max 100MB)
+  const maxSize = 100 * 1024 * 1024; // 100MB
+  if (file.size > maxSize) {
+    return {
+      valid: false,
+      error: `File size exceeds the maximum limit of 100MB. Current size: ${(file.size / (1024 * 1024)).toFixed(2)}MB`,
+      details: { size: file.size, maxSize }
+    };
   }
-}
 
-/**
- * Format file size to human-readable string
- * @param bytes Size in bytes
- * @returns Formatted string (e.g. "1.5 MB")
- */
-export function formatFileSize(bytes: number): string {
-  if (bytes === 0) return '0 Bytes';
+  // Check file type
+  const validImageTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+  const validVideoTypes = ['video/mp4', 'video/quicktime', 'video/webm'];
+  const validAudioTypes = ['audio/mp3', 'audio/mpeg', 'audio/wav', 'audio/ogg'];
+  
+  const isImage = validImageTypes.includes(file.type);
+  const isVideo = validVideoTypes.includes(file.type);
+  const isAudio = validAudioTypes.includes(file.type);
+  
+  if (!isImage && !isVideo && !isAudio) {
+    return {
+      valid: false,
+      error: `Unsupported file type: ${file.type}. Please upload an image, video, or audio file.`,
+      details: { type: file.type, supported: [...validImageTypes, ...validVideoTypes, ...validAudioTypes] }
+    };
+  }
 
-  const k = 1024;
-  const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
-  
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
-  
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-}
-
-/**
- * Run diagnostic checks on a file to ensure it meets requirements
- * @param file File to check
- * @param options Options for validation
- * @returns Object with validation results
- */
-export function runFileDiagnostic(file: File, options: {
-  maxSizeInMB?: number;
-  allowedTypes?: string[];
-} = {}): { valid: boolean; errors: string[] } {
-  const errors: string[] = [];
-  
-  // Check file size if maxSize is provided
-  if (options.maxSizeInMB) {
-    const maxSizeInBytes = options.maxSizeInMB * 1024 * 1024;
-    if (file.size > maxSizeInBytes) {
-      errors.push(`File size exceeds maximum allowed size of ${options.maxSizeInMB} MB`);
+  return { 
+    valid: true,
+    details: {
+      size: file.size,
+      type: file.type,
+      isImage,
+      isVideo,
+      isAudio,
+      name: file.name,
+      lastModified: file.lastModified
     }
-  }
-  
-  // Check file type if allowedTypes is provided
-  if (options.allowedTypes && options.allowedTypes.length > 0) {
-    const fileExtension = file.name.split('.').pop()?.toLowerCase();
-    const mimeTypeBase = file.type.split('/')[0];
-    const mimeTypeFull = file.type;
-    
-    const isAllowedType = options.allowedTypes.some(type => {
-      // Check if type matches MIME type base (image, video, etc.)
-      if (type.includes('/')) {
-        return mimeTypeFull === type;
-      }
-      // Check if type matches file extension
-      return fileExtension === type.toLowerCase().replace('.', '');
-    });
-    
-    if (!isAllowedType) {
-      errors.push(`File type not allowed. Allowed types: ${options.allowedTypes.join(', ')}`);
-    }
-  }
-  
-  return {
-    valid: errors.length === 0,
-    errors
   };
-}
+};
+
+/**
+ * Create a file preview URL for displaying in the UI
+ */
+export const createFilePreview = (file: File): string => {
+  if (!file) return '';
+  return URL.createObjectURL(file);
+};
+
+/**
+ * Revoke the file preview URL when it's no longer needed
+ */
+export const revokeFilePreview = (previewUrl: string): void => {
+  if (previewUrl) {
+    URL.revokeObjectURL(previewUrl);
+  }
+};

@@ -1,128 +1,66 @@
 
-import { supabase } from '@/integrations/supabase/client';
-import { getPlayableMediaUrl } from '@/utils/media/urlUtils';
-import { createUniqueFilePath } from '@/utils/media/mediaUtils';
+import { useState } from 'react';
+import { useToast } from '@/hooks/use-toast';
+import { useSupabaseClient } from '@supabase/auth-helpers-react';
+import { runFileDiagnostic } from '@/utils/upload/fileUtils';
 
 export const useStorageService = () => {
-  /**
-   * Gets a public URL for a file in Supabase storage
-   */
-  const getFullPublicUrl = (bucket: string, path: string): string => {
-    if (!path) return '';
-    
-    const { data } = supabase.storage
-      .from(bucket)
-      .getPublicUrl(path);
-    
-    return data.publicUrl;
-  };
+  const [isUploading, setIsUploading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const { toast } = useToast();
+  const supabase = useSupabaseClient();
 
-  /**
-   * Uploads a video file to Supabase storage
-   */
-  const uploadVideoToStorage = async (
-    userId: string, 
-    videoFile: File
-  ): Promise<{ success: boolean; path?: string; url?: string; error?: string }> => {
+  const uploadVideoToStorage = async (userId: string, file: File): Promise<{ path: string | null; error: string | null }> => {
+    if (!file) {
+      return { path: null, error: 'No file provided' };
+    }
+
+    setIsUploading(true);
+    setError(null);
+
     try {
-      // CRITICAL: Debug file info
-      console.log("FILE DEBUG:", {
-        file: videoFile,
-        isFile: videoFile instanceof File,
-        type: videoFile?.type,
-        size: videoFile?.size,
-        name: videoFile?.name
-      });
-      
-      // Validate file
-      if (!(videoFile instanceof File)) {
-        return { 
-          success: false, 
-          error: 'Invalid file object'
-        };
+      // Run file diagnostics
+      const diagnostic = runFileDiagnostic(file);
+      if (!diagnostic.valid) {
+        throw new Error(diagnostic.error);
       }
-      
-      // Validate content type
-      const contentType = videoFile.type;
-      const isValidVideo = contentType.startsWith("video/");
-      
-      if (!isValidVideo) {
-        return { 
-          success: false, 
-          error: `Invalid file type: ${contentType}. Only videos are allowed.` 
-        };
-      }
-      
-      // Use utility function to create a unique file path
-      const filePath = createUniqueFilePath(userId, videoFile);
-      const bucketName = 'shorts';
 
-      console.log("Uploading to path:", filePath, "in bucket:", bucketName);
-      console.log("File type:", videoFile.type);
-      
-      // CRITICAL: Upload with explicit content type and upsert: true
-      const uploadResult = await supabase.storage
-        .from(bucketName)
-        .upload(filePath, videoFile, {
+      // Create a unique filename based on user ID and timestamp
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${userId}_${Date.now()}.${fileExt}`;
+      const filePath = `videos/${fileName}`;
+
+      // Upload to Supabase Storage
+      const { data, error: uploadError } = await supabase
+        .storage
+        .from('shorts')
+        .upload(filePath, file as File, {
           cacheControl: '3600',
-          upsert: true,
-          contentType: contentType
+          upsert: false
         });
 
-      const uploadData = uploadResult.data;
-      const uploadError = uploadResult.error;
-
-      // Handle upload error
       if (uploadError) {
-        console.error("Upload failed:", uploadError);
-        return { 
-          success: false, 
-          error: `Upload failed: ${uploadError.message}` 
-        };
+        throw new Error(`Upload failed: ${uploadError.message}`);
       }
-      
-      if (!uploadData || !uploadData.path) {
-        return { 
-          success: false, 
-          error: 'Upload completed but no file path returned'
-        };
-      }
-      
-      console.log("Upload successful, path:", uploadData.path);
-      
-      // Test the upload with getPublicUrl
-      const { data: urlData } = supabase.storage
-        .from(bucketName)
-        .getPublicUrl(uploadData.path);
-      
-      console.log("Public URL test:", urlData.publicUrl);
-      
-      // Get the public URL using Supabase's getPublicUrl method
-      const { data: { publicUrl } } = supabase.storage
-        .from(bucketName)
-        .getPublicUrl(uploadData.path);
-        
-      console.log("Public URL:", publicUrl);
-      
-      // Use our utility to add cache busting as needed
-      const processedUrl = getPlayableMediaUrl(publicUrl);
-      
-      return { 
-        success: true, 
-        path: uploadData.path,
-        url: processedUrl
-      };
-    } catch (error: any) {
-      console.error("Storage upload error:", error);
-      return { 
-        success: false, 
-        error: error.message || "An unknown error occurred during upload"
-      };
+
+      return { path: data?.path || null, error: null };
+    } catch (err: any) {
+      const errorMessage = err.message || 'Failed to upload video';
+      setError(errorMessage);
+      toast({
+        title: 'Upload Failed',
+        description: errorMessage,
+        variant: 'destructive',
+      });
+      return { path: null, error: errorMessage };
+    } finally {
+      setIsUploading(false);
     }
   };
 
   return {
-    getFullPublicUrl,
-    uploadVideoToStorage
+    uploadVideoToStorage,
+    isUploading,
+    error
   };
 };

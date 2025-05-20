@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { MoreHorizontal, Flag, Ban, EyeOff, Trash2, Edit, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -10,7 +11,7 @@ import {
   LiveSession, 
   SurveillanceContentItem, 
   ModerationAction,
-  LiveSessionType
+  SessionType
 } from "@/types/surveillance";
 import { ModerationActionDialog } from "./ModerationActionDialog";
 import { ModerationActionItems } from "./ModerationActionItems";
@@ -113,7 +114,7 @@ export const SessionModerationActions: React.FC<{ session: LiveSession | Surveil
       
       return {
         id: contentItem.id,
-        type: 'content' as LiveSessionType,
+        type: 'content' as SessionType,
         user_id: contentItem.user_id || '',
         created_at: contentItem.created_at,
         content: contentItem.content,
@@ -123,7 +124,7 @@ export const SessionModerationActions: React.FC<{ session: LiveSession | Surveil
         content_type: contentItem.content_type,
         title: contentItem.title || '',
         description: contentItem.description || '',
-        status: contentItem.visibility || contentItem.status || 'public',
+        status: contentItem.status as any,
         started_at: contentItem.created_at, // Required field
         is_active: true, // Required field
       };

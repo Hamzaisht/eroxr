@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from "react";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { SurveillanceContentItem, ContentType } from "@/types/surveillance";
@@ -84,7 +83,7 @@ export function useContentSurveillance() {
       
       const transformedPosts: SurveillanceContentItem[] = (postsData || []).map(post => ({
         id: post.id,
-        type: "post",
+        type: "post" as ContentType,
         content_type: "post",
         user_id: post.creator_id,
         creator_id: post.creator_id,
@@ -94,6 +93,7 @@ export function useContentSurveillance() {
         creator_username: post.creator?.username || "Unknown",
         avatar_url: post.creator?.avatar_url,
         creator_avatar_url: post.creator?.avatar_url,
+        creator_avatar: post.creator?.avatar_url || "",
         content: post.content || "",
         title: post.title || "",
         description: post.description || "",
@@ -102,12 +102,14 @@ export function useContentSurveillance() {
         tags: post.tags || [],
         views: post.views || 0,
         likes: post.likes || 0,
-        comments: post.comments || 0
+        comments: post.comments || 0,
+        flagged: false,
+        severity: "low"
       }));
       
       const transformedStories: SurveillanceContentItem[] = (storiesData || []).map(story => ({
         id: story.id,
-        type: "story",
+        type: "story" as ContentType,
         content_type: "story",
         user_id: story.creator_id,
         creator_id: story.creator_id,
@@ -117,6 +119,7 @@ export function useContentSurveillance() {
         creator_username: story.creator?.username || "Unknown",
         avatar_url: story.creator?.avatar_url,
         creator_avatar_url: story.creator?.avatar_url,
+        creator_avatar: story.creator?.avatar_url || "",
         content: story.content || "",
         title: story.title || "",
         description: story.description || "",
@@ -125,12 +128,14 @@ export function useContentSurveillance() {
         tags: story.tags || [],
         views: story.views || 0,
         likes: story.likes || 0,
-        comments: story.comments || 0
+        comments: story.comments || 0,
+        flagged: false,
+        severity: "low"
       }));
       
       const transformedVideos: SurveillanceContentItem[] = (videosData || []).map(video => ({
         id: video.id,
-        type: "video",
+        type: "video" as ContentType,
         content_type: "video",
         user_id: video.creator_id,
         creator_id: video.creator_id,
@@ -141,6 +146,7 @@ export function useContentSurveillance() {
         creator_username: video.creator?.username || "Unknown",
         avatar_url: video.creator?.avatar_url,
         creator_avatar_url: video.creator?.avatar_url,
+        creator_avatar: video.creator?.avatar_url || "",
         content: video.content || "",
         title: video.title || "",
         description: video.description || "",
@@ -149,12 +155,14 @@ export function useContentSurveillance() {
         tags: video.tags || [],
         views: video.views || 0,
         likes: video.likes || 0,
-        comments: video.comments || 0
+        comments: video.comments || 0,
+        flagged: false,
+        severity: "low"
       }));
       
       const transformedAudios: SurveillanceContentItem[] = (audiosData || []).map(audio => ({
         id: audio.id,
-        type: "audio",
+        type: "audio" as ContentType,
         content_type: "audio",
         user_id: audio.creator_id,
         creator_id: audio.creator_id,
@@ -164,6 +172,7 @@ export function useContentSurveillance() {
         creator_username: audio.creator?.username || "Unknown",
         avatar_url: audio.creator?.avatar_url,
         creator_avatar_url: audio.creator?.avatar_url,
+        creator_avatar: audio.creator?.avatar_url || "",
         content: audio.content || "",
         title: audio.title || "",
         description: audio.description || "",
@@ -172,7 +181,9 @@ export function useContentSurveillance() {
         tags: audio.tags || [],
         views: audio.views || 0,
         likes: audio.likes || 0,
-        comments: audio.comments || 0
+        comments: audio.comments || 0,
+        flagged: false,
+        severity: "low"
       }));
       
       setPosts(transformedPosts);

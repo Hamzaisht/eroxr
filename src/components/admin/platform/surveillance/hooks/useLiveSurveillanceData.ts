@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from "react";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { LiveSession } from "@/types/surveillance";
@@ -6,17 +5,22 @@ import { useGhostMode } from "@/hooks/useGhostMode";
 
 export function useLiveSurveillanceData() {
   const [sessions, setSessions] = useState<LiveSession[]>([]);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
   const supabase = useSupabaseClient();
   const { isGhostMode } = useGhostMode();
   
   const fetchActiveSessions = useCallback(async () => {
-    if (!isGhostMode) return;
+    // Do not fetch data if ghost mode is not active
+    if (!isGhostMode) {
+      setSessions([]);
+      return;
+    }
+
+    setIsLoading(true);
+    setError(null);
     
     try {
-      setIsLoading(true);
-      console.log("Fetching active surveillance sessions...");
-      
       // Fetch direct messages with user profiles
       const { data: messages, error: messagesError } = await supabase
         .from('direct_messages')
@@ -26,6 +30,7 @@ export function useLiveSurveillanceData() {
         
       if (messagesError) {
         console.error("Error fetching messages:", messagesError);
+        setError("Failed to fetch messages");
       } else {
         console.log("Fetched messages:", messages?.length || 0);
       }
@@ -39,6 +44,7 @@ export function useLiveSurveillanceData() {
         
       if (postsError) {
         console.error("Error fetching posts:", postsError);
+        setError("Failed to fetch posts");
       } else {
         console.log("Fetched posts:", posts?.length || 0);
       }
@@ -53,6 +59,7 @@ export function useLiveSurveillanceData() {
         
       if (streamsError) {
         console.error("Error fetching streams:", streamsError);
+        setError("Failed to fetch streams");
       }
       
       // Transform messages into LiveSession format
@@ -115,8 +122,9 @@ export function useLiveSurveillanceData() {
       
       setSessions(allSessions);
       console.log(`Total active sessions: ${allSessions.length}`);
-    } catch (error) {
-      console.error("Error in fetchActiveSessions:", error);
+    } catch (error: any) {
+      setError(error.message || "Failed to fetch active sessions");
+      console.error("Error fetching active sessions:", error);
     } finally {
       setIsLoading(false);
     }
@@ -181,6 +189,7 @@ export function useLiveSurveillanceData() {
   return {
     sessions,
     isLoading,
+    error,
     fetchActiveSessions
   };
 }
