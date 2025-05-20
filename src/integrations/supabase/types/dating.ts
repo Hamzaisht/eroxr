@@ -1,3 +1,4 @@
+
 export type DatingAd = {
   id: string;
   user_id: string | null;
@@ -12,6 +13,8 @@ export type DatingAd = {
   updated_at: string | null;
   is_active: boolean | null;
   views_count: number | null;
+  view_count?: number | null;
+  message_count?: number | null;
   interests: string[] | null;
   preferred_age_range: [number, number] | null;
   height: number | null;
@@ -25,4 +28,9 @@ export type DatingAd = {
   seeking_description: string | null;
   last_active: string | null;
   profile_completion_score: number | null;
+  avatar_url?: string | null;
+  video_url?: string | null;
+  is_verified?: boolean | null;
+  is_premium?: boolean | null;
+  tags?: string[] | null;
 };
