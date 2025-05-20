@@ -25,3 +25,30 @@ export async function createPost(
     return { data: null, error };
   }
 }
+
+/**
+ * Updates a user's profile status
+ * @param userId The user ID whose profile status to update
+ * @param status The new status value
+ * @returns Result object with data and error
+ */
+export async function updateProfileStatus(
+  userId: string, 
+  status: Database['public']['Tables']['profiles']['Row']['status']
+): Promise<{ data: any; error: any }> {
+  try {
+    const { data, error } = await supabase
+      .from('profiles')
+      .update({ status })
+      .eq('id', userId)
+      .select()
+      .single();
+    
+    if (error) throw error;
+    
+    return { data, error: null };
+  } catch (error) {
+    console.error('Error updating profile status:', error);
+    return { data: null, error };
+  }
+}

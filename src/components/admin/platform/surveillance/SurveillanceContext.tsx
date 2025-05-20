@@ -7,6 +7,7 @@ interface SurveillanceContextProps {
   activeTab: SurveillanceTab;
   setActiveTab: (tab: SurveillanceTab) => void;
   error: string | null;
+  setError: (error: string | null) => void;
   liveAlerts: LiveAlert[];
   refreshAlerts: () => Promise<boolean>;
   startSurveillance: (session: LiveSession) => Promise<boolean>;
@@ -35,6 +36,7 @@ export const SurveillanceProvider = ({
       activeTab,
       setActiveTab,
       error,
+      setError,
       liveAlerts,
       refreshAlerts,
       startSurveillance

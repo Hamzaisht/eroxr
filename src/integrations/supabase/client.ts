@@ -1,10 +1,27 @@
+
 import { createClient } from '@supabase/supabase-js';
 import { Database } from './types/database.types';
 
+// Initialize the Supabase client with proper URL and anon key
+// Make sure these values are not empty or undefined
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+// Check if the required environment variables are available
+if (!supabaseUrl || !supabaseAnonKey) {
+  console.error('Supabase URL or anon key is missing. Please check your environment variables.');
+}
+
 // Initialize the Supabase client
 export const supabase = createClient<Database>(
-  import.meta.env.VITE_SUPABASE_URL,
-  import.meta.env.VITE_SUPABASE_ANON_KEY
+  supabaseUrl,
+  supabaseAnonKey,
+  {
+    auth: {
+      persistSession: true,
+      autoRefreshToken: true,
+    }
+  }
 );
 
 /**

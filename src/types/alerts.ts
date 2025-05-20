@@ -12,5 +12,6 @@ export interface LiveAlert {
   source?: string;
   requiresAction?: boolean;
   metadata?: Record<string, any>;
-  session?: any; // Add session property
+  session?: any;
+  created_at?: string; // Added for compatibility with data from API
 }

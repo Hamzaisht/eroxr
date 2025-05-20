@@ -1,132 +1,118 @@
 
 import React from "react";
 import {
-  Pagination as PaginationComponent,
+  Pagination,
   PaginationContent,
   PaginationEllipsis,
   PaginationItem,
   PaginationLink,
   PaginationNext,
-  PaginationPrevious,
+  PaginationPrevious
 } from "@/components/ui/pagination";
 
-interface PaginationProps {
+interface AdminPaginationProps {
   currentPage: number;
-  totalCount: number;
-  pageSize: number;
+  totalPages: number;
   onPageChange: (page: number) => void;
-  siblingCount?: number;
+  className?: string;
 }
 
-export function Pagination({
+export function AdminPagination({
   currentPage,
-  totalCount,
-  pageSize,
+  totalPages,
   onPageChange,
-  siblingCount = 1,
-}: PaginationProps) {
-  const totalPages = Math.ceil(totalCount / pageSize);
-
-  // If there's only one page, don't render pagination
+  className = ""
+}: AdminPaginationProps) {
   if (totalPages <= 1) return null;
 
-  // Determine range of pages to show
-  const range = (start: number, end: number) => {
-    const length = end - start + 1;
-    return Array.from({ length }, (_, i) => start + i);
-  };
-
-  // Generate pagination items
-  const generatePaginationItems = () => {
-    const maxPagesToShow = siblingCount * 2 + 5; // first, last, current, and 2 ellipses
-
-    // If total pages is less than max, show all pages
-    if (totalPages <= maxPagesToShow) {
-      return range(1, totalPages);
-    }
-
-    const leftSiblingIndex = Math.max(currentPage - siblingCount, 1);
-    const rightSiblingIndex = Math.min(currentPage + siblingCount, totalPages);
-
-    const showLeftDots = leftSiblingIndex > 2;
-    const showRightDots = rightSiblingIndex < totalPages - 2;
-
-    // Case 1: Show right dots only
-    if (!showLeftDots && showRightDots) {
-      const leftItemCount = 3 + 2 * siblingCount;
-      const leftRange = range(1, leftItemCount);
-      return [...leftRange, "...", totalPages];
-    }
-
-    // Case 2: Show left dots only
-    if (showLeftDots && !showRightDots) {
-      const rightItemCount = 3 + 2 * siblingCount;
-      const rightRange = range(totalPages - rightItemCount + 1, totalPages);
-      return [1, "...", ...rightRange];
-    }
-
-    // Case 3: Show both dots
-    if (showLeftDots && showRightDots) {
-      const middleRange = range(leftSiblingIndex, rightSiblingIndex);
-      return [1, "...", ...middleRange, "...", totalPages];
-    }
-
-    // Should not reach here
-    return range(1, totalPages);
-  };
-
-  const pages = generatePaginationItems();
+  const pages = getPageNumbers(currentPage, totalPages);
 
   return (
-    <PaginationComponent className="mt-4">
-      <PaginationContent>
-        <PaginationItem>
-          <PaginationPrevious
-            href="#"
-            onClick={(e) => {
-              e.preventDefault();
-              if (currentPage > 1) onPageChange(currentPage - 1);
-            }}
-            className={currentPage === 1 ? "opacity-50 pointer-events-none" : ""}
-          />
-        </PaginationItem>
+    <div className={`flex items-center justify-center py-4 ${className}`}>
+      <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={onPageChange}>
+        <PaginationContent>
+          <PaginationItem>
+            <PaginationPrevious 
+              onClick={() => currentPage > 1 && onPageChange(currentPage - 1)}
+              aria-disabled={currentPage === 1}
+              className={currentPage === 1 ? "opacity-50 cursor-not-allowed" : ""}
+            />
+          </PaginationItem>
 
-        {pages.map((page, index) => {
-          if (page === "...") {
+          {pages.map((page, i) => {
+            if (page === "...") {
+              return (
+                <PaginationItem key={`ellipsis-${i}`}>
+                  <PaginationEllipsis />
+                </PaginationItem>
+              );
+            }
             return (
-              <PaginationItem key={`ellipsis-${index}`}>
-                <PaginationEllipsis />
+              <PaginationItem key={page}>
+                <PaginationLink
+                  isActive={page === currentPage}
+                  onClick={() => onPageChange(Number(page))}
+                >
+                  {page}
+                </PaginationLink>
               </PaginationItem>
             );
-          }
+          })}
 
-          return (
-            <PaginationItem key={`page-${page}`}>
-              <PaginationLink
-                href="#"
-                onClick={(e) => {
-                  e.preventDefault();
-                  onPageChange(page as number);
-                }}
-                isActive={page === currentPage}
-              >
-                {page}
-              </PaginationLink>
-            </PaginationItem>
-          );
-        })}
-
-        <PaginationItem>
-          <PaginationNext
-            href="#"
-            onClick={(e) => {
-              e.preventDefault();
-              if (currentPage < totalPages) onPageChange(currentPage + 1);
-            }}
-            className={currentPage === totalPages ? "opacity-50 pointer-events-none" : ""}
-          />
-        </PaginationItem>
-      </PaginationContent>
-    </PaginationComponent>
+          <PaginationItem>
+            <PaginationNext 
+              onClick={() => currentPage < totalPages && onPageChange(currentPage + 1)}
+              aria-disabled={currentPage === totalPages}
+              className={currentPage === totalPages ? "opacity-50 cursor-not-allowed" : ""}
+            />
+          </PaginationItem>
+        </PaginationContent>
+      </Pagination>
+    </div>
   );
+}
+
+// Helper function to generate page numbers with ellipsis for large page counts
+function getPageNumbers(currentPage: number, totalPages: number) {
+  const MAX_VISIBLE_PAGES = 5;
+  
+  if (totalPages <= MAX_VISIBLE_PAGES) {
+    return Array.from({ length: totalPages }, (_, i) => i + 1);
+  }
+
+  // Always show first and last page
+  const pages = [1];
+  
+  // Calculate start and end of the visible pages window
+  let startPage = Math.max(2, currentPage - 1);
+  let endPage = Math.min(totalPages - 1, currentPage + 1);
+  
+  // Adjust window if we're near the start or end
+  if (currentPage <= 3) {
+    endPage = Math.min(MAX_VISIBLE_PAGES - 1, totalPages - 1);
+  } else if (currentPage >= totalPages - 2) {
+    startPage = Math.max(2, totalPages - (MAX_VISIBLE_PAGES - 2));
+  }
+  
+  // Add ellipsis before visible pages if needed
+  if (startPage > 2) {
+    pages.push("...");
+  }
+  
+  // Add visible pages
+  for (let i = startPage; i <= endPage; i++) {
+    pages.push(i);
+  }
+  
+  // Add ellipsis after visible pages if needed
+  if (endPage < totalPages - 1) {
+    pages.push("...");
+  }
+  
+  // Always add last page
+  if (totalPages > 1) {
+    pages.push(totalPages);
+  }
+  
+  return pages;
 }

@@ -1,110 +1,94 @@
 
-import { useState } from 'react';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Pagination } from '@/components/ui/pagination';
-import { Button } from '@/components/ui/button';
+import React from 'react';
+import { 
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow
+} from "@/components/ui/table";
+import { format } from 'date-fns';
 
-interface AdminLogEntry {
+interface AdminLog {
   id: string;
+  admin_id: string;
   action: string;
-  admin: string;
-  timestamp: string;
-  details: string;
+  action_type: string;
+  details: any;
+  created_at: string;
+  target_id?: string;
+  target_type?: string;
 }
 
-export const AdminLogsTable = () => {
-  const [currentPage, setCurrentPage] = useState(1);
-  const [loading, setLoading] = useState(false);
+interface AdminLogsTableProps {
+  logs: AdminLog[];
+  isLoading?: boolean;
+}
 
-  // Mock data for admin logs
-  const mockLogs: AdminLogEntry[] = [
-    {
-      id: '1',
-      action: 'User Banned',
-      admin: 'admin@example.com',
-      timestamp: new Date().toISOString(),
-      details: 'Banned user for violation of community guidelines'
-    },
-    {
-      id: '2',
-      action: 'Content Removed',
-      admin: 'moderator@example.com',
-      timestamp: new Date(Date.now() - 60000).toISOString(),
-      details: 'Removed inappropriate content'
-    },
-    {
-      id: '3',
-      action: 'Settings Updated',
-      admin: 'admin@example.com',
-      timestamp: new Date(Date.now() - 120000).toISOString(),
-      details: 'Updated platform settings'
-    }
-  ];
-
-  const formatDate = (dateString: string) => {
-    const options: Intl.DateTimeFormatOptions = {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    };
-    return new Date(dateString).toLocaleString(undefined, options);
-  };
-
-  return (
-    <div className="space-y-4">
-      <div className="flex justify-between items-center">
-        <h2 className="text-xl font-semibold">Admin Activity Logs</h2>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => {
-            setLoading(true);
-            setTimeout(() => setLoading(false), 500);
-          }}
-          disabled={loading}
-        >
-          {loading ? 'Refreshing...' : 'Refresh Logs'}
-        </Button>
+export const AdminLogsTable: React.FC<AdminLogsTableProps> = ({ logs, isLoading = false }) => {
+  if (isLoading) {
+    return (
+      <div className="w-full p-8 text-center">
+        <p className="text-muted-foreground">Loading admin logs...</p>
       </div>
+    );
+  }
+  
+  if (!logs || logs.length === 0) {
+    return (
+      <div className="w-full p-8 text-center">
+        <p className="text-muted-foreground">No admin logs available</p>
+      </div>
+    );
+  }
+  
+  return (
+    <div className="rounded-md border">
       <Table>
         <TableHeader>
           <TableRow>
+            <TableHead>Date / Time</TableHead>
+            <TableHead>Admin ID</TableHead>
             <TableHead>Action</TableHead>
-            <TableHead>Admin</TableHead>
-            <TableHead>Timestamp</TableHead>
-            <TableHead className="hidden md:table-cell">Details</TableHead>
+            <TableHead>Type</TableHead>
+            <TableHead>Target</TableHead>
+            <TableHead>Details</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          {mockLogs.length === 0 ? (
-            <TableRow>
-              <TableCell colSpan={4} className="text-center py-4">
-                No activity logs found
+          {logs.map((log) => (
+            <TableRow key={log.id}>
+              <TableCell className="font-mono text-xs">
+                {log.created_at ? format(new Date(log.created_at), 'yyyy-MM-dd HH:mm:ss') : 'N/A'}
+              </TableCell>
+              <TableCell className="max-w-[100px] truncate">
+                {log.admin_id || 'N/A'}
+              </TableCell>
+              <TableCell>{log.action || 'N/A'}</TableCell>
+              <TableCell>{log.action_type || 'N/A'}</TableCell>
+              <TableCell className="max-w-[100px] truncate">
+                {log.target_id ? (
+                  <span title={log.target_id}>
+                    {log.target_type ? `${log.target_type}:` : ''} {log.target_id}
+                  </span>
+                ) : 'N/A'}
+              </TableCell>
+              <TableCell>
+                {log.details ? (
+                  <pre className="max-w-[200px] truncate text-xs">
+                    {typeof log.details === 'object' 
+                      ? JSON.stringify(log.details, null, 2) 
+                      : log.details}
+                  </pre>
+                ) : 'No details'}
               </TableCell>
             </TableRow>
-          ) : (
-            mockLogs.map((log) => (
-              <TableRow key={log.id}>
-                <TableCell className="font-medium">{log.action}</TableCell>
-                <TableCell>{log.admin}</TableCell>
-                <TableCell>{formatDate(log.timestamp)}</TableCell>
-                <TableCell className="hidden md:table-cell">{log.details}</TableCell>
-              </TableRow>
-            ))
-          )}
+          ))}
         </TableBody>
       </Table>
-      {mockLogs.length > 0 && (
-        <div className="flex justify-end">
-          <Pagination
-            currentPage={currentPage}
-            totalPages={1}
-            onPageChange={setCurrentPage}
-          />
-        </div>
-      )}
     </div>
   );
 };
+
+export default AdminLogsTable;
