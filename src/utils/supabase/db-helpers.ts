@@ -1,89 +1,105 @@
 
-import { supabase } from '@/integrations/supabase/client';
-import { Database } from '@/integrations/supabase/types/database.types';
+import { supabase } from "@/integrations/supabase/client"; 
+import { Database } from "@/integrations/supabase/types/database.types";
+import { ProfileStatus } from "@/utils/supabase/type-guards";
+import { isQueryError } from "@/utils/supabase/typeSafeOperations";
+
+type ProfileRow = Database['public']['Tables']['profiles']['Row'];
+type ProfileUpdate = Database['public']['Tables']['profiles']['Update'];
 
 /**
- * Type-safe function for creating post entries
+ * Update a user's profile status safely
+ * @param userId The user ID to update
+ * @param status The new status to set
+ * @returns True if update was successful, false otherwise
  */
-export const createPost = async (postData: Database['public']['Tables']['posts']['Insert']) => {
-  const { data, error } = await supabase
-    .from('posts')
-    .insert(postData)
-    .select();
+export async function updateProfileStatus(userId: string, status: ProfileStatus): Promise<boolean> {
+  try {
+    const updateData: ProfileUpdate = {
+      status: status
+    };
 
-  if (error) throw error;
-  return data;
-};
+    const { data, error } = await supabase
+      .from('profiles')
+      .update(updateData)
+      .eq('id' as keyof ProfileRow, userId);
+      
+    if (error) {
+      console.error("Error updating profile status:", error);
+      return false;
+    }
+    
+    return true;
+  } catch (error) {
+    console.error("Exception updating profile status:", error);
+    return false;
+  }
+}
 
 /**
- * Type-safe function for updating profile status
+ * Get a user profile by ID with proper type checking
+ * @param userId The user ID to fetch
+ * @returns The profile data or null
  */
-export const updateProfileStatus = async (
-  userId: string, 
-  status: Database['public']['Tables']['profiles']['Update']['status']
-) => {
-  const { data, error } = await supabase
-    .from('profiles')
-    .update({ status })
-    .eq('id', userId as string);
-
-  if (error) throw error;
-  return data;
-};
-
-/**
- * Type-safe function for updating profile fields
- */
-export const updateProfileFields = async (
-  userId: string,
-  updateData: Database['public']['Tables']['profiles']['Update']
-) => {
-  const { data, error } = await supabase
-    .from('profiles')
-    .update(updateData)
-    .eq('id', userId as string);
-
-  if (error) throw error;
-  return data;
-};
-
-/**
- * Type-safe function for fetching user profile
- */
-export const fetchUserProfile = async (userId: string) => {
-  const { data, error } = await supabase
-    .from('profiles')
-    .select('*')
-    .eq('id', userId as string)
-    .single();
-
-  if (error) throw error;
-  return data;
-};
-
-/**
- * Type-safe function for updating reports
- */
-export const updateReportStatus = async (
-  reportId: string,
-  status: 'pending' | 'resolved' | 'rejected'
-) => {
-  const { data, error } = await supabase
-    .from('reports')
-    .update({ status })
-    .eq('id', reportId as string);
-
-  if (error) throw error;
-  return data;
-};
-
-/**
- * Type-safe way to extract data from query results
- */
-export function extractData<T>(queryResult: { data: T | null, error: any }): T | null {
-  if (queryResult.error) {
-    console.error('Database query error:', queryResult.error);
+export async function getProfileById(userId: string): Promise<ProfileRow | null> {
+  try {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id' as keyof ProfileRow, userId)
+      .maybeSingle();
+      
+    if (error) {
+      console.error("Error fetching profile:", error);
+      return null;
+    }
+    
+    // Check if data exists and isn't an error
+    if (!data || isQueryError(data)) {
+      return null;
+    }
+    
+    return data as ProfileRow;
+  } catch (error) {
+    console.error("Exception fetching profile:", error);
     return null;
   }
-  return queryResult.data;
+}
+
+/**
+ * Safe fetch for any table with proper error handling
+ * @param table The table name to fetch from
+ * @param columns The columns to select
+ * @param filterColumn The column to filter on
+ * @param filterValue The value to filter for
+ * @returns The data or null
+ */
+export async function safeFetch<T>(
+  table: string, 
+  columns: string, 
+  filterColumn: string, 
+  filterValue: any
+): Promise<T | null> {
+  try {
+    const { data, error } = await supabase
+      .from(table)
+      .select(columns)
+      .eq(filterColumn, filterValue)
+      .maybeSingle();
+      
+    if (error) {
+      console.error(`Error fetching from ${table}:`, error);
+      return null;
+    }
+    
+    // Check if data exists and isn't an error
+    if (!data || isQueryError(data)) {
+      return null;
+    }
+    
+    return data as T;
+  } catch (error) {
+    console.error(`Exception fetching from ${table}:`, error);
+    return null;
+  }
 }

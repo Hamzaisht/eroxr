@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import {
   DropdownMenu,
@@ -69,37 +70,56 @@ export function UserMenu() {
   const session = useSession();
   const supabaseClient = useSupabaseClient();
 
-  // Fetch user profile data
+  // Fetch user profile data with proper typing
   const { data: profile, isLoading: profileLoading } = useQuery({
     queryKey: ['user-profile', session?.user?.id],
     queryFn: async () => {
       if (!session?.user?.id) return null;
       
-      const { data, error } = await supabase
-        .from('profiles')
-        .select("*")
-        .eq("id" as keyof ProfileRow, session.user.id as string)
-        .maybeSingle();
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select("*")
+          .eq("id" as keyof ProfileRow, session.user.id as string)
+          .maybeSingle();
+          
+        if (error) {
+          console.error('Error fetching profile:', error);
+          return null;
+        }
         
-      if (error) {
-        console.error('Error fetching profile:', error);
+        // Check if data exists and is not an error
+        if (!data || 'error' in data) {
+          return null;
+        }
+        
+        return data as ProfileRow;
+      } catch (error) {
+        console.error('Exception fetching profile:', error);
         return null;
       }
-      
-      return data;
     },
     enabled: !!session?.user?.id,
   });
 
-  // Safely access profile data
+  // Safely access profile data with runtime type checking
   const safeProfile = getSafeProfile(profile);
 
   const signOut = async () => {
-    await supabaseClient.auth.signOut();
-    navigate("/login");
-    toast({
-      description: "You have been signed out.",
-    });
+    try {
+      await supabaseClient.auth.signOut();
+      navigate("/login");
+      toast({
+        description: "You have been signed out.",
+      });
+    } catch (error: any) {
+      console.error("Error during logout:", error);
+      toast({
+        variant: "destructive",
+        title: "Error signing out",
+        description: error.message || "Please try again later",
+      });
+    }
   };
 
   const handleStatusChange = (status: AvailabilityStatus) => {

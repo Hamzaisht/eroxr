@@ -6,8 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { safeString } from "@/utils/supabase/typeSafeOperations";
 import { Database } from "@/integrations/supabase/types/database.types";
 
-type AdminLogRow = Database['public']['Tables']['admin_logs']['Row'];
-
+// Define type for admin log rows
 interface AdminLog {
   id: string;
   admin_id: string;
@@ -33,6 +32,7 @@ export const AdminLogsTable = () => {
   const fetchLogs = async () => {
     setIsLoading(true);
     try {
+      // Check if admin_logs table exists in the database schema
       const { data, error } = await supabase
         .from('admin_logs')
         .select(`
@@ -49,40 +49,42 @@ export const AdminLogsTable = () => {
         .order('created_at', { ascending: false })
         .limit(100);
 
-      if (error) throw error;
+      if (error) {
+        // This could occur if the table doesn't exist or other query issues
+        throw new Error(`Failed to fetch admin logs: ${error.message}`);
+      }
 
-      // Safely transform data 
-      const formattedLogs = Array.isArray(data) ? data
-        .filter((log): log is (AdminLogRow & { profiles?: ProfileWithUsername }) => {
-          return log !== null && 
-                 typeof log === 'object' && 
-                 'id' in log;
-        })
-        .map(log => {
-          // Create a safe record with required properties
-          const adminLog: AdminLog = {
-            id: safeString(log.id),
-            admin_id: safeString(log.admin_id),
-            action: safeString(log.action),
-            action_type: safeString(log.action_type),
-            target_type: safeString(log.target_type || ''),
-            target_id: safeString(log.target_id || ''),
-            details: log.details || {},
-            created_at: safeString(log.created_at),
-            admin_name: (log.profiles && typeof log.profiles === 'object') ? 
-              safeString(log.profiles?.username) || 'Unknown Admin' : 
-              'Unknown Admin'
-          };
-          return adminLog;
-        }) : [];
+      // Safely transform data with type checking
+      const formattedLogs: AdminLog[] = [];
+      if (Array.isArray(data)) {
+        data.forEach(log => {
+          if (log && typeof log === 'object' && 'id' in log) {
+            const adminLog: AdminLog = {
+              id: safeString(log.id),
+              admin_id: safeString(log.admin_id),
+              action: safeString(log.action),
+              action_type: safeString(log.action_type),
+              target_type: safeString(log.target_type || ''),
+              target_id: safeString(log.target_id || ''),
+              details: log.details || {},
+              created_at: safeString(log.created_at),
+              admin_name: (log.profiles && typeof log.profiles === 'object') ? 
+                safeString(log.profiles?.username) || 'Unknown Admin' : 
+                'Unknown Admin'
+            };
+            formattedLogs.push(adminLog);
+          }
+        });
+      }
 
       setLogs(formattedLogs);
-    } catch (error: any) {
-      console.error("Error fetching admin logs:", error);
-      setError(error);
+    } catch (err: any) {
+      console.error("Error fetching admin logs:", err);
+      setError(err);
+      
       toast({
         title: "Error",
-        description: "Could not load admin logs. Please try again.",
+        description: "Could not load admin logs. The table might not exist or there was a query error.",
         variant: "destructive"
       });
     } finally {

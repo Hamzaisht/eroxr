@@ -4,11 +4,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { CreatorCard } from "@/components/CreatorCard";
 import { useSession } from "@supabase/auth-helpers-react";
 import { Database } from "@/integrations/supabase/types/database.types";
-import { safeString, isSubscriptionRow, isProfileRow } from "@/utils/supabase/typeSafeOperations";
+import { safeString } from "@/utils/supabase/typeSafeOperations";
 
+// Define proper types for profiles and subscriptions tables
 type ProfileRow = Database['public']['Tables']['profiles']['Row'];
 type SubscriptionRow = Database['public']['Tables']['creator_subscriptions']['Row'];
 
+// Define safe creator type
 interface Creator {
   id: string;
   username?: string | null;
@@ -17,6 +19,7 @@ interface Creator {
   banner_url?: string | null;
 }
 
+// Define safe subscription type
 interface Subscription {
   id: string;
   creator_id: string;
@@ -34,41 +37,59 @@ export const SubscribedCreators = () => {
     queryFn: async () => {
       if (!userId) return [];
       
-      const { data, error } = await supabase
-        .from("creator_subscriptions")
-        .select(`
-          *,
-          creator:creator_id(
-            id,
-            username,
-            avatar_url,
-            bio,
-            banner_url
-          )
-        `)
-        .eq("user_id" as keyof SubscriptionRow, userId as string)
-        .order("created_at", { ascending: false });
+      // Check if creator_subscriptions table exists in database schema
+      try {
+        const { data, error } = await supabase
+          .from("creator_subscriptions")
+          .select(`
+            *,
+            creator:creator_id(
+              id,
+              username,
+              avatar_url,
+              bio,
+              banner_url
+            )
+          `)
+          .eq("user_id" as keyof SubscriptionRow, userId as string)
+          .order("created_at" as keyof SubscriptionRow, { ascending: false });
+          
+        if (error) {
+          console.error("Error fetching subscriptions:", error);
+          return [];
+        }
         
-      if (error || !data) {
-        console.error("Error fetching subscriptions:", error);
+        // Ensure data exists and is an array
+        if (!data || !Array.isArray(data)) {
+          return [];
+        }
+        
+        // Transform data to match expected types with safe type checking
+        return data.map((item: any) => {
+          // Ensure item exists and has required properties
+          if (!item) return null;
+          
+          // Create subscription object with safe type conversion
+          const subscription: Subscription = {
+            id: safeString(item.id),
+            creator_id: safeString(item.creator_id),
+            user_id: safeString(item.user_id),
+            created_at: safeString(item.created_at),
+            creator: item.creator ? {
+              id: safeString(item.creator.id),
+              username: item.creator.username || null,
+              avatar_url: item.creator.avatar_url || null,
+              bio: item.creator.bio || null,
+              banner_url: item.creator.banner_url || null
+            } : undefined
+          };
+          
+          return subscription;
+        }).filter(Boolean) as Subscription[];
+      } catch (e) {
+        console.error("Exception fetching subscriptions:", e);
         return [];
       }
-      
-      // Transform data to match expected types, ensuring we only map valid rows
-      return data
-        .filter((item): item is (SubscriptionRow & {
-          creator?: ProfileRow | null;
-        }) => {
-          return isSubscriptionRow(item) && 
-                (!item.creator || (item.creator && typeof item.creator === 'object'));
-        })
-        .map((item) => ({
-          id: safeString(item.id),
-          creator_id: safeString(item.creator_id),
-          user_id: safeString(item.user_id),
-          created_at: safeString(item.created_at),
-          creator: item.creator as Creator
-        }));
     },
     enabled: !!userId,
   });

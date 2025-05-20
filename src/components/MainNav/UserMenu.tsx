@@ -50,7 +50,7 @@ export function UserMenu() {
         const { data, error } = await supabase
           .from('profiles')
           .select("*")
-          .eq("id" as keyof ProfileRow, session.user.id)
+          .eq("id" as keyof ProfileRow, session.user.id as string)
           .maybeSingle();
           
         if (error) {
@@ -58,7 +58,12 @@ export function UserMenu() {
           return null;
         }
         
-        return data as ProfileRow | null;
+        // Check if data exists and is not an error
+        if (!data || 'error' in data) {
+          return null;
+        }
+        
+        return data as ProfileRow;
       } catch (error) {
         console.error('Exception fetching profile:', error);
         return null;
