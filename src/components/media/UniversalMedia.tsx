@@ -6,6 +6,7 @@ import { normalizeMediaSource } from '@/utils/media/mediaUtils';
 import { useToast } from "@/hooks/use-toast";
 import { isValidMediaUrl } from '@/utils/media/mediaOrchestrator';
 import { AlertCircle } from 'lucide-react';
+import { ToastAction } from "@/components/ui/toast";
 
 interface UniversalMediaProps extends MediaOptions {
   item: any; // Accepting various formats for backward compatibility
@@ -74,10 +75,11 @@ export const UniversalMedia = forwardRef(({
         title: "Media failed to load",
         description: "Please try again later",
         variant: "destructive",
-        action: {
-          label: "Retry",
-          onClick: () => window.location.reload()
-        }
+        action: (
+          <ToastAction altText="Retry" onClick={() => window.location.reload()}>
+            Retry
+          </ToastAction>
+        ),
       });
     }
     
