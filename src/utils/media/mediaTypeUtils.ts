@@ -118,4 +118,3 @@ export const mimeTypeToMediaType = (mimeType: string): MediaType => {
   
   return MediaType.UNKNOWN;
 };
-

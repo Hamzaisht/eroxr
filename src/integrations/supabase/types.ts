@@ -1253,6 +1253,42 @@ export type Database = {
           },
         ]
       }
+      media_assets: {
+        Row: {
+          content_type: string | null
+          created_at: string | null
+          id: string
+          original_name: string | null
+          size: number | null
+          storage_path: string | null
+          type: string | null
+          url: string
+          user_id: string | null
+        }
+        Insert: {
+          content_type?: string | null
+          created_at?: string | null
+          id?: string
+          original_name?: string | null
+          size?: number | null
+          storage_path?: string | null
+          type?: string | null
+          url: string
+          user_id?: string | null
+        }
+        Update: {
+          content_type?: string | null
+          created_at?: string | null
+          id?: string
+          original_name?: string | null
+          size?: number | null
+          storage_path?: string | null
+          type?: string | null
+          url?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       nordic_cities: {
         Row: {
           city_name: string

@@ -1,4 +1,6 @@
 
+import { MediaType } from './types';
+
 /**
  * Add cache busting parameter to URLs
  */

@@ -9,7 +9,6 @@ export * from './urlUtils';
 export { MediaType } from './types';
 export { 
   detectMediaType, 
-  determineMediaType,
   extractMediaUrl, 
   createUniqueFilePath,
   normalizeMediaSource,

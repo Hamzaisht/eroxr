@@ -26,7 +26,7 @@ export const createUniqueFilePath = (userId: string, file: File | string): strin
 };
 
 /**
- * Uploads a file to Supabase storage
+ * Uploads a file to Supabase storage and tracks in media_assets
  */
 export const uploadFileToStorage = async (
   bucket: string, 
@@ -36,21 +36,33 @@ export const uploadFileToStorage = async (
   try {
     // Handle string file input (data URL)
     let fileToUpload: File | Blob = file as File;
+    let originalName = '';
+    let fileSize = 0;
+    let contentType = 'application/octet-stream';
     
-    // Convert data URL to blob if needed
-    if (typeof file === 'string' && file.startsWith('data:')) {
+    if (typeof file === 'object' && file instanceof File) {
+      originalName = file.name;
+      fileSize = file.size;
+      contentType = file.type;
+    } else if (typeof file === 'string' && file.startsWith('data:')) {
       const res = await fetch(file);
       fileToUpload = await res.blob();
+      // Try to extract content type from data URL
+      const matches = file.match(/^data:([^;]+);/);
+      if (matches && matches[1]) {
+        contentType = matches[1];
+      }
     } else if (typeof file !== 'object') {
       return { success: false, error: 'Invalid file format' };
     }
     
+    // Upload the file with explicit content type
     const { data, error } = await supabase.storage
       .from(bucket)
       .upload(filePath, fileToUpload, {
         cacheControl: '3600',
-        upsert: false,
-        contentType: typeof file === 'object' ? file.type : 'application/octet-stream'
+        upsert: true,
+        contentType
       });
 
     if (error) {
@@ -58,11 +70,44 @@ export const uploadFileToStorage = async (
       return { success: false, error: error.message };
     }
 
+    // Get public URL
     const { data: publicUrlData } = supabase.storage
       .from(bucket)
       .getPublicUrl(filePath);
+    
+    const url = publicUrlData?.publicUrl;
+    
+    if (!url) {
+      return { success: false, error: 'Failed to get public URL' };
+    }
+    
+    // Determine media type from content type
+    let mediaType = 'document';
+    if (contentType.startsWith('image/')) {
+      mediaType = contentType === 'image/gif' ? 'gif' : 'image';
+    } else if (contentType.startsWith('video/')) {
+      mediaType = 'video';
+    } else if (contentType.startsWith('audio/')) {
+      mediaType = 'audio';
+    }
+    
+    // Add entry to media_assets table if user is logged in
+    const { data: sessionData } = await supabase.auth.getSession();
+    const userId = sessionData?.session?.user?.id;
+    
+    if (userId) {
+      await supabase.from('media_assets').insert({
+        user_id: userId,
+        type: mediaType,
+        url,
+        original_name: originalName,
+        size: fileSize,
+        content_type: contentType,
+        storage_path: filePath
+      });
+    }
 
-    return { success: true, url: publicUrlData.publicUrl };
+    return { success: true, url };
   } catch (error: any) {
     console.error('Unexpected upload error:', error);
     return { success: false, error: error.message || 'Unknown upload error' };
@@ -157,17 +202,12 @@ export const normalizeMediaSource = (source: string | MediaSource | any): MediaS
 
 /**
  * Detect media type from URL or content type
- * @deprecated Use detectMediaTypeFromUrl from mediaTypeUtils instead
  */
-export const detectMediaType = (url: string): MediaType => {
-  return detectMediaTypeFromUrl(url);
+export const detectMediaType = (url: string | any): MediaType => {
+  // First extract the URL if an object is provided
+  const mediaUrl = typeof url === 'string' ? url : extractMediaUrl(url);
+  return detectMediaTypeFromUrl(mediaUrl);
 };
-
-/**
- * Determine media type from URL or MediaSource object
- * Alias for detectMediaType for backward compatibility
- */
-export const determineMediaType = detectMediaType;
 
 /**
  * Create a cache-busting URL for media
