@@ -14,6 +14,7 @@ interface MediaAccessStatus {
   canAccess: boolean;
   isLoading: boolean;
   error: string | null;
+  reason?: string;
 }
 
 export function useMediaAccess({ 
@@ -44,7 +45,8 @@ export function useMediaAccess({
       setAccessStatus({
         canAccess: false,
         isLoading: false,
-        error: "Authentication required"
+        error: "Authentication required",
+        reason: "authentication-required"
       });
       return;
     }
@@ -77,7 +79,8 @@ export function useMediaAccess({
           setAccessStatus({
             canAccess: !!data,
             isLoading: false,
-            error: null
+            error: null,
+            reason: data ? undefined : 'followers-only'
           });
           return;
         }
@@ -98,7 +101,8 @@ export function useMediaAccess({
           setAccessStatus({
             canAccess: !!data,
             isLoading: false,
-            error: null
+            error: null,
+            reason: data ? undefined : 'subscribers-only'
           });
           return;
         }
@@ -119,7 +123,8 @@ export function useMediaAccess({
           setAccessStatus({
             canAccess: !!data,
             isLoading: false,
-            error: null
+            error: null,
+            reason: data ? undefined : 'ppv'
           });
           return;
         }
@@ -129,7 +134,8 @@ export function useMediaAccess({
           setAccessStatus({
             canAccess: false, // We already checked creator_id match above
             isLoading: false,
-            error: "This content is private"
+            error: "This content is private",
+            reason: 'private'
           });
           return;
         }
@@ -138,7 +144,8 @@ export function useMediaAccess({
         setAccessStatus({
           canAccess: false,
           isLoading: false,
-          error: error.message || "Failed to check access permissions"
+          error: error.message || "Failed to check access permissions",
+          reason: 'error'
         });
       }
     };

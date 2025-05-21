@@ -1,3 +1,4 @@
+
 import { MediaSource, MediaAccessLevel } from './types';
 import { extractMediaUrl } from './mediaUtils';
 
@@ -53,9 +54,18 @@ export const processMediaAccess = (
     return { canAccess: true };
   }
   
+  // If no user data provided, access is denied for non-public content
+  if (!currentUserData) {
+    return { 
+      canAccess: false,
+      reason: 'authentication-required'
+    };
+  }
+  
   // Check different access levels
   switch (source.access_level) {
     case MediaAccessLevel.FOLLOWERS:
+      // Check if current user follows the content creator
       if (!currentUserData?.following?.includes(source.creator_id)) {
         return { 
           canAccess: false, 
@@ -65,6 +75,7 @@ export const processMediaAccess = (
       break;
       
     case MediaAccessLevel.SUBSCRIBERS:
+      // Check if current user subscribes to the content creator
       if (!currentUserData?.subscriptions?.includes(source.creator_id)) {
         return { 
           canAccess: false, 
@@ -74,6 +85,7 @@ export const processMediaAccess = (
       break;
       
     case MediaAccessLevel.PPV:
+      // Check if current user has purchased this specific content
       if (!currentUserData?.purchases?.includes(source.post_id)) {
         return { 
           canAccess: false, 

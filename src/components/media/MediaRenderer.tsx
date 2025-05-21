@@ -1,10 +1,9 @@
-
 import React, { useState, useEffect, forwardRef } from 'react';
 import { MediaSource, MediaType, MediaAccessLevel } from '@/utils/media/types';
 import { isImageType, isVideoType, isAudioType } from '@/utils/media/mediaTypeUtils';
 import { extractMediaUrl } from '@/utils/media/mediaUtils';
 import { AlertCircle, RefreshCw } from 'lucide-react';
-import { isValidMediaUrl } from '@/utils/media/mediaOrchestrator';
+import { validateMediaUrl } from '@/utils/media/mediaOrchestrator';
 import { useMediaAccess } from '@/hooks/useMediaAccess';
 import { LockedMediaOverlay } from './LockedMediaOverlay';
 
@@ -59,7 +58,7 @@ export const MediaRenderer = forwardRef<
   const postId = src.post_id;
   
   // Check if user has access to this media
-  const { canAccess, isLoading: isAccessLoading } = useMediaAccess({
+  const { canAccess, isLoading: isAccessLoading, reason } = useMediaAccess({
     creatorId,
     postId,
     accessLevel
@@ -71,7 +70,7 @@ export const MediaRenderer = forwardRef<
   };
   
   // Check for valid URL early to avoid unnecessary rendering
-  if (!isValidMediaUrl(url)) {
+  if (!validateMediaUrl(url)) {
     return (
       <div className="flex flex-col items-center justify-center h-full w-full p-4 bg-black/10 text-center">
         <AlertCircle className="h-8 w-8 text-red-500 mb-2" />

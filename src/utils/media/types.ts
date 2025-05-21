@@ -1,11 +1,10 @@
-
 export enum MediaType {
   IMAGE = 'image',
   VIDEO = 'video',
   AUDIO = 'audio',
-  GIF = 'gif',
   DOCUMENT = 'document',
-  UNKNOWN = 'unknown'
+  GIF = 'gif',
+  UNKNOWN = 'unknown',
 }
 
 export enum MediaAccessLevel {
@@ -13,7 +12,7 @@ export enum MediaAccessLevel {
   FOLLOWERS = 'followers',
   SUBSCRIBERS = 'subscribers',
   PPV = 'ppv',
-  PRIVATE = 'private'
+  PRIVATE = 'private',
 }
 
 export enum AvailabilityStatus {
@@ -27,11 +26,19 @@ export enum AvailabilityStatus {
 export interface MediaSource {
   url: string;
   type: MediaType;
-  creator_id?: string;
-  access_level?: MediaAccessLevel;
-  poster?: string;
   thumbnail?: string;
+  poster?: string;
+  duration?: number; 
+  width?: number;
+  height?: number;
+  watermark?: boolean;
+  creator_id?: string;
+  content_type?: string;
+  media_url?: string | string[];
+  video_url?: string;
+  thumbnail_url?: string;
   post_id?: string;
+  access_level?: MediaAccessLevel; // Added access level
 }
 
 export interface MediaOptions {

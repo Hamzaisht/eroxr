@@ -1,11 +1,11 @@
 
-import { Button } from "@/components/ui/button";
-import { MediaAccessLevel } from "@/utils/media/types";
-import { motion } from "framer-motion";
-import { LockIcon, UserPlus, Heart, CreditCard } from "lucide-react";
-import { useState } from "react";
-import { useToast } from "@/hooks/use-toast";
-import { useSession } from "@supabase/auth-helpers-react";
+import React from 'react';
+import { Shield, Users, Crown, Lock, CreditCard } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { MediaAccessLevel } from '@/utils/media/types';
+import { useSession } from '@supabase/auth-helpers-react';
+import { useToast } from '@/hooks/use-toast';
+import { supabase } from "@/integrations/supabase/client";
 
 interface LockedMediaOverlayProps {
   accessLevel: MediaAccessLevel;
@@ -15,139 +15,147 @@ interface LockedMediaOverlayProps {
   onUnlock?: () => void;
 }
 
-export function LockedMediaOverlay({
+export const LockedMediaOverlay = ({
   accessLevel,
   creatorId,
   postId,
   thumbnailUrl,
   onUnlock
-}: LockedMediaOverlayProps) {
-  const { toast } = useToast();
+}: LockedMediaOverlayProps) => {
   const session = useSession();
-  const [isLoading, setIsLoading] = useState(false);
-
-  const handleAction = async () => {
-    if (!session) {
+  const { toast } = useToast();
+  
+  // Lock icon and message based on access level
+  const getLockInfo = () => {
+    switch (accessLevel) {
+      case MediaAccessLevel.FOLLOWERS:
+        return {
+          icon: <Users className="h-8 w-8 text-blue-400" />,
+          message: "This content is for followers only",
+          actionLabel: "Follow"
+        };
+      case MediaAccessLevel.SUBSCRIBERS:
+        return {
+          icon: <Crown className="h-8 w-8 text-amber-400" />,
+          message: "This content is for subscribers only",
+          actionLabel: "Subscribe"
+        };
+      case MediaAccessLevel.PPV:
+        return {
+          icon: <CreditCard className="h-8 w-8 text-green-400" />,
+          message: "This content requires a one-time purchase",
+          actionLabel: "Buy Access"
+        };
+      case MediaAccessLevel.PRIVATE:
+      default:
+        return {
+          icon: <Lock className="h-8 w-8 text-red-400" />,
+          message: "This content is private",
+          actionLabel: ""
+        };
+    }
+  };
+  
+  const { icon, message, actionLabel } = getLockInfo();
+  
+  // Handle unlock action based on access level
+  const handleUnlockAction = async () => {
+    if (!session?.user) {
       toast({
         title: "Authentication Required",
-        description: "You need to sign in to access this content",
+        description: "Please sign in to access this content",
         variant: "destructive"
       });
       return;
     }
     
-    setIsLoading(true);
-    
     try {
-      let actionType = "";
-      let successMessage = "";
-      
       switch (accessLevel) {
         case MediaAccessLevel.FOLLOWERS:
-          actionType = "follow";
-          successMessage = "You are now following this creator";
-          // Implement follow API call here
+          // Follow the creator
+          await supabase.from("followers").insert({
+            follower_id: session.user.id,
+            following_id: creatorId
+          });
+          toast({
+            title: "Success!",
+            description: "You are now following this creator"
+          });
           break;
+          
         case MediaAccessLevel.SUBSCRIBERS:
-          actionType = "subscribe";
-          successMessage = "Successfully subscribed to this creator";
-          // Implement subscription API call here
+          // Redirect to subscription page
+          toast({
+            title: "Subscription Required",
+            description: "You will be redirected to the subscription page"
+          });
+          // In a real app, redirect to subscription page or open subscription modal
           break;
+          
         case MediaAccessLevel.PPV:
-          actionType = "purchase";
-          successMessage = "Content purchased successfully";
-          // Implement purchase API call here
+          if (!postId) {
+            toast({
+              title: "Error",
+              description: "Cannot purchase content without post ID",
+              variant: "destructive"
+            });
+            return;
+          }
+          
+          // In a real app, open payment modal or redirect to payment page
+          toast({
+            title: "Purchase Required",
+            description: "You will be redirected to purchase this content"
+          });
           break;
+          
+        default:
+          return;
       }
       
-      toast({
-        title: "Success",
-        description: successMessage
-      });
+      // Notify parent component that unlock action was performed
+      if (onUnlock) onUnlock();
       
-      if (onUnlock) {
-        onUnlock();
-      }
     } catch (error: any) {
       toast({
         title: "Error",
-        description: error.message || "Failed to complete action",
+        description: error.message || "Failed to process your request",
         variant: "destructive"
       });
-    } finally {
-      setIsLoading(false);
     }
   };
-
-  const getActionInfo = () => {
-    switch (accessLevel) {
-      case MediaAccessLevel.FOLLOWERS:
-        return {
-          title: "Followers Only Content",
-          description: "Follow this creator to view this content",
-          buttonText: "Follow Creator",
-          icon: <UserPlus className="h-6 w-6" />
-        };
-      case MediaAccessLevel.SUBSCRIBERS:
-        return {
-          title: "Subscribers Only Content",
-          description: "Subscribe to this creator to view this content",
-          buttonText: "Subscribe",
-          icon: <Heart className="h-6 w-6" />
-        };
-      case MediaAccessLevel.PPV:
-        return {
-          title: "Premium Content",
-          description: "Purchase this content to view it",
-          buttonText: "Purchase",
-          icon: <CreditCard className="h-6 w-6" />
-        };
-      case MediaAccessLevel.PRIVATE:
-      default:
-        return {
-          title: "Private Content",
-          description: "This content is private",
-          buttonText: "",
-          icon: <LockIcon className="h-6 w-6" />
-        };
-    }
-  };
-
-  const actionInfo = getActionInfo();
-
+  
   return (
-    <motion.div 
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      className="absolute inset-0 flex flex-col items-center justify-center bg-black/50 backdrop-blur-sm text-white text-center p-6"
-      style={{
-        backgroundImage: thumbnailUrl ? `url(${thumbnailUrl})` : undefined,
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-        backgroundBlendMode: 'overlay'
-      }}
-    >
-      <div className="absolute inset-0 bg-black/60" />
-      
-      <div className="relative z-10 flex flex-col items-center gap-4 max-w-sm">
-        <div className="p-4 rounded-full bg-black/30">
-          {actionInfo.icon}
+    <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/75 backdrop-blur-sm text-white rounded-lg">
+      {thumbnailUrl && (
+        <div className="absolute inset-0 z-0 opacity-20">
+          <img 
+            src={thumbnailUrl} 
+            alt="Content thumbnail" 
+            className="w-full h-full object-cover rounded-lg"
+          />
         </div>
+      )}
+      
+      <div className="z-10 flex flex-col items-center justify-center p-6 text-center">
+        <div className="bg-black/50 p-4 rounded-full mb-4">
+          {icon}
+        </div>
+        <h3 className="text-xl font-semibold mb-2">{message}</h3>
+        <p className="text-sm text-gray-300 mb-4">
+          You need additional access to view this content
+        </p>
         
-        <h3 className="text-xl font-bold">{actionInfo.title}</h3>
-        <p className="text-sm text-gray-300">{actionInfo.description}</p>
-        
-        {actionInfo.buttonText && accessLevel !== MediaAccessLevel.PRIVATE && (
+        {actionLabel && (
           <Button 
-            onClick={handleAction} 
-            disabled={isLoading}
-            className="mt-4"
-            variant="premium"
+            onClick={handleUnlockAction}
+            variant="default"
+            className="bg-primary hover:bg-primary/90"
           >
-            {isLoading ? "Processing..." : actionInfo.buttonText}
+            {actionLabel}
           </Button>
         )}
       </div>
-    </motion.div>
+    </div>
   );
-}
+};

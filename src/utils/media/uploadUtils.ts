@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { v4 as uuidv4 } from "uuid";
 import { MediaAccessLevel, UploadOptions, UploadResult } from "./types";
@@ -34,7 +33,7 @@ export const uploadMediaToSupabase = async (
   }
   
   try {
-    // Generate a unique file path
+    // Generate a unique path for the upload
     const timestamp = new Date().getTime();
     const fileExt = file.name.split(".").pop() || "";
     const fileId = uuidv4();
@@ -45,20 +44,13 @@ export const uploadMediaToSupabase = async (
     // Build path with userId subfolder for better organization
     const filePath = `${contentCategory}/${userId}/${fileId}-${timestamp}.${fileExt}`;
     
-    // Progress tracking function for onProgress callback
-    const onProgressCallback = options?.maxSizeMB ? () => {} : undefined;
-    
     // Prepare metadata with creator_id and access level
-    const metadata: {
-      creator_id: string;
-      access: MediaAccessLevel;
-      post_id?: string;
-    } = {
+    const metadata: Record<string, string> = {
       creator_id: userId,
       access: options?.accessLevel || MediaAccessLevel.PUBLIC,
     };
     
-    // Add post_id to metadata if available
+    // Add post_id to metadata if available - critical for PPV access control
     if (options?.postId) {
       metadata.post_id = options.postId;
     }
@@ -70,7 +62,6 @@ export const uploadMediaToSupabase = async (
         cacheControl: "3600",
         upsert: false,
         contentType: file.type,
-        // Use proper FileOptions type (onUploadProgress removed)
         metadata
       });
     
@@ -87,11 +78,14 @@ export const uploadMediaToSupabase = async (
       .from("media")
       .getPublicUrl(data.path);
     
+    console.log("✅ Media uploaded successfully with access level:", options?.accessLevel || "public");
+    
     return {
       success: true,
       url: publicUrlData.publicUrl,
       publicUrl: publicUrlData.publicUrl,
-      path: data.path
+      path: data.path,
+      accessLevel: options?.accessLevel || MediaAccessLevel.PUBLIC
     };
   } catch (err: any) {
     console.error("Upload exception:", err);
