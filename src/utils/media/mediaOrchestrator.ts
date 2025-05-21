@@ -1,3 +1,4 @@
+
 import { MediaType } from './types';
 import { extractMediaUrl } from './mediaUtils';
 
@@ -30,6 +31,13 @@ interface MediaCacheEntry {
   loaded: boolean;
   error: boolean;
   timestamp: number;
+}
+
+/**
+ * Helper function to validate media URLs
+ */
+export function isValidMediaUrl(url: string | undefined | null): boolean {
+  return typeof url === 'string' && url.startsWith('https://') && !url.includes('undefined');
 }
 
 /**
@@ -223,7 +231,8 @@ export class MediaOrchestrator {
     
     const url = extractMediaUrl(source);
     
-    if (!url) return null;
+    // Validate URL
+    if (!isValidMediaUrl(url)) return null;
     
     const id = source.id || `media-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
     const type = source.media_type || this.getMediaTypeFromUrl(url);

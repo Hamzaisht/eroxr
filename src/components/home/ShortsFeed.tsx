@@ -5,6 +5,7 @@ import { LoadingState } from "@/components/ui/LoadingState";
 import { ChevronDown, ChevronUp, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { MediaType } from "@/utils/media/types";
+import { isValidMediaUrl } from "@/utils/media/mediaOrchestrator";
 
 interface ShortsFeedProps {
   specificShortId: string | null;
@@ -27,7 +28,8 @@ const MediaDebug = ({ src }: { src: any }) => {
     mediaType: src.mediaType,
     videoUrl: src.videoUrl,
     thumbnailUrl: src.thumbnailUrl,
-    creator: src.creator ? { id: src.creator.id } : undefined
+    creator: src.creator ? { id: src.creator.id } : undefined,
+    isValidUrl: isValidMediaUrl(src.videoUrl)
   };
   
   return (
@@ -98,6 +100,9 @@ export const ShortsFeed = ({ specificShortId }: ShortsFeedProps) => {
     return shorts[currentIndex] || null;
   }, [shorts, currentIndex]);
 
+  // Validate video URL
+  const isValidVideo = currentShort && isValidMediaUrl(currentShort.videoUrl);
+
   const handleError = useCallback((index: number) => {
     console.error(`Error loading short at index ${index}`);
   }, []);
@@ -138,7 +143,7 @@ export const ShortsFeed = ({ specificShortId }: ShortsFeedProps) => {
       
       <div className="h-screen w-full bg-black">
         <div className="relative h-full w-full">
-          {currentShort && (
+          {isValidVideo ? (
             <ShortVideoPlayer
               videoUrl={currentShort.videoUrl}
               thumbnailUrl={currentShort.thumbnailUrl}
@@ -146,6 +151,12 @@ export const ShortsFeed = ({ specificShortId }: ShortsFeedProps) => {
               isCurrentVideo={true}
               onError={() => handleError(currentIndex)}
             />
+          ) : (
+            <div className="flex flex-col items-center justify-center h-full w-full bg-black text-white">
+              <AlertCircle className="h-12 w-12 mb-4 text-red-500" />
+              <h2 className="text-xl font-bold">Video unavailable</h2>
+              <p className="text-gray-400 mt-2">This video cannot be played</p>
+            </div>
           )}
         </div>
       </div>

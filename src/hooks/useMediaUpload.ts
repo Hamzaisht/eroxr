@@ -5,6 +5,7 @@ import { useToast } from '@/hooks/use-toast';
 import { validateFileForUpload } from '@/utils/upload/validators';
 import { uploadMediaToSupabase } from '@/utils/media/uploadUtils';
 import { UploadOptions } from '@/utils/media/types';
+import { isValidMediaUrl } from '@/utils/media/mediaOrchestrator';
 
 interface UploadState {
   isUploading: boolean;
@@ -140,6 +141,12 @@ export const useMediaUpload = (defaultOptions?: UploadOptions) => {
       if (finalOptions?.autoResetOnCompletion) {
         const delay = finalOptions.resetDelay || 3000;
         setTimeout(resetUploadState, delay);
+      }
+      
+      // Validate URL before returning
+      if ('publicUrl' in result && !isValidMediaUrl(result.publicUrl as string)) {
+        console.error('Invalid public URL format in upload result:', result);
+        throw new Error('Invalid public URL format returned');
       }
       
       return result;

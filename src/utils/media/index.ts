@@ -4,6 +4,8 @@ export * from './types';
 export * from './mediaUtils';
 export * from './mediaTypeUtils';
 export * from './urlUtils';
+export * from './generateVideoThumbnail';
+export * from './mediaOrchestrator';
 
 // Explicitly re-export these items to resolve ambiguity and ensure they're available
 export { MediaType } from './types';
@@ -12,7 +14,8 @@ export {
   extractMediaUrl, 
   createUniqueFilePath,
   normalizeMediaSource,
-  uploadFileToStorage
+  uploadFileToStorage,
+  isValidMediaUrl
 } from './mediaUtils';
 export { 
   isImageType, 
@@ -28,3 +31,7 @@ export {
   getPlayableMediaUrl,
   getOptimizedImageUrl
 } from './urlUtils';
+export {
+  generateVideoThumbnail,
+  generateThumbnailFromUrl
+} from './generateVideoThumbnail';

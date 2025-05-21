@@ -4,6 +4,8 @@ import { MediaRenderer } from './MediaRenderer';
 import { MediaSource, MediaType, MediaOptions } from '@/utils/media/types';
 import { normalizeMediaSource } from '@/utils/media/mediaUtils';
 import { useToast } from "@/hooks/use-toast";
+import { isValidMediaUrl } from '@/utils/media/mediaOrchestrator';
+import { AlertCircle } from 'lucide-react';
 
 interface UniversalMediaProps extends MediaOptions {
   item: any; // Accepting various formats for backward compatibility
@@ -48,6 +50,16 @@ export const UniversalMedia = forwardRef(({
       return { url: '', type: MediaType.UNKNOWN };
     }
   }, [item, poster]);
+  
+  // Early validation of URL
+  if (!isValidMediaUrl(mediaItem?.url)) {
+    return (
+      <div className="flex flex-col items-center justify-center h-full w-full p-4 bg-black/10 text-center">
+        <AlertCircle className="h-8 w-8 text-red-500 mb-2" />
+        <p className="text-sm text-gray-200">Invalid media source</p>
+      </div>
+    );
+  }
   
   const handleError = (error?: any) => {
     console.error("Media loading error:", error, mediaItem);

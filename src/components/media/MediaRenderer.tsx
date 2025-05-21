@@ -4,6 +4,7 @@ import { MediaSource, MediaType } from '@/utils/media/types';
 import { isImageType, isVideoType, isAudioType } from '@/utils/media/mediaTypeUtils';
 import { extractMediaUrl } from '@/utils/media/mediaUtils';
 import { AlertCircle, RefreshCw } from 'lucide-react';
+import { isValidMediaUrl } from '@/utils/media/mediaOrchestrator';
 
 interface MediaRendererProps {
   src: MediaSource;
@@ -50,6 +51,16 @@ export const MediaRenderer = forwardRef<
   // Extract the URL from the source
   const url = extractMediaUrl(src);
   const mediaType = src.type || MediaType.UNKNOWN;
+  
+  // Check for valid URL early to avoid unnecessary rendering
+  if (!isValidMediaUrl(url)) {
+    return (
+      <div className="flex flex-col items-center justify-center h-full w-full p-4 bg-black/10 text-center">
+        <AlertCircle className="h-8 w-8 text-red-500 mb-2" />
+        <p className="text-sm text-gray-200">Invalid media URL</p>
+      </div>
+    );
+  }
   
   // Reset error state on src change
   useEffect(() => {
