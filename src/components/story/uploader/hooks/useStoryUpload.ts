@@ -89,9 +89,13 @@ export const useStoryUpload = () => {
         return false;
       }
       
-      // Create preview
-      const preview = createFilePreview(file);
-      setPreviewUrl(preview);
+      // Create preview - FIX: Await the Promise before setting state
+      try {
+        const preview = await createFilePreview(file);
+        setPreviewUrl(preview);
+      } catch (previewErr) {
+        console.error('Failed to generate preview:', previewErr);
+      }
       
       return true;
     } catch (err) {
