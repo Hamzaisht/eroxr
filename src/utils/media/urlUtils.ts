@@ -1,4 +1,3 @@
-
 import { MediaType } from './types';
 import { determineMediaType } from './mediaUtils';
 

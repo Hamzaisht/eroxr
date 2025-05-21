@@ -53,10 +53,8 @@ export {
   generateThumbnailFromUrl
 } from './generateVideoThumbnail';
 
-// Export isValidMediaUrl from mediaOrchestrator - removed duplicate
-export {
-  isValidMediaUrl
-} from './mediaOrchestrator';
+// Remove the duplicate export of isValidMediaUrl from mediaOrchestrator
+// The one from urlUtils (renamed above) will be used instead
 
 export {
   uploadMediaToSupabase,

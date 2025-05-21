@@ -1,4 +1,3 @@
-
 import { MediaSource, MediaAccessLevel } from './types';
 import { extractMediaUrl } from './mediaUtils';
 
@@ -7,7 +6,8 @@ import { extractMediaUrl } from './mediaUtils';
  * @param url URL to check
  * @returns True if URL is valid
  */
-export const isValidMediaUrl = (url?: string): boolean => {
+// Rename to 'validateMediaUrl' to avoid conflict with urlUtils.isValidUrl (renamed to isValidMediaUrl in index.ts)
+export const validateMediaUrl = (url?: string): boolean => {
   // Basic validation - at minimum should be non-empty
   if (!url) return false;
   
