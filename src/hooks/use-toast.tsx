@@ -1,7 +1,7 @@
 
 import { useState, useEffect, createContext, useContext } from "react";
 
-type ToastType = {
+export type ToastType = {
   id: string;
   title?: React.ReactNode;
   description?: React.ReactNode;
@@ -96,3 +96,10 @@ export function useToast() {
     update: context.updateToast,
   };
 }
+
+// Export a standalone toast function for use outside of components
+export const toast = (props: Omit<ToastType, "id">) => {
+  // This may throw if used outside a ToastProvider
+  const { toast: toastFn } = useToast();
+  return toastFn(props);
+};

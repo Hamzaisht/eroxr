@@ -7,7 +7,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { toast } from "@/hooks/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import {
   Facebook,
   Twitter,
@@ -32,6 +32,7 @@ export function ErosShareDialog({
   onShare,
 }: ErosShareDialogProps) {
   const [copied, setCopied] = useState(false);
+  const { toast } = useToast();
   
   // Generate share URL (in a real app, use the actual domain)
   const shareUrl = `${window.location.origin}/eros/${videoId}`;

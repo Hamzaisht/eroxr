@@ -1,7 +1,7 @@
 
 // This file is maintained for compatibility with shadcn components
 // but delegates all functionality to our main toast hooks
-import { useToast as useToastHook } from "@/hooks/use-toast";
+import { useToast as useToastHook, ToastType } from "@/hooks/use-toast";
 
 export { useToast as useToastOriginal } from "@/hooks/use-toast";
 
@@ -14,4 +14,4 @@ export const toast = (props: Parameters<ReturnType<typeof useToastHook>["toast"]
 };
 
 // Export other types for compatibility
-export type { ToastType } from "@/hooks/use-toast";
+export type { ToastType };
