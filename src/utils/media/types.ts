@@ -1,3 +1,4 @@
+
 export enum MediaType {
   IMAGE = 'image',
   VIDEO = 'video',
@@ -71,4 +72,5 @@ export interface UploadResult {
   error?: string;
   publicUrl?: string;
   path?: string;
+  accessLevel?: MediaAccessLevel; // Added this property to fix the type error
 }
