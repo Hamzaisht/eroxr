@@ -1,4 +1,3 @@
-
 export enum MediaType {
   IMAGE = 'image',
   VIDEO = 'video',
@@ -73,4 +72,5 @@ export interface UploadResult {
   publicUrl?: string;
   path?: string;
   accessLevel?: MediaAccessLevel; // Added this property to fix the type error
+  signedUrl?: string; // Added for secure URL access
 }

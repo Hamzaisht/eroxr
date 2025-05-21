@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { v4 as uuidv4 } from "uuid";
 import { MediaAccessLevel, UploadOptions, UploadResult } from "./types";
@@ -73,19 +74,35 @@ export const uploadMediaToSupabase = async (
       };
     }
     
-    // Get the public URL
-    const { data: publicUrlData } = supabase.storage
-      .from("media")
-      .getPublicUrl(data.path);
+    // Get the appropriate URL based on access level
+    let accessUrl;
+    const accessLevel = options?.accessLevel || MediaAccessLevel.PUBLIC;
     
-    console.log("✅ Media uploaded successfully with access level:", options?.accessLevel || "public");
+    // For non-public content, use signed URLs with short expiration
+    if (accessLevel !== MediaAccessLevel.PUBLIC) {
+      // Create signed URL with expiration for restricted content
+      const { data: signedUrlData } = await supabase.storage
+        .from("media")
+        .createSignedUrl(data.path, 60 * 10); // 10 minutes expiration
+      
+      accessUrl = signedUrlData?.signedUrl;
+    } else {
+      // For public content, use public URL
+      const { data: publicUrlData } = supabase.storage
+        .from("media")
+        .getPublicUrl(data.path);
+      
+      accessUrl = publicUrlData.publicUrl;
+    }
+    
+    console.log("✅ Media uploaded successfully with access level:", accessLevel);
     
     return {
       success: true,
-      url: publicUrlData.publicUrl,
-      publicUrl: publicUrlData.publicUrl,
+      url: accessUrl,
+      publicUrl: accessUrl,
       path: data.path,
-      accessLevel: options?.accessLevel || MediaAccessLevel.PUBLIC
+      accessLevel: accessLevel
     };
   } catch (err: any) {
     console.error("Upload exception:", err);

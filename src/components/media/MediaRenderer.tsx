@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, forwardRef } from 'react';
 import { MediaSource, MediaType, MediaAccessLevel } from '@/utils/media/types';
 import { isImageType, isVideoType, isAudioType } from '@/utils/media/mediaTypeUtils';
@@ -6,6 +7,7 @@ import { AlertCircle, RefreshCw } from 'lucide-react';
 import { validateMediaUrl } from '@/utils/media/mediaOrchestrator';
 import { useMediaAccess } from '@/hooks/useMediaAccess';
 import { LockedMediaOverlay } from './LockedMediaOverlay';
+import { supabase } from '@/integrations/supabase/client';
 
 interface MediaRendererProps {
   src: MediaSource;
@@ -49,13 +51,15 @@ export const MediaRenderer = forwardRef<
   const [retries, setRetries] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [forceRender, setForceRender] = useState(false);
+  const [mediaUrl, setMediaUrl] = useState<string | null>(null);
   
   // Extract the URL from the source
-  const url = extractMediaUrl(src);
+  const initialUrl = extractMediaUrl(src);
   const mediaType = src.type || MediaType.UNKNOWN;
   const accessLevel = src.access_level || MediaAccessLevel.PUBLIC;
   const creatorId = src.creator_id;
   const postId = src.post_id;
+  const storagePath = src.path || extractStoragePath(initialUrl);
   
   // Check if user has access to this media
   const { canAccess, isLoading: isAccessLoading, reason } = useMediaAccess({
@@ -64,12 +68,56 @@ export const MediaRenderer = forwardRef<
     accessLevel
   });
   
+  // Extract storage path from URL
+  function extractStoragePath(url: string): string | undefined {
+    if (!url) return undefined;
+    
+    const match = url.match(/\/storage\/v1\/object\/public\/([^?]+)/);
+    return match ? match[1] : undefined;
+  }
+  
+  // Function to refresh signed URL for restricted content
+  const refreshSignedUrl = async () => {
+    if (!storagePath || accessLevel === MediaAccessLevel.PUBLIC) return initialUrl;
+    
+    try {
+      const { data, error } = await supabase.storage
+        .from("media")
+        .createSignedUrl(storagePath, 60 * 10); // 10 minutes expiration
+        
+      if (error || !data?.signedUrl) {
+        console.error("Error refreshing signed URL:", error);
+        return initialUrl;
+      }
+      
+      return data.signedUrl;
+    } catch (err) {
+      console.error("Failed to refresh signed URL:", err);
+      return initialUrl;
+    }
+  };
+  
   // Handle unlock action
   const handleUnlock = () => {
     setForceRender(prev => !prev);
   };
   
+  // Refresh URL when access changes or forced refresh
+  useEffect(() => {
+    const loadMediaUrl = async () => {
+      if (canAccess && accessLevel !== MediaAccessLevel.PUBLIC && storagePath) {
+        const freshUrl = await refreshSignedUrl();
+        setMediaUrl(freshUrl);
+      } else {
+        setMediaUrl(initialUrl);
+      }
+    };
+    
+    loadMediaUrl();
+  }, [canAccess, forceRender, accessLevel, storagePath]);
+  
   // Check for valid URL early to avoid unnecessary rendering
+  const url = mediaUrl || initialUrl;
   if (!validateMediaUrl(url)) {
     return (
       <div className="flex flex-col items-center justify-center h-full w-full p-4 bg-black/10 text-center">
@@ -118,6 +166,15 @@ export const MediaRenderer = forwardRef<
       setRetries(nextRetryCount);
       console.log(`Retry ${nextRetryCount}/${maxRetries} for ${url}`);
       
+      // If error is due to expired signed URL, refresh it
+      if (accessLevel !== MediaAccessLevel.PUBLIC && storagePath) {
+        refreshSignedUrl().then(freshUrl => {
+          if (freshUrl !== url) {
+            setMediaUrl(freshUrl);
+          }
+        });
+      }
+      
       // Attempt to reload after a delay
       setTimeout(() => {
         setHasError(false);
@@ -137,9 +194,16 @@ export const MediaRenderer = forwardRef<
   };
 
   // Retry media loading
-  const handleRetry = () => {
+  const handleRetry = async () => {
     setHasError(false);
     setIsLoading(true);
+    
+    // Refresh URL on manual retry
+    if (accessLevel !== MediaAccessLevel.PUBLIC && storagePath) {
+      const freshUrl = await refreshSignedUrl();
+      setMediaUrl(freshUrl);
+    }
+    
     setRetries(prev => prev + 1);
   };
   

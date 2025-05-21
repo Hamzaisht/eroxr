@@ -28,6 +28,31 @@ export function useMediaAccess({
     isLoading: accessLevel !== MediaAccessLevel.PUBLIC,
     error: null
   });
+  const [isAdmin, setIsAdmin] = useState<boolean>(false);
+  
+  // Check if user is admin
+  useEffect(() => {
+    const checkAdminStatus = async () => {
+      if (!session?.user) return;
+      
+      try {
+        const { data, error } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', session.user.id)
+          .eq('role', 'admin')
+          .maybeSingle();
+          
+        if (error) throw error;
+        setIsAdmin(!!data);
+      } catch (error) {
+        console.error('Error checking admin status:', error);
+        setIsAdmin(false);
+      }
+    };
+    
+    checkAdminStatus();
+  }, [session]);
   
   useEffect(() => {
     // Public content is always accessible
@@ -47,6 +72,16 @@ export function useMediaAccess({
         isLoading: false,
         error: "Authentication required",
         reason: "authentication-required"
+      });
+      return;
+    }
+    
+    // Admins can access all content
+    if (isAdmin) {
+      setAccessStatus({
+        canAccess: true,
+        isLoading: false,
+        error: null
       });
       return;
     }
@@ -151,7 +186,7 @@ export function useMediaAccess({
     };
     
     checkAccess();
-  }, [session, creatorId, postId, accessLevel]);
+  }, [session, creatorId, postId, accessLevel, isAdmin]);
   
   return accessStatus;
 }
