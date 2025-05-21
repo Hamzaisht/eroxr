@@ -1,77 +1,70 @@
+
+/**
+ * Media access level enumeration
+ */
+export enum MediaAccessLevel {
+  PUBLIC = 'public',
+  PRIVATE = 'private',
+  PAID = 'paid',
+  SUBSCRIBER = 'subscriber'
+}
+
+/**
+ * Media type enumeration
+ */
 export enum MediaType {
   IMAGE = 'image',
   VIDEO = 'video',
   AUDIO = 'audio',
   DOCUMENT = 'document',
-  GIF = 'gif',
-  UNKNOWN = 'unknown',
+  UNKNOWN = 'unknown'
 }
 
-export enum MediaAccessLevel {
-  PUBLIC = 'public',
-  FOLLOWERS = 'followers',
-  SUBSCRIBERS = 'subscribers',
-  PPV = 'ppv',
-  PRIVATE = 'private',
-}
-
-export enum AvailabilityStatus {
-  ONLINE = 'online',
-  AWAY = 'away',
-  BUSY = 'busy',
-  OFFLINE = 'offline',
-  INVISIBLE = 'invisible'
-}
-
+/**
+ * Media source interface
+ */
 export interface MediaSource {
   url: string;
   type: MediaType;
-  thumbnail?: string;
   poster?: string;
-  duration?: number; 
-  width?: number;
-  height?: number;
-  watermark?: boolean;
   creator_id?: string;
-  content_type?: string;
-  media_url?: string | string[];
-  video_url?: string;
-  thumbnail_url?: string;
   post_id?: string;
-  access_level?: MediaAccessLevel; // Added access level
-  path?: string; // Adding path property to fix the TS error
+  access_level?: MediaAccessLevel;
+  path?: string;
 }
 
-export interface MediaOptions {
-  autoPlay?: boolean;
-  controls?: boolean;
-  muted?: boolean;
-  loop?: boolean;
-  poster?: string;
-  onClick?: () => void;
-  onLoad?: () => void;
-  onError?: (error?: any) => void;
-  onEnded?: () => void;
-  onTimeUpdate?: (currentTime: number, duration: number) => void;
-  className?: string;
-}
-
+/**
+ * Upload options interface
+ */
 export interface UploadOptions {
-  contentCategory?: string;
-  maxSizeInMB?: number;
-  onProgress?: (progress: number) => void;
-  autoResetOnCompletion?: boolean;
-  resetDelay?: number;
+  bucket?: string;
+  path?: string;
+  contentType?: string;
+  maxSizeMB?: number;
+  folder?: string;
   accessLevel?: MediaAccessLevel;
-  postId?: string;
 }
 
+/**
+ * Upload result interface
+ */
 export interface UploadResult {
   success: boolean;
   url?: string;
-  error?: string;
   publicUrl?: string;
   path?: string;
-  accessLevel?: MediaAccessLevel; // Added this property to fix the type error
-  signedUrl?: string; // Added for secure URL access
+  error?: string;
+  accessLevel?: MediaAccessLevel;
+}
+
+/**
+ * Media item interface
+ */
+export interface MediaItem {
+  id: string;
+  url: string;
+  type: MediaType;
+  creator_id?: string;
+  created_at?: string;
+  metadata?: Record<string, any>;
 }

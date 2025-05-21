@@ -2,6 +2,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { v4 as uuidv4 } from "uuid";
 import { MediaAccessLevel, UploadOptions, UploadResult } from "./types";
+import { addCacheBuster } from "./mediaUtils";
 
 interface UploadToSupabaseParams {
   file: File;
@@ -34,6 +35,15 @@ export const uploadMediaToSupabase = async (
   }
   
   try {
+    // Validate file
+    if (!(file instanceof File) || file.size === 0) {
+      console.error("Invalid file object passed to uploader:", file);
+      return {
+        success: false,
+        error: "Invalid file provided"
+      };
+    }
+
     // Generate a unique path for the upload
     const timestamp = new Date().getTime();
     const fileExt = file.name.split(".").pop() || "";
@@ -83,35 +93,31 @@ export const uploadMediaToSupabase = async (
       };
     }
     
-    // Get the appropriate URL based on access level
-    let accessUrl;
-    const accessLevel = options?.accessLevel || MediaAccessLevel.PUBLIC;
+    // Get the appropriate URL - the bucket is now public so we use public URL
+    const { data: publicUrlData } = supabase.storage
+      .from("media")
+      .getPublicUrl(data.path);
+      
+    const accessUrl = publicUrlData?.publicUrl;
     
-    // For non-public content, use signed URLs with short expiration
-    if (accessLevel !== MediaAccessLevel.PUBLIC) {
-      // Create signed URL with expiration for restricted content
-      const { data: signedUrlData } = await supabase.storage
-        .from("media")
-        .createSignedUrl(data.path, 60 * 10); // 10 minutes expiration
-      
-      accessUrl = signedUrlData?.signedUrl;
-    } else {
-      // For public content, use public URL
-      const { data: publicUrlData } = supabase.storage
-        .from("media")
-        .getPublicUrl(data.path);
-      
-      accessUrl = publicUrlData.publicUrl;
+    if (!accessUrl) {
+      return {
+        success: false,
+        error: "Failed to get public URL"
+      };
     }
     
-    console.log("✅ Media uploaded successfully with access level:", accessLevel);
+    // Add cache buster to ensure fresh content
+    const finalUrl = addCacheBuster(accessUrl);
+    
+    console.log("✅ Media uploaded successfully:", finalUrl);
     
     return {
       success: true,
-      url: accessUrl,
-      publicUrl: accessUrl,
+      url: finalUrl,
+      publicUrl: finalUrl,
       path: data.path,
-      accessLevel: accessLevel
+      accessLevel: MediaAccessLevel.PUBLIC  // Since bucket is now public
     };
   } catch (err: any) {
     console.error("Upload exception:", err);

@@ -1,111 +1,90 @@
 
-import { MediaType } from './types';
+import { MediaType } from "./types";
 
 /**
- * Check if media type is an image type
- * @param type The media type to check
- * @returns True if the type is an image type
+ * Checks if the media type is an image
+ * @param type Media type to check
+ * @returns boolean
  */
-export const isImageType = (type: MediaType): boolean => {
-  return type === MediaType.IMAGE || type === MediaType.GIF;
+export const isImageType = (type: MediaType | string): boolean => {
+  return type === MediaType.IMAGE;
 };
 
 /**
- * Check if media type is a video type
- * @param type The media type to check
- * @returns True if the type is a video type
+ * Checks if the media type is a video
+ * @param type Media type to check
+ * @returns boolean
  */
-export const isVideoType = (type: MediaType): boolean => {
+export const isVideoType = (type: MediaType | string): boolean => {
   return type === MediaType.VIDEO;
 };
 
 /**
- * Check if media type is an audio type
- * @param type The media type to check
- * @returns True if the type is an audio type
+ * Checks if the media type is audio
+ * @param type Media type to check
+ * @returns boolean
  */
-export const isAudioType = (type: MediaType): boolean => {
+export const isAudioType = (type: MediaType | string): boolean => {
   return type === MediaType.AUDIO;
 };
 
 /**
- * Check if media type is a document type
- * @param type The media type to check
- * @returns True if the type is a document type
+ * Checks if a file is an image based on its MIME type
+ * @param file File to check
+ * @returns boolean
  */
-export const isDocumentType = (type: MediaType): boolean => {
-  return type === MediaType.DOCUMENT;
+export const isImageFile = (file: File): boolean => {
+  return file.type.startsWith('image/');
 };
 
 /**
- * Get file extension from URL
- * @param url The URL to extract extension from
- * @returns The file extension or empty string
+ * Checks if a file is a video based on its MIME type
+ * @param file File to check
+ * @returns boolean
  */
-export const getFileExtension = (url: string): string => {
-  if (!url) return '';
-  
-  // Remove query parameters
-  const urlWithoutParams = url.split('?')[0];
-  
-  // Get last part after last slash
-  const filename = urlWithoutParams.split('/').pop() || '';
-  
-  // Get extension
-  const extension = filename.split('.').pop() || '';
-  
-  return extension.toLowerCase();
+export const isVideoFile = (file: File): boolean => {
+  return file.type.startsWith('video/');
 };
 
 /**
- * Check if URL is a valid media URL
- * @param url URL to check
- * @returns True if URL is valid
+ * Checks if a file is audio based on its MIME type
+ * @param file File to check
+ * @returns boolean
  */
-export const isValidMediaUrl = (url: string): boolean => {
-  // Basic validation - at minimum should be non-empty
-  if (!url) return false;
-  
-  // Check if absolute URL
-  if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('blob:')) {
-    return true;
-  }
-  
-  // Check if relative URL
-  if (url.startsWith('/')) {
-    return true;
-  }
-  
-  // Check data URLs
-  if (url.startsWith('data:')) {
-    return true;
-  }
-  
-  return false;
+export const isAudioFile = (file: File): boolean => {
+  return file.type.startsWith('audio/');
 };
 
 /**
- * Convert MIME type to MediaType enum
+ * Get file extension from a file
+ * @param file File object
+ * @returns File extension without the dot
  */
-export const mimeTypeToMediaType = (mimeType: string): MediaType => {
-  if (!mimeType) return MediaType.UNKNOWN;
+export const getFileExtension = (file: File): string => {
+  return file.name.split('.').pop()?.toLowerCase() || '';
+};
+
+/**
+ * Get media type from file extension
+ * @param extension File extension
+ * @returns MediaType
+ */
+export const getMediaTypeFromExtension = (extension: string): MediaType => {
+  const imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp', 'avif'];
+  const videoExtensions = ['mp4', 'webm', 'mov', 'avi', 'mkv', 'm4v', 'ogv'];
+  const audioExtensions = ['mp3', 'wav', 'ogg', 'aac', 'flac', 'm4a'];
   
-  const type = mimeType.toLowerCase().split('/')[0];
-  
-  switch (type) {
-    case 'image':
-      return mimeType.includes('gif') ? MediaType.GIF : MediaType.IMAGE;
-    case 'video':
-      return MediaType.VIDEO;
-    case 'audio':
-      return MediaType.AUDIO;
-    case 'application':
-      // Common document types
-      if (/pdf|msword|vnd\.openxmlformats|vnd\.ms-excel|vnd\.ms-powerpoint/.test(mimeType)) {
-        return MediaType.DOCUMENT;
-      }
-      return MediaType.UNKNOWN;
-    default:
-      return MediaType.UNKNOWN;
+  if (imageExtensions.includes(extension.toLowerCase())) {
+    return MediaType.IMAGE;
   }
+  
+  if (videoExtensions.includes(extension.toLowerCase())) {
+    return MediaType.VIDEO;
+  }
+  
+  if (audioExtensions.includes(extension.toLowerCase())) {
+    return MediaType.AUDIO;
+  }
+  
+  return MediaType.UNKNOWN;
 };

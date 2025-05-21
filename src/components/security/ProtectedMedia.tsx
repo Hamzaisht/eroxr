@@ -1,44 +1,17 @@
 
 import { useSession } from "@supabase/auth-helpers-react";
-import { useEffect, ReactNode } from "react";
-import { initializeScreenshotProtection } from "@/lib/security";
+import { ReactNode } from "react";
 
 interface ProtectedMediaProps {
-  children: ReactNode;
   contentOwnerId: string;
-  className?: string;
+  children: ReactNode;
 }
 
-export const ProtectedMedia: React.FC<ProtectedMediaProps> = ({ 
-  children, 
-  contentOwnerId,
-  className 
-}) => {
+export const ProtectedMedia = ({ contentOwnerId, children }: ProtectedMediaProps) => {
   const session = useSession();
+  const currentUserId = session?.user?.id;
   
-  useEffect(() => {
-    if (session?.user?.id && contentOwnerId) {
-      // Only initialize protection if the viewer is different from the content owner
-      if (session.user.id !== contentOwnerId) {
-        initializeScreenshotProtection(session.user.id, contentOwnerId);
-      }
-    }
-  }, [session, contentOwnerId]);
-  
-  return (
-    <div 
-      className={className} 
-      style={{
-        WebkitUserSelect: 'none',
-        MozUserSelect: 'none',
-        userSelect: 'none',
-        pointerEvents: 'auto',
-        touchAction: 'manipulation',
-        position: 'relative'
-      }}
-      onContextMenu={e => e.preventDefault()}
-    >
-      {children}
-    </div>
-  );
+  // Always render the children since our bucket is now public and the media is accessible
+  // The "protected" functionality is now handled by RLS and the userId metadata
+  return <>{children}</>;
 };
