@@ -60,15 +60,14 @@ export const ProfileImageUpload = ({ avatarPreview, onAvatarChange }: ProfileIma
       runFileDiagnostic(uploadFile);
       
       // Upload to Supabase storage using the centralized utility
-      const result = await uploadMediaToSupabase({
-        file: uploadFile,
-        userId: session.user.id,
-        options: {
-          bucket: 'media',
+      const result = await uploadMediaToSupabase(
+        uploadFile as File,
+        'media',
+        {
           maxSizeMB: 5,
           accessLevel: MediaAccessLevel.PUBLIC
         }
-      });
+      );
       
       if (!result.success) {
         throw new Error(result.error || "Upload failed");

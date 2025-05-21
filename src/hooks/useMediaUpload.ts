@@ -1,4 +1,3 @@
-
 import { useState, useCallback } from 'react';
 import { useSession } from '@supabase/auth-helpers-react';
 import { useToast } from '@/hooks/use-toast';
@@ -113,17 +112,15 @@ export const useMediaUpload = (defaultOptions?: any) => {
       }, 200);
       
       // Use the centralized upload utility to the 'media' bucket
-      const result = await uploadMediaToSupabase({
+      const result = await uploadMediaToSupabase(
         file,
-        userId: session.user.id,
-        options: {
-          bucket: 'media', // Always use media bucket with subfolders
-          maxSizeMB: finalOptions?.maxSizeInMB,
-          saveMetadata: true,
+        'media',
+        {
+          maxSizeMB: finalOptions?.maxSizeMB,
           accessLevel: finalOptions?.accessLevel || MediaAccessLevel.PUBLIC,
-          postId: finalOptions?.postId
+          folder: finalOptions?.contentCategory
         }
-      });
+      );
       
       // Clear progress interval
       clearInterval(progressInterval);
@@ -216,8 +213,8 @@ export const useMediaUpload = (defaultOptions?: any) => {
   
   return {
     uploadState,
-    uploadMedia, // Keep for backward compatibility
-    upload,      // New simplified method
+    uploadMedia,
+    upload,
     resetUploadState,
     validateFile
   };

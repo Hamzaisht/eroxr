@@ -54,16 +54,14 @@ export const useAdMediaUpload = () => {
         }
         
         // Use the centralized upload utility
-        const videoResult = await uploadMediaToSupabase({
-          file: videoFile,
-          userId: session.user.id,
-          options: {
-            bucket: 'media',
+        const videoResult = await uploadMediaToSupabase(
+          videoFile,
+          'media',
+          {
             maxSizeMB: 100,
-            saveMetadata: true,
             accessLevel: MediaAccessLevel.PUBLIC
           }
-        });
+        );
         
         if (!videoResult.success || !videoResult.url) {
           throw new Error("Failed to upload video");
@@ -93,16 +91,14 @@ export const useAdMediaUpload = () => {
         }
         
         // Use the centralized upload utility
-        const avatarResult = await uploadMediaToSupabase({
-          file: avatarFile,
-          userId: session.user.id,
-          options: {
-            bucket: 'media',
+        const avatarResult = await uploadMediaToSupabase(
+          avatarFile,
+          'media',
+          {
             maxSizeMB: 5,
-            saveMetadata: true,
             accessLevel: MediaAccessLevel.PUBLIC
           }
-        });
+        );
         
         if (!avatarResult.success || !avatarResult.url) {
           throw new Error("Failed to upload avatar");

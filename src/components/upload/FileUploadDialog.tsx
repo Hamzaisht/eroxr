@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useSession } from "@supabase/auth-helpers-react";
 import {
@@ -7,7 +6,6 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -60,7 +58,7 @@ export const FileUploadDialog = ({
     try {
       const uploadOptions: UploadOptions = {
         contentCategory: contentCategory,
-        maxSizeInMB: maxFileSizeMB
+        maxSizeMB: maxFileSizeMB
       };
 
       const result = await uploadMedia(selectedFile, uploadOptions);

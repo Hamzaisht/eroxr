@@ -101,17 +101,15 @@ export const useVideoUpload = () => {
         });
       }, 300);
       
-      // Use the centralized upload utility - critically important fix here!
-      const result = await uploadMediaToSupabase({
+      // Use the centralized upload utility
+      const result = await uploadMediaToSupabase(
         file,
-        userId: session.user.id,
-        options: {
-          bucket: 'media', // Use the media bucket
+        'media',
+        {
           maxSizeMB: 100,
-          saveMetadata: true,
           accessLevel: MediaAccessLevel.PUBLIC
         }
-      });
+      );
       
       clearInterval(progressInterval);
       

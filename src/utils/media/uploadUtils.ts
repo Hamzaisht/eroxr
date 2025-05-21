@@ -1,6 +1,6 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { UploadOptions, UploadResult } from './types';
+import { UploadOptions, UploadResult, MediaAccessLevel } from './types';
 import { createUniqueFilePath } from './mediaUtils';
 
 /**
@@ -25,6 +25,7 @@ export async function uploadMediaToSupabase(
       contentType = file.type,
       maxSizeMB = 100,
       folder = '',
+      accessLevel = MediaAccessLevel.PUBLIC
     } = options;
 
     // Check file size
@@ -63,7 +64,8 @@ export async function uploadMediaToSupabase(
       success: true,
       url: publicUrl,
       publicUrl,
-      path: data.path
+      path: data.path,
+      accessLevel
     };
   } catch (err: any) {
     console.error('Upload failed:', err);

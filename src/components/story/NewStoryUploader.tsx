@@ -1,5 +1,4 @@
-
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useSession } from "@supabase/auth-helpers-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -37,15 +36,14 @@ export const NewStoryUploader: React.FC = () => {
     
     try {
       // Use centralized upload function
-      const result = await uploadMediaToSupabase({
+      const result = await uploadMediaToSupabase(
         file,
-        userId: session.user.id,
-        options: {
-          bucket: 'media',
+        'media',
+        {
           maxSizeMB: 50,
           accessLevel: MediaAccessLevel.PUBLIC
         }
-      });
+      );
       
       if (!result.success || !result.url) {
         throw new Error(result.error || "Failed to upload story media");

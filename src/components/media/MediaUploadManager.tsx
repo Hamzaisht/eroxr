@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useSupabaseClient, useSession } from '@supabase/auth-helpers-react';
 import { Button } from '@/components/ui/button';
@@ -82,15 +83,14 @@ export const MediaUploadManager = ({
       }, 300);
       
       // Use centralized upload utility
-      const result = await uploadMediaToSupabase({
+      const result = await uploadMediaToSupabase(
         file,
-        userId: session.user.id,
-        options: {
-          bucket: 'media',
+        'media',
+        {
           maxSizeMB: maxSizeInMB,
           accessLevel: MediaAccessLevel.PUBLIC
         }
-      });
+      );
       
       clearInterval(progressInterval);
       

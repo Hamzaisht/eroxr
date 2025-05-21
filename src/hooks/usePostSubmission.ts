@@ -1,11 +1,11 @@
 
-import { createUniqueFilePath, uploadFileToStorage } from '@/utils/media/mediaUtils';
+import { createUniqueFilePath } from '@/utils/media/mediaUtils';
+import { uploadMediaToSupabase } from '@/utils/media/uploadUtils';
 
-// Fix the uploadFileToStorage call with proper parameters
-export const uploadFile = async (userId: string, file: File) => {
+export const uploadFile = async (userId: string, fileToUpload: File) => {
   try {
-    const filePath = createUniqueFilePath(userId, file);
-    const result = await uploadFileToStorage('posts', filePath, file);
+    const options = { folder: userId };
+    const result = await uploadMediaToSupabase(fileToUpload, 'posts', options);
     return result;
   } catch (error) {
     console.error('Error uploading file:', error);

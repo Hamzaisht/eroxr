@@ -1,89 +1,129 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useSession } from '@supabase/auth-helpers-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { createUniqueFilePath } from '@/utils/media/mediaUtils';
+import { uploadMediaToSupabase } from '@/utils/media/uploadUtils';
+
+interface Story {
+  id: string;
+  creator_id: string;
+  media_url: string;
+  content_type: string;
+  is_public: boolean;
+  is_active: boolean;
+  created_at: string;
+  expires_at: string;
+}
 
 export const useStories = () => {
-  const [isUploading, setIsUploading] = useState(false);
+  const [stories, setStories] = useState<Story[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [uploading, setUploading] = useState(false);
   const session = useSession();
   const { toast } = useToast();
 
-  const uploadStory = async (file: File, duration?: number): Promise<{ success: boolean; url?: string; error?: string }> => {
+  // Load stories
+  useEffect(() => {
+    fetchStories();
+  }, []);
+
+  const fetchStories = async () => {
+    setLoading(true);
+    
+    try {
+      const { data, error } = await supabase
+        .from('stories')
+        .select('*')
+        .eq('is_active', true)
+        .order('created_at', { ascending: false });
+        
+      if (error) throw error;
+      
+      setStories(data || []);
+    } catch (error: any) {
+      console.error('Error fetching stories:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to load stories',
+        variant: 'destructive',
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Upload a new story
+  const uploadStory = async (file: File) => {
     if (!session?.user) {
       toast({
-        title: "Authentication Required",
-        description: "You must be logged in to upload stories",
-        variant: "destructive"
+        title: 'Authentication Required',
+        description: 'Please sign in to upload stories',
+        variant: 'destructive',
       });
-      return { success: false, error: "Not authenticated" };
+      return null;
     }
-
-    if (!file) {
-      return { success: false, error: "No file selected" };
-    }
-
-    setIsUploading(true);
-
+    
+    setUploading(true);
+    
     try {
-      // Determine content type
-      let contentType = "image";
-      if (file.type.startsWith("video/")) {
-        contentType = "video";
+      // Upload media file
+      const result = await uploadMediaToSupabase(
+        file, 
+        'stories',
+        {
+          maxSizeMB: 50,
+          folder: 'stories'
+        }
+      );
+      
+      if (!result.success) {
+        throw new Error(result.error || 'Upload failed');
       }
-
-      // Create a unique path for the upload
-      const userId = session.user.id;
-      const filePath = createUniqueFilePath(userId, file);
-
-      // Upload the file to Supabase Storage
-      const { data, error } = await supabase.storage
-        .from("stories")
-        .upload(filePath, file, {
-          cacheControl: "3600",
-          upsert: false
-        });
-
-      if (error) {
-        throw error;
-      }
-
-      // Get the public URL
-      const { data: urlData } = supabase.storage
-        .from("stories")
-        .getPublicUrl(data.path);
-
-      // Create a story record in the database
-      const { error: storyError } = await supabase.from("stories").insert({
-        creator_id: userId,
-        media_url: urlData.publicUrl,
-        content_type: contentType,
-        duration: duration || (contentType === "video" ? null : 5),
-        media_type: file.type
+      
+      // Create story entry in database
+      const contentType = file.type.startsWith('image/') ? 'image' : 'video';
+      
+      const { data, error } = await supabase
+        .from('stories')
+        .insert({
+          creator_id: session.user.id,
+          media_url: result.url,
+          content_type: contentType,
+          is_public: true
+        })
+        .select()
+        .single();
+        
+      if (error) throw error;
+      
+      // Add new story to list
+      setStories(prev => [data, ...prev]);
+      
+      toast({
+        title: 'Story uploaded',
+        description: 'Your story has been published',
       });
-
-      if (storyError) {
-        throw storyError;
-      }
-
-      return {
-        success: true,
-        url: urlData.publicUrl
-      };
+      
+      return data;
     } catch (error: any) {
-      console.error("Story upload error:", error);
-      return {
-        success: false,
-        error: error.message || "Failed to upload story"
-      };
+      console.error('Error uploading story:', error);
+      toast({
+        title: 'Upload failed',
+        description: error.message || 'Failed to upload story',
+        variant: 'destructive',
+      });
+      return null;
     } finally {
-      setIsUploading(false);
+      setUploading(false);
     }
   };
 
   return {
-    uploadStory,
-    isUploading
+    stories,
+    loading,
+    uploading,
+    fetchStories,
+    uploadStory
   };
 };
