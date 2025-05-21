@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Heart, X, MessageCircle, Filter } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
+import { CreateBodyContactDialog } from "@/components/ads/body-contact"; // Add this import
 
 interface ActionItem {
   icon: React.ReactNode;
@@ -25,11 +26,18 @@ export const FloatingActionButton = ({
   onMessage
 }: FloatingActionButtonProps) => {
   const [isOpen, setIsOpen] = useState(false);
+  // Add state for body contact dialog
+  const [showBodyContactDialog, setShowBodyContactDialog] = useState(false);
 
   const toggleMenu = () => {
     setIsOpen(!isOpen);
   };
   
+  const handleCreateAd = () => {
+    setIsOpen(false);
+    setShowBodyContactDialog(true);
+  };
+
   const actionItems: ActionItem[] = [
     {
       icon: <Filter className="h-5 w-5" />,
@@ -44,13 +52,8 @@ export const FloatingActionButton = ({
     },
     {
       icon: <Heart className="h-5 w-5" />,
-      label: "Like",
-      onClick: () => {
-        if (onLike) {
-          onLike();
-        }
-        setIsOpen(false);
-      },
+      label: "Create Ad",
+      onClick: handleCreateAd,
       color: "bg-green-500 text-white"
     },
     {
@@ -76,6 +79,10 @@ export const FloatingActionButton = ({
       color: "bg-blue-500 text-white"
     }
   ];
+
+  const handleBodyContactSuccess = () => {
+    // Handle success, maybe refresh the page or show a toast
+  };
 
   return (
     <div className="fixed right-4 bottom-24 z-50 md:hidden">
@@ -136,6 +143,9 @@ export const FloatingActionButton = ({
           +
         </motion.div>
       </motion.button>
+
+      {/* Add the CreateBodyContactDialog */}
+      <CreateBodyContactDialog onSuccess={handleBodyContactSuccess} />
     </div>
   );
 };

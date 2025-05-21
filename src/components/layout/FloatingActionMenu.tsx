@@ -8,6 +8,7 @@ import { FloatingMenuItem } from "./menu/FloatingMenuItem";
 import { useToast } from "@/hooks/use-toast";
 import { useSession } from "@supabase/auth-helpers-react";
 import { UploadVideoDialog } from "../home/UploadVideoDialog";
+import { CreateBodyContactDialog } from "../ads/body-contact"; // Add this import
 
 interface FloatingActionMenuProps {
   currentPath: string;
@@ -16,6 +17,7 @@ interface FloatingActionMenuProps {
 export const FloatingActionMenu = ({ currentPath }: FloatingActionMenuProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [isVideoDialogOpen, setIsVideoDialogOpen] = useState(false);
+  const [isBodyContactDialogOpen, setIsBodyContactDialogOpen] = useState(false); // Add this state
   const navigate = useNavigate();
   const { toast } = useToast();
   const session = useSession();
@@ -78,7 +80,8 @@ export const FloatingActionMenu = ({ currentPath }: FloatingActionMenuProps) => 
         onClick: () => {
           setIsOpen(false);
           handleAuthentication(() => {
-            navigate("/dating/create");
+            // Open the dialog instead of navigating
+            setIsBodyContactDialogOpen(true);
             toast({
               title: "Create Dating Profile",
               description: "Start creating your dating profile"
@@ -100,6 +103,14 @@ export const FloatingActionMenu = ({ currentPath }: FloatingActionMenuProps) => 
   };
 
   const menuItems = getContextualMenuItems();
+
+  const handleBodyContactSuccess = () => {
+    toast({
+      title: "Dating Ad Created",
+      description: "Your dating ad has been created successfully",
+    });
+    // Optionally refresh data or update UI here
+  };
 
   return (
     <div className="fixed bottom-6 right-6 z-50">
@@ -136,6 +147,11 @@ export const FloatingActionMenu = ({ currentPath }: FloatingActionMenuProps) => 
       <UploadVideoDialog 
         open={isVideoDialogOpen} 
         onOpenChange={setIsVideoDialogOpen}
+      />
+      
+      {/* Body Contact Dialog */}
+      <CreateBodyContactDialog 
+        onSuccess={handleBodyContactSuccess} 
       />
     </div>
   );

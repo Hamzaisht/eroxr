@@ -22,6 +22,13 @@ export const CreateBodyContactDialog = ({ onSuccess }: CreateBodyContactDialogPr
     }
   }
 
+  const handleSuccess = () => {
+    if (onSuccess) {
+      onSuccess();
+    }
+    setIsOpen(false);
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <Button
@@ -61,7 +68,7 @@ export const CreateBodyContactDialog = ({ onSuccess }: CreateBodyContactDialogPr
             <div className="flex-1 min-h-0 p-4 md:p-8 overflow-y-auto custom-scrollbar">
               <ImmersiveAdCreation
                 onClose={() => setIsOpen(false)}
-                onSuccess={onSuccess}
+                onSuccess={handleSuccess}
               />
             </div>
           </div>
