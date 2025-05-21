@@ -1,4 +1,3 @@
-
 import { MediaSource, MediaAccessLevel } from './types';
 import { extractMediaUrl } from './mediaUtils';
 
@@ -31,6 +30,7 @@ export const validateMediaUrl = (url?: string): boolean => {
 };
 
 // Re-export with the old name for backward compatibility
+// Keep this for files that directly import from mediaOrchestrator.ts
 export const isValidMediaUrl = validateMediaUrl;
 
 /**

@@ -1,11 +1,10 @@
-
 import { useState, useCallback } from 'react';
 import { useSession } from '@supabase/auth-helpers-react';
 import { useToast } from '@/hooks/use-toast';
 import { validateFileForUpload } from '@/utils/upload/validators';
 import { uploadMediaToSupabase } from '@/utils/media/uploadUtils';
 import { MediaAccessLevel } from '@/utils/media/types';
-import { isValidMediaUrl } from '@/utils/media/mediaOrchestrator';
+import { validateMediaUrl } from '@/utils/media/mediaOrchestrator';
 
 interface UploadState {
   isUploading: boolean;
@@ -148,7 +147,7 @@ export const useMediaUpload = (defaultOptions?: any) => {
       }
       
       // Validate URL before returning
-      if ('url' in result && !isValidMediaUrl(result.url as string)) {
+      if ('url' in result && !validateMediaUrl(result.url as string)) {
         console.error('Invalid public URL format in upload result:', result);
         throw new Error('Invalid public URL format returned');
       }
