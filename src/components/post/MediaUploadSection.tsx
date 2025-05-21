@@ -14,6 +14,7 @@ interface MediaUploadSectionProps {
 
 export const MediaUploadSection = ({ onMediaSelect, isUploading }: MediaUploadSectionProps) => {
   const [selectedFiles, setSelectedFiles] = useState<FileList | null>(null);
+  const [localIsUploading, setLocalIsUploading] = useState(false);
   const { toast } = useToast();
   const session = useSession();
 
@@ -22,6 +23,7 @@ export const MediaUploadSection = ({ onMediaSelect, isUploading }: MediaUploadSe
     if (!files || !session?.user?.id) return;
 
     setSelectedFiles(files);
+    setLocalIsUploading(true);
     
     try {
       const uploadPromises = Array.from(files).map(async (file) => {
@@ -31,9 +33,11 @@ export const MediaUploadSection = ({ onMediaSelect, isUploading }: MediaUploadSe
           fileToUpload = await optimizeImage(file);
         }
 
-        // Upload to Supabase storage
+        // Generate a unique path for the file
         const path = createUniqueFilePath(fileToUpload);
-        const result = await uploadFileToStorage('posts', path, fileToUpload);
+        
+        // Upload to storage with improved service
+        const result = await uploadFileToStorage('media', path, fileToUpload);
         
         if (!result.success || !result.url) {
           throw new Error(result.error || "Failed to upload file");
@@ -47,7 +51,7 @@ export const MediaUploadSection = ({ onMediaSelect, isUploading }: MediaUploadSe
 
       toast({
         title: "Media uploaded",
-        description: "Your media has been uploaded successfully to storage",
+        description: "Your media has been uploaded successfully",
       });
     } catch (error: any) {
       console.error('Upload error:', error);
@@ -57,6 +61,7 @@ export const MediaUploadSection = ({ onMediaSelect, isUploading }: MediaUploadSe
         variant: "destructive",
       });
     } finally {
+      setLocalIsUploading(false);
       setSelectedFiles(null);
     }
   }, [onMediaSelect, toast, session?.user?.id]);
@@ -103,6 +108,8 @@ export const MediaUploadSection = ({ onMediaSelect, isUploading }: MediaUploadSe
     });
   };
 
+  const isUploadingState = isUploading || localIsUploading;
+
   return (
     <div className="space-y-4">
       <input
@@ -112,7 +119,7 @@ export const MediaUploadSection = ({ onMediaSelect, isUploading }: MediaUploadSe
         accept="image/*,video/*"
         className="hidden"
         onChange={handleFileChange}
-        disabled={isUploading}
+        disabled={isUploadingState}
       />
 
       <Button
@@ -120,9 +127,9 @@ export const MediaUploadSection = ({ onMediaSelect, isUploading }: MediaUploadSe
         variant="outline"
         className="w-full h-32 relative border-dashed border-2"
         onClick={() => document.getElementById('media-upload')?.click()}
-        disabled={isUploading}
+        disabled={isUploadingState}
       >
-        {isUploading ? (
+        {isUploadingState ? (
           <div className="flex flex-col items-center gap-2">
             <Loader2 className="h-6 w-6 animate-spin" />
             <span>Uploading...</span>

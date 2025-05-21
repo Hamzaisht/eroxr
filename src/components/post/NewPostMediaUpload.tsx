@@ -1,95 +1,81 @@
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { X, Upload, Loader2 } from "lucide-react";
-import { Input } from "@/components/ui/input";
-import { UniversalMedia } from "@/components/media/UniversalMedia";
-import { useMediaUpload } from "@/hooks/useMediaUpload";
+import { ImagePlus, X, Loader2 } from "lucide-react";
+import { useSession } from '@supabase/auth-helpers-react';
 import { useToast } from "@/hooks/use-toast";
-import { MediaAccessLevel } from "@/utils/media/types";
-import { AccessLevelSelector } from "@/components/media/AccessLevelSelector";
-import { runFileDiagnostic } from "@/utils/upload/fileUtils";
+import { createUniqueFilePath } from "@/utils/upload/fileUtils";
+import { uploadFileToStorage } from "@/utils/upload/storageService";
 
 interface NewPostMediaUploadProps {
   onMediaUrlsChange: (urls: string[]) => void;
-  onAccessLevelChange?: (accessLevel: MediaAccessLevel) => void;
-  postId?: string;
+  onUploadProgress?: (isUploading: boolean) => void;
 }
 
-export const NewPostMediaUpload: React.FC<NewPostMediaUploadProps> = ({ 
+export const NewPostMediaUpload = ({ 
   onMediaUrlsChange,
-  onAccessLevelChange,
-  postId
-}) => {
+  onUploadProgress
+}: NewPostMediaUploadProps) => {
   const [mediaUrls, setMediaUrls] = useState<string[]>([]);
-  const [showUploader, setShowUploader] = useState(false);
-  const { upload, uploadState } = useMediaUpload();
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const session = useSession();
   const { toast } = useToast();
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [accessLevel, setAccessLevel] = useState<MediaAccessLevel>(MediaAccessLevel.PUBLIC);
 
-  const handleMediaSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files.length > 0) {
-      const file = e.target.files[0];
-      // Run file diagnostic
-      runFileDiagnostic(file);
-      setSelectedFile(file);
-    }
-  };
-  
-  const handleAccessLevelChange = (value: MediaAccessLevel) => {
-    setAccessLevel(value);
-    if (onAccessLevelChange) {
-      onAccessLevelChange(value);
-    }
-  };
-
-  const handleUpload = async () => {
-    if (!selectedFile) {
-      toast({
-        title: "No file selected",
-        description: "Please select a file to upload",
-        variant: "destructive"
-      });
-      return;
-    }
-
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0 || !session?.user?.id) return;
+    
+    setIsUploading(true);
+    setUploadProgress(0);
+    if (onUploadProgress) onUploadProgress(true);
+    
     try {
-      // Determine media type
-      const mediaType = selectedFile.type.startsWith('image/') 
-        ? 'image' 
-        : selectedFile.type.startsWith('video/') 
-          ? 'video' 
-          : selectedFile.type.startsWith('audio/')
-            ? 'audio'
-            : 'document';
-      
-      // Upload using our centralized upload hook
-      const url = await upload({ 
-        file: selectedFile, 
-        mediaType,
-        accessLevel,
-        postId
+      const uploadPromises = Array.from(files).map(async (file) => {
+        // Create a unique path for the file
+        const path = createUniqueFilePath(file);
+        
+        // Upload to storage
+        const result = await uploadFileToStorage('media', path, file);
+        
+        if (!result.success || !result.url) {
+          throw new Error(result.error || "Failed to upload file");
+        }
+        
+        return result.url;
       });
       
-      if (!url) {
-        throw new Error("Failed to upload media");
-      }
+      // Show progress updates
+      const progressInterval = setInterval(() => {
+        setUploadProgress(prev => {
+          const newProgress = Math.min(prev + 5, 95);
+          return newProgress;
+        });
+      }, 300);
       
-      // Ensure we're working with a proper string URL
-      const mediaUrl = String(url);
-      const newMediaUrls = [...mediaUrls, mediaUrl];
+      // Wait for all uploads to complete
+      const newUrls = await Promise.all(uploadPromises);
       
-      setMediaUrls(newMediaUrls);
-      onMediaUrlsChange(newMediaUrls);
-      setShowUploader(false);
-      setSelectedFile(null);
+      clearInterval(progressInterval);
+      setUploadProgress(100);
+      
+      // Update state
+      setMediaUrls(prev => {
+        const updatedUrls = [...prev, ...newUrls];
+        onMediaUrlsChange(updatedUrls);
+        return updatedUrls;
+      });
       
       toast({
-        title: "Upload successful",
-        description: `${mediaType} uploaded with ${accessLevel} access`
+        title: "Media uploaded",
+        description: `Successfully uploaded ${newUrls.length} ${newUrls.length === 1 ? 'file' : 'files'}`
       });
       
+      // Reset file input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
     } catch (error: any) {
       console.error("Media upload error:", error);
       toast({
@@ -97,104 +83,79 @@ export const NewPostMediaUpload: React.FC<NewPostMediaUploadProps> = ({
         description: error.message || "Failed to upload media",
         variant: "destructive"
       });
+    } finally {
+      setIsUploading(false);
+      setUploadProgress(0);
+      if (onUploadProgress) onUploadProgress(false);
     }
   };
-
-  const handleRemoveMedia = (indexToRemove: number) => {
-    const newMediaUrls = mediaUrls.filter((_, index) => index !== indexToRemove);
-    setMediaUrls(newMediaUrls);
-    onMediaUrlsChange(newMediaUrls);
+  
+  const removeMedia = (index: number) => {
+    setMediaUrls(prev => {
+      const updatedUrls = prev.filter((_, i) => i !== index);
+      onMediaUrlsChange(updatedUrls);
+      return updatedUrls;
+    });
   };
 
   return (
     <div className="space-y-4">
+      <input
+        type="file"
+        ref={fileInputRef}
+        multiple
+        accept="image/*,video/*"
+        className="hidden"
+        onChange={handleFileChange}
+        disabled={isUploading}
+      />
+      
       {mediaUrls.length > 0 && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
           {mediaUrls.map((url, index) => (
-            <div key={index} className="relative group">
-              <UniversalMedia
-                item={{
-                  url,
-                  type: url.includes('.mp4') ? 'video' : 'image',
-                  access_level: accessLevel
+            <div key={`media-${index}`} className="relative group rounded-md overflow-hidden h-24">
+              <img
+                src={url}
+                alt={`Upload ${index + 1}`}
+                className="w-full h-full object-cover"
+                onError={(e) => {
+                  // Handle image loading errors
+                  const target = e.target as HTMLImageElement;
+                  target.onerror = null;
+                  target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9IiM2NjY2NjYiLz48dGV4dCB4PSI1MCUiIHk9IjUwJSIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjEycHgiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IiNmZmZmZmYiPkltYWdlIEVycm9yPC90ZXh0Pjwvc3ZnPg==';
                 }}
-                className="w-full h-48 rounded-md overflow-hidden"
               />
-              <Button
-                variant="destructive"
-                size="icon"
-                className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
-                onClick={() => handleRemoveMedia(index)}
+              <button
+                type="button"
+                onClick={() => removeMedia(index)}
+                className="absolute top-1 right-1 bg-black/70 rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
               >
-                <X className="h-4 w-4" />
-              </Button>
+                <X className="h-4 w-4 text-white" />
+              </button>
             </div>
           ))}
         </div>
       )}
-
-      {showUploader ? (
-        <div className="border rounded-md p-4">
-          <div className="space-y-4">
-            <Input
-              type="file"
-              accept="image/*,video/*,audio/*"
-              onChange={handleMediaSelect}
-            />
-            
-            {selectedFile && (
-              <div className="text-sm">
-                Selected: {selectedFile.name} ({(selectedFile.size / (1024 * 1024)).toFixed(2)}MB)
-              </div>
-            )}
-            
-            <AccessLevelSelector
-              value={accessLevel}
-              onChange={handleAccessLevelChange}
-            />
-            
-            <div className="flex justify-end space-x-2">
-              <Button
-                variant="ghost"
-                onClick={() => {
-                  setShowUploader(false);
-                  setSelectedFile(null);
-                }}
-                disabled={uploadState.isUploading}
-              >
-                Cancel
-              </Button>
-              
-              <Button
-                variant="default"
-                onClick={handleUpload}
-                disabled={!selectedFile || uploadState.isUploading}
-              >
-                {uploadState.isUploading ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    {uploadState.progress}%
-                  </>
-                ) : (
-                  <>
-                    <Upload className="mr-2 h-4 w-4" />
-                    Upload
-                  </>
-                )}
-              </Button>
-            </div>
+      
+      <Button
+        type="button"
+        variant="outline"
+        className="w-full p-6 border-dashed"
+        onClick={() => fileInputRef.current?.click()}
+        disabled={isUploading}
+      >
+        {isUploading ? (
+          <div className="flex flex-col items-center">
+            <Loader2 className="h-5 w-5 animate-spin mb-2" />
+            <span>Uploading... {uploadProgress}%</span>
           </div>
-        </div>
-      ) : (
-        <Button
-          variant="outline"
-          className="w-full"
-          onClick={() => setShowUploader(true)}
-        >
-          <Upload className="mr-2 h-4 w-4" />
-          Add Media
-        </Button>
-      )}
+        ) : (
+          <div className="flex flex-col items-center">
+            <ImagePlus className="h-5 w-5 mb-2" />
+            <span>Add Photos/Videos</span>
+          </div>
+        )}
+      </Button>
     </div>
   );
 };

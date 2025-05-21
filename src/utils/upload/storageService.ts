@@ -1,74 +1,99 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { runFileDiagnostic, formatFileSize, createUniqueFilePath } from "./fileUtils";
+import { createUniqueFilePath } from "./fileUtils";
+import { addCacheBuster } from "./fileUtils";
 
 interface UploadResult {
   success: boolean;
   url?: string;
-  error?: string;
   path?: string;
+  error?: string;
 }
 
 /**
- * Centralized file upload utility for Supabase storage
- * @deprecated Use uploadMediaToSupabase from @/utils/media/uploadUtils instead
+ * Upload a file to Supabase storage with improved error handling and consistent path generation
+ * 
+ * @param bucket The storage bucket name
+ * @param path The path to store the file under
+ * @param file The file to upload
+ * @returns Upload result with URL and path if successful
  */
 export const uploadFileToStorage = async (
-  bucketName: string = 'media',
-  filePath: string,
+  bucket: string,
+  path: string,
   file: File
 ): Promise<UploadResult> => {
-  if (!file) {
-    return { 
-      success: false, 
-      error: 'No file provided' 
-    };
+  if (!file || !(file instanceof File)) {
+    console.error("Invalid file provided to uploadFileToStorage");
+    return { success: false, error: "Invalid file provided" };
   }
-  
-  // Run diagnostic on the file
-  const diagnostic = runFileDiagnostic(file);
-  if (!diagnostic.valid) {
-    return { 
-      success: false, 
-      error: diagnostic.message || 'Invalid file object' 
-    };
-  }
-  
+
+  console.log(`Uploading file to ${bucket}/${path}`);
+
   try {
-    console.log(`Uploading to ${bucketName}/${filePath} (${formatFileSize(file.size)}, type: ${file.type})`);
-    
+    // Upload to Supabase storage with explicit content type
     const { data, error } = await supabase.storage
-      .from(bucketName)
-      .upload(filePath, file, {
+      .from(bucket)
+      .upload(path, file, {
         cacheControl: '3600',
         upsert: true,
-        contentType: file.type
+        contentType: file.type || 'application/octet-stream'
       });
-    
+
     if (error) {
-      console.error("Upload error:", error);
-      return {
-        success: false,
-        error: error.message
+      console.error("Storage upload error:", error);
+      return { 
+        success: false, 
+        error: error.message || "Upload failed" 
       };
     }
-    
-    const { data: { publicUrl } } = supabase.storage
-      .from(bucketName)
+
+    if (!data || !data.path) {
+      return {
+        success: false,
+        error: "Upload succeeded but no path returned"
+      };
+    }
+
+    // Get public URL using the consistent method
+    const { data: urlData } = supabase.storage
+      .from(bucket)
       .getPublicUrl(data.path);
-    
-    console.log("Upload successful:", publicUrl);
-    
+
+    if (!urlData || !urlData.publicUrl) {
+      return {
+        success: false,
+        error: "Failed to get media URL"
+      };
+    }
+
+    // Add cache buster to ensure fresh content
+    const finalUrl = addCacheBuster(urlData.publicUrl);
+
+    console.log("Upload successful, URL:", finalUrl);
+
     return {
       success: true,
-      url: publicUrl,
+      url: finalUrl,
       path: data.path
     };
-  } catch (err: any) {
-    console.error("Upload exception:", err);
+  } catch (error: any) {
+    console.error("File upload error:", error);
     return {
       success: false,
-      error: err.message
+      error: error.message || "An unknown error occurred during upload"
     };
   }
+};
+
+/**
+ * Get the public URL for a file in storage
+ * 
+ * @param bucket The storage bucket name
+ * @param path The path of the file
+ * @returns The public URL with cache buster
+ */
+export const getStorageFileUrl = (bucket: string, path: string): string => {
+  const { data } = supabase.storage.from(bucket).getPublicUrl(path);
+  return data?.publicUrl ? addCacheBuster(data.publicUrl) : '';
 };

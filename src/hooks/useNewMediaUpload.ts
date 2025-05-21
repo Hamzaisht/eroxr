@@ -81,7 +81,7 @@ export const useNewMediaUpload = () => {
       // Generate a unique path for the file
       const path = createUniqueFilePath(file);
       
-      // Upload the file - this returns UploadResult, not just a URL string
+      // Upload the file using our improved utility
       const result = await uploadFileToStorage(bucket, path, file);
       
       if (progressInterval) {
@@ -104,7 +104,7 @@ export const useNewMediaUpload = () => {
         return { success: false, url: null, error };
       }
       
-      // Upload successful - extract the URL from the result
+      // Upload successful - set the URL
       const uploadedUrl = result.url;
       setState({
         isUploading: false,
