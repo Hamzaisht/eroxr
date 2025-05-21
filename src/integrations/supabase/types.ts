@@ -1255,6 +1255,8 @@ export type Database = {
       }
       media_assets: {
         Row: {
+          access_level: string
+          content_owner_id: string | null
           content_type: string | null
           created_at: string | null
           id: string
@@ -1266,6 +1268,8 @@ export type Database = {
           user_id: string | null
         }
         Insert: {
+          access_level?: string
+          content_owner_id?: string | null
           content_type?: string | null
           created_at?: string | null
           id?: string
@@ -1277,6 +1281,8 @@ export type Database = {
           user_id?: string | null
         }
         Update: {
+          access_level?: string
+          content_owner_id?: string | null
           content_type?: string | null
           created_at?: string | null
           id?: string

@@ -1,7 +1,7 @@
 
 import { forwardRef, Ref, useMemo, useState } from 'react';
 import { MediaRenderer } from './MediaRenderer';
-import { MediaSource, MediaType, MediaOptions } from '@/utils/media/types';
+import { MediaSource, MediaType, MediaOptions, MediaAccessLevel } from '@/utils/media/types';
 import { normalizeMediaSource } from '@/utils/media/mediaUtils';
 import { useToast } from "@/hooks/use-toast";
 import { isValidMediaUrl } from '@/utils/media/mediaOrchestrator';
@@ -14,6 +14,7 @@ interface UniversalMediaProps extends MediaOptions {
   objectFit?: 'cover' | 'contain' | 'fill' | 'none' | 'scale-down';
   alt?: string;
   maxRetries?: number;
+  accessLevel?: MediaAccessLevel;
 }
 
 export const UniversalMedia = forwardRef(({
@@ -32,7 +33,8 @@ export const UniversalMedia = forwardRef(({
   onTimeUpdate,
   objectFit = 'cover',
   alt = "Media content",
-  maxRetries = 2
+  maxRetries = 2,
+  accessLevel
 }: UniversalMediaProps, ref: Ref<HTMLVideoElement | HTMLImageElement>) => {
   const { toast } = useToast();
   const [retryCount, setRetryCount] = useState(0);
@@ -41,16 +43,23 @@ export const UniversalMedia = forwardRef(({
   const mediaItem = useMemo(() => {
     try {
       const normalized = normalizeMediaSource(item);
+      
       // If poster prop was passed, add it to the mediaSource
       if (poster) {
         normalized.poster = poster;
       }
+      
+      // If access level is explicitly provided, use it
+      if (accessLevel) {
+        normalized.access_level = accessLevel;
+      }
+      
       return normalized;
     } catch (error) {
       console.error("Error normalizing media source:", error, item);
       return { url: '', type: MediaType.UNKNOWN };
     }
-  }, [item, poster]);
+  }, [item, poster, accessLevel]);
   
   // Early validation of URL
   if (!isValidMediaUrl(mediaItem?.url)) {

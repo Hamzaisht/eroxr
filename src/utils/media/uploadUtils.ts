@@ -1,8 +1,7 @@
-
 import { v4 as uuidv4 } from 'uuid';
 import { supabase } from '@/integrations/supabase/client';
 import { validateFileForUpload } from '@/utils/upload/validators';
-import { MediaType } from '@/utils/media/types';
+import { MediaType, MediaAccessLevel } from '@/utils/media/types';
 import { runFileDiagnostic } from '@/utils/upload/fileUtils';
 
 export interface MediaUploadOptions {
@@ -13,6 +12,8 @@ export interface MediaUploadOptions {
   maxSizeMB?: number;
   metadata?: Record<string, string>;
   saveMetadata?: boolean;
+  accessLevel?: MediaAccessLevel;
+  postId?: string;
 }
 
 export interface MediaUploadResult {
@@ -127,12 +128,27 @@ export async function uploadMediaToSupabase({
       originalName: file.name
     });
     
+    // Determine access level
+    const accessLevel = options.accessLevel || MediaAccessLevel.PUBLIC;
+    
+    // Prepare metadata with access control information
+    const metadata = {
+      ...(options.metadata || {}),
+      creator_id: userId,
+      access: accessLevel
+    };
+    
+    // Add post_id to metadata if provided (for PPV content)
+    if (accessLevel === MediaAccessLevel.PPV && options.postId) {
+      metadata.post_id = options.postId;
+    }
+    
     // Set up upload options
     const uploadOptions = {
       contentType: options.contentType || file.type,
       cacheControl: options.cacheControl || '3600',
       upsert: options.upsert ?? false,
-      ...(options.metadata ? { metadata: options.metadata } : {})
+      metadata
     };
     
     // Determine storage bucket
@@ -175,7 +191,9 @@ export async function uploadMediaToSupabase({
           size: file.size,
           original_name: file.name,
           storage_path: filePath,
-          content_type: file.type
+          content_type: file.type,
+          access_level: accessLevel,
+          content_owner_id: userId
         });
         
         if (insertError) {
@@ -197,7 +215,8 @@ export async function uploadMediaToSupabase({
       metadata: {
         originalName: file.name,
         contentType: file.type,
-        mediaType
+        mediaType,
+        accessLevel
       }
     };
   } catch (error: any) {

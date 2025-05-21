@@ -6,23 +6,37 @@ import { Input } from "@/components/ui/input";
 import { UniversalMedia } from "@/components/media/UniversalMedia";
 import { useMediaUpload } from "@/hooks/useMediaUpload";
 import { useToast } from "@/hooks/use-toast";
+import { MediaAccessLevel } from "@/utils/media/types";
+import { AccessLevelSelector } from "@/components/media/AccessLevelSelector";
 
 interface NewPostMediaUploadProps {
   onMediaUrlsChange: (urls: string[]) => void;
+  onAccessLevelChange?: (accessLevel: MediaAccessLevel) => void;
+  postId?: string;
 }
 
 export const NewPostMediaUpload: React.FC<NewPostMediaUploadProps> = ({ 
-  onMediaUrlsChange 
+  onMediaUrlsChange,
+  onAccessLevelChange,
+  postId
 }) => {
   const [mediaUrls, setMediaUrls] = useState<string[]>([]);
   const [showUploader, setShowUploader] = useState(false);
   const { upload, uploadState } = useMediaUpload();
   const { toast } = useToast();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [accessLevel, setAccessLevel] = useState<MediaAccessLevel>(MediaAccessLevel.PUBLIC);
 
   const handleMediaSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       setSelectedFile(e.target.files[0]);
+    }
+  };
+  
+  const handleAccessLevelChange = (value: MediaAccessLevel) => {
+    setAccessLevel(value);
+    if (onAccessLevelChange) {
+      onAccessLevelChange(value);
     }
   };
 
@@ -50,7 +64,9 @@ export const NewPostMediaUpload: React.FC<NewPostMediaUploadProps> = ({
       const url = await upload({ 
         file: selectedFile, 
         mediaType,
-        contentCategory: 'posts'
+        contentCategory: 'posts',
+        accessLevel,
+        postId
       });
       
       if (!url) {
@@ -68,7 +84,7 @@ export const NewPostMediaUpload: React.FC<NewPostMediaUploadProps> = ({
       
       toast({
         title: "Upload successful",
-        description: `${mediaType} uploaded successfully`
+        description: `${mediaType} uploaded with ${accessLevel} access`
       });
       
     } catch (error: any) {
@@ -94,7 +110,11 @@ export const NewPostMediaUpload: React.FC<NewPostMediaUploadProps> = ({
           {mediaUrls.map((url, index) => (
             <div key={index} className="relative group">
               <UniversalMedia
-                item={url}
+                item={{
+                  url,
+                  type: url.includes('.mp4') ? 'video' : 'image',
+                  access_level: accessLevel
+                }}
                 className="w-full h-48 rounded-md overflow-hidden"
               />
               <Button
@@ -124,6 +144,11 @@ export const NewPostMediaUpload: React.FC<NewPostMediaUploadProps> = ({
                 Selected: {selectedFile.name} ({(selectedFile.size / (1024 * 1024)).toFixed(2)}MB)
               </div>
             )}
+            
+            <AccessLevelSelector
+              value={accessLevel}
+              onChange={handleAccessLevelChange}
+            />
             
             <div className="flex justify-end space-x-2">
               <Button

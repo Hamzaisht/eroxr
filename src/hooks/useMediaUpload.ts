@@ -4,7 +4,7 @@ import { useSession } from '@supabase/auth-helpers-react';
 import { useToast } from '@/hooks/use-toast';
 import { validateFileForUpload } from '@/utils/upload/validators';
 import { uploadMediaToSupabase } from '@/utils/media/uploadUtils';
-import { UploadOptions } from '@/utils/media/types';
+import { MediaAccessLevel } from '@/utils/media/types';
 import { isValidMediaUrl } from '@/utils/media/mediaOrchestrator';
 
 interface UploadState {
@@ -20,9 +20,11 @@ interface UploadParams {
   contentCategory?: string;
   maxSizeInMB?: number;
   onProgress?: (progress: number) => void;
+  accessLevel?: MediaAccessLevel;
+  postId?: string;
 }
 
-export const useMediaUpload = (defaultOptions?: UploadOptions) => {
+export const useMediaUpload = (defaultOptions?: any) => {
   const [uploadState, setUploadState] = useState<UploadState>({
     isUploading: false,
     progress: 0,
@@ -44,7 +46,7 @@ export const useMediaUpload = (defaultOptions?: UploadOptions) => {
   }, []);
   
   // Validate file before upload
-  const validateFile = useCallback((file: File, options?: UploadOptions) => {
+  const validateFile = useCallback((file: File, options?: any) => {
     const maxSizeInMB = options?.maxSizeInMB || defaultOptions?.maxSizeInMB || 100;
     return validateFileForUpload(file, maxSizeInMB);
   }, [defaultOptions?.maxSizeInMB]);
@@ -52,7 +54,7 @@ export const useMediaUpload = (defaultOptions?: UploadOptions) => {
   // Upload media file - original method kept for backward compatibility
   const uploadMedia = useCallback(async (
     file: File,
-    options?: UploadOptions
+    options?: any
   ) => {
     if (!session?.user?.id) {
       return { 
@@ -118,7 +120,9 @@ export const useMediaUpload = (defaultOptions?: UploadOptions) => {
         options: {
           bucket: finalOptions?.contentCategory || 'media',
           maxSizeMB: finalOptions?.maxSizeInMB,
-          saveMetadata: true
+          saveMetadata: true,
+          accessLevel: finalOptions?.accessLevel || MediaAccessLevel.PUBLIC,
+          postId: finalOptions?.postId
         }
       });
       
@@ -144,7 +148,7 @@ export const useMediaUpload = (defaultOptions?: UploadOptions) => {
       }
       
       // Validate URL before returning
-      if ('publicUrl' in result && !isValidMediaUrl(result.publicUrl as string)) {
+      if ('url' in result && !isValidMediaUrl(result.url as string)) {
         console.error('Invalid public URL format in upload result:', result);
         throw new Error('Invalid public URL format returned');
       }
@@ -179,7 +183,9 @@ export const useMediaUpload = (defaultOptions?: UploadOptions) => {
     mediaType, 
     contentCategory,
     maxSizeInMB,
-    onProgress 
+    onProgress,
+    accessLevel = MediaAccessLevel.PUBLIC,
+    postId 
   }: UploadParams): Promise<string | null> => {
     if (!file) {
       toast({
@@ -201,14 +207,13 @@ export const useMediaUpload = (defaultOptions?: UploadOptions) => {
     const result = await uploadMedia(file, {
       contentCategory: bucket,
       maxSizeInMB,
-      onProgress
+      onProgress,
+      accessLevel,
+      postId
     });
     
     // Fix the type checking - access publicUrl or url property safely
     if (result.success) {
-      if ('publicUrl' in result) {
-        return result.publicUrl as string;
-      }
       if ('url' in result) {
         return result.url as string;
       }

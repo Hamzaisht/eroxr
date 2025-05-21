@@ -1,10 +1,12 @@
 
 import React, { useState, useEffect, forwardRef } from 'react';
-import { MediaSource, MediaType } from '@/utils/media/types';
+import { MediaSource, MediaType, MediaAccessLevel } from '@/utils/media/types';
 import { isImageType, isVideoType, isAudioType } from '@/utils/media/mediaTypeUtils';
 import { extractMediaUrl } from '@/utils/media/mediaUtils';
 import { AlertCircle, RefreshCw } from 'lucide-react';
 import { isValidMediaUrl } from '@/utils/media/mediaOrchestrator';
+import { useMediaAccess } from '@/hooks/useMediaAccess';
+import { LockedMediaOverlay } from './LockedMediaOverlay';
 
 interface MediaRendererProps {
   src: MediaSource;
@@ -47,10 +49,26 @@ export const MediaRenderer = forwardRef<
   const [hasError, setHasError] = useState(false);
   const [retries, setRetries] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
+  const [forceRender, setForceRender] = useState(false);
   
   // Extract the URL from the source
   const url = extractMediaUrl(src);
   const mediaType = src.type || MediaType.UNKNOWN;
+  const accessLevel = src.access_level || MediaAccessLevel.PUBLIC;
+  const creatorId = src.creator_id;
+  const postId = src.post_id;
+  
+  // Check if user has access to this media
+  const { canAccess, isLoading: isAccessLoading } = useMediaAccess({
+    creatorId,
+    postId,
+    accessLevel
+  });
+  
+  // Handle unlock action
+  const handleUnlock = () => {
+    setForceRender(prev => !prev);
+  };
   
   // Check for valid URL early to avoid unnecessary rendering
   if (!isValidMediaUrl(url)) {
@@ -62,12 +80,27 @@ export const MediaRenderer = forwardRef<
     );
   }
   
+  // Show locked content overlay if user doesn't have access
+  if (!canAccess && !isAccessLoading && accessLevel !== MediaAccessLevel.PUBLIC) {
+    return (
+      <div className="relative w-full h-full">
+        <LockedMediaOverlay
+          accessLevel={accessLevel}
+          creatorId={creatorId || ''}
+          postId={postId}
+          thumbnailUrl={poster}
+          onUnlock={handleUnlock}
+        />
+      </div>
+    );
+  }
+  
   // Reset error state on src change
   useEffect(() => {
     setHasError(false);
     setIsLoading(true);
     setRetries(0);
-  }, [url]);
+  }, [url, forceRender]);
   
   // Handle load event
   const handleLoad = () => {
@@ -110,6 +143,15 @@ export const MediaRenderer = forwardRef<
     setIsLoading(true);
     setRetries(prev => prev + 1);
   };
+  
+  // Loading display while checking access or loading media
+  if (isAccessLoading) {
+    return (
+      <div className="flex items-center justify-center h-full w-full bg-black/10">
+        <div className="w-6 h-6 border-2 border-t-primary rounded-full animate-spin" />
+      </div>
+    );
+  }
   
   // Error display component
   const ErrorDisplay = () => (
