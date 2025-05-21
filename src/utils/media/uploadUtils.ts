@@ -1,274 +1,152 @@
-import { v4 as uuidv4 } from 'uuid';
-import { supabase } from '@/integrations/supabase/client';
-import { validateFileForUpload } from '@/utils/upload/validators';
-import { MediaType, MediaAccessLevel } from '@/utils/media/types';
-import { runFileDiagnostic } from '@/utils/upload/fileUtils';
 
-export interface MediaUploadOptions {
-  bucket?: string;
-  contentType?: string;
-  cacheControl?: string;
-  upsert?: boolean;
-  maxSizeMB?: number;
-  metadata?: Record<string, string>;
-  saveMetadata?: boolean;
-  accessLevel?: MediaAccessLevel;
-  postId?: string;
-}
-
-export interface MediaUploadResult {
-  success: boolean;
-  url?: string;
-  error?: string;
-  path?: string;
-  fileType?: string;
-  fileSize?: number;
-  metadata?: Record<string, any>;
-}
+import { supabase } from "@/integrations/supabase/client";
+import { v4 as uuidv4 } from "uuid";
+import { MediaAccessLevel, UploadOptions, UploadResult } from "./types";
 
 /**
- * Generate a unique storage path for uploaded media
+ * Uploads a media file to Supabase storage with optional metadata
+ * 
+ * @param file The file to upload
+ * @param options Upload options including access level
+ * @returns UploadResult with URL if successful
  */
-export function generateMediaStoragePath({
-  userId,
-  type,
-  originalName
-}: {
-  userId: string;
-  type: 'image' | 'video' | 'audio' | 'document';
-  originalName: string;
-}): string {
-  const timestamp = Date.now();
-  const fileExt = originalName.split('.').pop()?.toLowerCase() || 'unknown';
-  const uuid = uuidv4().substring(0, 8);
-
-  return `${type}s/${userId}/${uuid}_${timestamp}.${fileExt}`;
-}
-
-/**
- * Get MediaType enum from file or string type
- */
-export function getMediaTypeFromFile(file: File): MediaType {
-  const mimePrefix = file.type.split('/')[0];
+export const uploadMediaToSupabase = async (
+  file: File,
+  options?: UploadOptions
+): Promise<UploadResult> => {
+  if (!file) {
+    return {
+      success: false,
+      error: "No file provided"
+    };
+  }
   
-  switch (mimePrefix) {
-    case 'image': 
-      return MediaType.IMAGE;
-    case 'video': 
-      return MediaType.VIDEO;
-    case 'audio': 
-      return MediaType.AUDIO;
-    default: 
-      return MediaType.DOCUMENT;
-  }
-}
-
-/**
- * Unified function to upload media to Supabase storage
- */
-export async function uploadMediaToSupabase({
-  file,
-  userId,
-  options = {}
-}: {
-  file: File;
-  userId: string;
-  options?: MediaUploadOptions;
-}): Promise<MediaUploadResult> {
-  if (!file || !userId) {
-    return { 
-      success: false, 
-      error: "Missing file or user ID" 
-    };
-  }
-
   try {
-    // Run diagnostic for debugging
-    const diagnostic = runFileDiagnostic(file);
-    if (!diagnostic.valid) {
-      console.error("File diagnostic failed:", diagnostic.message);
-      return { 
-        success: false, 
-        error: diagnostic.message || "File diagnostic failed" 
+    const user = supabase.auth.getUser();
+    const userId = (await user).data.user?.id;
+    
+    if (!userId) {
+      return {
+        success: false,
+        error: "User not authenticated"
       };
     }
     
-    // Validate file size and type
-    const maxSizeMB = options.maxSizeMB || 100; // Default 100MB max
-    const validation = validateFileForUpload(file, maxSizeMB);
-    if (!validation.valid) {
-      return { 
-        success: false, 
-        error: validation.error 
-      };
-    }
+    // Generate a unique file path
+    const timestamp = new Date().getTime();
+    const fileExt = file.name.split(".").pop() || "";
+    const fileId = uuidv4();
     
-    // Determine media type for path
-    const mimePrefix = file.type.split('/')[0];
-    let mediaType: 'image' | 'video' | 'audio' | 'document';
+    // Determine content category folder
+    const contentCategory = options?.contentCategory || "media";
     
-    switch (mimePrefix) {
-      case 'image': 
-        mediaType = 'image'; 
-        break;
-      case 'video': 
-        mediaType = 'video'; 
-        break;
-      case 'audio': 
-        mediaType = 'audio'; 
-        break;
-      default: 
-        mediaType = 'document';
-    }
+    // Build path with userId subfolder for better organization
+    const filePath = `${contentCategory}/${userId}/${fileId}-${timestamp}.${fileExt}`;
     
-    // Generate unique file path
-    const filePath = generateMediaStoragePath({
-      userId,
-      type: mediaType,
-      originalName: file.name
-    });
-    
-    // Determine access level
-    const accessLevel = options.accessLevel || MediaAccessLevel.PUBLIC;
-    
-    // Prepare metadata with access control information
-    const metadata = {
-      ...(options.metadata || {}),
-      creator_id: userId,
-      access: accessLevel
+    // Progress tracking
+    let progress = 0;
+    const onUploadProgress = (progressEvent: any) => {
+      if (progressEvent.totalBytes) {
+        progress = Math.round((progressEvent.loaded * 100) / progressEvent.totalBytes);
+        options?.onProgress?.(progress);
+      }
     };
     
-    // Add post_id to metadata if provided (for PPV content)
-    if (accessLevel === MediaAccessLevel.PPV && options.postId) {
+    // Prepare metadata with creator_id and access level
+    const metadata: {
+      creator_id: string;
+      access: MediaAccessLevel;
+      post_id?: string;
+    } = {
+      creator_id: userId,
+      access: options?.accessLevel || MediaAccessLevel.PUBLIC,
+    };
+    
+    // Add post_id to metadata if available
+    if (options?.postId) {
       metadata.post_id = options.postId;
     }
     
-    // Set up upload options
-    const uploadOptions = {
-      contentType: options.contentType || file.type,
-      cacheControl: options.cacheControl || '3600',
-      upsert: options.upsert ?? false,
-      metadata
-    };
-    
-    // Determine storage bucket
-    const bucket = options.bucket || 'media';
-    
-    // Upload to Supabase
+    // Upload file with metadata
     const { data, error } = await supabase.storage
-      .from(bucket)
-      .upload(filePath, file, uploadOptions);
-      
-    if (error) {
-      console.error("Supabase upload error:", error);
-      return { 
-        success: false, 
-        error: error.message || "Upload failed" 
+      .from("media")
+      .upload(filePath, file, {
+        cacheControl: "3600",
+        upsert: false,
+        contentType: file.type,
+        onUploadProgress,
+        metadata
+      });
+    
+    if (error || !data) {
+      console.error("Upload error:", error);
+      return {
+        success: false,
+        error: error?.message || "Upload failed"
       };
     }
     
-    // Get public URL
+    // Get the public URL
     const { data: publicUrlData } = supabase.storage
-      .from(bucket)
-      .getPublicUrl(data?.path || filePath);
+      .from("media")
+      .getPublicUrl(data.path);
     
-    if (!publicUrlData?.publicUrl) {
-      return { 
-        success: false, 
-        error: "Failed to get public URL" 
-      };
+    // Auto-reset progress after completion if requested
+    if (options?.autoResetOnCompletion) {
+      setTimeout(() => {
+        options?.onProgress?.(0);
+      }, options?.resetDelay || 1000);
     }
     
-    // Save metadata to database
-    const saveToDatabase = options.saveMetadata ?? true; // Default to true
-    
-    if (saveToDatabase) {
-      try {
-        const { error: insertError } = await supabase.from('media_assets').insert({
-          user_id: userId,
-          url: publicUrlData.publicUrl,
-          type: mediaType,
-          size: file.size,
-          original_name: file.name,
-          storage_path: filePath,
-          content_type: file.type,
-          access_level: accessLevel,
-          content_owner_id: userId
-        });
-        
-        if (insertError) {
-          console.warn('[Metadata Insert Warning]', insertError.message);
-        }
-      } catch (metadataError: any) {
-        // Log but don't fail the upload if metadata save fails
-        console.error("Failed to save media metadata:", metadataError);
-      }
-    }
-    
-    // Return success with URL and metadata
     return {
       success: true,
       url: publicUrlData.publicUrl,
-      path: filePath,
-      fileType: file.type,
-      fileSize: file.size,
-      metadata: {
-        originalName: file.name,
-        contentType: file.type,
-        mediaType,
-        accessLevel
-      }
+      publicUrl: publicUrlData.publicUrl,
+      path: data.path
     };
-  } catch (error: any) {
-    console.error("Unexpected upload error:", error);
-    return { 
-      success: false, 
-      error: error.message || "An unexpected error occurred during upload" 
+  } catch (err: any) {
+    console.error("Upload exception:", err);
+    return {
+      success: false,
+      error: err.message || "Unknown error during upload"
     };
   }
-}
+};
 
 /**
- * Helper to update an existing media file
+ * Delete a media file from Supabase storage
+ * 
+ * @param path The file path to delete
+ * @returns Success status
  */
-export async function updateExistingMedia({
-  file,
-  userId,
-  existingPath,
-  options = {}
-}: {
-  file: File;
-  userId: string;
-  existingPath: string;
-  options?: Omit<MediaUploadOptions, 'upsert'>;
-}): Promise<MediaUploadResult> {
-  return uploadMediaToSupabase({
-    file,
-    userId,
-    options: {
-      ...options,
-      upsert: true
-    }
-  });
-}
-
-/**
- * Track media errors for monitoring
- */
-export function reportMediaError(
-  url: string,
-  errorType: 'load_failure' | 'timeout' | 'format_error' | 'access_denied',
-  attemptCount: number = 1,
-  mediaType: string = 'unknown',
-  componentName: string = 'unknown'
-): void {
-  // Log error for debugging
-  console.error(`Media error [${errorType}]: ${url}`, {
-    attemptCount,
-    mediaType,
-    componentName
-  });
+export const deleteMediaFromSupabase = async (path: string): Promise<boolean> => {
+  if (!path) return false;
   
-  // This can be expanded to send errors to an analytics service
-  // or to your own error tracking endpoint
-}
+  try {
+    // Extract path from full URL if needed
+    let storagePath = path;
+    
+    // If full URL is provided, extract the path portion
+    if (path.includes('storage/v1/object/public/')) {
+      storagePath = path.split('storage/v1/object/public/')[1];
+      // Further split to remove bucket name
+      const pathParts = storagePath.split('/');
+      pathParts.shift(); // Remove bucket name
+      storagePath = pathParts.join('/');
+    }
+    
+    const { error } = await supabase.storage
+      .from("media")
+      .remove([storagePath]);
+    
+    if (error) {
+      console.error("Delete error:", error);
+      return false;
+    }
+    
+    return true;
+  } catch (err) {
+    console.error("Delete exception:", err);
+    return false;
+  }
+};

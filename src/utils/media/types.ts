@@ -16,6 +16,14 @@ export enum MediaAccessLevel {
   PRIVATE = 'private'
 }
 
+export enum AvailabilityStatus {
+  ONLINE = 'online',
+  AWAY = 'away',
+  BUSY = 'busy',
+  OFFLINE = 'offline',
+  INVISIBLE = 'invisible'
+}
+
 export interface MediaSource {
   url: string;
   type: MediaType;

@@ -3,118 +3,83 @@ import { MediaType } from './types';
 
 /**
  * Check if media type is an image type
+ * @param type The media type to check
+ * @returns True if the type is an image type
  */
-export const isImageType = (type: MediaType | string): boolean => {
-  if (typeof type === 'string') {
-    return type === MediaType.IMAGE || type === 'image';
-  }
-  return type === MediaType.IMAGE;
+export const isImageType = (type: MediaType): boolean => {
+  return type === MediaType.IMAGE || type === MediaType.GIF;
 };
 
 /**
  * Check if media type is a video type
+ * @param type The media type to check
+ * @returns True if the type is a video type
  */
-export const isVideoType = (type: MediaType | string): boolean => {
-  if (typeof type === 'string') {
-    return type === MediaType.VIDEO || type === 'video';
-  }
+export const isVideoType = (type: MediaType): boolean => {
   return type === MediaType.VIDEO;
 };
 
 /**
  * Check if media type is an audio type
+ * @param type The media type to check
+ * @returns True if the type is an audio type
  */
-export const isAudioType = (type: MediaType | string): boolean => {
-  if (typeof type === 'string') {
-    return type === MediaType.AUDIO || type === 'audio';
-  }
+export const isAudioType = (type: MediaType): boolean => {
   return type === MediaType.AUDIO;
 };
 
 /**
  * Check if media type is a document type
+ * @param type The media type to check
+ * @returns True if the type is a document type
  */
-export const isDocumentType = (type: MediaType | string): boolean => {
-  if (typeof type === 'string') {
-    return type === MediaType.DOCUMENT || type === 'document';
-  }
+export const isDocumentType = (type: MediaType): boolean => {
   return type === MediaType.DOCUMENT;
 };
 
 /**
- * Check if media type is a GIF type
+ * Get file extension from URL
+ * @param url The URL to extract extension from
+ * @returns The file extension or empty string
  */
-export const isGifType = (type: MediaType | string): boolean => {
-  if (typeof type === 'string') {
-    return type === MediaType.GIF || type === 'gif';
-  }
-  return type === MediaType.GIF;
-};
-
-/**
- * Get file extension from a URL
- */
-export const getFileExtensionFromUrl = (url: string): string => {
+export const getFileExtension = (url: string): string => {
+  if (!url) return '';
+  
+  // Remove query parameters
   const urlWithoutParams = url.split('?')[0];
-  return urlWithoutParams.split('.').pop()?.toLowerCase() || '';
+  
+  // Get last part after last slash
+  const filename = urlWithoutParams.split('/').pop() || '';
+  
+  // Get extension
+  const extension = filename.split('.').pop() || '';
+  
+  return extension.toLowerCase();
 };
 
 /**
- * Detect media type from URL or file extension
+ * Check if URL is a valid media URL
+ * @param url URL to check
+ * @returns True if URL is valid
  */
-export const detectMediaTypeFromUrl = (url: string): MediaType => {
-  const extension = getFileExtensionFromUrl(url);
+export const isValidMediaUrl = (url: string): boolean => {
+  // Basic validation - at minimum should be non-empty
+  if (!url) return false;
   
-  if (['jpg', 'jpeg', 'png', 'webp', 'svg'].includes(extension)) {
-    return MediaType.IMAGE;
+  // Check if absolute URL
+  if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('blob:')) {
+    return true;
   }
   
-  if (['gif'].includes(extension)) {
-    return MediaType.GIF;
+  // Check if relative URL
+  if (url.startsWith('/')) {
+    return true;
   }
   
-  if (['mp4', 'webm', 'ogg', 'mov'].includes(extension)) {
-    return MediaType.VIDEO;
+  // Check data URLs
+  if (url.startsWith('data:')) {
+    return true;
   }
   
-  if (['mp3', 'wav', 'ogg', 'aac'].includes(extension)) {
-    return MediaType.AUDIO;
-  }
-  
-  if (['pdf', 'doc', 'docx', 'txt'].includes(extension)) {
-    return MediaType.DOCUMENT;
-  }
-  
-  return MediaType.UNKNOWN;
-};
-
-/**
- * Convert MIME type to MediaType
- */
-export const mimeTypeToMediaType = (mimeType: string): MediaType => {
-  if (!mimeType) return MediaType.UNKNOWN;
-  
-  if (mimeType.startsWith('image/')) {
-    if (mimeType === 'image/gif') {
-      return MediaType.GIF;
-    }
-    return MediaType.IMAGE;
-  }
-  
-  if (mimeType.startsWith('video/')) {
-    return MediaType.VIDEO;
-  }
-  
-  if (mimeType.startsWith('audio/')) {
-    return MediaType.AUDIO;
-  }
-  
-  if (mimeType.startsWith('application/pdf') || 
-      mimeType.startsWith('application/msword') || 
-      mimeType.includes('document') || 
-      mimeType.includes('text/')) {
-    return MediaType.DOCUMENT;
-  }
-  
-  return MediaType.UNKNOWN;
+  return false;
 };

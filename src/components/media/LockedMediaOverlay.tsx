@@ -142,7 +142,7 @@ export function LockedMediaOverlay({
             onClick={handleAction} 
             disabled={isLoading}
             className="mt-4"
-            variant="luxury"
+            variant="premium"
           >
             {isLoading ? "Processing..." : actionInfo.buttonText}
           </Button>
