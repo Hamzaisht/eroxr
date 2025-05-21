@@ -96,15 +96,23 @@ export const uploadFileToStorage = async (
     const userId = sessionData?.session?.user?.id;
     
     if (userId) {
-      await supabase.from('media_assets').insert({
-        user_id: userId,
-        type: mediaType,
-        url,
-        original_name: originalName,
-        size: fileSize,
-        content_type: contentType,
-        storage_path: filePath
-      });
+      try {
+        const { error: insertError } = await supabase.from('media_assets').insert({
+          user_id: userId,
+          type: mediaType,
+          url,
+          original_name: originalName,
+          size: fileSize,
+          content_type: contentType,
+          storage_path: filePath
+        });
+        
+        if (insertError) {
+          console.warn('[Metadata Insert Warning]', insertError.message);
+        }
+      } catch (metadataError) {
+        console.error("Failed to save media metadata:", metadataError);
+      }
     }
 
     return { success: true, url };

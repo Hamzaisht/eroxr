@@ -168,7 +168,7 @@ export async function uploadMediaToSupabase({
     
     if (saveToDatabase) {
       try {
-        await supabase.from('media_assets').insert({
+        const { error: insertError } = await supabase.from('media_assets').insert({
           user_id: userId,
           url: publicUrlData.publicUrl,
           type: mediaType,
@@ -177,6 +177,10 @@ export async function uploadMediaToSupabase({
           storage_path: filePath,
           content_type: file.type
         });
+        
+        if (insertError) {
+          console.warn('[Metadata Insert Warning]', insertError.message);
+        }
       } catch (metadataError: any) {
         // Log but don't fail the upload if metadata save fails
         console.error("Failed to save media metadata:", metadataError);
