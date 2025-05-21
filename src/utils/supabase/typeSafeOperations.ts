@@ -1,23 +1,24 @@
 
-import { supabase } from "@/integrations/supabase/client";
+import { PostgrestSingleResponse } from '@supabase/supabase-js';
+
+/**
+ * Checks if a query error occurred
+ * @param result Potential error object
+ * @returns Whether the error is a query error
+ */
+export function isQueryError<T>(
+  result: PostgrestSingleResponse<T> | null | undefined
+): result is PostgrestSingleResponse<T> & { error: Error } {
+  return !!result && 'error' in result && result.error !== null;
+}
 
 /**
  * Ensures a string value is returned, handling nulls and undefined
  * @param value The value to convert to string
  * @returns A safe string value
  */
-export function safeString(value: any): string {
-  if (value === null || value === undefined) return '';
-  return String(value);
-}
-
-/**
- * Checks if a query error occurred
- * @param error Potential error object
- * @returns Whether the error is a query error
- */
-export function isQueryError(error: any): boolean {
-  return error && typeof error === 'object' && 'code' in error;
+export function safeString(value: unknown): string | undefined {
+  return typeof value === 'string' && value.trim() !== '' ? value : undefined;
 }
 
 /**
