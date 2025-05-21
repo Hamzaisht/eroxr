@@ -1,10 +1,10 @@
+
 import { useState, useCallback } from 'react';
 import { useSession } from '@supabase/auth-helpers-react';
 import { useToast } from '@/hooks/use-toast';
 import { validateFileForUpload } from '@/utils/upload/validators';
 import { uploadMediaToSupabase } from '@/utils/media/uploadUtils';
-import { MediaAccessLevel } from '@/utils/media/types';
-import { validateMediaUrl } from '@/utils/media/mediaOrchestrator';
+import { MediaAccessLevel, UploadResult } from '@/utils/media/types';
 
 interface UploadState {
   isUploading: boolean;
@@ -50,11 +50,11 @@ export const useMediaUpload = (defaultOptions?: any) => {
     return validateFileForUpload(file, maxSizeInMB);
   }, [defaultOptions?.maxSizeInMB]);
   
-  // Upload media file - original method kept for backward compatibility
+  // Upload media file - this is the main function that all components should use
   const uploadMedia = useCallback(async (
     file: File,
     options?: any
-  ) => {
+  ): Promise<UploadResult> => {
     if (!session?.user?.id) {
       return { 
         success: false, 
@@ -146,12 +146,6 @@ export const useMediaUpload = (defaultOptions?: any) => {
         setTimeout(resetUploadState, delay);
       }
       
-      // Validate URL before returning
-      if ('url' in result && !validateMediaUrl(result.url as string)) {
-        console.error('Invalid public URL format in upload result:', result);
-        throw new Error('Invalid public URL format returned');
-      }
-      
       return result;
     } catch (error: any) {
       console.error("Media upload error:", error);
@@ -201,17 +195,16 @@ export const useMediaUpload = (defaultOptions?: any) => {
        file.type.startsWith('video/') ? 'video' :
        file.type.startsWith('audio/') ? 'audio' : 'document');
     
-    const bucket = contentCategory || detectedMediaType + 's';
-    
+    // Always use 'media' as bucket with proper organization within
     const result = await uploadMedia(file, {
-      contentCategory: bucket,
+      contentCategory: 'media', // Always use the 'media' bucket
       maxSizeInMB,
       onProgress,
       accessLevel,
       postId
     });
     
-    // Fix the type checking - access publicUrl or url property safely
+    // Return the URL on success
     if (result.success) {
       if ('url' in result) {
         return result.url as string;

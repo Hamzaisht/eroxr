@@ -8,6 +8,7 @@ import { useMediaUpload } from "@/hooks/useMediaUpload";
 import { useToast } from "@/hooks/use-toast";
 import { MediaAccessLevel } from "@/utils/media/types";
 import { AccessLevelSelector } from "@/components/media/AccessLevelSelector";
+import { runFileDiagnostic } from "@/utils/upload/fileUtils";
 
 interface NewPostMediaUploadProps {
   onMediaUrlsChange: (urls: string[]) => void;
@@ -29,7 +30,10 @@ export const NewPostMediaUpload: React.FC<NewPostMediaUploadProps> = ({
 
   const handleMediaSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
-      setSelectedFile(e.target.files[0]);
+      const file = e.target.files[0];
+      // Run file diagnostic
+      runFileDiagnostic(file);
+      setSelectedFile(file);
     }
   };
   
@@ -64,7 +68,6 @@ export const NewPostMediaUpload: React.FC<NewPostMediaUploadProps> = ({
       const url = await upload({ 
         file: selectedFile, 
         mediaType,
-        contentCategory: 'posts',
         accessLevel,
         postId
       });

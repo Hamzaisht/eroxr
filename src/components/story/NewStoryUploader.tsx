@@ -8,6 +8,8 @@ import { MediaUploader } from "@/components/shared/MediaUploader";
 import { NewMediaRenderer } from "@/components/media/NewMediaRenderer";
 import { Loader2, X } from "lucide-react";
 import { runFileDiagnostic } from "@/utils/upload/fileUtils";
+import { uploadMediaToSupabase } from "@/utils/media/uploadUtils";
+import { MediaAccessLevel } from "@/utils/media/types";
 
 export const NewStoryUploader: React.FC = () => {
   const [mediaUrl, setMediaUrl] = useState<string | null>(null);
@@ -18,6 +20,49 @@ export const NewStoryUploader: React.FC = () => {
   
   const session = useSession();
   const { toast } = useToast();
+
+  const handleMediaUpload = async (file: File) => {
+    if (!file || !session?.user?.id) {
+      toast({
+        title: "Upload Error",
+        description: "Invalid file or not logged in",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    // Run diagnostic and save to ref
+    runFileDiagnostic(file);
+    fileRef.current = file;
+    
+    try {
+      // Use centralized upload function
+      const result = await uploadMediaToSupabase({
+        file,
+        userId: session.user.id,
+        options: {
+          bucket: 'media',
+          maxSizeMB: 50,
+          accessLevel: MediaAccessLevel.PUBLIC
+        }
+      });
+      
+      if (!result.success || !result.url) {
+        throw new Error(result.error || "Failed to upload story media");
+      }
+      
+      setMediaUrl(result.url);
+      return result.url;
+    } catch (error: any) {
+      console.error("Story media upload error:", error);
+      toast({
+        title: "Upload Failed",
+        description: error.message || "Failed to upload story media",
+        variant: "destructive"
+      });
+      return null;
+    }
+  };
 
   const handleMediaComplete = (url: string) => {
     setMediaUrl(url);

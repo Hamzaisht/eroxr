@@ -5,8 +5,9 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Label } from "@/components/ui/label";
 import { Upload, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { uploadFileToStorage } from "@/utils/upload/storageService";
 import { runFileDiagnostic } from "@/utils/upload/fileUtils";
+import { uploadMediaToSupabase } from "@/utils/media/uploadUtils";
+import { MediaAccessLevel } from "@/utils/media/types";
 
 interface ProfileImageUploadProps {
   avatarPreview: string;
@@ -52,19 +53,22 @@ export const ProfileImageUpload = ({ avatarPreview, onAvatarChange }: ProfileIma
       };
       reader.readAsDataURL(file);
       
-      // Generate a unique path for this file
-      const userId = session.user.id;
-      const timestamp = new Date().getTime();
-      const path = `${userId}/${timestamp}_avatar.${file.name.split('.').pop()}`;
-      
-      // CRITICAL: Use the reference from useRef for upload
+      // Use centralized upload utility
       const uploadFile = fileRef.current;
       
       // Run diagnostic again right before upload
       runFileDiagnostic(uploadFile);
       
-      // Then upload to Supabase storage
-      const result = await uploadFileToStorage('avatars', path, uploadFile);
+      // Upload to Supabase storage using the centralized utility
+      const result = await uploadMediaToSupabase({
+        file: uploadFile,
+        userId: session.user.id,
+        options: {
+          bucket: 'media',
+          maxSizeMB: 5,
+          accessLevel: MediaAccessLevel.PUBLIC
+        }
+      });
       
       if (!result.success) {
         throw new Error(result.error || "Upload failed");

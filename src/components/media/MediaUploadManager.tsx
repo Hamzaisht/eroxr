@@ -1,15 +1,12 @@
-
 import { useState } from 'react';
 import { useSupabaseClient, useSession } from '@supabase/auth-helpers-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Label } from '@/components/ui/label';
 import { Loader2, Upload, Image, FileVideo, File } from 'lucide-react';
-import {
-  createUniqueFilePath,
-  uploadFileToStorage,
-  formatFileSize
-} from '@/utils/media/mediaUtils';
+import { formatFileSize } from '@/utils/upload/fileUtils';
+import { uploadMediaToSupabase } from '@/utils/media/uploadUtils';
+import { MediaAccessLevel } from '@/utils/media/types';
 
 interface MediaUploadManagerProps {
   bucketName?: string;
@@ -21,7 +18,6 @@ interface MediaUploadManagerProps {
 }
 
 export const MediaUploadManager = ({
-  bucketName = 'media',
   allowedTypes = ['image/*', 'video/*', 'audio/*', 'application/pdf'],
   maxSizeInMB = 100,
   onUploadComplete,
@@ -30,7 +26,6 @@ export const MediaUploadManager = ({
 }: MediaUploadManagerProps) => {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
-  const supabase = useSupabaseClient();
   const session = useSession();
   const { toast } = useToast();
   
@@ -86,14 +81,16 @@ export const MediaUploadManager = ({
         setUploadProgress(prev => Math.min(prev + 10, 90));
       }, 300);
       
-      // Get user ID for folder structure
-      const userId = session.user.id;
-      
-      // Generate unique file path
-      const filePath = createUniqueFilePath(userId, file);
-      
-      // Upload to storage
-      const result = await uploadFileToStorage(bucketName, filePath, file);
+      // Use centralized upload utility
+      const result = await uploadMediaToSupabase({
+        file,
+        userId: session.user.id,
+        options: {
+          bucket: 'media',
+          maxSizeMB: maxSizeInMB,
+          accessLevel: MediaAccessLevel.PUBLIC
+        }
+      });
       
       clearInterval(progressInterval);
       

@@ -1,84 +1,87 @@
 
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from "@/integrations/supabase/client";
+import { v4 as uuidv4 } from "uuid";
+import { runFileDiagnostic, formatFileSize } from "./fileUtils";
+
+interface UploadResult {
+  success: boolean;
+  url?: string;
+  error?: string;
+  path?: string;
+}
 
 /**
- * Uploads a file to Supabase storage
+ * Centralized file upload utility for Supabase storage
+ * Replaces all other upload functions in the app
  */
 export const uploadFileToStorage = async (
-  bucket: string, 
-  filePath: string, 
-  file: File | string
-): Promise<{ success: boolean; url?: string; error?: string }> => {
+  bucketName: string = 'media',
+  filePath: string,
+  file: File
+): Promise<UploadResult> => {
+  if (!file) {
+    return { 
+      success: false, 
+      error: 'No file provided' 
+    };
+  }
+  
+  // Run diagnostic on the file
+  if (!runFileDiagnostic(file)) {
+    return { 
+      success: false, 
+      error: 'Invalid file object' 
+    };
+  }
+  
   try {
-    // Handle string file input (data URL)
-    let fileToUpload: File | Blob = file as File;
-    
-    // Convert data URL to blob if needed
-    if (typeof file === 'string' && file.startsWith('data:')) {
-      const res = await fetch(file);
-      fileToUpload = await res.blob();
-    } else if (typeof file !== 'object') {
-      return { success: false, error: 'Invalid file format' };
-    }
+    console.log(`Uploading to ${bucketName}/${filePath} (${formatFileSize(file.size)}, type: ${file.type})`);
     
     const { data, error } = await supabase.storage
-      .from(bucket)
-      .upload(filePath, fileToUpload, {
+      .from(bucketName)
+      .upload(filePath, file, {
         cacheControl: '3600',
-        upsert: false
+        upsert: true,
+        contentType: file.type
       });
-
+    
     if (error) {
-      console.error('Storage upload error:', error);
-      return { success: false, error: error.message };
+      console.error("Upload error:", error);
+      return {
+        success: false,
+        error: error.message
+      };
     }
-
-    const { data: publicUrlData } = supabase.storage
-      .from(bucket)
-      .getPublicUrl(filePath);
-
-    if (!publicUrlData?.publicUrl) {
-      return { success: false, error: 'Failed to get public URL' };
-    }
-
-    // If this is a real File instance and we have a user ID, save metadata
-    if (file instanceof File && filePath.includes('/')) {
-      const userId = filePath.split('/')[0]; // Try to extract user ID from path
-      
-      // Only attempt to save metadata if we have what appears to be a UUID
-      if (userId && userId.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/)) {
-        try {
-          // Determine media type
-          const mimePrefix = file.type.split('/')[0];
-          let mediaType;
-          
-          switch (mimePrefix) {
-            case 'image': mediaType = 'image'; break;
-            case 'video': mediaType = 'video'; break; 
-            case 'audio': mediaType = 'audio'; break;
-            default: mediaType = 'document';
-          }
-          
-          // Insert metadata
-          await supabase.from('media_assets').insert({
-            user_id: userId,
-            url: publicUrlData.publicUrl,
-            type: mediaType,
-            size: file.size,
-            original_name: file.name,
-            storage_path: filePath,
-            content_type: file.type
-          });
-        } catch (metadataError) {
-          // Don't fail the upload if metadata saving fails
-          console.error('Error saving media metadata:', metadataError);
-        }
-      }
-    }
-
-    return { success: true, url: publicUrlData.publicUrl };
-  } catch (error: any) {
-    console.error('Unexpected upload error:', error);
-    return { success: false, error: error.message || 'Unknown upload error' };
+    
+    const { data: { publicUrl } } = supabase.storage
+      .from(bucketName)
+      .getPublicUrl(data.path);
+    
+    console.log("Upload successful:", publicUrl);
+    
+    return {
+      success: true,
+      url: publicUrl,
+      path: data.path
+    };
+  } catch (err: any) {
+    console.error("Upload exception:", err);
+    return {
+      success: false,
+      error: err.message
+    };
   }
+};
+
+/**
+ * Create a unique file path for upload
+ */
+export const createUniqueFilePath = (userId: string, file: File): string => {
+  const timestamp = Date.now();
+  const uniqueId = uuidv4().substring(0, 8);
+  const fileExt = file.name.split('.').pop() || '';
+  
+  // Organize by user ID and file type
+  const contentType = file.type.split('/')[0];
+  return `${userId}/${contentType}s/${timestamp}-${uniqueId}.${fileExt}`;
 };

@@ -1,9 +1,9 @@
 
 import { useRef } from "react";
 import { useSession } from "@supabase/auth-helpers-react";
-import { validateVideoFormat, getVideoDuration } from "@/utils/videoProcessing";
 import { runFileDiagnostic } from "@/utils/upload/fileUtils";
-import { useMediaUpload } from "@/hooks/useMediaUpload";
+import { uploadMediaToSupabase } from "@/utils/media/uploadUtils";
+import { MediaAccessLevel } from "@/utils/media/types";
 
 interface MediaUploadResult {
   videoUrl: string | null;
@@ -16,7 +16,6 @@ export const useAdMediaUpload = () => {
   // Critical: Use refs instead of state for file objects
   const videoFileRef = useRef<File | null>(null);
   const avatarFileRef = useRef<File | null>(null);
-  const { upload } = useMediaUpload();
 
   const setVideoFile = (file: File | null) => {
     videoFileRef.current = file;
@@ -54,31 +53,23 @@ export const useAdMediaUpload = () => {
           throw new Error(`Invalid file type: ${videoFile.type}. Only videos are allowed.`);
         }
         
-        // Validate video format
-        const isValidVideo = await validateVideoFormat(videoFile);
-        if (!isValidVideo) {
-          throw new Error("Invalid video format. Please upload a valid video file.");
-        }
-        
-        // Get video duration
-        const duration = await getVideoDuration(videoFile);
-        console.log("Video duration:", duration);
-        
-        if (duration > 120) { // More than 2 minutes
-          throw new Error("Video is too long. Maximum duration is 2 minutes.");
-        }
-        
         // Use the centralized upload utility
-        videoUrl = await upload({
+        const videoResult = await uploadMediaToSupabase({
           file: videoFile,
-          mediaType: 'video',
-          contentCategory: 'dating-videos'
+          userId: session.user.id,
+          options: {
+            bucket: 'media',
+            maxSizeMB: 100,
+            saveMetadata: true,
+            accessLevel: MediaAccessLevel.PUBLIC
+          }
         });
         
-        if (!videoUrl) {
+        if (!videoResult.success || !videoResult.url) {
           throw new Error("Failed to upload video");
         }
         
+        videoUrl = videoResult.url;
         console.log("Generated video URL:", videoUrl);
       }
 
@@ -102,16 +93,22 @@ export const useAdMediaUpload = () => {
         }
         
         // Use the centralized upload utility
-        avatarUrl = await upload({
+        const avatarResult = await uploadMediaToSupabase({
           file: avatarFile,
-          mediaType: 'image',
-          contentCategory: 'avatars'
+          userId: session.user.id,
+          options: {
+            bucket: 'media',
+            maxSizeMB: 5,
+            saveMetadata: true,
+            accessLevel: MediaAccessLevel.PUBLIC
+          }
         });
         
-        if (!avatarUrl) {
+        if (!avatarResult.success || !avatarResult.url) {
           throw new Error("Failed to upload avatar");
         }
         
+        avatarUrl = avatarResult.url;
         console.log("Generated avatar URL:", avatarUrl);
       }
 

@@ -2,8 +2,9 @@
 import { useState } from "react";
 import { useSession } from "@supabase/auth-helpers-react";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
+import { uploadMediaToSupabase } from "@/utils/media/uploadUtils";
 import { runFileDiagnostic } from "@/utils/upload/fileUtils";
+import { MediaAccessLevel } from "@/utils/media/types";
 
 interface UploadState {
   isUploading: boolean;
@@ -71,15 +72,6 @@ export const useVideoUpload = () => {
     }
 
     try {
-      // CRITICAL: Debug file info
-      console.log("FILE DEBUG:", {
-        file,
-        isFile: file instanceof File,
-        type: file?.type,
-        size: file?.size,
-        name: file?.name
-      });
-      
       // Validate file type
       const isValidVideoType = file.type.startsWith("video/");
       if (!isValidVideoType) {
@@ -109,96 +101,23 @@ export const useVideoUpload = () => {
         });
       }, 300);
       
-      // Generate a unique path for the upload
-      const userId = session.user.id;
-      const timestamp = new Date().getTime();
-      const fileExt = file.name.split('.').pop() || 'mp4';
-      const path = `${userId}/${timestamp}_video.${fileExt}`;
-      
-      console.log(`Uploading video to path: shorts/${path} with content type: ${file.type}`);
-      
-      // CRITICAL: Upload directly to Supabase with explicit content type and upsert: true
-      const { data: uploadData, error: uploadError } = await supabase.storage
-        .from('shorts')
-        .upload(path, file, {
-          contentType: file.type,
-          cacheControl: '3600',
-          upsert: true
-        });
+      // Use the centralized upload utility - critically important fix here!
+      const result = await uploadMediaToSupabase({
+        file,
+        userId: session.user.id,
+        options: {
+          bucket: 'media', // Use the media bucket
+          maxSizeMB: 100,
+          saveMetadata: true,
+          accessLevel: MediaAccessLevel.PUBLIC
+        }
+      });
       
       clearInterval(progressInterval);
       
-      if (uploadError) {
-        console.error("Video upload error:", uploadError);
-        
-        setUploadState({
-          isUploading: false,
-          progress: 0,
-          isComplete: false,
-          error: uploadError.message
-        });
-        
-        return { 
-          success: false, 
-          error: uploadError.message 
-        };
+      if (!result.success) {
+        throw new Error(result.error || "Upload failed");
       }
-      
-      if (!uploadData) {
-        const errorMsg = "Upload completed but no data returned";
-        console.error(errorMsg);
-        
-        setUploadState({
-          isUploading: false,
-          progress: 0,
-          isComplete: false,
-          error: errorMsg
-        });
-        
-        return { 
-          success: false, 
-          error: errorMsg
-        };
-      }
-      
-      // Get public URL and verify it exists
-      const { data: { publicUrl } } = supabase.storage
-        .from('shorts')
-        .getPublicUrl(path);
-      
-      // CRITICAL: Verify and log the result
-      if (publicUrl) {
-        console.log("✅ Supabase URL:", publicUrl);
-      } else {
-        const errorMsg = "Upload completed but no URL returned";
-        console.error("❌ Supabase URL missing");
-        
-        setUploadState({
-          isUploading: false,
-          progress: 0,
-          isComplete: false,
-          error: errorMsg
-        });
-        
-        return { 
-          success: false, 
-          error: errorMsg
-        };
-      }
-      
-      // Verify URL is accessible
-      try {
-        const response = await fetch(publicUrl, { method: 'HEAD' });
-        if (!response.ok) {
-          console.warn(`Upload verification failed: ${response.status} ${response.statusText}`);
-        } else {
-          console.log("Upload verification successful - URL is accessible");
-        }
-      } catch (verifyError) {
-        console.warn("Could not verify uploaded file URL:", verifyError);
-      }
-      
-      console.log("Upload successful, URL:", publicUrl);
       
       // Upload complete
       setUploadState({
@@ -210,7 +129,7 @@ export const useVideoUpload = () => {
       
       return { 
         success: true, 
-        videoUrl: publicUrl
+        videoUrl: result.url
       };
       
     } catch (error: any) {
