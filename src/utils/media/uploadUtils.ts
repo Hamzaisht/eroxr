@@ -163,14 +163,16 @@ export async function uploadMediaToSupabase({
       };
     }
     
-    // Optional: Save metadata to database
-    if (options.saveMetadata) {
+    // Save metadata to database
+    const saveToDatabase = options.saveMetadata ?? true; // Default to true
+    
+    if (saveToDatabase) {
       try {
         await supabase.from('media_assets').insert({
           user_id: userId,
           url: publicUrlData.publicUrl,
           type: mediaType,
-          file_size: file.size,
+          size: file.size,
           original_name: file.name,
           storage_path: filePath,
           content_type: file.type
