@@ -22,11 +22,9 @@ import {
   AlertTriangle,
 } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
-import { ErosUploadProgress } from "@/types/eros";
-import { VideoPlayer } from "@/components/video/VideoPlayer";
-import { createFilePreview, revokeFilePreview } from "@/utils/upload";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
+import { useMediaUpload } from "@/hooks/useMediaUpload";
 
 interface ErosUploadFormProps {
   onUploaded?: (videoId: string) => void;
@@ -44,23 +42,19 @@ export function ErosUploadForm({
   const [dragActive, setDragActive] = useState(false);
   const [hoveringPreview, setHoveringPreview] = useState(false);
   const [isVideoPlaying, setIsVideoPlaying] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState<ErosUploadProgress>({
-    progress: 0,
-    isUploading: false,
-    isProcessing: false,
-    error: null,
-  });
+  const [validationError, setValidationError] = useState<string | null>(null);
   
   const session = useSession();
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
+  const { upload, uploadState } = useMediaUpload({ maxSizeInMB: maxFileSize });
 
   // Clean up preview URL when component unmounts
   useEffect(() => {
     return () => {
       if (previewUrl) {
-        revokeFilePreview(previewUrl);
+        URL.revokeObjectURL(previewUrl);
       }
     };
   }, [previewUrl]);
@@ -69,12 +63,12 @@ export function ErosUploadForm({
   const handleFileSelect = (file: File | null) => {
     // Revoke old preview if exists
     if (previewUrl) {
-      revokeFilePreview(previewUrl);
+      URL.revokeObjectURL(previewUrl);
       setPreviewUrl(null);
     }
     
     // Clear any previous errors
-    setUploadProgress(prev => ({ ...prev, error: null }));
+    setValidationError(null);
     
     if (!file) {
       setSelectedFile(null);
@@ -83,19 +77,19 @@ export function ErosUploadForm({
     
     // Validate file type
     if (!file.type.startsWith('video/')) {
-      setUploadProgress(prev => ({ ...prev, error: "Please select a valid video file" }));
+      setValidationError("Please select a valid video file");
       return;
     }
     
     // Validate file size
     if (file.size > maxFileSize * 1024 * 1024) {
-      setUploadProgress(prev => ({ ...prev, error: `File size must be less than ${maxFileSize}MB` }));
+      setValidationError(`File size must be less than ${maxFileSize}MB`);
       return;
     }
     
     // Set the file and create preview
     setSelectedFile(file);
-    const url = createFilePreview(file);
+    const url = URL.createObjectURL(file);
     setPreviewUrl(url);
   };
 
@@ -136,17 +130,11 @@ export function ErosUploadForm({
   // Remove selected file
   const handleRemoveFile = () => {
     if (previewUrl) {
-      revokeFilePreview(previewUrl);
+      URL.revokeObjectURL(previewUrl);
     }
     
     setSelectedFile(null);
     setPreviewUrl(null);
-    setUploadProgress({
-      progress: 0,
-      isUploading: false,
-      isProcessing: false,
-      error: null,
-    });
     
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
@@ -166,53 +154,24 @@ export function ErosUploadForm({
     }
     
     if (!selectedFile) {
-      setUploadProgress(prev => ({ ...prev, error: "Please select a video file" }));
+      setValidationError("Please select a video file");
       return;
     }
     
     try {
-      // Start uploading
-      setUploadProgress({
-        progress: 0,
-        isUploading: true,
-        isProcessing: false,
-        error: null,
+      // Upload the video using our central upload utility
+      const videoUrl = await upload({
+        file: selectedFile,
+        mediaType: 'video',
+        contentCategory: 'eros-videos',
+        onProgress: (progress) => {
+          console.log(`Eros upload progress: ${progress}%`);
+        }
       });
       
-      // Generate a unique file path
-      const fileExt = selectedFile.name.split('.').pop();
-      const filePath = `${session.user.id}/${Date.now()}-${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
-      
-      // Upload the file with progress tracking
-      const uploadOptions = {
-        cacheControl: '3600',
-        upsert: false,
-      };
-      
-      // Create a custom upload handler with progress
-      const { data: uploadData, error: uploadError } = await supabase.storage
-        .from('eros-videos')
-        .upload(filePath, selectedFile, uploadOptions);
-      
-      // Track progress manually
-      setUploadProgress(prev => ({ ...prev, progress: 100 }));
-      
-      if (uploadError) {
-        throw new Error(uploadError.message);
+      if (!videoUrl) {
+        throw new Error("Failed to upload video");
       }
-      
-      // Get public URL
-      const { data: publicUrlData } = supabase.storage
-        .from('eros-videos')
-        .getPublicUrl(filePath);
-      
-      // Mark as processing
-      setUploadProgress(prev => ({ 
-        ...prev, 
-        isUploading: false,
-        isProcessing: true,
-        progress: 100,
-      }));
       
       // Create post in the database
       const { data: videoData, error: videoError } = await supabase
@@ -220,7 +179,7 @@ export function ErosUploadForm({
         .insert({
           creator_id: session.user.id,
           content: description,
-          video_urls: [publicUrlData.publicUrl],
+          video_urls: [videoUrl],
           tags: tags ? tags.split(',').map(tag => tag.trim().replace(/^#/, '')) : [],
           visibility: 'public',
         })
@@ -252,12 +211,6 @@ export function ErosUploadForm({
       
     } catch (error: any) {
       console.error("Upload error:", error);
-      setUploadProgress(prev => ({ 
-        ...prev, 
-        isUploading: false,
-        isProcessing: false,
-        error: error.message || "Failed to upload video" 
-      }));
       
       toast({
         title: "Upload failed",
@@ -324,11 +277,12 @@ export function ErosUploadForm({
                 onClick={() => setIsVideoPlaying(!isVideoPlaying)}
               >
                 {previewUrl && (
-                  <VideoPlayer
-                    url={previewUrl}
+                  <video
+                    src={previewUrl}
                     className="w-full h-full object-contain"
                     autoPlay={isVideoPlaying}
-                    onError={() => setUploadProgress(prev => ({ ...prev, error: "Failed to preview video" }))}
+                    controls={isVideoPlaying}
+                    muted={!isVideoPlaying}
                   />
                 )}
                 
@@ -361,29 +315,29 @@ export function ErosUploadForm({
           )}
           
           {/* Upload progress */}
-          {uploadProgress.isUploading && (
+          {uploadState.isUploading && (
             <div className="space-y-1">
               <div className="flex justify-between text-sm mb-1">
                 <span>Uploading...</span>
-                <span>{uploadProgress.progress}%</span>
+                <span>{uploadState.progress}%</span>
               </div>
-              <Progress value={uploadProgress.progress} className="h-2" />
-            </div>
-          )}
-          
-          {/* Processing status */}
-          {uploadProgress.isProcessing && (
-            <div className="p-3 bg-blue-50 border border-blue-200 rounded-md flex items-center gap-2">
-              <Loader2 className="h-4 w-4 animate-spin text-blue-500" />
-              <span className="text-sm text-blue-800">Processing your video...</span>
+              <Progress value={uploadState.progress} className="h-2" />
             </div>
           )}
           
           {/* Error message */}
-          {uploadProgress.error && (
+          {(uploadState.error || validationError) && (
             <div className="p-3 bg-red-50 border border-red-200 rounded-md flex items-center gap-2">
               <AlertTriangle className="h-4 w-4 text-red-500" />
-              <span className="text-sm text-red-800">{uploadProgress.error}</span>
+              <span className="text-sm text-red-800">{uploadState.error || validationError}</span>
+            </div>
+          )}
+          
+          {/* Upload complete message */}
+          {uploadState.isComplete && (
+            <div className="p-3 bg-green-50 border border-green-200 rounded-md flex items-center gap-2">
+              <CheckCircle className="h-4 w-4 text-green-500" />
+              <span className="text-sm text-green-800">Upload complete!</span>
             </div>
           )}
           
@@ -398,7 +352,7 @@ export function ErosUploadForm({
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               className="resize-none"
-              disabled={uploadProgress.isUploading || uploadProgress.isProcessing}
+              disabled={uploadState.isUploading}
             />
           </div>
           
@@ -412,7 +366,7 @@ export function ErosUploadForm({
               placeholder="fun, funny, dance"
               value={tags}
               onChange={(e) => setTags(e.target.value)}
-              disabled={uploadProgress.isUploading || uploadProgress.isProcessing}
+              disabled={uploadState.isUploading}
             />
           </div>
         </CardContent>
@@ -422,19 +376,19 @@ export function ErosUploadForm({
             type="button"
             variant="outline"
             onClick={() => navigate(-1)}
-            disabled={uploadProgress.isUploading || uploadProgress.isProcessing}
+            disabled={uploadState.isUploading}
           >
             Cancel
           </Button>
           
           <Button
             type="submit"
-            disabled={!selectedFile || uploadProgress.isUploading || uploadProgress.isProcessing}
+            disabled={!selectedFile || uploadState.isUploading}
           >
-            {uploadProgress.isUploading || uploadProgress.isProcessing ? (
+            {uploadState.isUploading ? (
               <>
                 <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                {uploadProgress.isUploading ? "Uploading..." : "Processing..."}
+                Uploading... {uploadState.progress}%
               </>
             ) : (
               <>

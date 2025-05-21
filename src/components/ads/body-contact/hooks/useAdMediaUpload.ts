@@ -1,9 +1,9 @@
 
 import { useRef } from "react";
 import { useSession } from "@supabase/auth-helpers-react";
-import { supabase } from "@/integrations/supabase/client";
 import { validateVideoFormat, getVideoDuration } from "@/utils/videoProcessing";
 import { runFileDiagnostic } from "@/utils/upload/fileUtils";
+import { useMediaUpload } from "@/hooks/useMediaUpload";
 
 interface MediaUploadResult {
   videoUrl: string | null;
@@ -16,6 +16,7 @@ export const useAdMediaUpload = () => {
   // Critical: Use refs instead of state for file objects
   const videoFileRef = useRef<File | null>(null);
   const avatarFileRef = useRef<File | null>(null);
+  const { upload } = useMediaUpload();
 
   const setVideoFile = (file: File | null) => {
     videoFileRef.current = file;
@@ -47,15 +48,6 @@ export const useAdMediaUpload = () => {
           throw new Error("Only raw File instances with data can be uploaded");
         }
         
-        // CRITICAL: Debug file info
-        console.log("FILE DEBUG:", {
-          file: videoFile,
-          isFile: videoFile instanceof File,
-          type: videoFile?.type,
-          size: videoFile?.size,
-          name: videoFile?.name
-        });
-        
         // Validate file type
         const isValidVideoType = videoFile.type.startsWith("video/");
         if (!isValidVideoType) {
@@ -76,37 +68,15 @@ export const useAdMediaUpload = () => {
           throw new Error("Video is too long. Maximum duration is 2 minutes.");
         }
         
-        const videoFileName = `${session.user.id}/${Date.now()}_video.mp4`;
-        console.log("Uploading video to path:", videoFileName);
+        // Use the centralized upload utility
+        videoUrl = await upload({
+          file: videoFile,
+          mediaType: 'video',
+          contentCategory: 'dating-videos'
+        });
         
-        // CRITICAL: Upload with explicit content type and upsert: true
-        const { error: videoError, data: videoData } = await supabase.storage
-          .from('dating-videos')
-          .upload(videoFileName, videoFile, {
-            cacheControl: '3600',
-            upsert: true,
-            contentType: videoFile.type
-          });
-
-        if (videoError) {
-          console.error("Video upload error:", videoError);
-          throw new Error(`Video upload failed: ${videoError.message}`);
-        }
-
-        console.log("Video upload successful:", videoData);
-        
-        // Get public URL
-        const { data: { publicUrl } } = supabase.storage
-          .from('dating-videos')
-          .getPublicUrl(videoFileName);
-        
-        // CRITICAL: Verify and log the result
-        if (publicUrl) {
-          console.log("✅ Supabase Video URL:", publicUrl);
-          videoUrl = publicUrl;
-        } else {
-          console.error("❌ Supabase Video URL missing");
-          throw new Error("Failed to get public URL for video");
+        if (!videoUrl) {
+          throw new Error("Failed to upload video");
         }
         
         console.log("Generated video URL:", videoUrl);
@@ -125,51 +95,21 @@ export const useAdMediaUpload = () => {
           throw new Error("Only raw File instances with data can be uploaded");
         }
         
-        // CRITICAL: Debug file info
-        console.log("FILE DEBUG:", {
-          file: avatarFile,
-          isFile: avatarFile instanceof File,
-          type: avatarFile?.type,
-          size: avatarFile?.size,
-          name: avatarFile?.name
-        });
-        
         // Validate file type
         const isValidImageType = avatarFile.type.startsWith("image/");
         if (!isValidImageType) {
           throw new Error(`Invalid file type: ${avatarFile.type}. Only images are allowed for avatars.`);
         }
         
-        const avatarFileName = `${session.user.id}/${Date.now()}_avatar.jpg`;
+        // Use the centralized upload utility
+        avatarUrl = await upload({
+          file: avatarFile,
+          mediaType: 'image',
+          contentCategory: 'avatars'
+        });
         
-        // CRITICAL: Upload with explicit content type and upsert: true
-        const { error: avatarError, data: avatarData } = await supabase.storage
-          .from('avatars')
-          .upload(avatarFileName, avatarFile, {
-            cacheControl: '3600',
-            upsert: true,
-            contentType: avatarFile.type
-          });
-
-        if (avatarError) {
-          console.error("Avatar upload error:", avatarError);
-          throw new Error(`Avatar upload failed: ${avatarError.message}`);
-        }
-
-        console.log("Avatar upload successful:", avatarData);
-        
-        // Get public URL
-        const { data: { publicUrl } } = supabase.storage
-          .from('avatars')
-          .getPublicUrl(avatarFileName);
-        
-        // CRITICAL: Verify and log the result
-        if (publicUrl) {
-          console.log("✅ Supabase Avatar URL:", publicUrl);
-          avatarUrl = publicUrl;
-        } else {
-          console.error("❌ Supabase Avatar URL missing");
-          throw new Error("Failed to get public URL for avatar");
+        if (!avatarUrl) {
+          throw new Error("Failed to upload avatar");
         }
         
         console.log("Generated avatar URL:", avatarUrl);

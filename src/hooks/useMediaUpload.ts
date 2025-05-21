@@ -13,6 +13,14 @@ interface UploadState {
   isComplete: boolean;
 }
 
+interface UploadParams {
+  file: File;
+  mediaType?: string;
+  contentCategory?: string;
+  maxSizeInMB?: number;
+  onProgress?: (progress: number) => void;
+}
+
 export const useMediaUpload = (defaultOptions?: UploadOptions) => {
   const [uploadState, setUploadState] = useState<UploadState>({
     isUploading: false,
@@ -40,7 +48,7 @@ export const useMediaUpload = (defaultOptions?: UploadOptions) => {
     return validateFileForUpload(file, maxSizeInMB);
   }, [defaultOptions?.maxSizeInMB]);
   
-  // Upload media file
+  // Upload media file - original method kept for backward compatibility
   const uploadMedia = useCallback(async (
     file: File,
     options?: UploadOptions
@@ -158,9 +166,48 @@ export const useMediaUpload = (defaultOptions?: UploadOptions) => {
     }
   }, [session, toast, validateFile, resetUploadState, defaultOptions]);
   
+  // New simplified upload method with consistent interface
+  const upload = useCallback(async ({ 
+    file, 
+    mediaType, 
+    contentCategory,
+    maxSizeInMB,
+    onProgress 
+  }: UploadParams) => {
+    if (!file) {
+      toast({
+        title: "Upload Error",
+        description: "No file provided",
+        variant: "destructive"
+      });
+      return null;
+    }
+    
+    // Determine media type from file if not provided
+    const detectedMediaType = mediaType || 
+      (file.type.startsWith('image/') ? 'image' : 
+       file.type.startsWith('video/') ? 'video' :
+       file.type.startsWith('audio/') ? 'audio' : 'document');
+    
+    const bucket = contentCategory || detectedMediaType + 's';
+    
+    const result = await uploadMedia(file, {
+      contentCategory: bucket,
+      maxSizeInMB,
+      onProgress
+    });
+    
+    if (result.success && result.url) {
+      return result.url;
+    }
+    
+    return null;
+  }, [uploadMedia, toast]);
+  
   return {
     uploadState,
-    uploadMedia,
+    uploadMedia, // Keep for backward compatibility
+    upload,      // New simplified method
     resetUploadState,
     validateFile
   };
