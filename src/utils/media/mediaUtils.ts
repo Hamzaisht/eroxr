@@ -179,3 +179,75 @@ export const determineMediaType = (url: string): MediaType => {
   // Default
   return MediaType.UNKNOWN;
 };
+
+/**
+ * Create a unique file path for storage
+ */
+export const createUniqueFilePath = (userId: string, file: File): string => {
+  const timestamp = Date.now();
+  const uuid = Math.random().toString(36).substring(2, 10);
+  const fileExt = file.name.split('.').pop() || '';
+  const safeFileName = file.name
+    .split('.')[0]
+    .replace(/[^a-zA-Z0-9]/g, '_')
+    .substring(0, 20);
+
+  return `${userId}/${timestamp}-${uuid}-${safeFileName}.${fileExt}`.toLowerCase();
+};
+
+/**
+ * Format file size to human-readable format 
+ */
+export const formatFileSize = (bytes: number): string => {
+  if (bytes === 0) return '0 Bytes';
+  
+  const k = 1024;
+  const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+};
+
+// Alias for determineMediaType to fix naming issue
+export const detectMediaType = determineMediaType;
+
+/**
+ * Upload a file to storage
+ */
+export const uploadFileToStorage = async (
+  bucket: string,
+  filePath: string,
+  file: File
+) => {
+  // Import supabase client dynamically to avoid circular dependency
+  const { supabase } = await import('@/integrations/supabase/client');
+  
+  try {
+    const { data, error } = await supabase.storage
+      .from(bucket)
+      .upload(filePath, file, {
+        cacheControl: '3600',
+        upsert: false
+      });
+
+    if (error) {
+      console.error('Storage upload error:', error);
+      return { success: false, error: error.message };
+    }
+
+    const { data: publicUrlData } = supabase.storage
+      .from(bucket)
+      .getPublicUrl(filePath);
+
+    return { 
+      success: true, 
+      url: publicUrlData.publicUrl,
+      path: data.path
+    };
+  } catch (error: any) {
+    return { 
+      success: false, 
+      error: error.message || 'Unknown upload error' 
+    };
+  }
+};

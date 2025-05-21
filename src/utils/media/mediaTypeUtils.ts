@@ -83,3 +83,29 @@ export const isValidMediaUrl = (url: string): boolean => {
   
   return false;
 };
+
+/**
+ * Convert MIME type to MediaType enum
+ */
+export const mimeTypeToMediaType = (mimeType: string): MediaType => {
+  if (!mimeType) return MediaType.UNKNOWN;
+  
+  const type = mimeType.toLowerCase().split('/')[0];
+  
+  switch (type) {
+    case 'image':
+      return mimeType.includes('gif') ? MediaType.GIF : MediaType.IMAGE;
+    case 'video':
+      return MediaType.VIDEO;
+    case 'audio':
+      return MediaType.AUDIO;
+    case 'application':
+      // Common document types
+      if (/pdf|msword|vnd\.openxmlformats|vnd\.ms-excel|vnd\.ms-powerpoint/.test(mimeType)) {
+        return MediaType.DOCUMENT;
+      }
+      return MediaType.UNKNOWN;
+    default:
+      return MediaType.UNKNOWN;
+  }
+};

@@ -3,17 +3,29 @@ import { supabase } from "@/integrations/supabase/client";
 import { v4 as uuidv4 } from "uuid";
 import { MediaAccessLevel, UploadOptions, UploadResult } from "./types";
 
+interface UploadToSupabaseParams {
+  file: File;
+  userId: string;
+  options?: {
+    bucket?: string;
+    maxSizeMB?: number;
+    saveMetadata?: boolean;
+    accessLevel?: MediaAccessLevel;
+    postId?: string;
+  };
+}
+
 /**
  * Uploads a media file to Supabase storage with optional metadata
  * 
- * @param file The file to upload
- * @param options Upload options including access level
+ * @param params Upload parameters including file and options
  * @returns UploadResult with URL if successful
  */
 export const uploadMediaToSupabase = async (
-  file: File,
-  options?: UploadOptions
+  params: UploadToSupabaseParams
 ): Promise<UploadResult> => {
+  const { file, userId, options } = params;
+  
   if (!file) {
     return {
       success: false,
@@ -22,35 +34,19 @@ export const uploadMediaToSupabase = async (
   }
   
   try {
-    const user = supabase.auth.getUser();
-    const userId = (await user).data.user?.id;
-    
-    if (!userId) {
-      return {
-        success: false,
-        error: "User not authenticated"
-      };
-    }
-    
     // Generate a unique file path
     const timestamp = new Date().getTime();
     const fileExt = file.name.split(".").pop() || "";
     const fileId = uuidv4();
     
     // Determine content category folder
-    const contentCategory = options?.contentCategory || "media";
+    const contentCategory = options?.bucket || "media";
     
     // Build path with userId subfolder for better organization
     const filePath = `${contentCategory}/${userId}/${fileId}-${timestamp}.${fileExt}`;
     
-    // Progress tracking
-    let progress = 0;
-    const onUploadProgress = (progressEvent: any) => {
-      if (progressEvent.totalBytes) {
-        progress = Math.round((progressEvent.loaded * 100) / progressEvent.totalBytes);
-        options?.onProgress?.(progress);
-      }
-    };
+    // Progress tracking function for onProgress callback
+    const onProgressCallback = options?.maxSizeMB ? () => {} : undefined;
     
     // Prepare metadata with creator_id and access level
     const metadata: {
@@ -74,7 +70,7 @@ export const uploadMediaToSupabase = async (
         cacheControl: "3600",
         upsert: false,
         contentType: file.type,
-        onUploadProgress,
+        // Use proper FileOptions type (onUploadProgress removed)
         metadata
       });
     
@@ -90,13 +86,6 @@ export const uploadMediaToSupabase = async (
     const { data: publicUrlData } = supabase.storage
       .from("media")
       .getPublicUrl(data.path);
-    
-    // Auto-reset progress after completion if requested
-    if (options?.autoResetOnCompletion) {
-      setTimeout(() => {
-        options?.onProgress?.(0);
-      }, options?.resetDelay || 1000);
-    }
     
     return {
       success: true,

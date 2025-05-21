@@ -5,7 +5,8 @@ import { Button } from "@/components/ui/button";
 import { cn } from '@/lib/utils';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { MediaType } from '@/types/media';
-import { calculateAspectRatioDimensions, getPlayableMediaUrl } from '@/utils/media/types';
+import { calculateAspectRatioDimensions } from '@/utils/media/mediaUtils';
+import { getPlayableMediaUrl } from '@/utils/media/urlUtils';
 
 interface MediaContentProps {
   mediaUrl?: string;
@@ -174,7 +175,9 @@ export function MediaContent({
     }
   };
   
-  const { width, height } = calculateAspectRatioDimensions(mediaType === MediaType.VIDEO ? 16/9 : 4/3, 1200, 800);
+  // Calculate aspect ratio dimensions for modal display
+  const aspectRatio = mediaType === MediaType.VIDEO ? 16/9 : 4/3;
+  const { width, height } = calculateAspectRatioDimensions(1200, 1200/aspectRatio, 1200, 800);
   
   return (
     <>

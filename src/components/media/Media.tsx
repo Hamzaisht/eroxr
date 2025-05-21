@@ -1,7 +1,8 @@
+
 import { useState, useEffect, forwardRef } from 'react';
 import { AlertCircle, Loader2 } from 'lucide-react';
 import { MediaType } from '@/utils/media/types';
-import { detectMediaType } from '@/utils/media/mediaUtils';
+import { determineMediaType } from '@/utils/media/mediaUtils';
 import { extractMediaUrl } from '@/utils/media/mediaUtils';
 import { getPlayableMediaUrl } from '@/utils/media/urlUtils';
 
@@ -66,7 +67,7 @@ export const Media = forwardRef<HTMLVideoElement | HTMLImageElement, MediaProps>
         setUrl(playableUrl);
 
         // Determine media type
-        const typeString = detectMediaType(source);
+        const typeString = determineMediaType(source);
         // Convert string type to MediaType enum
         setMediaType(typeString);
       } catch (err) {

@@ -1,7 +1,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { 
-  detectMediaType, 
+  determineMediaType,
   extractMediaUrl
 } from '@/utils/media/mediaUtils';
 import { MediaType } from '@/utils/media/types';
@@ -76,7 +76,7 @@ export const NewMediaRenderer = ({
       }
       
       // Determine if the media is a video
-      const mediaType = detectMediaType(item);
+      const mediaType = determineMediaType(item);
       
       // If the mediaType is indeterminate, check content type from URL
       if (mediaType === MediaType.UNKNOWN) {

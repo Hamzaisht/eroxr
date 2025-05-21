@@ -9,7 +9,7 @@ import {
   createUniqueFilePath,
   uploadFileToStorage,
   formatFileSize
-} from '@/utils/media';
+} from '@/utils/media/mediaUtils';
 
 interface MediaUploadManagerProps {
   bucketName?: string;

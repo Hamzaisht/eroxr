@@ -2,7 +2,7 @@
 import { useState, useEffect, forwardRef } from 'react';
 import { AlertCircle, Loader2 } from 'lucide-react';
 import { MediaType } from '@/types/media';
-import { detectMediaType, extractMediaUrl } from '@/utils/media/mediaUtils';
+import { determineMediaType, extractMediaUrl } from '@/utils/media/mediaUtils';
 
 type MediaProps = {
   source: any;
@@ -64,7 +64,7 @@ export const Media = forwardRef<HTMLVideoElement | HTMLImageElement, MediaProps>
         setUrl(extractedUrl);
 
         // Determine media type - using the extracted URL string for type detection
-        const type = detectMediaType(extractedUrl);
+        const type = determineMediaType(extractedUrl);
         setMediaType(type);
       } catch (err) {
         console.error('Error processing media:', err);
