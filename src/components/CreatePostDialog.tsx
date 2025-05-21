@@ -11,16 +11,19 @@ import { useMediaUpload } from "@/hooks/useMediaUpload";
 export interface CreatePostDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  selectedFiles?: FileList | null;
+  onFileSelect?: (files: FileList | null) => void;
   onPostCreated?: () => void;
 }
 
 export function CreatePostDialog({
   open,
   onOpenChange,
+  selectedFiles,
+  onFileSelect,
   onPostCreated
 }: CreatePostDialogProps) {
   const [caption, setCaption] = useState("");
-  const [selectedFiles, setSelectedFiles] = useState<FileList | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [uploadedUrls, setUploadedUrls] = useState<string[]>([]);
   const { toast } = useToast();
@@ -28,8 +31,16 @@ export function CreatePostDialog({
   const { upload, uploadState } = useMediaUpload();
 
   const handleFileSelect = (files: FileList | null) => {
-    setSelectedFiles(files);
+    if (onFileSelect) {
+      onFileSelect(files);
+    } else {
+      setSelectedFiles(files);
+    }
   };
+
+  // Use either the prop or local state
+  const [localSelectedFiles, setSelectedFiles] = useState<FileList | null>(null);
+  const effectiveFiles = selectedFiles || localSelectedFiles;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -43,7 +54,7 @@ export function CreatePostDialog({
       return;
     }
 
-    if (!caption && (!selectedFiles || selectedFiles.length === 0)) {
+    if (!caption && (!effectiveFiles || effectiveFiles.length === 0)) {
       toast({
         title: "Empty post",
         description: "Please add some content or media to your post",
@@ -57,8 +68,8 @@ export function CreatePostDialog({
 
     try {
       // Upload all selected files
-      if (selectedFiles && selectedFiles.length > 0) {
-        const uploadPromises = Array.from(selectedFiles).map(async (file) => {
+      if (effectiveFiles && effectiveFiles.length > 0) {
+        const uploadPromises = Array.from(effectiveFiles).map(async (file) => {
           const mediaType = file.type.startsWith('image/') 
             ? 'image' 
             : file.type.startsWith('video/') 
@@ -96,6 +107,9 @@ export function CreatePostDialog({
       // Reset form fields
       setCaption("");
       setSelectedFiles(null);
+      if (onFileSelect) {
+        onFileSelect(null);
+      }
       setUploadedUrls([]);
       onOpenChange(false);
       
@@ -145,11 +159,11 @@ export function CreatePostDialog({
             />
             
             {/* Display selected file info */}
-            {selectedFiles && selectedFiles.length > 0 && (
+            {effectiveFiles && effectiveFiles.length > 0 && (
               <div className="mt-2">
                 <p className="text-sm font-medium">Selected files:</p>
                 <ul className="text-sm">
-                  {Array.from(selectedFiles).map((file, index) => (
+                  {Array.from(effectiveFiles).map((file, index) => (
                     <li key={index}>
                       {file.name} ({(file.size / (1024 * 1024)).toFixed(2)}MB)
                     </li>

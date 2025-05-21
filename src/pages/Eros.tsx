@@ -219,9 +219,7 @@ export default function Eros() {
       />
 
       <div className="fixed bottom-24 right-6 md:bottom-6 z-50">
-        <div onClick={handleUploadClick}>
-          <UploadShortButton onUploadClick={handleUploadClick} />
-        </div>
+        <UploadShortButton onUploadClick={handleUploadClick} />
       </div>
       
       <div className="fixed bottom-24 left-6 md:bottom-6 z-50">

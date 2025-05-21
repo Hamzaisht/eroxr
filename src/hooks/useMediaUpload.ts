@@ -197,8 +197,11 @@ export const useMediaUpload = (defaultOptions?: UploadOptions) => {
       onProgress
     });
     
-    if (result.success && result.url) {
-      return result.url;
+    // Fix for TypeScript error - check for publicUrl or url property
+    if (result.success) {
+      const url = 'publicUrl' in result ? result.publicUrl : 
+                  'url' in result ? result.url : null;
+      return url;
     }
     
     return null;
