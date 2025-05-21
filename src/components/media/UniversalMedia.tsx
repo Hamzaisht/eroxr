@@ -71,9 +71,13 @@ export const UniversalMedia = forwardRef(({
     // If we've exceeded max retries, display toast error
     if (newRetryCount >= maxRetries) {
       toast({
-        title: "Error loading media",
-        description: "Failed to load media content after multiple attempts",
+        title: "Media failed to load",
+        description: "Please try again later",
         variant: "destructive",
+        action: {
+          label: "Retry",
+          onClick: () => window.location.reload()
+        }
       });
     }
     
