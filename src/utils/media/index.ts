@@ -1,6 +1,5 @@
 
 // Re-export all media utilities from the various files
-export * from './types';
 export * from './mediaUtils';
 export * from './mediaTypeUtils';
 export * from './urlUtils';
@@ -8,8 +7,8 @@ export * from './generateVideoThumbnail';
 export * from './mediaOrchestrator';
 export * from './uploadUtils';
 
-// Explicit re-exports to ensure compatibility
-export { 
+// Explicit type re-exports with proper 'export type' syntax
+export type { 
   MediaType, 
   MediaAccessLevel,
   AvailabilityStatus,
@@ -21,14 +20,13 @@ export {
 
 export { 
   determineMediaType,
-  detectMediaType, 
   extractMediaUrl, 
-  createUniqueFilePath,
   normalizeMediaSource,
   uploadFileToStorage,
   calculateAspectRatioDimensions,
   getPlayableMediaUrl,
-  formatFileSize
+  formatFileSize,
+  createUniqueFilePath
 } from './mediaUtils';
 
 export { 
@@ -36,17 +34,16 @@ export {
   isVideoType, 
   isAudioType,
   isDocumentType,
-  mimeTypeToMediaType,
   getFileExtension,
-  isValidMediaUrl as isValidUrl
+  mimeTypeToMediaType
 } from './mediaTypeUtils';
 
 export {
   isVideoUrl,
   isImageUrl,
   isAudioUrl,
-  isValidUrl,
-  getPlayableMediaUrl as getMediaUrl,
+  // Rename this export to avoid the duplicate
+  isValidUrl as isValidMediaUrl,
   getOptimizedImageUrl
 } from './urlUtils';
 
