@@ -2,47 +2,45 @@
 import { MediaType } from './types';
 
 /**
- * Check if the given type is an image type
+ * Check if a media type is an image
  */
-export function isImageType(type: string): boolean {
-  return type === MediaType.IMAGE || 
-         type === 'image' || 
-         (typeof type === 'string' && type.startsWith('image/'));
-}
+export const isImageType = (type: MediaType): boolean => {
+  return type === MediaType.IMAGE || type === MediaType.GIF;
+};
 
 /**
- * Check if the given type is a video type
+ * Check if a media type is a video
  */
-export function isVideoType(type: string): boolean {
-  return type === MediaType.VIDEO || 
-         type === 'video' || 
-         (typeof type === 'string' && type.startsWith('video/'));
-}
+export const isVideoType = (type: MediaType): boolean => {
+  return type === MediaType.VIDEO;
+};
 
 /**
- * Check if the given type is an audio type
+ * Check if a media type is audio
  */
-export function isAudioType(type: string): boolean {
-  return type === MediaType.AUDIO || 
-         type === 'audio' || 
-         (typeof type === 'string' && type.startsWith('audio/'));
-}
+export const isAudioType = (type: MediaType): boolean => {
+  return type === MediaType.AUDIO;
+};
 
 /**
- * Convert a MIME type to a MediaType enum
+ * Convert MIME type to MediaType
  */
-export function mimeTypeToMediaType(mimeType: string): MediaType {
-  if (!mimeType) return MediaType.UNKNOWN;
-  
+export const mimeTypeToMediaType = (mimeType: string): MediaType => {
   if (mimeType.startsWith('image/')) {
-    return MediaType.IMAGE;
-  } else if (mimeType.startsWith('video/')) {
+    return mimeType.includes('gif') ? MediaType.GIF : MediaType.IMAGE;
+  }
+  
+  if (mimeType.startsWith('video/')) {
     return MediaType.VIDEO;
-  } else if (mimeType.startsWith('audio/')) {
+  }
+  
+  if (mimeType.startsWith('audio/')) {
     return MediaType.AUDIO;
-  } else if (mimeType.startsWith('application/') || mimeType.startsWith('text/')) {
+  }
+  
+  if (mimeType.startsWith('application/')) {
     return MediaType.DOCUMENT;
   }
   
   return MediaType.UNKNOWN;
-}
+};

@@ -1,51 +1,25 @@
 
-// Define media types
 export enum MediaType {
-  IMAGE = "image",
-  VIDEO = "video",
-  AUDIO = "audio",
-  DOCUMENT = "document",
-  GIF = "gif",
-  UNKNOWN = "unknown"
+  IMAGE = 'image',
+  VIDEO = 'video',
+  AUDIO = 'audio',
+  DOCUMENT = 'document',
+  GIF = 'gif',
+  UNKNOWN = 'unknown',
 }
 
-// Updated AvailabilityStatus enum with uppercase constants 
-// to match how it's being accessed in the components
-export enum AvailabilityStatus {
-  ONLINE = "online",
-  AWAY = "away",
-  BUSY = "busy",
-  INVISIBLE = "invisible",
-  OFFLINE = "offline",
-  
-  // Also include these for compatibility
-  AVAILABLE = "available",
-  PROCESSING = "processing",
-  FAILED = "failed",
-  REMOVED = "removed",
-  RESTRICTED = "restricted"
-}
-
-// Base MediaSource interface
 export interface MediaSource {
-  // Standard properties
   url: string;
-  type: MediaType | string;
-  
-  // Optional standard properties
-  creator_id?: string;
-  contentCategory?: string;
-  thumbnail_url?: string;
-  poster?: string;
+  type: MediaType;
   thumbnail?: string;
-  
-  // Legacy properties (for backward compatibility)
-  media_url?: string | string[];
-  video_url?: string;
-  media_urls?: string[];
-  video_urls?: string[];
-  media_type?: MediaType | string;
+  poster?: string;
+  duration?: number; 
+  width?: number;
+  height?: number;
+  watermark?: boolean;
+  creator_id?: string;
   content_type?: string;
+  media_url?: string | string[];
 }
 
 export interface MediaOptions {
@@ -55,53 +29,17 @@ export interface MediaOptions {
   muted?: boolean;
   loop?: boolean;
   poster?: string;
-  showWatermark?: boolean;
-  showCloseButton?: boolean;
-  creatorId?: string;
-  onClose?: () => void;
   onClick?: () => void;
   onLoad?: () => void;
-  onError?: (error: any) => void;
+  onError?: (error?: any) => void;
   onEnded?: () => void;
   onTimeUpdate?: (currentTime: number, duration: number) => void;
 }
 
-export interface UploadResult {
-  success: boolean;
-  url?: string;
-  error?: string;
-  fileSize?: number;
-  fileType?: string;
-  metadata?: Record<string, any>;
-}
-
 export interface UploadOptions {
   maxSizeInMB?: number;
-  allowedTypes?: string[];
-  folderPath?: string;
-  bucket?: string;
-  metadata?: Record<string, any>;
-  onProgress?: (progress: number) => void;
   contentCategory?: string;
+  onProgress?: (progress: number) => void;
   autoResetOnCompletion?: boolean;
   resetDelay?: number;
-}
-
-// Add utility function for aspect ratio calculations
-export function calculateAspectRatioDimensions(aspectRatio: number, maxWidth: number, maxHeight: number) {
-  let width = maxWidth;
-  let height = width / aspectRatio;
-  
-  if (height > maxHeight) {
-    height = maxHeight;
-    width = height * aspectRatio;
-  }
-  
-  return { width, height };
-}
-
-// Add utility function for playable media URLs
-export function getPlayableMediaUrl(url: string): string {
-  // This can be expanded with more logic if needed
-  return url;
 }

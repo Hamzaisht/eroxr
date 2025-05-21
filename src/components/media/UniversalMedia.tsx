@@ -1,24 +1,14 @@
 
 import { forwardRef, Ref, useMemo, useState } from 'react';
 import { MediaRenderer } from './MediaRenderer';
-import { MediaType } from '@/types/media';
+import { MediaSource, MediaType, MediaOptions } from '@/utils/media/types';
 import { normalizeMediaSource } from '@/utils/media/mediaUtils';
 import { useToast } from "@/hooks/use-toast";
 
-interface UniversalMediaProps {
-  item: any;
-  className?: string;
-  autoPlay?: boolean;
-  controls?: boolean;
-  muted?: boolean;
-  loop?: boolean;
-  poster?: string;
+interface UniversalMediaProps extends MediaOptions {
+  item: any; // Accepting various formats for backward compatibility
   showWatermark?: boolean;
-  onClick?: () => void;
-  onLoad?: () => void;
-  onError?: (error?: any) => void;
-  onEnded?: () => void;
-  onTimeUpdate?: (currentTime: number, duration: number) => void;
+  objectFit?: 'cover' | 'contain' | 'fill' | 'none' | 'scale-down';
   alt?: string;
   maxRetries?: number;
 }
@@ -37,6 +27,7 @@ export const UniversalMedia = forwardRef(({
   onError,
   onEnded,
   onTimeUpdate,
+  objectFit = 'cover',
   alt = "Media content",
   maxRetries = 2
 }: UniversalMediaProps, ref: Ref<HTMLVideoElement | HTMLImageElement>) => {

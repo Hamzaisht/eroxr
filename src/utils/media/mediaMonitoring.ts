@@ -1,51 +1,55 @@
 
+import { MediaType } from './types';
+
+interface MediaError {
+  url: string;
+  type: string;
+  retryCount: number;
+  mediaType: string;
+  component: string;
+  timestamp: number;
+}
+
+let mediaErrorLog: MediaError[] = [];
+
 /**
- * Report media errors for monitoring and analytics
- * 
- * @param url The URL of the media that failed
- * @param errorType Type of error that occurred
- * @param retryCount Number of times retry was attempted
- * @param mediaType Type of media (image, video, etc)
- * @param component Component where the error occurred
+ * Report a media error for monitoring
  */
-export function reportMediaError(
+export const reportMediaError = (
   url: string,
-  errorType: 'load_failure' | 'playback_error' | 'network_error' | 'timeout' | 'other',
-  retryCount: number,
-  mediaType: string,
-  component: string
-): void {
-  // Log the error for local debugging
-  console.error('Media Error Report:', {
+  type: string,
+  retryCount: number = 0,
+  mediaType: string = 'unknown',
+  component: string = 'unknown'
+): void => {
+  const error: MediaError = {
     url,
-    errorType,
+    type,
     retryCount,
     mediaType,
     component,
-    timestamp: new Date().toISOString(),
-  });
-
-  // In a production app, this would send data to an analytics service
-  // For now, we'll just log it to the console
-}
+    timestamp: Date.now()
+  };
+  
+  console.error(`Media error: ${type} - URL: ${url}`, error);
+  mediaErrorLog.push(error);
+  
+  // Prevent log from growing too large
+  if (mediaErrorLog.length > 100) {
+    mediaErrorLog = mediaErrorLog.slice(-50);
+  }
+};
 
 /**
- * Track media playback events for analytics
+ * Get all logged media errors
  */
-export function trackMediaPlayback(
-  mediaId: string,
-  action: 'play' | 'pause' | 'seek' | 'complete',
-  position: number,
-  duration: number
-): void {
-  // Log the playback event
-  console.log('Media Playback Event:', {
-    mediaId,
-    action,
-    position,
-    duration,
-    timestamp: new Date().toISOString(),
-  });
-  
-  // In a production app, this would send data to an analytics service
-}
+export const getMediaErrorLog = (): MediaError[] => {
+  return mediaErrorLog;
+};
+
+/**
+ * Clear the media error log
+ */
+export const clearMediaErrorLog = (): void => {
+  mediaErrorLog = [];
+};

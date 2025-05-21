@@ -1,12 +1,14 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { MediaSource, MediaType } from '@/types/media';
+import { MediaSource, MediaType } from './types';
+import { v4 as uuidv4 } from 'uuid';
 
 /**
  * Creates a unique file path for storage based on user ID and file
  */
 export const createUniqueFilePath = (userId: string, file: File | string): string => {
   const timestamp = Date.now();
+  const uuid = uuidv4().substring(0, 8);
   let fileExt = 'jpg'; // Default extension
   
   if (typeof file === 'object' && file instanceof File) {
@@ -19,7 +21,7 @@ export const createUniqueFilePath = (userId: string, file: File | string): strin
     }
   }
   
-  return `${userId}/${timestamp}-${Math.random().toString(36).substring(2, 9)}.${fileExt}`;
+  return `${userId}/${timestamp}-${uuid}.${fileExt}`;
 };
 
 /**
@@ -46,7 +48,8 @@ export const uploadFileToStorage = async (
       .from(bucket)
       .upload(filePath, fileToUpload, {
         cacheControl: '3600',
-        upsert: false
+        upsert: false,
+        contentType: typeof file === 'object' ? file.type : 'application/octet-stream'
       });
 
     if (error) {
