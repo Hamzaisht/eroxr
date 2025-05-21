@@ -1,15 +1,11 @@
-interface MediaErrorData {
-  url: string;
-  errorType: string;
-  attemptCount: number;
-  mediaType: string;
-  componentName: string;
-  timestamp: number;
-  userAgent: string;
-}
-
 /**
- * Report media error for tracking
+ * Track media errors for monitoring
+ * 
+ * @param url The media URL that failed to load
+ * @param errorType The type of error that occurred
+ * @param attemptCount Number of attempts made to load the media
+ * @param mediaType The type of media (image, video, etc.)
+ * @param componentName The component where the error occurred
  */
 export function reportMediaError(
   url: string,
@@ -25,52 +21,25 @@ export function reportMediaError(
     componentName
   });
   
-  // Create error report
-  const errorData: MediaErrorData = {
-    url,
-    errorType,
-    attemptCount,
+  // This function can be expanded to:
+  // 1. Send errors to an analytics service
+  // 2. Log to a database for tracking
+  // 3. Send to monitoring system
+  // 4. Trigger alerts for repeated failures
+}
+
+/**
+ * Monitor media performance metrics
+ */
+export function trackMediaPerformance(
+  url: string,
+  loadTime: number,
+  mediaType: string,
+  success: boolean
+): void {
+  console.info(`Media performance: ${url}`, {
+    loadTime,
     mediaType,
-    componentName,
-    timestamp: Date.now(),
-    userAgent: navigator.userAgent
-  };
-  
-  // Store errors for analytics
-  const storedErrors = JSON.parse(localStorage.getItem('media_errors') || '[]');
-  storedErrors.push(errorData);
-  
-  // Keep only the most recent 50 errors
-  while (storedErrors.length > 50) {
-    storedErrors.shift();
-  }
-  
-  // Save back to storage
-  localStorage.setItem('media_errors', JSON.stringify(storedErrors));
-  
-  // You could also send this to an analytics endpoint or error tracking service
-}
-
-/**
- * Get all recorded media errors
- */
-export function getMediaErrorLogs(): MediaErrorData[] {
-  return JSON.parse(localStorage.getItem('media_errors') || '[]');
-}
-
-/**
- * Clear media error logs
- */
-export function clearMediaErrorLogs(): void {
-  localStorage.removeItem('media_errors');
-}
-
-/**
- * Track successful media loads
- */
-export function trackMediaSuccess(url: string, mediaType: string, loadTimeMs: number): void {
-  // Can be used for performance monitoring
-  console.log(`Media loaded successfully: ${url} (${mediaType}) in ${loadTimeMs}ms`);
-  
-  // This could be sent to an analytics service to track success rates
+    success
+  });
 }

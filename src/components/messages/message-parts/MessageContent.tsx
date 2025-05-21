@@ -7,6 +7,7 @@ import { Message } from "@/integrations/supabase/types/messages";
 import { UniversalMedia } from "@/components/media/UniversalMedia";
 import { MediaType } from "@/utils/media/types";
 import { AlertCircle, RefreshCw } from "lucide-react";
+import { reportMediaError } from "@/utils/media/mediaMonitoring";
 
 interface MessageContentProps {
   message: Message;
@@ -17,6 +18,7 @@ interface MessageContentProps {
 export const MessageContent = ({ message, isCurrentUser, onMediaClick }: MessageContentProps) => {
   const [loadErrors, setLoadErrors] = useState<Record<string, boolean>>({});
   const [isLoading, setIsLoading] = useState(true);
+  const [retries, setRetries] = useState<Record<string, number>>({});
 
   const handleImageLoad = useCallback((url: string) => {
     setLoadErrors(prev => ({ ...prev, [url]: false }));
@@ -27,15 +29,47 @@ export const MessageContent = ({ message, isCurrentUser, onMediaClick }: Message
     console.error(`Image load error: ${url}`);
     setLoadErrors(prev => ({ ...prev, [url]: true }));
     setIsLoading(false);
-  }, []);
+    
+    // Track retry count
+    const currentRetries = retries[url] || 0;
+    const newRetryCount = currentRetries + 1;
+    setRetries(prev => ({ ...prev, [url]: newRetryCount }));
+    
+    if (newRetryCount >= 2) {
+      reportMediaError(
+        url,
+        'load_failure',
+        newRetryCount,
+        'image',
+        'MessageContent'
+      );
+    }
+  }, [retries]);
 
   const handleRetry = (url: string) => {
     setLoadErrors(prev => ({ ...prev, [url]: false }));
     setIsLoading(true);
   };
 
-  const onError = () => {
-    console.error("Media error");
+  // Generic media error handler
+  const onError = (url: string) => {
+    console.error("Media error for:", url);
+    
+    // Track retry count for this URL
+    const currentRetries = retries[url] || 0;
+    const newRetryCount = currentRetries + 1;
+    setRetries(prev => ({ ...prev, [url]: newRetryCount }));
+    
+    if (newRetryCount >= 2) {
+      const isVideo = url.match(/\.(mp4|webm|mov|avi)$/i) ? true : false;
+      reportMediaError(
+        url,
+        'load_failure',
+        newRetryCount,
+        isVideo ? 'video' : 'image',
+        'MessageContent'
+      );
+    }
   };
 
   // Render image attachments
@@ -78,6 +112,7 @@ export const MessageContent = ({ message, isCurrentUser, onMediaClick }: Message
             onClick={() => onMediaClick?.(url)}
             onLoad={() => handleImageLoad(url)}
             onError={() => handleImageError(url)}
+            maxRetries={2}
           />
         )}
       </div>
@@ -100,7 +135,8 @@ export const MessageContent = ({ message, isCurrentUser, onMediaClick }: Message
           }}
           className="w-full max-h-60 object-cover"
           showWatermark={false}
-          onError={onError}
+          onError={() => onError(url)}
+          maxRetries={2}
         />
       </div>
     ));
@@ -123,7 +159,8 @@ export const MessageContent = ({ message, isCurrentUser, onMediaClick }: Message
           className="w-full"
           showWatermark={false}
           controls={true}
-          onError={onError}
+          onError={() => onError(url)}
+          maxRetries={2}
         />
       </div>
     ));
@@ -142,7 +179,8 @@ export const MessageContent = ({ message, isCurrentUser, onMediaClick }: Message
           }}
           className="w-full max-h-60 object-cover"
           showWatermark={false}
-          onError={onError}
+          onError={() => onError(message.video_url)}
+          maxRetries={2}
         />
       </div>
     );

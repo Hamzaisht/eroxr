@@ -1,12 +1,12 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { 
   detectMediaType, 
   extractMediaUrl
 } from '@/utils/media/mediaUtils';
 import { MediaType } from '@/utils/media/types';
 import { getPlayableMediaUrl } from '@/utils/media/urlUtils';
-import { AlertCircle, Loader2 } from 'lucide-react';
+import { AlertCircle, Loader2, RefreshCw } from 'lucide-react';
 
 interface NewMediaRendererProps {
   item: any; // The data item containing the media URL(s)
@@ -40,9 +40,10 @@ export const NewMediaRenderer = ({
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [retryCount, setRetryCount] = useState(0);
+  const MAX_RETRIES = 2;
 
-  useEffect(() => {
-    // Reset state when item changes
+  const processMediaItem = useCallback(() => {
+    // Reset state
     setIsLoading(true);
     setError(null);
     
@@ -92,7 +93,11 @@ export const NewMediaRenderer = ({
       setError(error.message || "Failed to process media");
       setIsLoading(false);
     }
-  }, [item, retryCount]);
+  }, [item]);
+
+  useEffect(() => {
+    processMediaItem();
+  }, [item, processMediaItem, retryCount]);
 
   const handleLoad = () => {
     setIsLoading(false);
@@ -104,10 +109,15 @@ export const NewMediaRenderer = ({
     console.error(`Media load error for ${isVideo ? 'video' : 'image'}: ${url}`);
     setIsLoading(false);
     setError(`Failed to load ${isVideo ? 'video' : 'image'}`);
+    if (retryCount < MAX_RETRIES) {
+      console.log(`Retry attempt ${retryCount + 1} for ${url}`);
+    }
     if (onError) onError();
   };
 
   const handleRetry = () => {
+    if (retryCount >= MAX_RETRIES) return;
+    
     setIsLoading(true);
     setError(null);
     setRetryCount(prev => prev + 1);
@@ -128,12 +138,15 @@ export const NewMediaRenderer = ({
       <div className={`flex flex-col items-center justify-center bg-gray-100 dark:bg-gray-800 text-gray-500 ${className}`}>
         <AlertCircle className="h-8 w-8 mb-2" />
         <p className="text-sm">{error || "Media unavailable"}</p>
-        <button
-          onClick={() => setRetryCount(prev => prev + 1)}
-          className="mt-2 px-3 py-1 bg-gray-200 dark:bg-gray-700 rounded-md text-sm"
-        >
-          Retry
-        </button>
+        {retryCount < MAX_RETRIES && (
+          <button
+            onClick={handleRetry}
+            className="mt-2 px-3 py-1 bg-gray-200 dark:bg-gray-700 rounded-md text-sm flex items-center gap-2"
+          >
+            <RefreshCw className="h-3 w-3" /> 
+            Retry
+          </button>
+        )}
       </div>
     );
   }
@@ -142,6 +155,7 @@ export const NewMediaRenderer = ({
   if (isVideo) {
     return (
       <video
+        key={`video-${retryCount}`} // Key helps force remount on retry
         src={url}
         className={className}
         autoPlay={autoPlay}
@@ -150,14 +164,8 @@ export const NewMediaRenderer = ({
         loop={loop}
         poster={poster}
         onClick={onClick}
-        onLoadedData={() => {
-          setIsLoading(false);
-          if (onLoad) onLoad();
-        }}
-        onError={() => {
-          setError('Failed to load video');
-          if (onError) onError();
-        }}
+        onLoadedData={handleLoad}
+        onError={handleError}
         onEnded={onEnded}
         playsInline
       />
@@ -167,17 +175,12 @@ export const NewMediaRenderer = ({
   // Render image element
   return (
     <img
+      key={`img-${retryCount}`} // Key helps force remount on retry
       src={url}
       className={className}
       onClick={onClick}
-      onLoad={() => {
-        setIsLoading(false);
-        if (onLoad) onLoad();
-      }}
-      onError={() => {
-        setError('Failed to load image');
-        if (onError) onError();
-      }}
+      onLoad={handleLoad}
+      onError={handleError}
       alt="Media content"
     />
   );

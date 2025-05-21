@@ -2,9 +2,8 @@
 import { useState, useCallback } from 'react';
 import { useSession } from '@supabase/auth-helpers-react';
 import { useToast } from '@/hooks/use-toast';
-import { createUniqueFilePath } from '@/utils/media/mediaUtils';
 import { validateFileForUpload } from '@/utils/upload/validators';
-import { uploadFileToStorage } from '@/utils/upload/storageService';
+import { uploadMediaToSupabase } from '@/utils/media/uploadUtils';
 import { UploadOptions } from '@/utils/media/types';
 
 interface UploadState {
@@ -103,14 +102,16 @@ export const useMediaUpload = (defaultOptions?: UploadOptions) => {
         });
       }, 200);
       
-      // Map generic categories to actual bucket names
-      let bucketName = finalOptions?.contentCategory || 'media';
-      
-      // Generate unique file path
-      const filePath = createUniqueFilePath(session.user.id, file);
-      
-      // Upload to storage
-      const result = await uploadFileToStorage(bucketName, filePath, file);
+      // Use the centralized upload utility
+      const result = await uploadMediaToSupabase({
+        file,
+        userId: session.user.id,
+        options: {
+          bucket: finalOptions?.contentCategory || 'media',
+          maxSizeMB: finalOptions?.maxSizeInMB,
+          saveMetadata: true
+        }
+      });
       
       // Clear progress interval
       clearInterval(progressInterval);
