@@ -6,7 +6,6 @@ import { useToast } from "@/hooks/use-toast";
 import { useInView } from "react-intersection-observer";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { StickyHeader } from "./StickyHeader";
-import { FloatingActionButton } from "./FloatingActionButton";
 import { useContentTabs } from "./DatingContent/useContentTabs";
 import { AllAdsTab } from "./DatingContentTabs/AllAdsTab";
 import { TrendingAdsTab } from "./DatingContentTabs/TrendingAdsTab";
@@ -50,7 +49,7 @@ export function DatingContentController({
     }));
   };
 
-  // Mobile FAB actions
+  // Handle events for profile interactions (moved from FloatingActionButton)
   const handleLike = () => {
     if (!selectedAd || !session) {
       toast({
@@ -133,15 +132,7 @@ export function DatingContentController({
           onFilterToggle={onFilterToggle}
         />
       )}
-      {/* Floating action button for mobile */}
-      {isMobile && (
-        <FloatingActionButton 
-          showFilters={onFilterToggle}
-          onLike={handleLike}
-          onSkip={handleSkip}
-          onMessage={handleMessage}
-        />
-      )}
+      
       {/* Tabs */}
       <Tabs 
         value={activeTab} 
