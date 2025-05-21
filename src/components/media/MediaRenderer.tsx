@@ -19,7 +19,6 @@ interface MediaRendererProps {
   onError?: (error?: any) => void;
   onEnded?: () => void;
   onTimeUpdate?: (currentTime: number, duration: number) => void;
-  ref?: React.Ref<HTMLVideoElement | HTMLImageElement>;
   allowRetry?: boolean;
   maxRetries?: number;
 }
@@ -139,7 +138,7 @@ export const MediaRenderer = forwardRef<
             className={className}
             onClick={onClick}
             onLoad={handleLoad}
-            onError={handleError}
+            onError={(e) => handleError(e)}
             ref={ref as React.Ref<HTMLImageElement>}
             alt=""
           />
@@ -164,7 +163,7 @@ export const MediaRenderer = forwardRef<
             poster={poster}
             onClick={onClick}
             onLoadedData={handleLoad}
-            onError={handleError}
+            onError={(e) => handleError(e)}
             onEnded={onEnded}
             onTimeUpdate={handleTimeUpdate}
             ref={ref as React.Ref<HTMLVideoElement>}
@@ -189,7 +188,7 @@ export const MediaRenderer = forwardRef<
             muted={muted}
             loop={loop}
             onLoadedData={handleLoad}
-            onError={handleError}
+            onError={(e) => handleError(e)}
             onEnded={onEnded}
           />
         )}

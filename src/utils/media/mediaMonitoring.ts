@@ -1,55 +1,76 @@
-
-import { MediaType } from './types';
-
-interface MediaError {
+interface MediaErrorData {
   url: string;
-  type: string;
-  retryCount: number;
+  errorType: string;
+  attemptCount: number;
   mediaType: string;
-  component: string;
+  componentName: string;
   timestamp: number;
+  userAgent: string;
 }
 
-let mediaErrorLog: MediaError[] = [];
-
 /**
- * Report a media error for monitoring
+ * Report media error for tracking
  */
-export const reportMediaError = (
+export function reportMediaError(
   url: string,
-  type: string,
-  retryCount: number = 0,
+  errorType: 'load_failure' | 'timeout' | 'format_error' | 'access_denied',
+  attemptCount: number = 1,
   mediaType: string = 'unknown',
-  component: string = 'unknown'
-): void => {
-  const error: MediaError = {
-    url,
-    type,
-    retryCount,
+  componentName: string = 'unknown'
+): void {
+  // Log error for debugging
+  console.error(`Media error [${errorType}]: ${url}`, {
+    attemptCount,
     mediaType,
-    component,
-    timestamp: Date.now()
+    componentName
+  });
+  
+  // Create error report
+  const errorData: MediaErrorData = {
+    url,
+    errorType,
+    attemptCount,
+    mediaType,
+    componentName,
+    timestamp: Date.now(),
+    userAgent: navigator.userAgent
   };
   
-  console.error(`Media error: ${type} - URL: ${url}`, error);
-  mediaErrorLog.push(error);
+  // Store errors for analytics
+  const storedErrors = JSON.parse(localStorage.getItem('media_errors') || '[]');
+  storedErrors.push(errorData);
   
-  // Prevent log from growing too large
-  if (mediaErrorLog.length > 100) {
-    mediaErrorLog = mediaErrorLog.slice(-50);
+  // Keep only the most recent 50 errors
+  while (storedErrors.length > 50) {
+    storedErrors.shift();
   }
-};
+  
+  // Save back to storage
+  localStorage.setItem('media_errors', JSON.stringify(storedErrors));
+  
+  // You could also send this to an analytics endpoint or error tracking service
+}
 
 /**
- * Get all logged media errors
+ * Get all recorded media errors
  */
-export const getMediaErrorLog = (): MediaError[] => {
-  return mediaErrorLog;
-};
+export function getMediaErrorLogs(): MediaErrorData[] {
+  return JSON.parse(localStorage.getItem('media_errors') || '[]');
+}
 
 /**
- * Clear the media error log
+ * Clear media error logs
  */
-export const clearMediaErrorLog = (): void => {
-  mediaErrorLog = [];
-};
+export function clearMediaErrorLogs(): void {
+  localStorage.removeItem('media_errors');
+}
+
+/**
+ * Track successful media loads
+ */
+export function trackMediaSuccess(url: string, mediaType: string, loadTimeMs: number): void {
+  // Can be used for performance monitoring
+  console.log(`Media loaded successfully: ${url} (${mediaType}) in ${loadTimeMs}ms`);
+  
+  // This could be sent to an analytics service to track success rates
+}

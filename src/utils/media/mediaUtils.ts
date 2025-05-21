@@ -1,6 +1,7 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { MediaSource, MediaType } from './types';
+import { detectMediaTypeFromUrl } from './mediaTypeUtils';
 import { v4 as uuidv4 } from 'uuid';
 
 /**
@@ -99,7 +100,7 @@ export const normalizeMediaSource = (source: string | MediaSource | any): MediaS
   if (typeof source === 'string') {
     // Determine media type from URL
     const url = source;
-    const type = detectMediaType(url);
+    const type = detectMediaTypeFromUrl(url);
     
     return { url, type };
   }
@@ -108,7 +109,7 @@ export const normalizeMediaSource = (source: string | MediaSource | any): MediaS
     if (!('url' in source) && ('media_url' in source || 'video_url' in source)) {
       // Convert alternative URL formats to standard format
       const url = extractMediaUrl(source);
-      const type = source.type || detectMediaType(url);
+      const type = source.type || detectMediaTypeFromUrl(url);
       
       return {
         ...source,
@@ -156,32 +157,31 @@ export const normalizeMediaSource = (source: string | MediaSource | any): MediaS
 
 /**
  * Detect media type from URL or content type
+ * @deprecated Use detectMediaTypeFromUrl from mediaTypeUtils instead
  */
 export const detectMediaType = (url: string): MediaType => {
-  const extension = url.split('.').pop()?.toLowerCase() || '';
-  
-  if (['jpg', 'jpeg', 'png', 'webp', 'svg'].includes(extension)) {
-    return MediaType.IMAGE;
-  }
-  
-  if (['gif'].includes(extension)) {
-    return MediaType.GIF;
-  }
-  
-  if (['mp4', 'webm', 'ogg', 'mov'].includes(extension)) {
-    return MediaType.VIDEO;
-  }
-  
-  if (['mp3', 'wav', 'ogg', 'aac'].includes(extension)) {
-    return MediaType.AUDIO;
-  }
-  
-  if (['pdf', 'doc', 'docx', 'txt'].includes(extension)) {
-    return MediaType.DOCUMENT;
-  }
-  
-  return MediaType.UNKNOWN;
+  return detectMediaTypeFromUrl(url);
 };
 
-// Alias for backward compatibility
-export const determineMediaType = detectMediaType;
+/**
+ * Create a cache-busting URL for media
+ */
+export const createCacheBustingUrl = (url: string): string => {
+  if (!url) return '';
+  
+  const separator = url.includes('?') ? '&' : '?';
+  return `${url}${separator}_cb=${Date.now()}`;
+};
+
+/**
+ * Convert file size in bytes to human-readable format
+ */
+export const formatFileSize = (bytes: number): string => {
+  if (bytes === 0) return '0 Bytes';
+  
+  const k = 1024;
+  const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+};
