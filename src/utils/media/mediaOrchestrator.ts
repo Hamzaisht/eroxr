@@ -1,3 +1,4 @@
+
 import { MediaSource, MediaAccessLevel } from './types';
 import { extractMediaUrl } from './mediaUtils';
 
@@ -28,6 +29,9 @@ export const validateMediaUrl = (url?: string): boolean => {
   
   return false;
 };
+
+// Re-export with the old name for backward compatibility
+export const isValidMediaUrl = validateMediaUrl;
 
 /**
  * Process media source to determine if access is allowed
