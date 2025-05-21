@@ -15,7 +15,6 @@ export {
   createUniqueFilePath,
   normalizeMediaSource,
   uploadFileToStorage,
-  isValidMediaUrl
 } from './mediaUtils';
 export { 
   isImageType, 
@@ -35,3 +34,6 @@ export {
   generateVideoThumbnail,
   generateThumbnailFromUrl
 } from './generateVideoThumbnail';
+export {
+  isValidMediaUrl
+} from './mediaOrchestrator';
