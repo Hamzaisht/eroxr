@@ -1,4 +1,3 @@
-
 import { MediaType } from './types';
 import { extractMediaUrl } from './mediaUtils';
 
@@ -37,7 +36,10 @@ interface MediaCacheEntry {
  * Helper function to validate media URLs
  */
 export function isValidMediaUrl(url: string | undefined | null): boolean {
-  return typeof url === 'string' && url.startsWith('https://') && !url.includes('undefined');
+  return typeof url === 'string' && 
+         url.startsWith('https://') && 
+         !url.includes('undefined') && 
+         !url.includes('null');
 }
 
 /**
