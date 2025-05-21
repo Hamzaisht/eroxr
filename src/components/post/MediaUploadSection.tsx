@@ -1,3 +1,4 @@
+
 import { useState, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { ImagePlus, Loader2 } from "lucide-react";
@@ -31,7 +32,8 @@ export const MediaUploadSection = ({ onMediaSelect, isUploading }: MediaUploadSe
         }
 
         // Upload to Supabase storage
-        const path = createUniqueFilePath(session.user.id, fileToUpload);
+        // Fix: Use createUniqueFilePath with only the file parameter
+        const path = createUniqueFilePath(fileToUpload);
         const result = await uploadFileToStorage('posts', path, fileToUpload);
         
         if (!result.success || !result.url) {

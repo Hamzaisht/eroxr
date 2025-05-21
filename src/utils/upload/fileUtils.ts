@@ -112,6 +112,8 @@ export function revokeFilePreview(url: string): void {
 
 /**
  * Create a unique filename for upload
+ * Updated to accept one parameter (file) instead of two (userId, file)
+ * The userId parameter can be added to the path inside the function if needed
  */
 export function createUniqueFilePath(file: File): string {
   const timestamp = Date.now();
@@ -121,4 +123,18 @@ export function createUniqueFilePath(file: File): string {
   // Organize by file type
   const contentType = file.type.split('/')[0];
   return `${contentType}s/${timestamp}-${uniqueId}.${fileExt}`;
+}
+
+/**
+ * Create a unique file path with user ID
+ * This is an alternative function that accepts both userId and file
+ */
+export function createUserFilePath(userId: string, file: File): string {
+  const timestamp = Date.now();
+  const uniqueId = uuidv4().substring(0, 8);
+  const fileExt = file.name.split('.').pop() || '';
+  
+  // Organize by user ID and file type
+  const contentType = file.type.split('/')[0];
+  return `${userId}/${contentType}s/${timestamp}-${uniqueId}.${fileExt}`;
 }

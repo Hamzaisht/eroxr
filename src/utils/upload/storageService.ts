@@ -76,6 +76,8 @@ export const uploadFileToStorage = async (
 
 /**
  * Create a unique file path for upload
+ * 
+ * Note: This uses the createUserFilePath approach with both userId and file
  */
 export const createUniqueFilePath = (userId: string, file: File): string => {
   const timestamp = Date.now();

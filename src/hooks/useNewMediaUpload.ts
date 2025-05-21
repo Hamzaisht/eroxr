@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useSession } from '@supabase/auth-helpers-react';
 import { createUniqueFilePath } from '@/utils/upload/fileUtils';
@@ -77,8 +78,8 @@ export const useNewMediaUpload = () => {
       // Get bucket name or use default
       const bucket = options.bucket || 'media';
       
-      // Create a unique path for the file
-      const path = createUniqueFilePath(session.user.id, file);
+      // Fix: Use createUniqueFilePath with only the file parameter
+      const path = createUniqueFilePath(file);
       
       // Upload the file - this returns UploadResult, not just a URL string
       const result = await uploadFileToStorage(bucket, path, file);
