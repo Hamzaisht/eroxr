@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { useToast } from "@/hooks/use-toast";
 import { runFileDiagnostic } from "@/utils/upload/fileUtils";
+import { validateFileForUpload } from "@/utils/upload/validators";
 
 export const useStorageService = () => {
   const [isUploading, setIsUploading] = useState(false);
@@ -22,13 +23,16 @@ export const useStorageService = () => {
 
     try {
       // Validate file
-      const diagnostic = runFileDiagnostic(file, {
-        maxSizeMB: 100,
-        allowedTypes: ["image/*", "video/*"],
-      });
-
+      const diagnostic = runFileDiagnostic(file);
+      
       if (!diagnostic.valid) {
         return { success: false, error: diagnostic.message };
+      }
+
+      // Validate file size and type
+      const validation = validateFileForUpload(file);
+      if (!validation.valid) {
+        return { success: false, error: validation.error };
       }
 
       // Generate a unique file name

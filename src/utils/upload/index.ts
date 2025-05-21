@@ -12,6 +12,7 @@ export {
 // Export file utilities
 export {
   runFileDiagnostic,
+  formatFileSize,
   createFilePreview,
   revokeFilePreview,
   createUniqueFilePath

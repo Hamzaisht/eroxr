@@ -2,10 +2,10 @@
 /**
  * Comprehensive file diagnostics for debugging upload issues
  */
-export const runFileDiagnostic = (file: File | null): boolean => {
+export const runFileDiagnostic = (file: File | null, options?: { maxSizeMB?: number, allowedTypes?: string[] }): { valid: boolean, message?: string } => {
   if (!file) {
     console.error("❌ File diagnostic: No file provided");
-    return false;
+    return { valid: false, message: "No file provided" };
   }
   
   console.log("📋 File diagnostic report:", {
@@ -20,20 +20,45 @@ export const runFileDiagnostic = (file: File | null): boolean => {
   // Check for common issues
   if (!(file instanceof File)) {
     console.error("❌ File diagnostic: Not a File instance");
-    return false;
+    return { valid: false, message: "Not a File instance" };
   }
   
   if (file.size === 0) {
     console.error("❌ File diagnostic: Zero byte file");
-    return false;
+    return { valid: false, message: "Zero byte file" };
   }
   
   if (!file.type) {
     console.warn("⚠️ File diagnostic: Missing MIME type");
   }
   
+  // Check size if maxSizeMB is provided
+  if (options?.maxSizeMB) {
+    const maxSizeBytes = options.maxSizeMB * 1024 * 1024;
+    if (file.size > maxSizeBytes) {
+      console.error(`❌ File diagnostic: File too large (${formatFileSize(file.size)} > ${options.maxSizeMB}MB)`);
+      return { valid: false, message: `File exceeds maximum size of ${options.maxSizeMB}MB` };
+    }
+  }
+  
+  // Check type if allowedTypes is provided
+  if (options?.allowedTypes && options.allowedTypes.length > 0) {
+    const isValidType = options.allowedTypes.some(type => {
+      if (type.endsWith('/*')) {
+        const category = type.split('/')[0];
+        return file.type.startsWith(category + '/');
+      }
+      return file.type === type;
+    });
+    
+    if (!isValidType) {
+      console.error(`❌ File diagnostic: Invalid file type ${file.type}`);
+      return { valid: false, message: `Invalid file type: ${file.type}` };
+    }
+  }
+  
   console.log("✅ File diagnostic: Valid file object");
-  return true;
+  return { valid: true };
 };
 
 export const formatFileSize = (bytes: number): string => {
@@ -44,33 +69,51 @@ export const formatFileSize = (bytes: number): string => {
 };
 
 /**
- * Validates a file before upload
+ * Create a unique file path for upload
  */
-export const validateFileForUpload = (file: File, maxSizeInMB: number = 100): { valid: boolean, error?: string } => {
-  // Run diagnostic first
-  runFileDiagnostic(file);
+export const createUniqueFilePath = (userId: string, file: File): string => {
+  const timestamp = Date.now();
+  const fileExt = file.name.split('.').pop() || '';
+  const contentType = file.type.split('/')[0] || 'misc';
   
-  // Basic validation
-  if (!file) {
-    return { valid: false, error: "No file provided" };
-  }
+  // Sanitize filename to remove special characters
+  const sanitizedName = file.name
+    .replace(/\.[^/.]+$/, "") // Remove extension
+    .replace(/[^a-zA-Z0-9]/g, "-") // Replace special chars with dash
+    .substring(0, 20); // Limit length
   
-  if (!(file instanceof File)) {
-    return { valid: false, error: "Invalid file object" };
-  }
-  
-  if (file.size === 0) {
-    return { valid: false, error: "File has zero size" };
-  }
-  
-  // Size validation
-  const maxSizeInBytes = maxSizeInMB * 1024 * 1024;
-  if (file.size > maxSizeInBytes) {
-    return { 
-      valid: false, 
-      error: `File exceeds maximum size (${formatFileSize(file.size)} > ${maxSizeInMB}MB)` 
+  // Organize by user ID and file type
+  return `${userId}/${contentType}s/${timestamp}-${sanitizedName}.${fileExt}`;
+};
+
+/**
+ * Create a data URL preview for a file
+ */
+export const createFilePreview = (file: File): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    
+    reader.onload = () => {
+      if (typeof reader.result === 'string') {
+        resolve(reader.result);
+      } else {
+        reject(new Error('Failed to generate preview'));
+      }
     };
+    
+    reader.onerror = () => {
+      reject(reader.error || new Error('Failed to read file'));
+    };
+    
+    reader.readAsDataURL(file);
+  });
+};
+
+/**
+ * Revoke a data URL to prevent memory leaks
+ */
+export const revokeFilePreview = (dataUrl: string): void => {
+  if (dataUrl.startsWith('blob:')) {
+    URL.revokeObjectURL(dataUrl);
   }
-  
-  return { valid: true };
 };

@@ -78,7 +78,7 @@ export const useStorageService = () => {
   ): Promise<{ path?: string; error?: string }> => {
     setIsUploading(true);
     try {
-      const result = await uploadFile(videoFile, "shorts", userId);
+      const result = await uploadFile(videoFile, "media", userId);
       
       if (!result.success) {
         return { error: result.error };

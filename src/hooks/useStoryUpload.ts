@@ -1,114 +1,178 @@
 
-import { useState } from "react";
-import { useSession, useSupabaseClient } from "@supabase/auth-helpers-react";
-import { useNavigate } from "react-router-dom";
-import { v4 as uuidv4 } from "uuid";
-import { createFilePreview, revokeFilePreview, runFileDiagnostic } from "@/utils/upload/fileUtils";
-import { useToast } from "./use-toast";
+import { useState, useEffect, useRef } from "react";
+import { useSession } from "@supabase/auth-helpers-react";
+import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { validateFileForUpload } from "@/utils/upload/validators";
+import { createFilePreview, revokeFilePreview } from "@/utils/upload/fileUtils";
+import { uploadMediaToSupabase } from "@/utils/media/uploadUtils";
+import { MediaAccessLevel } from "@/utils/media/types";
 
-export function useStoryUpload() {
-  const [uploading, setUploading] = useState(false);
-  const [videoPreview, setVideoPreview] = useState<string | null>(null);
-  const [videoFile, setVideoFile] = useState<File | null>(null);
-  const supabase = useSupabaseClient();
+export const useStoryUpload = () => {
+  const [mediaFile, setMediaFile] = useState<File | null>(null);
+  const [mediaPreview, setMediaPreview] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const session = useSession();
-  const navigate = useNavigate();
   const { toast } = useToast();
-  
-  const handleVideoSelect = async (file: File) => {
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleFileChange = async (file: File) => {
+    if (!file) return;
+    
     // Validate file
-    const diagnostic = runFileDiagnostic(file);
-    if (!diagnostic.valid) {
+    const validation = validateFileForUpload(file, 50);
+    if (!validation.valid) {
       toast({
         title: "Invalid file",
-        description: diagnostic.message || "Invalid video file",
-        variant: "destructive",
+        description: validation.error || "Please select a valid media file",
+        variant: "destructive"
       });
       return;
     }
-    
-    // Set video file
-    setVideoFile(file);
     
     // Create preview
-    const previewUrl = createFilePreview(file);
-    setVideoPreview(previewUrl);
-  };
-  
-  const clearVideo = () => {
-    if (videoPreview) {
-      revokeFilePreview(videoPreview);
+    try {
+      const preview = await createFilePreview(file);
+      setMediaFile(file);
+      setMediaPreview(preview);
+    } catch (err) {
+      console.error("Error creating preview:", err);
     }
-    setVideoFile(null);
-    setVideoPreview(null);
   };
-  
-  const uploadVideo = async () => {
-    if (!videoFile || !session?.user) {
+
+  const uploadStory = async (): Promise<string | null> => {
+    if (!mediaFile || !session?.user?.id) {
       toast({
-        title: "Missing video or session",
-        description: "Please select a video and ensure you are logged in.",
-        variant: "destructive",
+        title: "Upload error",
+        description: "No file selected or not logged in",
+        variant: "destructive"
       });
-      return;
+      return null;
     }
     
-    setUploading(true);
+    setIsUploading(true);
+    setUploadProgress(10);
     
     try {
-      const videoName = `${uuidv4()}-${videoFile.name}`;
-      
-      // Upload video to Supabase storage
-      const { data, error } = await supabase
-        .storage
-        .from('videos')
-        .upload(videoName, videoFile, {
-          cacheControl: '3600',
-          upsert: false
-        });
-        
-      if (error) {
-        throw error;
-      }
-      
-      // Fixed: Use proper access to data object
-      const storageUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/videos/`;
-      const videoUrl = `${storageUrl}${data.path}`;
-      
-      // Update user profile with video URL
-      const { error: updateError } = await supabase
-        .from('profiles')
-        .update({ video_url: videoUrl })
-        .eq('id', session.user.id);
-        
-      if (updateError) {
-        throw updateError;
-      }
-      
-      toast({
-        title: "Video uploaded",
-        description: "Your video has been uploaded successfully.",
+      // Upload using the centralized utility
+      const result = await uploadMediaToSupabase({
+        file: mediaFile,
+        userId: session.user.id,
+        options: {
+          bucket: 'media',
+          maxSizeMB: 50,
+          accessLevel: MediaAccessLevel.PUBLIC
+        }
       });
       
-      clearVideo();
-      navigate('/profile');
+      setUploadProgress(100);
+      
+      if (!result.success || !result.url) {
+        throw new Error(result.error || "Failed to upload story");
+      }
+      
+      return result.url;
     } catch (error: any) {
-      console.error("Error uploading video:", error);
+      console.error("Story upload error:", error);
       toast({
         title: "Upload failed",
-        description: error.message || "Failed to upload video. Please try again.",
-        variant: "destructive",
+        description: error.message || "Failed to upload story",
+        variant: "destructive"
       });
+      return null;
     } finally {
-      setUploading(false);
+      setIsUploading(false);
     }
   };
-  
-  return {
-    uploading,
-    videoPreview,
-    handleVideoSelect,
-    clearVideo,
-    uploadVideo,
+
+  const publishStory = async (): Promise<boolean> => {
+    if (!session?.user?.id) {
+      toast({
+        title: "Authentication Required",
+        description: "Please sign in to publish your story",
+        variant: "destructive"
+      });
+      return false;
+    }
+    
+    setIsSubmitting(true);
+    
+    try {
+      const mediaUrl = await uploadStory();
+      
+      if (!mediaUrl) {
+        throw new Error("Failed to upload media");
+      }
+      
+      // Determine content type from file
+      const contentType = mediaFile?.type.startsWith('image/') ? 'image' : 'video';
+      
+      // Insert into stories table
+      const { error } = await supabase
+        .from("stories")
+        .insert({
+          creator_id: session.user.id,
+          media_url: mediaUrl,
+          content_type: contentType,
+          is_public: true,
+          expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString() // 24 hours from now
+        });
+      
+      if (error) throw error;
+      
+      toast({
+        title: "Story Published",
+        description: "Your story has been published successfully"
+      });
+      
+      // Reset form
+      resetForm();
+      return true;
+    } catch (error: any) {
+      console.error("Story submission error:", error);
+      toast({
+        title: "Submission Failed",
+        description: error.message || "Failed to publish story",
+        variant: "destructive"
+      });
+      return false;
+    } finally {
+      setIsSubmitting(false);
+    }
   };
-}
+
+  const resetForm = () => {
+    setMediaFile(null);
+    if (mediaPreview) {
+      revokeFilePreview(mediaPreview);
+    }
+    setMediaPreview(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  // Clean up previews when component unmounts
+  useEffect(() => {
+    return () => {
+      if (mediaPreview) {
+        revokeFilePreview(mediaPreview);
+      }
+    };
+  }, [mediaPreview]);
+
+  return {
+    mediaFile,
+    mediaPreview,
+    isUploading,
+    isSubmitting,
+    uploadProgress,
+    fileInputRef,
+    handleFileChange,
+    uploadStory,
+    publishStory,
+    resetForm
+  };
+};

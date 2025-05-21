@@ -1,56 +1,57 @@
 
 import { useState, useEffect } from 'react';
-import { createFilePreview, revokeFilePreview } from '@/utils/upload/fileUtils';
+import { createFilePreview, revokeFilePreview } from "@/utils/upload/fileUtils";
 
 export const useFilePreview = () => {
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const [fileType, setFileType] = useState<'image' | 'video' | 'other' | null>(null);
-
-  // Create a preview URL from a file
-  const createPreview = (file: File | null) => {
-    // Clean up any existing preview URL
-    if (previewUrl) {
-      revokeFilePreview(previewUrl);
-      setPreviewUrl(null);
+  const [preview, setPreview] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  
+  // Generate preview from a file object
+  const generatePreview = async (file: File) => {
+    if (!file) return;
+    
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      // Clean up previous preview if it exists
+      if (preview) {
+        revokeFilePreview(preview);
+      }
+      
+      const dataUrl = await createFilePreview(file);
+      setPreview(dataUrl);
+    } catch (err: any) {
+      console.error('Error generating preview:', err);
+      setError(err.message || 'Failed to generate preview');
+    } finally {
+      setIsLoading(false);
     }
-
-    if (!file) {
-      setFileType(null);
-      return;
-    }
-
-    // Determine file type
-    if (file.type.startsWith('image/')) {
-      setFileType('image');
-    } else if (file.type.startsWith('video/')) {
-      setFileType('video');
-    } else {
-      setFileType('other');
-    }
-
-    // Create a new preview URL
-    const newPreviewUrl = createFilePreview(file);
-    setPreviewUrl(newPreviewUrl);
   };
-
+  
+  // Clear preview and revoke object URL
+  const clearPreview = () => {
+    if (preview) {
+      revokeFilePreview(preview);
+      setPreview(null);
+    }
+  };
+  
   // Clean up on unmount
   useEffect(() => {
     return () => {
-      if (previewUrl) {
-        revokeFilePreview(previewUrl);
+      if (preview) {
+        revokeFilePreview(preview);
       }
     };
-  }, [previewUrl]);
-
+  }, [preview]);
+  
   return {
-    previewUrl,
-    fileType,
-    createPreview,
-    revokePreview: () => {
-      if (previewUrl) {
-        revokeFilePreview(previewUrl);
-        setPreviewUrl(null);
-      }
-    }
+    preview,
+    isLoading,
+    error,
+    generatePreview,
+    clearPreview
   };
 };
