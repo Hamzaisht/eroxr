@@ -1,7 +1,6 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { v4 as uuidv4 } from "uuid";
-import { runFileDiagnostic, formatFileSize } from "./fileUtils";
+import { runFileDiagnostic, formatFileSize, createUniqueFilePath } from "./fileUtils";
 
 interface UploadResult {
   success: boolean;
@@ -74,17 +73,5 @@ export const uploadFileToStorage = async (
   }
 };
 
-/**
- * Create a unique file path for upload
- * 
- * Note: This uses the createUserFilePath approach with both userId and file
- */
-export const createUniqueFilePath = (userId: string, file: File): string => {
-  const timestamp = Date.now();
-  const uniqueId = uuidv4().substring(0, 8);
-  const fileExt = file.name.split('.').pop() || '';
-  
-  // Organize by user ID and file type
-  const contentType = file.type.split('/')[0];
-  return `${userId}/${contentType}s/${timestamp}-${uniqueId}.${fileExt}`;
-};
+// Remove the redundant createUniqueFilePath function from this file
+// as we're importing it from fileUtils.ts instead
