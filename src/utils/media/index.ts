@@ -37,8 +37,7 @@ export {
   isVideoType, 
   isAudioType,
   isDocumentType,
-  getFileExtension,
-  mimeTypeToMediaType
+  getMediaTypeFromFile
 } from './mediaTypeUtils';
 
 // Export functions from urlUtils

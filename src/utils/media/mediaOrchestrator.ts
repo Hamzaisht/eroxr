@@ -1,91 +1,35 @@
-
-import { MediaType, MediaSource, MediaAccessLevel } from './types';
+import { isValidUrl } from './urlUtils';
 
 /**
- * Validates if a media URL is properly formatted
- * @param url URL string to validate
- * @returns boolean
+ * Determines if a URL is a valid media URL
+ * @param url URL to check
+ * @returns Boolean indicating if URL is valid
  */
-export function isValidMediaUrl(url: string | undefined | null): boolean {
+export function isValidMediaUrl(url: string | null | undefined): boolean {
   if (!url) return false;
   
-  try {
-    // Basic URL validation
-    const urlPattern = /^(https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})([/\w .-]*)*\/?$/i;
-    const isValidFormat = urlPattern.test(url);
-    
-    // Check if it's a Supabase storage URL
-    const isSupabaseUrl = url.includes('storage/v1/object');
-    
-    // Handle data URLs (base64)
-    const isDataUrl = url.startsWith('data:');
-    
-    // Handle blob URLs
-    const isBlobUrl = url.startsWith('blob:');
-    
-    return isValidFormat || isSupabaseUrl || isDataUrl || isBlobUrl;
-  } catch (error) {
-    console.error("Error validating media URL:", error);
-    return false;
-  }
+  return isValidUrl(url);
 }
 
-// Export validateMediaUrl as an alias of isValidMediaUrl for backwards compatibility
+/**
+ * Alias for isValidMediaUrl for backward compatibility
+ */
 export const validateMediaUrl = isValidMediaUrl;
 
 /**
- * Get a playable media URL
- * @param url Input URL
- * @returns Processed URL ready for playback
+ * Check if a user can access a specific piece of media
+ * @param params Access parameters
+ * @returns Boolean indicating if user can access media
  */
-export function getPlayableMediaUrl(url: string): string {
-  if (!url) return '';
-  
-  try {
-    // Return the original URL if it's valid
-    if (isValidMediaUrl(url)) {
-      // If it's a storage URL and doesn't have cache busting, add it
-      if (url.includes('storage/v1/object') && !url.includes('?t=')) {
-        const separator = url.includes('?') ? '&' : '?';
-        const timestamp = Date.now();
-        return `${url}${separator}t=${timestamp}`;
-      }
-      return url;
-    }
-    
-    // Log invalid URLs but return them anyway to allow the player to handle errors
-    console.warn('Invalid media URL format:', url);
-    return url;
-  } catch (error) {
-    console.error("Error processing media URL:", error);
-    return url;
-  }
-}
-
-/**
- * Checks if a media item is accessible to the current user
- * @param mediaItem Media item to check
- * @returns boolean
- */
-export async function canAccessMedia(mediaItem: MediaSource): Promise<boolean> {
-  if (!mediaItem?.url) return false;
-  
-  // Public media is always accessible
-  if (!mediaItem.access_level || mediaItem.access_level === 'public') {
-    return true;
-  }
-  
-  // For other access levels, we assume that the RLS policies will handle access
-  // and the URL will only be valid if the user has access
-  try {
-    const response = await fetch(mediaItem.url, { 
-      method: 'HEAD',
-      cache: 'no-cache'
-    });
-    
-    return response.ok;
-  } catch (error) {
-    console.error('Media access check failed:', error);
-    return false;
-  }
+export function canAccessMedia(params: { 
+  creatorId?: string | null; 
+  postId?: string | null;
+  accessLevel?: string;
+  userId?: string | null;
+  isPremium?: boolean;
+}): boolean {
+  // This is just a placeholder function - actual implementation would check
+  // if the current user has access to the media based on subscription status,
+  // payment status, etc.
+  return true;
 }

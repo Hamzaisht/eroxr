@@ -12,7 +12,9 @@ export enum MediaAccessLevel {
   PUBLIC = 'public',
   PRIVATE = 'private',
   SUBSCRIBERS = 'subscribers',
+  FOLLOWERS = 'followers',
   PPV = 'ppv',
+  PAID = 'paid',
   INVISIBLE = 'invisible',
 }
 
@@ -22,6 +24,11 @@ export enum AvailabilityStatus {
   ERROR = 'error',
   DELETED = 'deleted',
   EXPIRED = 'expired',
+  ONLINE = 'online',
+  OFFLINE = 'offline',
+  AWAY = 'away',
+  BUSY = 'busy',
+  INVISIBLE = 'invisible',
 }
 
 export interface MediaSource {
