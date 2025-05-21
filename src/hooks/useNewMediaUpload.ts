@@ -78,7 +78,7 @@ export const useNewMediaUpload = () => {
       // Get bucket name or use default
       const bucket = options.bucket || 'media';
       
-      // Fix: Use createUniqueFilePath with only the file parameter
+      // Use createUniqueFilePath with only the file parameter
       const path = createUniqueFilePath(file);
       
       // Upload the file - this returns UploadResult, not just a URL string

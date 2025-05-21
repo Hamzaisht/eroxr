@@ -32,7 +32,7 @@ export const MediaUploadSection = ({ onMediaSelect, isUploading }: MediaUploadSe
         }
 
         // Upload to Supabase storage
-        // Fix: Use createUniqueFilePath with only the file parameter
+        // Use createUniqueFilePath with only the file parameter
         const path = createUniqueFilePath(fileToUpload);
         const result = await uploadFileToStorage('posts', path, fileToUpload);
         

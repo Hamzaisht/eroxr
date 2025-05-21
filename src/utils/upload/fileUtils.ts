@@ -1,3 +1,4 @@
+
 import { v4 as uuidv4 } from 'uuid';
 
 /**
@@ -107,6 +108,63 @@ export function revokeFilePreview(url: string): void {
   if (url && url.startsWith('blob:')) {
     URL.revokeObjectURL(url);
   }
+}
+
+/**
+ * Extract file extension from filename
+ */
+export function extractFileExtension(filename: string): string {
+  return filename.split('.').pop()?.toLowerCase() || '';
+}
+
+/**
+ * Get MIME type from file extension
+ */
+export function getMimeTypeFromExtension(extension: string): string {
+  const mimeTypes: Record<string, string> = {
+    // Images
+    'jpg': 'image/jpeg',
+    'jpeg': 'image/jpeg',
+    'png': 'image/png',
+    'gif': 'image/gif',
+    'webp': 'image/webp',
+    'svg': 'image/svg+xml',
+    'bmp': 'image/bmp',
+    
+    // Videos
+    'mp4': 'video/mp4',
+    'webm': 'video/webm',
+    'mov': 'video/quicktime',
+    'avi': 'video/x-msvideo',
+    'mkv': 'video/x-matroska',
+    'wmv': 'video/x-ms-wmv',
+    
+    // Documents
+    'pdf': 'application/pdf',
+    'doc': 'application/msword',
+    'docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    'txt': 'text/plain',
+  };
+  
+  const ext = extension.toLowerCase().replace('.', '');
+  return mimeTypes[ext] || 'application/octet-stream';
+}
+
+/**
+ * Infer content type from file extension
+ */
+export function inferContentTypeFromExtension(filename: string): string {
+  return getMimeTypeFromExtension(extractFileExtension(filename));
+}
+
+/**
+ * Add cache buster to URL
+ */
+export function addCacheBuster(url: string): string {
+  if (!url) return '';
+  
+  const separator = url.includes('?') ? '&' : '?';
+  return `${url}${separator}_cb=${Date.now()}`;
 }
 
 /**

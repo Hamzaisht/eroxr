@@ -1,5 +1,5 @@
+
 import { supabase } from "@/integrations/supabase/client";
-import { v4 as uuidv4 } from "uuid";
 import { runFileDiagnostic, formatFileSize, createUniqueFilePath } from "./fileUtils";
 
 interface UploadResult {
@@ -11,7 +11,6 @@ interface UploadResult {
 
 /**
  * Centralized file upload utility for Supabase storage
- * Replaces all other upload functions in the app
  * @deprecated Use uploadMediaToSupabase from @/utils/media/uploadUtils instead
  */
 export const uploadFileToStorage = async (
@@ -27,10 +26,11 @@ export const uploadFileToStorage = async (
   }
   
   // Run diagnostic on the file
-  if (!runFileDiagnostic(file)) {
+  const diagnostic = runFileDiagnostic(file);
+  if (!diagnostic.valid) {
     return { 
       success: false, 
-      error: 'Invalid file object' 
+      error: diagnostic.message || 'Invalid file object' 
     };
   }
   
@@ -72,6 +72,3 @@ export const uploadFileToStorage = async (
     };
   }
 };
-
-// Remove the redundant createUniqueFilePath function from this file
-// as we're importing it from fileUtils.ts instead

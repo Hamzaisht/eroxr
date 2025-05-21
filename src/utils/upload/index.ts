@@ -19,8 +19,16 @@ export {
   formatFileSize,
   createFilePreview,
   revokeFilePreview,
-  createUniqueFilePath
+  createUniqueFilePath,
+  createUserFilePath,
+  addCacheBuster,
+  extractFileExtension,
+  getMimeTypeFromExtension,
+  inferContentTypeFromExtension
 } from './fileUtils';
 
 // Export storage service
 export * from './storageService';
+
+// Export file upload service
+export * from './fileUploadService';

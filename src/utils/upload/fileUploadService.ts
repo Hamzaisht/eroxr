@@ -1,41 +1,14 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { createUniqueFilePath, runFileDiagnostic } from "@/utils/upload/fileUtils";
+import { 
+  createUniqueFilePath, 
+  runFileDiagnostic, 
+  addCacheBuster,
+  extractFileExtension,
+  getMimeTypeFromExtension
+} from "@/utils/upload/fileUtils";
 import { validateFileForUpload } from "@/utils/upload/validators";
 import { getSupabaseUrl } from "@/utils/media/supabaseUrlUtils";
-
-/**
- * Get MIME type from file extension
- */
-function getMimeTypeFromExtension(extension: string): string {
-  const mimeTypes: Record<string, string> = {
-    // Images
-    'jpg': 'image/jpeg',
-    'jpeg': 'image/jpeg',
-    'png': 'image/png',
-    'gif': 'image/gif',
-    'webp': 'image/webp',
-    'svg': 'image/svg+xml',
-    'bmp': 'image/bmp',
-    
-    // Videos
-    'mp4': 'video/mp4',
-    'webm': 'video/webm',
-    'mov': 'video/quicktime',
-    'avi': 'video/x-msvideo',
-    'mkv': 'video/x-matroska',
-    'wmv': 'video/x-ms-wmv',
-    
-    // Documents
-    'pdf': 'application/pdf',
-    'doc': 'application/msword',
-    'docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-    'txt': 'text/plain',
-  };
-  
-  const ext = extension.toLowerCase().replace('.', '');
-  return mimeTypes[ext] || 'application/octet-stream';
-}
 
 interface FileUploadOptions {
   contentType?: string;
@@ -49,30 +22,6 @@ interface FileUploadResult {
   path?: string;
   error?: string;
 }
-
-/**
- * Add cache buster to URL
- */
-export const addCacheBuster = (url: string): string => {
-  if (!url) return '';
-  
-  const separator = url.includes('?') ? '&' : '?';
-  return `${url}${separator}_cb=${Date.now()}`;
-};
-
-/**
- * Extract file extension from filename
- */
-export const extractFileExtension = (filename: string): string => {
-  return filename.split('.').pop()?.toLowerCase() || '';
-};
-
-/**
- * Infer content type from file extension
- */
-export const inferContentTypeFromExtension = (filename: string): string => {
-  return getMimeTypeFromExtension(extractFileExtension(filename));
-};
 
 /**
  * Upload a file to Supabase storage
