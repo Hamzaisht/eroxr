@@ -19,6 +19,27 @@ export const SUPPORTED_VIDEO_TYPES = [
 ];
 
 /**
+ * Check if a file is an image
+ */
+export const isImageFile = (file: File): boolean => {
+  return SUPPORTED_IMAGE_TYPES.includes(file.type);
+};
+
+/**
+ * Check if a file is a video
+ */
+export const isVideoFile = (file: File): boolean => {
+  return SUPPORTED_VIDEO_TYPES.includes(file.type);
+};
+
+/**
+ * Get file extension from a file
+ */
+export const getFileExtension = (file: File): string => {
+  return file.name.split('.').pop()?.toLowerCase() || '';
+};
+
+/**
  * Validates a file for upload based on size and type
  */
 export const validateFileForUpload = (

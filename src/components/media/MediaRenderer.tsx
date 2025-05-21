@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, forwardRef } from 'react';
 import { MediaSource, MediaType } from '@/utils/media/types';
 import { isImageType, isVideoType, isAudioType } from '@/utils/media/mediaTypeUtils';
 import { extractMediaUrl } from '@/utils/media/mediaUtils';
@@ -24,7 +24,7 @@ interface MediaRendererProps {
   maxRetries?: number;
 }
 
-export const MediaRenderer: React.FC<MediaRendererProps> = React.forwardRef<
+export const MediaRenderer = forwardRef<
   HTMLVideoElement | HTMLImageElement,
   MediaRendererProps
 >(({

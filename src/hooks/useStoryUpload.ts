@@ -17,7 +17,7 @@ export function useStoryUpload() {
   
   const handleVideoSelect = async (file: File) => {
     // Validate file
-    const diagnostic = runFileDiagnostic(file, { maxSizeMB: 100, allowedTypes: ['video/*'] });
+    const diagnostic = runFileDiagnostic(file);
     if (!diagnostic.valid) {
       toast({
         title: "Invalid file",

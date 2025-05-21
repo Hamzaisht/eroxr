@@ -22,11 +22,8 @@ export const useStorageService = () => {
 
     try {
       // Validate file
-      const diagnostic = runFileDiagnostic(file, {
-        maxSizeMB: 100,
-        allowedTypes: ["image/*", "video/*"],
-      });
-
+      const diagnostic = runFileDiagnostic(file);
+      
       if (!diagnostic.valid) {
         return { success: false, error: diagnostic.message };
       }
