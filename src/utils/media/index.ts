@@ -1,4 +1,5 @@
 
+
 // Re-export all media utilities from the various files
 export * from './mediaUtils';
 export * from './mediaTypeUtils';
@@ -52,6 +53,7 @@ export {
   generateThumbnailFromUrl
 } from './generateVideoThumbnail';
 
+// Export isValidMediaUrl from mediaOrchestrator - removed duplicate
 export {
   isValidMediaUrl
 } from './mediaOrchestrator';
@@ -60,3 +62,4 @@ export {
   uploadMediaToSupabase,
   deleteMediaFromSupabase
 } from './uploadUtils';
+
