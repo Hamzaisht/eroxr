@@ -87,3 +87,35 @@ export const detectMediaTypeFromUrl = (url: string): MediaType => {
   
   return MediaType.UNKNOWN;
 };
+
+/**
+ * Convert MIME type to MediaType
+ */
+export const mimeTypeToMediaType = (mimeType: string): MediaType => {
+  if (!mimeType) return MediaType.UNKNOWN;
+  
+  if (mimeType.startsWith('image/')) {
+    if (mimeType === 'image/gif') {
+      return MediaType.GIF;
+    }
+    return MediaType.IMAGE;
+  }
+  
+  if (mimeType.startsWith('video/')) {
+    return MediaType.VIDEO;
+  }
+  
+  if (mimeType.startsWith('audio/')) {
+    return MediaType.AUDIO;
+  }
+  
+  if (mimeType.startsWith('application/pdf') || 
+      mimeType.startsWith('application/msword') || 
+      mimeType.includes('document') || 
+      mimeType.includes('text/')) {
+    return MediaType.DOCUMENT;
+  }
+  
+  return MediaType.UNKNOWN;
+};
+

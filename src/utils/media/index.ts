@@ -3,6 +3,7 @@
 export * from './types';
 export * from './mediaUtils';
 export * from './mediaTypeUtils';
+export * from './urlUtils';
 
 // Explicitly re-export these items to resolve ambiguity and ensure they're available
 export { MediaType } from './types';
@@ -17,6 +18,14 @@ export {
 export { 
   isImageType, 
   isVideoType, 
-  isAudioType, 
-  mimeTypeToMediaType 
+  isAudioType,
+  mimeTypeToMediaType
 } from './mediaTypeUtils';
+export {
+  isVideoUrl,
+  isImageUrl,
+  isAudioUrl,
+  isValidUrl,
+  getPlayableMediaUrl,
+  getOptimizedImageUrl
+} from './urlUtils';

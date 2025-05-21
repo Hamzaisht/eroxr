@@ -164,6 +164,12 @@ export const detectMediaType = (url: string): MediaType => {
 };
 
 /**
+ * Determine media type from URL or MediaSource object
+ * Alias for detectMediaType for backward compatibility
+ */
+export const determineMediaType = detectMediaType;
+
+/**
  * Create a cache-busting URL for media
  */
 export const createCacheBustingUrl = (url: string): string => {

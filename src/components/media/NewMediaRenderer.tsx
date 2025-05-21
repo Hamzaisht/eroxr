@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { 
-  determineMediaType, 
+  detectMediaType, 
   extractMediaUrl
 } from '@/utils/media/mediaUtils';
 import { MediaType } from '@/utils/media/types';

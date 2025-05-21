@@ -105,3 +105,36 @@ export const createThumbnailUrl = (videoUrl: string): string => {
   
   return videoUrl;
 };
+
+/**
+ * Check if a URL points to a video file
+ */
+export const isVideoUrl = (url: string): boolean => {
+  if (!url) return false;
+  
+  // Check file extension in the URL
+  const extension = url.split('.').pop()?.toLowerCase() || '';
+  return ['mp4', 'webm', 'mov', 'avi', 'mkv'].includes(extension);
+};
+
+/**
+ * Check if a URL points to an image file
+ */
+export const isImageUrl = (url: string): boolean => {
+  if (!url) return false;
+  
+  // Check file extension in the URL
+  const extension = url.split('.').pop()?.toLowerCase() || '';
+  return ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp'].includes(extension);
+};
+
+/**
+ * Check if a URL points to an audio file
+ */
+export const isAudioUrl = (url: string): boolean => {
+  if (!url) return false;
+  
+  // Check file extension in the URL
+  const extension = url.split('.').pop()?.toLowerCase() || '';
+  return ['mp3', 'wav', 'ogg', 'aac', 'm4a'].includes(extension);
+};
