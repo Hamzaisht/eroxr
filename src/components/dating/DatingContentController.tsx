@@ -2,20 +2,28 @@
 import { useState, useEffect } from "react";
 import { useSession } from "@supabase/auth-helpers-react";
 import { useMediaQuery } from "@/hooks/use-mobile";
-import { useToast } from "@/hooks/use-toast";
 import { useInView } from "react-intersection-observer";
-import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { StickyHeader } from "./StickyHeader";
 import { useContentTabs } from "./DatingContent/useContentTabs";
-import { AllAdsTab } from "./DatingContentTabs/AllAdsTab";
-import { TrendingAdsTab } from "./DatingContentTabs/TrendingAdsTab";
-import { PopularAdsTab } from "./DatingContentTabs/PopularAdsTab";
-import { QuickMatchTab } from "./DatingContentTabs/QuickMatchTab";
-import { FavoritesTab } from "./DatingContentTabs/FavoritesTab";
-import { NearbyTab } from "./DatingContentTabs/NearbyTab";
+import { useProfileInteractions } from "./hooks/useProfileInteractions";
+import { useScrollPosition } from "./hooks/useScrollPosition";
+import { DatingContentTabs } from "./DatingContentTabs/TabsContent";
+import { DatingAd } from "@/components/ads/types/dating";
+
+interface DatingContentControllerProps {
+  ads: DatingAd[];
+  canAccessBodyContact: boolean;
+  onAdCreationSuccess: () => void;
+  onTagClick: (tag: string) => void;
+  isLoading?: boolean;
+  userProfile: DatingAd | null;
+  activeTab?: string;
+  onTabChange?: (tab: string) => void;
+  onFilterToggle?: () => void;
+}
 
 export function DatingContentController({ 
-  ads,
+  ads = [],
   canAccessBodyContact,
   onAdCreationSuccess,
   onTagClick,
@@ -24,11 +32,9 @@ export function DatingContentController({
   activeTab = "browse",
   onTabChange,
   onFilterToggle
-}: any) {
+}: DatingContentControllerProps) {
   const session = useSession();
   const isMobile = useMediaQuery("(max-width: 768px)");
-  const { toast } = useToast();
-  const [scrollPosition, setScrollPosition] = useState(0);
   const { ref: tabsRef, inView: tabsInView } = useInView({
     threshold: 0,
     rootMargin: "-50px 0px 0px 0px"
@@ -39,76 +45,23 @@ export function DatingContentController({
     mostViewedAds, trendingAds
   } = useContentTabs(ads);
 
-  // Utility to apply tag click logic on ads (kept for use with All/Trending/Popular tabs)
-  const makeTagClickable = (ads: any) => {
-    if (!ads || !onTagClick) return ads;
-    return ads.map((ad: any) => ({
+  const { handleLike, handleSkip, handleMessage } = useProfileInteractions();
+  const { scrollPosition, restoreScroll } = useScrollPosition();
+
+  // Utility to apply tag click logic on ads
+  const makeTagClickable = (adItems: DatingAd[] = []) => {
+    if (!adItems || !onTagClick) return adItems;
+    return adItems.map((ad) => ({
       ...ad,
       tags: ad.tags?.map((tag: string) => tag) || [],
       onTagClick
     }));
   };
 
-  // Handle events for profile interactions (moved from FloatingActionButton)
-  const handleLike = () => {
-    if (!selectedAd || !session) {
-      toast({
-        title: "Select a profile first",
-        description: "You need to select a profile before you can like it",
-        duration: 2000,
-      });
-      return;
-    }
-    toast({
-      title: "Liked profile",
-      description: `You've liked ${selectedAd.title}`,
-      duration: 2000,
-    });
-  };
-
-  const handleSkip = () => {
-    setSelectedAd(null);
-    toast({
-      title: "Skipped profile",
-      description: "Showing you different profiles",
-      duration: 2000,
-    });
-  };
-
-  const handleMessage = () => {
-    if (!selectedAd || !session) {
-      toast({
-        title: "Select a profile first",
-        description: "You need to select a profile before you can message them",
-        duration: 2000,
-      });
-      return;
-    }
-    toast({
-      title: "Message sent",
-      description: `You've messaged ${selectedAd.title}`,
-      duration: 2000,
-    });
-  };
-
   // Restore scroll
   useEffect(() => {
-    const savedPosition = scrollPosition;
-    const timer = setTimeout(() => {
-      window.scrollTo(0, savedPosition);
-    }, 100);
-
-    return () => clearTimeout(timer);
+    return restoreScroll(scrollPosition);
   }, [viewMode, browseSubTab, scrollPosition, activeTab]);
-
-  // Track scroll
-  useEffect(() => {
-    const handleScroll = () => {
-      setScrollPosition(window.scrollY);
-    };
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
 
   // Floating tabs when scrolled past header
   const [showFloatingTabs, setShowFloatingTabs] = useState(false);
@@ -121,9 +74,14 @@ export function DatingContentController({
     if (onTabChange) onTabChange(value);
   };
 
+  // Handle profile actions with the hook functions
+  const handleProfileLike = () => handleLike(selectedAd);
+  const handleProfileSkip = () => setSelectedAd(handleSkip());
+  const handleProfileMessage = () => handleMessage(selectedAd);
+
   // Render tabs
   return (
-    <div className="flex-1 space-y-6">
+    <div ref={tabsRef} className="flex-1 space-y-6">
       {/* Floating header for sticky tabs/navigation */}
       {showFloatingTabs && (
         <StickyHeader 
@@ -133,65 +91,25 @@ export function DatingContentController({
         />
       )}
       
-      {/* Tabs */}
-      <Tabs 
-        value={activeTab} 
-        onValueChange={onTabChange}
-        className="w-full"
-      >
-        <TabsContent value="browse">
-          <AllAdsTab
-            allAds={ads}
-            isLoading={isLoading}
-            userProfile={userProfile}
-            setSelectedAd={setSelectedAd}
-            selectedAd={selectedAd}
-            session={session}
-            viewMode={viewMode}
-            makeTagClickable={makeTagClickable}
-            onSelectProfile={setSelectedAd}
-            browseSubTab={browseSubTab}
-            setBrowseSubTab={setBrowseSubTab}
-          />
-        </TabsContent>
-        <TabsContent value="trending">
-          <TrendingAdsTab
-            trendingAds={trendingAds}
-            isLoading={isLoading}
-            userProfile={userProfile}
-            viewMode={viewMode}
-            makeTagClickable={makeTagClickable}
-          />
-        </TabsContent>
-        <TabsContent value="popular">
-          <PopularAdsTab
-            mostViewedAds={mostViewedAds}
-            isLoading={isLoading}
-            userProfile={userProfile}
-            viewMode={viewMode}
-            makeTagClickable={makeTagClickable}
-          />
-        </TabsContent>
-        <TabsContent value="quick-match">
-          <QuickMatchTab
-            ads={ads}
-            isLoading={isLoading}
-            userProfile={userProfile}
-            session={session}
-            canAccessBodyContact={canAccessBodyContact}
-            onAdCreationSuccess={onAdCreationSuccess}
-          />
-        </TabsContent>
-        <TabsContent value="favorites">
-          <FavoritesTab
-            session={session}
-            userProfile={userProfile}
-          />
-        </TabsContent>
-        <TabsContent value="nearby">
-          <NearbyTab />
-        </TabsContent>
-      </Tabs>
+      {/* Tabs Content */}
+      <DatingContentTabs
+        activeTab={activeTab}
+        onTabChange={handleTabChange}
+        ads={ads}
+        isLoading={isLoading}
+        userProfile={userProfile}
+        session={session}
+        viewMode={viewMode}
+        makeTagClickable={makeTagClickable}
+        selectedAd={selectedAd}
+        setSelectedAd={setSelectedAd}
+        browseSubTab={browseSubTab}
+        setBrowseSubTab={setBrowseSubTab}
+        mostViewedAds={mostViewedAds || []}
+        trendingAds={trendingAds || []}
+        canAccessBodyContact={canAccessBodyContact}
+        onAdCreationSuccess={onAdCreationSuccess}
+      />
     </div>
   );
 }
