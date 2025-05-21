@@ -57,7 +57,10 @@ export const NewPostMediaUpload: React.FC<NewPostMediaUploadProps> = ({
         throw new Error("Failed to upload media");
       }
       
-      const newMediaUrls = [...mediaUrls, url];
+      // Ensure we're working with a proper string URL
+      const mediaUrl = String(url);
+      const newMediaUrls = [...mediaUrls, mediaUrl];
+      
       setMediaUrls(newMediaUrls);
       onMediaUrlsChange(newMediaUrls);
       setShowUploader(false);
