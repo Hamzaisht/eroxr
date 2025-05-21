@@ -173,7 +173,7 @@ export const useMediaUpload = (defaultOptions?: UploadOptions) => {
     contentCategory,
     maxSizeInMB,
     onProgress 
-  }: UploadParams) => {
+  }: UploadParams): Promise<string | null> => {
     if (!file) {
       toast({
         title: "Upload Error",
@@ -197,11 +197,14 @@ export const useMediaUpload = (defaultOptions?: UploadOptions) => {
       onProgress
     });
     
-    // Fix for TypeScript error - check for publicUrl or url property
+    // Fix the type checking - access publicUrl or url property safely
     if (result.success) {
-      const url = 'publicUrl' in result ? result.publicUrl : 
-                  'url' in result ? result.url : null;
-      return url;
+      if ('publicUrl' in result) {
+        return result.publicUrl as string;
+      }
+      if ('url' in result) {
+        return result.url as string;
+      }
     }
     
     return null;
