@@ -1,187 +1,153 @@
-import { useState, useRef, useEffect } from "react";
-import { useSession } from "@supabase/auth-helpers-react";
-import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
-import { Button } from "@/components/ui/button";
-import { MediaUploader } from "@/components/shared/MediaUploader";
-import { NewMediaRenderer } from "@/components/media/NewMediaRenderer";
-import { Loader2, X } from "lucide-react";
-import { runFileDiagnostic } from "@/utils/upload/fileUtils";
-import { uploadMediaToSupabase } from "@/utils/media/uploadUtils";
-import { MediaAccessLevel } from "@/utils/media/types";
+import { useState, useCallback } from 'react';
+import { useDropzone } from 'react-dropzone';
+import { useSession } from '@supabase/auth-helpers-react';
+import { useRouter } from 'next/router';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { useToast } from '@/hooks/use-toast';
+import { Loader2, Upload, X } from 'lucide-react';
+import { runFileDiagnostic } from '@/utils/upload/fileUtils';
+import { uploadMediaToSupabase } from '@/utils/media/uploadUtils';
+import { MediaAccessLevel } from '@/utils/media/types';
 
-export const NewStoryUploader: React.FC = () => {
-  const [mediaUrl, setMediaUrl] = useState<string | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  
-  // CRITICAL: Use ref for file storage instead of state
-  const fileRef = useRef<File | null>(null);
-  
+const bucket = 'stories';
+
+export default function NewStoryUploader() {
+  const [file, setFile] = useState<File | null>(null);
+  const [description, setDescription] = useState('');
+  const [uploading, setUploading] = useState(false);
   const session = useSession();
+  const router = useRouter();
   const { toast } = useToast();
 
-  const handleMediaUpload = async (file: File) => {
-    if (!file || !session?.user?.id) {
+  const onDrop = useCallback((acceptedFiles: File[]) => {
+    const file = acceptedFiles[0];
+    
+    // CRITICAL: Run file diagnostic
+    runFileDiagnostic(file);
+    
+    setFile(file);
+  }, []);
+  
+  const {getRootProps, getInputProps, isDragActive} = useDropzone({
+    onDrop,
+    accept: 'image/*, video/*'
+  });
+
+  const handleDescriptionChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setDescription(e.target.value);
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!file) {
       toast({
-        title: "Upload Error",
-        description: "Invalid file or not logged in",
-        variant: "destructive"
+        title: 'No file selected',
+        description: 'Please select a file to upload',
+        variant: 'destructive'
       });
       return;
     }
     
-    // Run diagnostic and save to ref
-    runFileDiagnostic(file);
-    fileRef.current = file;
-    
+    if (!session?.user) {
+      toast({
+        title: 'Authentication Required',
+        description: 'Please sign in to upload stories',
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    setUploading(true);
+
     try {
-      // Use centralized upload function
+      // Use centralized upload utility
       const result = await uploadMediaToSupabase(
         file,
-        'media',
+        bucket,
         {
           maxSizeMB: 50,
           accessLevel: MediaAccessLevel.PUBLIC
         }
       );
       
-      if (!result.success || !result.url) {
-        throw new Error(result.error || "Failed to upload story media");
+      if (!result.success) {
+        throw new Error(result.error || 'Upload failed');
       }
-      
-      setMediaUrl(result.url);
-      return result.url;
-    } catch (error: any) {
-      console.error("Story media upload error:", error);
-      toast({
-        title: "Upload Failed",
-        description: error.message || "Failed to upload story media",
-        variant: "destructive"
-      });
-      return null;
-    }
-  };
 
-  const handleMediaComplete = (url: string) => {
-    setMediaUrl(url);
-  };
-
-  const handlePublish = async () => {
-    if (!session?.user?.id) {
       toast({
-        title: "Authentication Required",
-        description: "Please sign in to create a story.",
-        variant: "destructive"
-      });
-      return;
-    }
-    
-    if (!mediaUrl) {
-      toast({
-        title: "No Media",
-        description: "Please upload an image or video for your story.",
-        variant: "destructive"
-      });
-      return;
-    }
-    
-    // CRITICAL: Verify file integrity once more before publishing
-    if (fileRef.current) {
-      runFileDiagnostic(fileRef.current);
-    }
-    
-    setIsSubmitting(true);
-    
-    try {
-      const contentType = mediaUrl.toLowerCase().includes('.mp4') ? 'video' : 'image';
-      
-      const { error } = await supabase
-        .from("stories")
-        .insert({
-          creator_id: session.user.id,
-          media_url: mediaUrl,
-          content_type: contentType,
-          is_public: true,
-          expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString() // 24 hours from now
-        });
-      
-      if (error) throw error;
-      
-      toast({
-        title: "Story Published",
-        description: "Your story has been published successfully."
+        title: 'Upload complete',
+        description: 'Your story has been uploaded successfully'
       });
       
-      // Reset form
-      setMediaUrl(null);
-      fileRef.current = null;
+      router.push('/');
     } catch (error: any) {
-      console.error("Story submission error:", error);
+      console.error('Story upload error:', error);
+      
       toast({
-        title: "Error",
-        description: error.message || "Failed to publish story. Please try again.",
-        variant: "destructive"
+        title: 'Upload failed',
+        description: error.message || 'Failed to upload story',
+        variant: 'destructive'
       });
     } finally {
-      setIsSubmitting(false);
+      setUploading(false);
     }
   };
 
-  const handleClearMedia = () => {
-    setMediaUrl(null);
-    fileRef.current = null;
-  };
-  
-  // Modified MediaUploader to capture the file reference
-  const handleFileCapture = (file: File) => {
-    fileRef.current = file;
+  const handleRemoveFile = () => {
+    setFile(null);
   };
 
   return (
-    <div className="space-y-4 p-4 border rounded-md">
-      <h2 className="text-lg font-bold">Create Story</h2>
-      
-      {mediaUrl ? (
-        <div className="relative">
-          <NewMediaRenderer
-            item={mediaUrl}
-            className="w-full h-[70vh] max-h-[500px] rounded-md overflow-hidden"
+    <div className="container mx-auto py-10">
+      <h1 className="text-2xl font-bold mb-6">Upload New Story</h1>
+      <form onSubmit={handleSubmit} className="max-w-md mx-auto">
+        <div {...getRootProps()} className={`relative border-2 border-dashed rounded-md p-6 mb-4 cursor-pointer ${isDragActive ? 'border-primary' : 'border-gray-300'}`}>
+          <input {...getInputProps()} />
+          {file ? (
+            <div className="flex items-center justify-between">
+              <p className="text-sm text-gray-500">{file.name} ({Math.round(file.size / 1024)} KB)</p>
+              <Button type="button" variant="ghost" size="sm" onClick={handleRemoveFile}>
+                <X className="h-4 w-4 mr-2" />
+                Remove
+              </Button>
+            </div>
+          ) : (
+            <div className="text-center">
+              <Upload className="mx-auto h-6 w-6 text-gray-400 mb-2" />
+              <p className="text-sm text-gray-500">
+                {isDragActive ? "Drop the file here" : "Drag 'n' drop a file here, or click to select a file"}
+              </p>
+              <p className="text-xs text-gray-500">
+                (Images and videos are allowed)
+              </p>
+            </div>
+          )}
+        </div>
+        <div className="mb-4">
+          <Label htmlFor="description" className="block text-sm font-medium text-gray-700">Description</Label>
+          <Textarea
+            id="description"
+            value={description}
+            onChange={handleDescriptionChange}
+            rows={3}
+            className="shadow-sm focus:ring-primary focus:border-primary block w-full sm:text-sm border-gray-300 rounded-md"
           />
-          <Button
-            variant="destructive"
-            size="icon"
-            className="absolute top-2 right-2"
-            onClick={handleClearMedia}
-          >
-            <X className="h-4 w-4" />
-          </Button>
         </div>
-      ) : (
-        <MediaUploader
-          bucketName="stories"
-          onComplete={handleMediaComplete}
-          buttonText="Upload Story Media"
-          onFileCapture={handleFileCapture} // Prop to capture file reference
-        />
-      )}
-      
-      {mediaUrl && (
-        <div className="flex justify-end">
-          <Button 
-            onClick={handlePublish} 
-            disabled={isSubmitting}
-          >
-            {isSubmitting ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Publishing...
-              </>
-            ) : (
-              "Publish Story"
-            )}
-          </Button>
-        </div>
-      )}
+        <Button type="submit" disabled={uploading} className="w-full">
+          {uploading ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Uploading ...
+            </>
+          ) : (
+            "Upload Story"
+          )}
+        </Button>
+      </form>
     </div>
   );
-};
+}

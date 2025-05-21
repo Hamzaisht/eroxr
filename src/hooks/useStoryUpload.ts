@@ -1,10 +1,9 @@
-
-import { useState, useRef } from "react";
-import { useSession } from "@supabase/auth-helpers-react";
-import { useToast } from "@/hooks/use-toast";
-import { uploadMediaToSupabase } from "@/utils/media/uploadUtils";
-import { MediaAccessLevel } from "@/utils/media/types";
-import { supabase } from "@/integrations/supabase/client";
+import { useState, useCallback } from 'react';
+import { useSession } from '@supabase/auth-helpers-react';
+import { useToast } from '@/hooks/use-toast';
+import { uploadMediaToSupabase } from '@/utils/media/uploadUtils';
+import { runFileDiagnostic } from '@/utils/upload/fileUtils';
+import { MediaAccessLevel } from '@/utils/media/types';
 
 interface UploadState {
   isUploading: boolean;
@@ -21,11 +20,19 @@ export const useStoryUpload = () => {
     isComplete: false
   });
   
-  const fileRef = useRef<File | null>(null);
   const session = useSession();
   const { toast } = useToast();
   
-  const uploadStory = async (file: File): Promise<string | null> => {
+  const resetUploadState = useCallback(() => {
+    setUploadState({
+      isUploading: false,
+      progress: 0,
+      error: null,
+      isComplete: false
+    });
+  }, []);
+  
+  const uploadStory = useCallback(async (file: File): Promise<string | null> => {
     if (!session?.user?.id) {
       toast({
         title: "Authentication Required",
@@ -35,8 +42,8 @@ export const useStoryUpload = () => {
       return null;
     }
     
-    // Save to ref
-    fileRef.current = file;
+    // Validate file
+    runFileDiagnostic(file);
     
     setUploadState({
       isUploading: true,
@@ -46,7 +53,7 @@ export const useStoryUpload = () => {
     });
     
     try {
-      // Simulate progress
+      // Simulate progress updates
       const progressInterval = setInterval(() => {
         setUploadState(prev => ({
           ...prev,
@@ -54,12 +61,13 @@ export const useStoryUpload = () => {
         }));
       }, 300);
       
-      // Use centralized upload function
+      // Use centralized upload utility
       const result = await uploadMediaToSupabase(
         file,
         'stories',
         {
           maxSizeMB: 50,
+          folder: `${session.user.id}/stories`,
           accessLevel: MediaAccessLevel.PUBLIC
         }
       );
@@ -67,7 +75,7 @@ export const useStoryUpload = () => {
       clearInterval(progressInterval);
       
       if (!result.success) {
-        throw new Error(result.error || "Failed to upload story");
+        throw new Error(result.error || "Upload failed");
       }
       
       setUploadState({
@@ -96,55 +104,11 @@ export const useStoryUpload = () => {
       
       return null;
     }
-  };
-  
-  const publishStory = async (mediaUrl: string): Promise<boolean> => {
-    if (!session?.user?.id) {
-      toast({
-        title: "Authentication Required",
-        description: "Please sign in to publish stories",
-        variant: "destructive"
-      });
-      return false;
-    }
-    
-    const contentType = fileRef.current?.type.startsWith("image/") ? "image" : "video";
-    
-    try {
-      const { error } = await supabase
-        .from("stories")
-        .insert({
-          creator_id: session.user.id,
-          media_url: mediaUrl,
-          content_type: contentType,
-          is_public: true,
-          expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString() // 24 hours
-        });
-      
-      if (error) throw error;
-      
-      toast({
-        title: "Story Published",
-        description: "Your story has been published successfully"
-      });
-      
-      return true;
-    } catch (error: any) {
-      console.error("Story publishing error:", error);
-      
-      toast({
-        title: "Publishing Failed",
-        description: error.message || "Failed to publish story",
-        variant: "destructive"
-      });
-      
-      return false;
-    }
-  };
+  }, [session, toast]);
   
   return {
     uploadState,
     uploadStory,
-    publishStory
+    resetUploadState
   };
 };

@@ -1,5 +1,5 @@
 
-import { createUniqueFilePath, uploadFileToStorage } from '@/utils/media/mediaUtils';
+import { createUniqueFilePath } from '@/utils/media/mediaUtils';
 import { uploadMediaToSupabase } from '@/utils/media/uploadUtils';
 
 // Fix the uploadFileToStorage call with proper parameters

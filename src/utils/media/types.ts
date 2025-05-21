@@ -1,98 +1,48 @@
 
-/**
- * Media access level enumeration
- */
-export enum MediaAccessLevel {
-  PUBLIC = 'public',
-  PRIVATE = 'private',
-  PAID = 'paid',
-  SUBSCRIBER = 'subscriber',
-  FOLLOWERS = 'followers',
-  PPV = 'ppv'
-}
-
-/**
- * Media type enumeration
- */
 export enum MediaType {
   IMAGE = 'image',
   VIDEO = 'video',
   AUDIO = 'audio',
   DOCUMENT = 'document',
   GIF = 'gif',
-  UNKNOWN = 'unknown'
+  UNKNOWN = 'unknown',
 }
 
-/**
- * User availability status
- */
+export enum MediaAccessLevel {
+  PUBLIC = 'public',
+  PRIVATE = 'private',
+  SUBSCRIBERS = 'subscribers',
+  PPV = 'ppv',
+  INVISIBLE = 'invisible',
+}
+
 export enum AvailabilityStatus {
-  ONLINE = 'online',
-  AWAY = 'away',
-  BUSY = 'busy',
-  OFFLINE = 'offline',
-  INVISIBLE = 'invisible'
+  AVAILABLE = 'available',
+  PROCESSING = 'processing',
+  ERROR = 'error',
+  DELETED = 'deleted',
+  EXPIRED = 'expired',
 }
 
-/**
- * Media source interface
- */
 export interface MediaSource {
   url: string;
   type: MediaType;
-  poster?: string;
-  creator_id?: string;
-  post_id?: string;
-  access_level?: MediaAccessLevel;
-  path?: string;
   thumbnail?: string;
-  watermark?: boolean;
-  duration?: number;
+  poster?: string;
+  duration?: number; 
   width?: number;
   height?: number;
-  content_type?: string;
-}
-
-/**
- * Upload options interface
- */
-export interface UploadOptions {
-  bucket?: string;
-  path?: string;
-  contentType?: string;
-  maxSizeMB?: number;
-  folder?: string;
-  accessLevel?: MediaAccessLevel;
-  contentCategory?: string; // Add this field
-}
-
-/**
- * Upload result interface
- */
-export interface UploadResult {
-  success: boolean;
-  url?: string;
-  publicUrl?: string;
-  path?: string;
-  error?: string;
-  accessLevel?: MediaAccessLevel;
-}
-
-/**
- * Media item interface
- */
-export interface MediaItem {
-  id: string;
-  url: string;
-  type: MediaType;
+  watermark?: boolean;
   creator_id?: string;
-  created_at?: string;
-  metadata?: Record<string, any>;
+  content_type?: string;
+  media_url?: string | string[];
+  video_url?: string;
+  thumbnail_url?: string;
+  path?: string;
+  access_level?: MediaAccessLevel;
+  post_id?: string;
 }
 
-/**
- * Media options for rendering
- */
 export interface MediaOptions {
   className?: string;
   autoPlay?: boolean;
@@ -104,5 +54,24 @@ export interface MediaOptions {
   onLoad?: () => void;
   onError?: (error?: any) => void;
   onEnded?: () => void;
-  onTimeUpdate?: (e: any) => void;
+  onTimeUpdate?: (currentTime: number, duration: number) => void;
+}
+
+export interface UploadOptions {
+  path?: string;
+  contentType?: string;
+  maxSizeMB?: number;
+  folder?: string;
+  accessLevel?: MediaAccessLevel;
+  contentCategory?: string;
+}
+
+export interface UploadResult {
+  success: boolean;
+  url?: string;
+  publicUrl?: string;
+  path?: string;
+  error?: string;
+  accessLevel?: MediaAccessLevel;
+  contentCategory?: string;
 }

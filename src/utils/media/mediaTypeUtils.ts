@@ -1,127 +1,60 @@
 
-import { MediaType } from "./types";
+// Create this utility file if it doesn't exist
+import { MediaType } from './types';
 
 /**
- * Checks if the media type is an image
- * @param type Media type to check
- * @returns boolean
+ * Check if media type is an image
  */
-export const isImageType = (type: MediaType | string): boolean => {
-  return type === MediaType.IMAGE;
-};
+export function isImageType(type: MediaType): boolean {
+  return type === MediaType.IMAGE || type === MediaType.GIF;
+}
 
 /**
- * Checks if the media type is a video
- * @param type Media type to check
- * @returns boolean
+ * Check if media type is a video
  */
-export const isVideoType = (type: MediaType | string): boolean => {
+export function isVideoType(type: MediaType): boolean {
   return type === MediaType.VIDEO;
-};
+}
 
 /**
- * Checks if the media type is audio
- * @param type Media type to check
- * @returns boolean
+ * Check if media type is audio
  */
-export const isAudioType = (type: MediaType | string): boolean => {
+export function isAudioType(type: MediaType): boolean {
   return type === MediaType.AUDIO;
-};
+}
 
 /**
- * Checks if the media type is a document
- * @param type Media type to check
- * @returns boolean
+ * Check if media type is a document
  */
-export const isDocumentType = (type: MediaType | string): boolean => {
+export function isDocumentType(type: MediaType): boolean {
   return type === MediaType.DOCUMENT;
-};
+}
 
 /**
- * Checks if a file is an image based on its MIME type
- * @param file File to check
- * @returns boolean
+ * Determine media type from file object
  */
-export const isImageFile = (file: File): boolean => {
-  return file.type.startsWith('image/');
-};
-
-/**
- * Checks if a file is a video based on its MIME type
- * @param file File to check
- * @returns boolean
- */
-export const isVideoFile = (file: File): boolean => {
-  return file.type.startsWith('video/');
-};
-
-/**
- * Checks if a file is audio based on its MIME type
- * @param file File to check
- * @returns boolean
- */
-export const isAudioFile = (file: File): boolean => {
-  return file.type.startsWith('audio/');
-};
-
-/**
- * Get file extension from a file
- * @param file File object
- * @returns File extension without the dot
- */
-export const getFileExtension = (file: File): string => {
-  return file.name.split('.').pop()?.toLowerCase() || '';
-};
-
-/**
- * Get media type from file extension
- * @param extension File extension
- * @returns MediaType
- */
-export const getMediaTypeFromExtension = (extension: string): MediaType => {
-  const imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp', 'avif'];
-  const videoExtensions = ['mp4', 'webm', 'mov', 'avi', 'mkv', 'm4v', 'ogv'];
-  const audioExtensions = ['mp3', 'wav', 'ogg', 'aac', 'flac', 'm4a'];
+export function getMediaTypeFromFile(file: File): MediaType {
+  if (!file || !file.type) return MediaType.UNKNOWN;
   
-  if (imageExtensions.includes(extension.toLowerCase())) {
-    return MediaType.IMAGE;
+  if (file.type.startsWith('image/')) {
+    return file.type.includes('gif') ? MediaType.GIF : MediaType.IMAGE;
   }
   
-  if (videoExtensions.includes(extension.toLowerCase())) {
+  if (file.type.startsWith('video/')) {
     return MediaType.VIDEO;
   }
   
-  if (audioExtensions.includes(extension.toLowerCase())) {
+  if (file.type.startsWith('audio/')) {
     return MediaType.AUDIO;
   }
   
-  return MediaType.UNKNOWN;
-};
-
-/**
- * Convert MIME type to MediaType
- * @param mimeType MIME type string
- * @returns MediaType
- */
-export const mimeTypeToMediaType = (mimeType: string): MediaType => {
-  if (mimeType.startsWith('image/')) {
-    if (mimeType === 'image/gif') {
-      return MediaType.GIF;
-    }
-    return MediaType.IMAGE;
-  }
-  
-  if (mimeType.startsWith('video/')) {
-    return MediaType.VIDEO;
-  }
-  
-  if (mimeType.startsWith('audio/')) {
-    return MediaType.AUDIO;
-  }
-  
-  if (mimeType.startsWith('application/') || mimeType.startsWith('text/')) {
+  if (file.type.includes('pdf') || 
+      file.type.includes('doc') || 
+      file.type.includes('xls') || 
+      file.type.includes('ppt') || 
+      file.type.includes('text/')) {
     return MediaType.DOCUMENT;
   }
   
   return MediaType.UNKNOWN;
-};
+}

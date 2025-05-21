@@ -1,4 +1,3 @@
-
 import { v4 as uuidv4 } from 'uuid';
 
 /**
@@ -17,44 +16,43 @@ export function formatFileSize(bytes: number): string {
 /**
  * Run diagnostic tests on a file object
  */
-export function runFileDiagnostic(file: File): { valid: boolean, message?: string } {
-  // Basic existence check
+export function runFileDiagnostic(file: File): { valid: boolean; message: string } {
   if (!file) {
-    console.error("File is null or undefined");
     return { valid: false, message: "No file provided" };
   }
-  
-  // Type check
+
   if (!(file instanceof File)) {
-    console.error(`File is not a File instance:`, file);
-    return { valid: false, message: "Not a valid File object" };
+    return { valid: false, message: "Invalid file object" };
   }
-  
-  // Size check
+
   if (file.size === 0) {
-    console.error("File has zero size");
-    return { valid: false, message: "File is empty (0 bytes)" };
+    return { valid: false, message: "File is empty (zero bytes)" };
   }
-  
-  // Name check
-  if (!file.name || file.name.length === 0) {
-    console.warn("File has no name");
+
+  // Check for valid file name
+  if (!file.name || file.name.trim() === '') {
+    return { valid: false, message: "File has no name" };
   }
-  
-  // Type check
-  if (!file.type || file.type.length === 0) {
-    console.warn("File has no type information");
+
+  // Validate file type basic check
+  const isImage = file.type.startsWith('image/');
+  const isVideo = file.type.startsWith('video/');
+  const isAudio = file.type.startsWith('audio/');
+  const isDocument = file.type.includes('pdf') || 
+                    file.type.includes('doc') || 
+                    file.type.includes('sheet') || 
+                    file.type.includes('presentation');
+
+  if (!isImage && !isVideo && !isAudio && !isDocument) {
+    return { 
+      valid: false, 
+      message: `Unknown file type: ${file.type}. Only images, videos, audio and documents are supported.` 
+    };
   }
+
+  console.log(`File diagnostic passed for: ${file.name} (${file.type}, ${file.size} bytes)`);
   
-  // Log file details for debugging
-  console.info("File diagnostic:", {
-    name: file.name,
-    type: file.type,
-    size: formatFileSize(file.size),
-    lastModified: new Date(file.lastModified).toISOString()
-  });
-  
-  return { valid: true };
+  return { valid: true, message: "File is valid" };
 }
 
 /**
@@ -164,7 +162,7 @@ export function addCacheBuster(url: string): string {
   if (!url) return '';
   
   const separator = url.includes('?') ? '&' : '?';
-  return `${url}${separator}_cb=${Date.now()}`;
+  return `${url}${separator}t=${Date.now()}`;
 }
 
 /**

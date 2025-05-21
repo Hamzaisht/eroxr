@@ -1,221 +1,55 @@
 import { useState, useCallback } from 'react';
 import { useSession } from '@supabase/auth-helpers-react';
-import { useToast } from '@/hooks/use-toast';
-import { validateFileForUpload } from '@/utils/upload/validators';
 import { uploadMediaToSupabase } from '@/utils/media/uploadUtils';
-import { MediaAccessLevel, UploadResult } from '@/utils/media/types';
+import { useToast } from './use-toast';
+import { MediaAccessLevel } from '@/utils/media/types';
 
-interface UploadState {
-  isUploading: boolean;
-  progress: number;
-  error: string | null;
-  isComplete: boolean;
-}
-
-interface UploadParams {
-  file: File;
-  mediaType?: string;
-  contentCategory?: string;
-  maxSizeInMB?: number;
-  onProgress?: (progress: number) => void;
-  accessLevel?: MediaAccessLevel;
-  postId?: string;
-}
-
-export const useMediaUpload = (defaultOptions?: any) => {
-  const [uploadState, setUploadState] = useState<UploadState>({
-    isUploading: false,
-    progress: 0,
-    error: null,
-    isComplete: false
-  });
-  
-  const session = useSession();
+export const useMediaUpload = () => {
+  const [isUploading, setIsUploading] = useState(false);
   const { toast } = useToast();
-  
-  // Reset upload state
-  const resetUploadState = useCallback(() => {
-    setUploadState({
-      isUploading: false,
-      progress: 0,
-      error: null,
-      isComplete: false
-    });
-  }, []);
-  
-  // Validate file before upload
-  const validateFile = useCallback((file: File, options?: any) => {
-    const maxSizeInMB = options?.maxSizeInMB || defaultOptions?.maxSizeInMB || 100;
-    return validateFileForUpload(file, maxSizeInMB);
-  }, [defaultOptions?.maxSizeInMB]);
-  
-  // Upload media file - this is the main function that all components should use
+  const session = useSession();
+
   const uploadMedia = useCallback(async (
     file: File,
-    options?: any
-  ): Promise<UploadResult> => {
+    options: { contentCategory: string; maxSizeInMB: number }
+  ) => {
     if (!session?.user?.id) {
-      return { 
-        success: false, 
-        error: "Authentication required" 
-      };
+      toast({
+        title: "Authentication Required",
+        description: "Please sign in to upload media",
+        variant: "destructive"
+      });
+      return { success: false, error: 'Authentication required' };
     }
-    
-    // Combine default options with provided options
-    const finalOptions = {
-      ...defaultOptions,
-      ...options
-    };
-    
-    // Validate file
-    const fileValidation = validateFile(file, finalOptions);
-    if (!fileValidation.valid) {
-      setUploadState(prev => ({
-        ...prev,
-        error: fileValidation.error || "Invalid file"
-      }));
-      
-      if (fileValidation.error) {
-        toast({
-          title: "Upload Error",
-          description: fileValidation.error,
-          variant: "destructive"
-        });
-      }
-      
-      return { success: false, error: fileValidation.error };
-    }
-    
-    // Set uploading state
-    setUploadState({
-      isUploading: true,
-      progress: 0,
-      error: null,
-      isComplete: false
-    });
-    
+
+    setIsUploading(true);
+
     try {
-      // Simulate progress updates
-      const progressInterval = setInterval(() => {
-        setUploadState(prev => {
-          const newProgress = Math.min(prev.progress + 5, 90);
-          
-          if (finalOptions?.onProgress) {
-            finalOptions.onProgress(newProgress);
-          }
-          
-          return {
-            ...prev,
-            progress: newProgress
-          };
-        });
-      }, 200);
-      
-      // Use the centralized upload utility to the 'media' bucket
+      const { contentCategory, maxSizeInMB } = options;
+
       const result = await uploadMediaToSupabase(
         file,
         'media',
         {
-          maxSizeMB: finalOptions?.maxSizeMB,
-          accessLevel: finalOptions?.accessLevel || MediaAccessLevel.PUBLIC,
-          folder: finalOptions?.contentCategory
+          folder: `${session.user.id}/${contentCategory}`,
+          maxSizeMB: maxSizeInMB,
+          accessLevel: MediaAccessLevel.PUBLIC
         }
       );
-      
-      // Clear progress interval
-      clearInterval(progressInterval);
-      
-      if (!result.success) {
-        throw new Error(result.error || "Upload failed");
-      }
-      
-      // Complete upload
-      setUploadState({
-        isUploading: false,
-        progress: 100,
-        error: null,
-        isComplete: true
-      });
-      
-      // Auto-reset state after completion if enabled
-      if (finalOptions?.autoResetOnCompletion) {
-        const delay = finalOptions.resetDelay || 3000;
-        setTimeout(resetUploadState, delay);
-      }
-      
+
       return result;
     } catch (error: any) {
-      console.error("Media upload error:", error);
-      
-      setUploadState({
-        isUploading: false,
-        progress: 0,
-        error: error.message || "Upload failed",
-        isComplete: false
-      });
-      
+      console.error('Error uploading media:', error);
       toast({
         title: "Upload Failed",
         description: error.message || "Failed to upload media",
         variant: "destructive"
       });
-      
-      return { 
-        success: false, 
-        error: error.message || "Upload failed" 
-      };
+      return { success: false, error: error.message };
+    } finally {
+      setIsUploading(false);
     }
-  }, [session, toast, validateFile, resetUploadState, defaultOptions]);
-  
-  // New simplified upload method with consistent interface
-  const upload = useCallback(async ({ 
-    file, 
-    mediaType, 
-    contentCategory,
-    maxSizeInMB,
-    onProgress,
-    accessLevel = MediaAccessLevel.PUBLIC,
-    postId 
-  }: UploadParams): Promise<string | null> => {
-    if (!file) {
-      toast({
-        title: "Upload Error",
-        description: "No file provided",
-        variant: "destructive"
-      });
-      return null;
-    }
-    
-    // Determine media type from file if not provided
-    const detectedMediaType = mediaType || 
-      (file.type.startsWith('image/') ? 'image' : 
-       file.type.startsWith('video/') ? 'video' :
-       file.type.startsWith('audio/') ? 'audio' : 'document');
-    
-    // Always use 'media' as bucket with proper organization within
-    const result = await uploadMedia(file, {
-      contentCategory: 'media', // Always use the 'media' bucket
-      maxSizeInMB,
-      onProgress,
-      accessLevel,
-      postId
-    });
-    
-    // Return the URL on success
-    if (result.success) {
-      if ('url' in result) {
-        return result.url as string;
-      }
-    }
-    
-    return null;
-  }, [uploadMedia, toast]);
-  
-  return {
-    uploadState,
-    uploadMedia,
-    upload,
-    resetUploadState,
-    validateFile
-  };
+  }, [session, toast]);
+
+  return { uploadMedia, isUploading };
 };

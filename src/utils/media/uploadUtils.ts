@@ -25,7 +25,8 @@ export async function uploadMediaToSupabase(
       contentType = file.type,
       maxSizeMB = 100,
       folder = '',
-      accessLevel = MediaAccessLevel.PUBLIC
+      accessLevel = MediaAccessLevel.PUBLIC,
+      contentCategory
     } = options;
 
     // Check file size
@@ -65,7 +66,8 @@ export async function uploadMediaToSupabase(
       url: publicUrl,
       publicUrl,
       path: data.path,
-      accessLevel
+      accessLevel,
+      contentCategory
     };
   } catch (err: any) {
     console.error('Upload failed:', err);

@@ -1,4 +1,3 @@
-
 import { useRef } from "react";
 import { useSession } from "@supabase/auth-helpers-react";
 import { runFileDiagnostic } from "@/utils/upload/fileUtils";
