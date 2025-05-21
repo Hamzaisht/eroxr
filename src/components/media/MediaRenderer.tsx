@@ -4,7 +4,7 @@ import { MediaSource, MediaType, MediaAccessLevel } from '@/utils/media/types';
 import { isImageType, isVideoType, isAudioType } from '@/utils/media/mediaTypeUtils';
 import { extractMediaUrl } from '@/utils/media/mediaUtils';
 import { AlertCircle, RefreshCw } from 'lucide-react';
-import { validateMediaUrl } from '@/utils/media/mediaOrchestrator';
+import { isValidMediaUrl } from '@/utils/media/mediaOrchestrator';
 import { useMediaAccess } from '@/hooks/useMediaAccess';
 import { LockedMediaOverlay } from './LockedMediaOverlay';
 import { supabase } from '@/integrations/supabase/client';

@@ -1,5 +1,5 @@
 
-import { MediaType, MediaSource } from './types';
+import { MediaType, MediaSource, MediaAccessLevel } from './types';
 
 /**
  * Validates if a media URL is properly formatted
@@ -29,6 +29,9 @@ export function isValidMediaUrl(url: string | undefined | null): boolean {
     return false;
   }
 }
+
+// Alias for isValidMediaUrl for better semantic naming
+export const validateMediaUrl = isValidMediaUrl;
 
 /**
  * Get a playable media URL

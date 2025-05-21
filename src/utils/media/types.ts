@@ -6,7 +6,9 @@ export enum MediaAccessLevel {
   PUBLIC = 'public',
   PRIVATE = 'private',
   PAID = 'paid',
-  SUBSCRIBER = 'subscriber'
+  SUBSCRIBER = 'subscriber',
+  FOLLOWERS = 'followers',
+  PPV = 'ppv'
 }
 
 /**
@@ -17,7 +19,18 @@ export enum MediaType {
   VIDEO = 'video',
   AUDIO = 'audio',
   DOCUMENT = 'document',
+  GIF = 'gif',
   UNKNOWN = 'unknown'
+}
+
+/**
+ * User availability status
+ */
+export enum AvailabilityStatus {
+  ONLINE = 'online',
+  AWAY = 'away',
+  BUSY = 'busy',
+  OFFLINE = 'offline'
 }
 
 /**
@@ -31,6 +44,12 @@ export interface MediaSource {
   post_id?: string;
   access_level?: MediaAccessLevel;
   path?: string;
+  thumbnail?: string;
+  watermark?: boolean;
+  duration?: number;
+  width?: number;
+  height?: number;
+  content_type?: string;
 }
 
 /**
@@ -67,4 +86,21 @@ export interface MediaItem {
   creator_id?: string;
   created_at?: string;
   metadata?: Record<string, any>;
+}
+
+/**
+ * Media options for rendering
+ */
+export interface MediaOptions {
+  className?: string;
+  autoPlay?: boolean;
+  controls?: boolean;
+  muted?: boolean;
+  loop?: boolean;
+  poster?: string;
+  onClick?: () => void;
+  onLoad?: () => void;
+  onError?: (error?: any) => void;
+  onEnded?: () => void;
+  onTimeUpdate?: (e: any) => void;
 }

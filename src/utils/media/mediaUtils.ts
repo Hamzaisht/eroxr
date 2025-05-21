@@ -1,181 +1,123 @@
 
-import { v4 as uuidv4 } from 'uuid';
-import { supabase } from '@/integrations/supabase/client';
-import { MediaSource, MediaType } from '@/utils/media/types';
+import { MediaType, MediaSource } from './types';
 
 /**
- * Creates a unique file path for uploads
- * @param userId The user ID to associate with the file
- * @param file The file being uploaded
- * @returns Unique file path
+ * Extract a URL from a MediaSource object or return the string if it's already a string
  */
-export const createUniqueFilePath = (userId: string, file: File): string => {
-  const timestamp = Date.now();
-  const uniqueId = uuidv4().substring(0, 8);
-  const fileExt = file.name.split('.').pop() || '';
-  const safeFileName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
-  return `${userId}/${timestamp}-${uniqueId}-${safeFileName}`;
-};
-
-/**
- * Adds cache busting parameters to URLs
- * @param url The URL to add cache busting to
- * @returns URL with cache busting parameters
- */
-export const addCacheBuster = (url: string): string => {
-  if (!url) return url;
-  
-  const timestamp = Date.now();
-  const random = Math.random().toString(36).substring(2, 9);
-  const separator = url.includes('?') ? '&' : '?';
-  return `${url}${separator}t=${timestamp}&r=${random}`;
-};
-
-/**
- * Extract media URL from different source formats
- * @param source Media source (object or string)
- * @returns URL string
- */
-export const extractMediaUrl = (source: MediaSource | string): string => {
+export function extractMediaUrl(source: MediaSource | string): string {
   if (!source) return '';
-  
-  if (typeof source === 'string') {
-    return source;
-  }
-  
+  if (typeof source === 'string') return source;
   return source.url || '';
-};
-
-/**
- * Normalizes media source to a standard format
- * @param source Media source in various formats
- * @returns Standardized MediaSource object
- */
-export const normalizeMediaSource = (source: any): MediaSource => {
-  // Handle string URLs
-  if (typeof source === 'string') {
-    const isVideo = source.match(/\.(mp4|webm|mov|avi)($|\?)/i);
-    return {
-      url: source,
-      type: isVideo ? MediaType.VIDEO : MediaType.IMAGE
-    };
-  }
-  
-  // Already a MediaSource
-  if (source && typeof source === 'object' && 'url' in source) {
-    return {
-      ...source,
-      url: source.url,
-      type: source.type || determineMediaType(source.url)
-    };
-  }
-  
-  // Handle object with different property names
-  if (source && typeof source === 'object') {
-    // Look for common URL properties
-    const url = source.url || 
-                source.src || 
-                source.media_url || 
-                source.video_url || 
-                source.image_url || 
-                '';
-    
-    return {
-      url,
-      type: determineMediaType(url),
-      creator_id: source.creator_id || source.user_id,
-      post_id: source.post_id || source.id
-    };
-  }
-  
-  // Default empty source
-  return { url: '', type: MediaType.UNKNOWN };
-};
-
-/**
- * Determines media type from URL or file extension
- * @param url URL or file path
- * @returns Media type
- */
-export const determineMediaType = (url: string): MediaType => {
-  if (!url) return MediaType.UNKNOWN;
-  
-  const videoExtensions = /\.(mp4|webm|mov|avi|mkv)($|\?)/i;
-  const imageExtensions = /\.(jpg|jpeg|png|gif|webp|svg|avif|bmp)($|\?)/i;
-  const audioExtensions = /\.(mp3|wav|ogg|aac|flac)($|\?)/i;
-  
-  if (url.match(videoExtensions)) return MediaType.VIDEO;
-  if (url.match(imageExtensions)) return MediaType.IMAGE;
-  if (url.match(audioExtensions)) return MediaType.AUDIO;
-  
-  // Check for service-specific video URLs
-  if (url.includes('youtube.com') || url.includes('youtu.be')) {
-    return MediaType.VIDEO;
-  }
-  
-  return MediaType.UNKNOWN;
-};
-
-/**
- * Gets public URL for a file in storage
- * @param bucketName Bucket name
- * @param filePath File path within the bucket
- * @returns Public URL with cache busting
- */
-export const getPublicUrl = (bucketName: string, filePath: string): string => {
-  if (!filePath) return '';
-  
-  try {
-    const { data } = supabase.storage
-      .from(bucketName)
-      .getPublicUrl(filePath);
-      
-    if (data?.publicUrl) {
-      return addCacheBuster(data.publicUrl);
-    }
-    
-    return '';
-  } catch (error) {
-    console.error('Error generating public URL:', error);
-    return '';
-  }
-};
-
-/**
- * Checks if media URL is accessible
- * @param url Media URL to check
- * @returns Promise that resolves to boolean
- */
-export async function isMediaAccessible(url: string): Promise<boolean> {
-  if (!url) return false;
-  
-  try {
-    const response = await fetch(url, { method: 'HEAD' });
-    return response.ok;
-  } catch (error) {
-    console.error('Media accessibility check failed:', error);
-    return false;
-  }
 }
 
 /**
- * Report a media error
+ * Normalize a variety of inputs into a MediaSource object
  */
-export function reportMediaError(
-  url: string,
-  errorType: string,
-  retryCount: number,
-  mediaType: string,
-  componentName: string
-): void {
-  console.error('Media Error Report:', {
-    url,
-    errorType,
-    retryCount,
-    mediaType,
-    componentName,
-    timestamp: new Date().toISOString()
-  });
+export function normalizeMediaSource(input: any): MediaSource {
+  // If it's already in the right format
+  if (input && typeof input === 'object' && 'url' in input && 'type' in input) {
+    return input as MediaSource;
+  }
+
+  // If it's a string URL
+  if (typeof input === 'string') {
+    // Try to determine type from URL
+    const url = input;
+    const isImage = /\.(jpg|jpeg|png|gif|webp|svg|avif)($|\?)/i.test(url);
+    const isVideo = /\.(mp4|webm|mov|avi)($|\?)/i.test(url);
+    const isAudio = /\.(mp3|wav|ogg|aac)($|\?)/i.test(url);
+    
+    let type = MediaType.UNKNOWN;
+    if (isImage) type = MediaType.IMAGE;
+    else if (isVideo) type = MediaType.VIDEO;
+    else if (isAudio) type = MediaType.AUDIO;
+    
+    return { url, type };
+  }
+
+  // If it has media_url, video_url, or thumbnail_url (compatibility with old format)
+  if (input && typeof input === 'object') {
+    if (input.media_url) {
+      return {
+        url: Array.isArray(input.media_url) ? input.media_url[0] : input.media_url,
+        type: MediaType.IMAGE,
+        thumbnail: input.thumbnail_url,
+      };
+    }
+    
+    if (input.video_url) {
+      return {
+        url: input.video_url,
+        type: MediaType.VIDEO,
+        thumbnail: input.thumbnail_url,
+        poster: input.thumbnail_url,
+      };
+    }
+    
+    if (input.thumbnail_url) {
+      return {
+        url: input.thumbnail_url,
+        type: MediaType.IMAGE,
+      };
+    }
+  }
+
+  // Default fallback
+  return { url: '', type: MediaType.UNKNOWN };
+}
+
+/**
+ * Calculate aspect ratio dimensions
+ */
+export function calculateAspectRatioDimensions(
+  originalWidth: number, 
+  originalHeight: number,
+  targetWidth?: number,
+  targetHeight?: number
+): { width: number; height: number } {
+  // If no target dimensions provided, return original dimensions
+  if (!targetWidth && !targetHeight) {
+    return { width: originalWidth, height: originalHeight };
+  }
   
-  // In a production app, send this to a monitoring service
+  // Calculate aspect ratio
+  const aspectRatio = originalWidth / originalHeight;
+  
+  // If targetWidth is provided but not targetHeight
+  if (targetWidth && !targetHeight) {
+    return {
+      width: targetWidth,
+      height: Math.round(targetWidth / aspectRatio)
+    };
+  }
+  
+  // If targetHeight is provided but not targetWidth
+  if (targetHeight && !targetWidth) {
+    return {
+      width: Math.round(targetHeight * aspectRatio),
+      height: targetHeight
+    };
+  }
+  
+  // If both are provided, maintain aspect ratio within bounds
+  if (targetWidth && targetHeight) {
+    const targetRatio = targetWidth / targetHeight;
+    
+    if (aspectRatio > targetRatio) {
+      // Width constrains
+      return {
+        width: targetWidth,
+        height: Math.round(targetWidth / aspectRatio)
+      };
+    } else {
+      // Height constrains
+      return {
+        width: Math.round(targetHeight * aspectRatio),
+        height: targetHeight
+      };
+    }
+  }
+  
+  // Fallback
+  return { width: originalWidth, height: originalHeight };
 }

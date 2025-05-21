@@ -1,100 +1,101 @@
+
 import { MediaType } from './types';
-import { determineMediaType } from './mediaUtils';
 
 /**
- * Check if URL points to a video file
+ * Check if a URL is valid
  * @param url URL to check
- * @returns True if it's a video URL
+ * @returns boolean
  */
-export const isVideoUrl = (url: string): boolean => {
-  if (!url) return false;
-  
-  const mediaType = determineMediaType(url);
-  return mediaType === MediaType.VIDEO;
-};
-
-/**
- * Check if URL points to an image file
- * @param url URL to check
- * @returns True if it's an image URL
- */
-export const isImageUrl = (url: string): boolean => {
-  if (!url) return false;
-  
-  const mediaType = determineMediaType(url);
-  return mediaType === MediaType.IMAGE || mediaType === MediaType.GIF;
-};
-
-/**
- * Check if URL points to an audio file
- * @param url URL to check
- * @returns True if it's an audio URL
- */
-export const isAudioUrl = (url: string): boolean => {
-  if (!url) return false;
-  
-  const mediaType = determineMediaType(url);
-  return mediaType === MediaType.AUDIO;
-};
-
-/**
- * Check if URL is valid
- * @param url URL to check
- * @returns True if URL is valid
- */
-export const isValidUrl = (url?: string): boolean => {
+export function isValidUrl(url: string | undefined | null): boolean {
   if (!url) return false;
   
   try {
-    const parsedUrl = new URL(url);
-    return parsedUrl.protocol === 'http:' || 
-           parsedUrl.protocol === 'https:' || 
-           parsedUrl.protocol === 'blob:' || 
-           parsedUrl.protocol === 'data:';
-  } catch (e) {
-    // If URL is relative, it's still valid for our purposes
-    return url.startsWith('/');
+    new URL(url);
+    return true;
+  } catch (err) {
+    return false;
   }
-};
+}
 
 /**
- * Get playable media URL (fixes relative paths)
- * @param url The URL to process
- * @returns A properly formatted URL for playback
- */
-export const getPlayableMediaUrl = (url: string): string => {
-  if (!url) return '';
-  
-  // Already absolute URL
-  if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('blob:') || url.startsWith('data:')) {
-    return url;
-  }
-  
-  // Convert relative URL to absolute
-  if (url.startsWith('/')) {
-    return `${window.location.origin}${url}`;
-  }
-  
-  return url;
-};
-
-/**
- * Generate optimized image URL (for CDNs or responsive sizes)
+ * Get an optimized image URL with width and height parameters
  * @param url Original image URL
  * @param width Target width
  * @param height Target height
  * @returns Optimized image URL
  */
-export const getOptimizedImageUrl = (url: string, width?: number, height?: number): string => {
+export function getOptimizedImageUrl(url: string, width?: number, height?: number): string {
   if (!url) return '';
   
-  // If we're not using a CDN or if it's not an image, return the original URL
-  if (!isImageUrl(url)) return url;
+  try {
+    // Parse URL
+    const urlObj = new URL(url);
+    
+    // Only process storage URLs
+    if (!url.includes('storage/v1/object')) {
+      return url;
+    }
+    
+    // Add dimensions if provided
+    if (width) {
+      urlObj.searchParams.set('width', width.toString());
+    }
+    
+    if (height) {
+      urlObj.searchParams.set('height', height.toString());
+    }
+    
+    return urlObj.toString();
+  } catch (error) {
+    console.error('Error optimizing image URL:', error);
+    return url;
+  }
+}
+
+/**
+ * Check if a URL points to a video
+ * @param url URL to check
+ * @returns boolean
+ */
+export function isVideoUrl(url: string): boolean {
+  if (!url) return false;
+  return /\.(mp4|webm|mov|avi|mkv)($|\?)/i.test(url);
+}
+
+/**
+ * Check if a URL points to an image
+ * @param url URL to check
+ * @returns boolean
+ */
+export function isImageUrl(url: string): boolean {
+  if (!url) return false;
+  return /\.(jpe?g|png|gif|webp|svg|avif)($|\?)/i.test(url);
+}
+
+/**
+ * Check if a URL points to an audio file
+ * @param url URL to check
+ * @returns boolean
+ */
+export function isAudioUrl(url: string): boolean {
+  if (!url) return false;
+  return /\.(mp3|wav|ogg|aac|flac|m4a)($|\?)/i.test(url);
+}
+
+/**
+ * Get a playable media URL with cache busting
+ * @param url Input URL
+ * @returns Processed URL ready for playback
+ */
+export function getPlayableMediaUrl(url: string): string {
+  if (!url) return '';
   
-  // Basic implementation - could be extended with CDN parameters
-  // For example with imgix, cloudinary, etc.
+  // For Supabase storage URLs, add cache busting
+  if (url.includes('storage/v1/object') && !url.includes('?t=')) {
+    const separator = url.includes('?') ? '&' : '?';
+    const timestamp = Date.now();
+    return `${url}${separator}t=${timestamp}`;
+  }
   
-  // For now, just return the original URL
-  // In the future, add CDN parameters here
   return url;
-};
+}

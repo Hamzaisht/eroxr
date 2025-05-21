@@ -29,6 +29,15 @@ export const isAudioType = (type: MediaType | string): boolean => {
 };
 
 /**
+ * Checks if the media type is a document
+ * @param type Media type to check
+ * @returns boolean
+ */
+export const isDocumentType = (type: MediaType | string): boolean => {
+  return type === MediaType.DOCUMENT;
+};
+
+/**
  * Checks if a file is an image based on its MIME type
  * @param file File to check
  * @returns boolean
@@ -84,6 +93,34 @@ export const getMediaTypeFromExtension = (extension: string): MediaType => {
   
   if (audioExtensions.includes(extension.toLowerCase())) {
     return MediaType.AUDIO;
+  }
+  
+  return MediaType.UNKNOWN;
+};
+
+/**
+ * Convert MIME type to MediaType
+ * @param mimeType MIME type string
+ * @returns MediaType
+ */
+export const mimeTypeToMediaType = (mimeType: string): MediaType => {
+  if (mimeType.startsWith('image/')) {
+    if (mimeType === 'image/gif') {
+      return MediaType.GIF;
+    }
+    return MediaType.IMAGE;
+  }
+  
+  if (mimeType.startsWith('video/')) {
+    return MediaType.VIDEO;
+  }
+  
+  if (mimeType.startsWith('audio/')) {
+    return MediaType.AUDIO;
+  }
+  
+  if (mimeType.startsWith('application/') || mimeType.startsWith('text/')) {
+    return MediaType.DOCUMENT;
   }
   
   return MediaType.UNKNOWN;
