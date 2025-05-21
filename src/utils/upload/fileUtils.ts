@@ -1,119 +1,124 @@
 
+import { v4 as uuidv4 } from 'uuid';
+
 /**
- * Comprehensive file diagnostics for debugging upload issues
+ * Format file size into human readable format
  */
-export const runFileDiagnostic = (file: File | null, options?: { maxSizeMB?: number, allowedTypes?: string[] }): { valid: boolean, message?: string } => {
+export function formatFileSize(bytes: number): string {
+  if (bytes === 0) return '0 Bytes';
+  
+  const k = 1024;
+  const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+}
+
+/**
+ * Run diagnostic tests on a file object
+ */
+export function runFileDiagnostic(file: File): { valid: boolean, message?: string } {
+  // Basic existence check
   if (!file) {
-    console.error("❌ File diagnostic: No file provided");
+    console.error("File is null or undefined");
     return { valid: false, message: "No file provided" };
   }
   
-  console.log("📋 File diagnostic report:", {
-    name: file.name,
-    size: formatFileSize(file.size),
-    type: file.type,
-    lastModified: new Date(file.lastModified).toISOString(),
-    isFile: file instanceof File,
-    hasData: file.size > 0
-  });
-  
-  // Check for common issues
+  // Type check
   if (!(file instanceof File)) {
-    console.error("❌ File diagnostic: Not a File instance");
-    return { valid: false, message: "Not a File instance" };
+    console.error(`File is not a File instance:`, file);
+    return { valid: false, message: "Not a valid File object" };
   }
   
+  // Size check
   if (file.size === 0) {
-    console.error("❌ File diagnostic: Zero byte file");
-    return { valid: false, message: "Zero byte file" };
+    console.error("File has zero size");
+    return { valid: false, message: "File is empty (0 bytes)" };
   }
   
-  if (!file.type) {
-    console.warn("⚠️ File diagnostic: Missing MIME type");
+  // Name check
+  if (!file.name || file.name.length === 0) {
+    console.warn("File has no name");
   }
   
-  // Check size if maxSizeMB is provided
-  if (options?.maxSizeMB) {
-    const maxSizeBytes = options.maxSizeMB * 1024 * 1024;
-    if (file.size > maxSizeBytes) {
-      console.error(`❌ File diagnostic: File too large (${formatFileSize(file.size)} > ${options.maxSizeMB}MB)`);
-      return { valid: false, message: `File exceeds maximum size of ${options.maxSizeMB}MB` };
-    }
+  // Type check
+  if (!file.type || file.type.length === 0) {
+    console.warn("File has no type information");
   }
   
-  // Check type if allowedTypes is provided
-  if (options?.allowedTypes && options.allowedTypes.length > 0) {
-    const isValidType = options.allowedTypes.some(type => {
-      if (type.endsWith('/*')) {
-        const category = type.split('/')[0];
-        return file.type.startsWith(category + '/');
-      }
-      return file.type === type;
-    });
-    
-    if (!isValidType) {
-      console.error(`❌ File diagnostic: Invalid file type ${file.type}`);
-      return { valid: false, message: `Invalid file type: ${file.type}` };
-    }
-  }
-  
-  console.log("✅ File diagnostic: Valid file object");
-  return { valid: true };
-};
-
-export const formatFileSize = (bytes: number): string => {
-  if (bytes < 1024) return bytes + ' bytes';
-  else if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(2) + ' KB';
-  else if (bytes < 1024 * 1024 * 1024) return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
-  else return (bytes / (1024 * 1024 * 1024)).toFixed(2) + ' GB';
-};
-
-/**
- * Create a unique file path for upload
- */
-export const createUniqueFilePath = (userId: string, file: File): string => {
-  const timestamp = Date.now();
-  const fileExt = file.name.split('.').pop() || '';
-  const contentType = file.type.split('/')[0] || 'misc';
-  
-  // Sanitize filename to remove special characters
-  const sanitizedName = file.name
-    .replace(/\.[^/.]+$/, "") // Remove extension
-    .replace(/[^a-zA-Z0-9]/g, "-") // Replace special chars with dash
-    .substring(0, 20); // Limit length
-  
-  // Organize by user ID and file type
-  return `${userId}/${contentType}s/${timestamp}-${sanitizedName}.${fileExt}`;
-};
-
-/**
- * Create a data URL preview for a file
- */
-export const createFilePreview = (file: File): Promise<string> => {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    
-    reader.onload = () => {
-      if (typeof reader.result === 'string') {
-        resolve(reader.result);
-      } else {
-        reject(new Error('Failed to generate preview'));
-      }
-    };
-    
-    reader.onerror = () => {
-      reject(reader.error || new Error('Failed to read file'));
-    };
-    
-    reader.readAsDataURL(file);
+  // Log file details for debugging
+  console.info("File diagnostic:", {
+    name: file.name,
+    type: file.type,
+    size: formatFileSize(file.size),
+    lastModified: new Date(file.lastModified).toISOString()
   });
-};
+  
+  return { valid: true };
+}
 
 /**
- * Revoke a data URL to prevent memory leaks
+ * Create file preview URL
+ * @returns Promise that resolves to a data URL string
  */
-export const revokeFilePreview = (dataUrl: string): void => {
-  if (dataUrl.startsWith('blob:')) {
-    URL.revokeObjectURL(dataUrl);
+export async function createFilePreview(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    // Make sure we're working with a valid file
+    if (!file) {
+      reject(new Error('No file provided'));
+      return;
+    }
+    
+    if (!(file instanceof File)) {
+      reject(new Error('Invalid file object'));
+      return;
+    }
+
+    // For image files, create an ObjectURL
+    if (file.type.startsWith('image/')) {
+      try {
+        const url = URL.createObjectURL(file);
+        resolve(url);
+      } catch (err) {
+        reject(new Error('Failed to create preview URL'));
+      }
+      return;
+    }
+    
+    // For video files, create an ObjectURL
+    if (file.type.startsWith('video/')) {
+      try {
+        const url = URL.createObjectURL(file);
+        resolve(url);
+      } catch (err) {
+        reject(new Error('Failed to create video preview'));
+      }
+      return;
+    }
+    
+    // For other file types, generate a type icon URL or placeholder
+    resolve('https://via.placeholder.com/150?text=File');
+  });
+}
+
+/**
+ * Revoke file preview URL to prevent memory leaks
+ */
+export function revokeFilePreview(url: string): void {
+  if (url && url.startsWith('blob:')) {
+    URL.revokeObjectURL(url);
   }
-};
+}
+
+/**
+ * Create a unique filename for upload
+ */
+export function createUniqueFilePath(file: File): string {
+  const timestamp = Date.now();
+  const uniqueId = uuidv4().substring(0, 8);
+  const fileExt = file.name.split('.').pop() || '';
+  
+  // Organize by file type
+  const contentType = file.type.split('/')[0];
+  return `${contentType}s/${timestamp}-${uniqueId}.${fileExt}`;
+}

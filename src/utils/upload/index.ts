@@ -4,9 +4,13 @@ export {
   validateFileForUpload,
   isImageFile,
   isVideoFile,
+  isAudioFile,
+  isDocumentFile,
   getFileExtension,
   SUPPORTED_IMAGE_TYPES,
-  SUPPORTED_VIDEO_TYPES
+  SUPPORTED_VIDEO_TYPES,
+  SUPPORTED_AUDIO_TYPES,
+  SUPPORTED_DOCUMENT_TYPES
 } from './validators';
 
 // Export file utilities

@@ -112,12 +112,12 @@ export const useMediaUpload = (defaultOptions?: any) => {
         });
       }, 200);
       
-      // Use the centralized upload utility
+      // Use the centralized upload utility to the 'media' bucket
       const result = await uploadMediaToSupabase({
         file,
         userId: session.user.id,
         options: {
-          bucket: finalOptions?.contentCategory || 'media',
+          bucket: 'media', // Always use media bucket with subfolders
           maxSizeMB: finalOptions?.maxSizeInMB,
           saveMetadata: true,
           accessLevel: finalOptions?.accessLevel || MediaAccessLevel.PUBLIC,

@@ -1,117 +1,108 @@
 
-import { runFileDiagnostic, formatFileSize } from "./fileUtils";
-
-// Define supported media types
+// Supported file types
 export const SUPPORTED_IMAGE_TYPES = [
-  'image/jpeg', 
-  'image/png', 
-  'image/gif', 
-  'image/webp', 
+  'image/jpeg',
+  'image/png',
+  'image/webp',
+  'image/gif',
   'image/svg+xml'
 ];
 
 export const SUPPORTED_VIDEO_TYPES = [
-  'video/mp4', 
-  'video/webm', 
-  'video/quicktime', 
-  'video/x-msvideo'
+  'video/mp4',
+  'video/webm',
+  'video/quicktime',
+  'video/x-matroska'
+];
+
+export const SUPPORTED_AUDIO_TYPES = [
+  'audio/mpeg',
+  'audio/wav',
+  'audio/ogg',
+  'audio/webm'
+];
+
+export const SUPPORTED_DOCUMENT_TYPES = [
+  'application/pdf',
+  'application/msword',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'text/plain'
 ];
 
 /**
- * Check if a file is an image
+ * Check if file is an image
  */
-export const isImageFile = (file: File): boolean => {
-  return SUPPORTED_IMAGE_TYPES.includes(file.type.toLowerCase());
-};
+export function isImageFile(file: File): boolean {
+  return SUPPORTED_IMAGE_TYPES.includes(file.type);
+}
 
 /**
- * Check if a file is a video
+ * Check if file is a video
  */
-export const isVideoFile = (file: File): boolean => {
-  return SUPPORTED_VIDEO_TYPES.includes(file.type.toLowerCase());
-};
+export function isVideoFile(file: File): boolean {
+  return SUPPORTED_VIDEO_TYPES.includes(file.type);
+}
 
 /**
- * Get file extension from file or filename
+ * Check if file is an audio file
  */
-export const getFileExtension = (fileOrName: File | string): string => {
-  const name = typeof fileOrName === 'string' ? fileOrName : fileOrName.name;
-  return name.split('.').pop()?.toLowerCase() || '';
-};
+export function isAudioFile(file: File): boolean {
+  return SUPPORTED_AUDIO_TYPES.includes(file.type);
+}
 
 /**
- * Validates a file before upload with enhanced type and format checking
+ * Check if file is a document
  */
-export const validateFileForUpload = (
-  file: File, 
-  maxSizeInMB: number = 100
-): { valid: boolean, error?: string, message?: string } => {
-  // Run diagnostic first
-  runFileDiagnostic(file);
+export function isDocumentFile(file: File): boolean {
+  return SUPPORTED_DOCUMENT_TYPES.includes(file.type);
+}
+
+/**
+ * Get file extension from filename or File object
+ */
+export function getFileExtension(file: File | string): string {
+  if (typeof file === 'string') {
+    return file.split('.').pop()?.toLowerCase() || '';
+  }
   
+  return file.name.split('.').pop()?.toLowerCase() || '';
+}
+
+/**
+ * Validate file before upload
+ */
+export function validateFileForUpload(file: File, maxSizeInMB = 100): { valid: boolean; error?: string } {
   // Basic validation
   if (!file) {
-    return { valid: false, error: "No file provided", message: "No file provided" };
+    return { valid: false, error: 'No file provided' };
   }
   
   if (!(file instanceof File)) {
-    return { valid: false, error: "Invalid file object", message: "Invalid file object" };
+    return { valid: false, error: 'Invalid file object' };
   }
   
-  if (file.size === 0) {
-    return { valid: false, error: "File has zero size", message: "File has zero size" };
-  }
-  
-  // Size validation
+  // Check file size
   const maxSizeInBytes = maxSizeInMB * 1024 * 1024;
   if (file.size > maxSizeInBytes) {
-    const errorMsg = `File exceeds maximum size (${formatFileSize(file.size)} > ${maxSizeInMB}MB)`;
-    return { 
-      valid: false, 
-      error: errorMsg,
-      message: errorMsg
+    return {
+      valid: false,
+      error: `File size exceeds the maximum allowed (${maxSizeInMB}MB)`
     };
   }
   
-  // Type validation for common formats
-  const contentType = file.type.toLowerCase();
+  // Check if file is supported
+  const isSupported = 
+    isImageFile(file) || 
+    isVideoFile(file) || 
+    isAudioFile(file) || 
+    isDocumentFile(file);
   
-  // Images
-  if (contentType.startsWith('image/')) {
-    if (!SUPPORTED_IMAGE_TYPES.includes(contentType)) {
-      const errorMsg = `Unsupported image format: ${contentType}. Use JPEG, PNG, GIF, WebP or SVG.`;
-      return {
-        valid: false,
-        error: errorMsg,
-        message: errorMsg
-      };
-    }
-  }
-  
-  // Video
-  else if (contentType.startsWith('video/')) {
-    if (!SUPPORTED_VIDEO_TYPES.includes(contentType)) {
-      const errorMsg = `Unsupported video format: ${contentType}. Use MP4, WebM, MOV or AVI.`;
-      return {
-        valid: false,
-        error: errorMsg,
-        message: errorMsg
-      };
-    }
-  }
-  
-  // Audio
-  else if (contentType.startsWith('audio/')) {
-    const allowedAudioTypes = ['audio/mp3', 'audio/mpeg', 'audio/wav', 'audio/ogg'];
-    if (!allowedAudioTypes.includes(contentType)) {
-      const errorMsg = `Unsupported audio format: ${contentType}. Use MP3, WAV or OGG.`;
-      return {
-        valid: false,
-        error: errorMsg,
-        message: errorMsg
-      };
-    }
+  if (!isSupported) {
+    return {
+      valid: false,
+      error: `Unsupported file type: ${file.type}`
+    };
   }
   
   return { valid: true };
-};
+}

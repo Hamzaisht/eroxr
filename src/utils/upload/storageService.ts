@@ -13,6 +13,7 @@ interface UploadResult {
 /**
  * Centralized file upload utility for Supabase storage
  * Replaces all other upload functions in the app
+ * @deprecated Use uploadMediaToSupabase from @/utils/media/uploadUtils instead
  */
 export const uploadFileToStorage = async (
   bucketName: string = 'media',

@@ -39,11 +39,18 @@ export const uploadMediaToSupabase = async (
     const fileExt = file.name.split(".").pop() || "";
     const fileId = uuidv4();
     
-    // Determine content category folder
-    const contentCategory = options?.bucket || "media";
+    // Determine content category for subfolder organization
+    let contentType = options?.bucket || 'media';
+    if (contentType === 'media') {
+      // Further organize by content type
+      if (file.type.startsWith('image/')) contentType = 'images';
+      else if (file.type.startsWith('video/')) contentType = 'videos';
+      else if (file.type.startsWith('audio/')) contentType = 'audio';
+      else contentType = 'documents';
+    }
     
     // Build path with userId subfolder for better organization
-    const filePath = `${contentCategory}/${userId}/${fileId}-${timestamp}.${fileExt}`;
+    const filePath = `${userId}/${contentType}/${fileId}-${timestamp}.${fileExt}`;
     
     // Prepare metadata with creator_id and access level
     const metadata: Record<string, string> = {
@@ -56,7 +63,9 @@ export const uploadMediaToSupabase = async (
       metadata.post_id = options.postId;
     }
     
-    // Upload file with metadata
+    console.log(`Uploading to media bucket: ${filePath} (${file.type})`);
+    
+    // Upload file with metadata - ALWAYS to the 'media' bucket
     const { data, error } = await supabase.storage
       .from("media")
       .upload(filePath, file, {
