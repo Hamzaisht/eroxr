@@ -12,7 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useMediaQuery } from "@/hooks/use-mobile";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Video } from "lucide-react";
+import { Video, Loader2 } from "lucide-react";
 
 const Home = () => {
   const [isCreatePostOpen, setIsCreatePostOpen] = useState(false);
@@ -20,15 +20,20 @@ const Home = () => {
   const [isGoLiveOpen, setIsGoLiveOpen] = useState(false);
   const [isPayingCustomer, setIsPayingCustomer] = useState<boolean | null>(null);
   const [isErosDialogOpen, setIsErosDialogOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const session = useSession();
   const { toast } = useToast();
   const isMobile = useMediaQuery("(max-width: 768px)");
 
   useEffect(() => {
     const checkPayingCustomerStatus = async () => {
-      if (!session?.user?.id) return;
+      if (!session?.user?.id) {
+        setIsLoading(false);
+        return;
+      }
       
       try {
+        setIsLoading(true);
         const { data, error } = await supabase
           .from('profiles')
           .select('is_paying_customer')
@@ -37,6 +42,11 @@ const Home = () => {
       
         if (error) {
           console.error('Error fetching profile data:', error);
+          toast({
+            title: "Error",
+            description: "Could not load your profile information. Please try again.",
+            variant: "destructive"
+          });
           return;
         }
       
@@ -45,13 +55,26 @@ const Home = () => {
         }
       } catch (err) {
         console.error('Exception in checkPayingCustomerStatus:', err);
+      } finally {
+        setIsLoading(false);
       }
     };
 
     checkPayingCustomerStatus();
-  }, [session?.user?.id]);
+  }, [session?.user?.id, toast]);
 
   if (!session) return null;
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="h-10 w-10 animate-spin text-luxury-primary" />
+          <p className="text-luxury-neutral">Loading your personalized feed...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <HomeLayout>

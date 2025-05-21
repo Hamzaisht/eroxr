@@ -60,7 +60,7 @@ export const uploadFile = async (
   });
   
   try {
-    // Use createUniqueFilePath with only the file parameter
+    // Generate a unique path for the file
     const filePath = createUniqueFilePath(file);
     
     // CRITICAL: Explicitly use the file's type
