@@ -1,7 +1,8 @@
+
 import { useEffect } from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { Toaster } from "@/components/ui/toaster";
-import { ThemeProvider } from "@/components/ThemeProvider";
+import { ThemeProvider } from "@/components/layout/ThemeProvider";
 import Home from "./pages/Home";
 import { ensureStorageBuckets } from "./utils/upload/ensureBuckets";
 

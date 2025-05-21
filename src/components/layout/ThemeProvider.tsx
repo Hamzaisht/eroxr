@@ -4,22 +4,28 @@ import { ThemeContext } from './ThemeContext';
 
 interface ThemeProviderProps {
   children: React.ReactNode;
+  defaultTheme?: 'light' | 'dark';
+  storageKey?: string;
 }
 
-export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
-  const [theme, setTheme] = useState<'light' | 'dark'>('dark');
+export const ThemeProvider: React.FC<ThemeProviderProps> = ({ 
+  children, 
+  defaultTheme = 'dark', 
+  storageKey = 'theme' 
+}) => {
+  const [theme, setTheme] = useState<'light' | 'dark'>(defaultTheme);
 
   useEffect(() => {
-    const savedTheme = localStorage.getItem('theme') as 'light' | 'dark';
+    const savedTheme = localStorage.getItem(storageKey) as 'light' | 'dark';
     if (savedTheme) {
       setTheme(savedTheme);
     }
-  }, []);
+  }, [storageKey]);
 
   const toggleTheme = () => {
     const newTheme = theme === 'light' ? 'dark' : 'light';
     setTheme(newTheme);
-    localStorage.setItem('theme', newTheme);
+    localStorage.setItem(storageKey, newTheme);
   };
 
   return (
