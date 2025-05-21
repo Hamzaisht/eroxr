@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { FeedContainer } from "./feed/components/FeedContainer";
@@ -16,21 +17,23 @@ export const MainFeed = ({
   const isMobile = useIsMobile();
   const { toast } = useToast();
   const [hasSeenTip, setHasSeenTip] = useState(() => 
-    localStorage.getItem("hasSeenEngagementTip")
+    localStorage.getItem("hasSeenEngagementTip") === "true"
   );
 
-  // Show engagement tip for new users
+  // Show engagement tip for new users - but only once
   useEffect(() => {
     if (!hasSeenTip) {
-      setTimeout(() => {
+      const timer = setTimeout(() => {
         toast({
           title: "Pro Tip! 💡",
           description: "Interact with content to see more of what you love. Try liking or commenting!",
           duration: 5000,
         });
         localStorage.setItem("hasSeenEngagementTip", "true");
-        setHasSeenTip("true");
-      }, 10000);
+        setHasSeenTip(true);
+      }, 5000);
+      
+      return () => clearTimeout(timer);
     }
   }, [hasSeenTip, toast]);
 

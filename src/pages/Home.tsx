@@ -21,6 +21,7 @@ const Home = () => {
   const [isPayingCustomer, setIsPayingCustomer] = useState<boolean | null>(null);
   const [isErosDialogOpen, setIsErosDialogOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const session = useSession();
   const { toast } = useToast();
   const isMobile = useMediaQuery("(max-width: 768px)");
@@ -34,6 +35,8 @@ const Home = () => {
       
       try {
         setIsLoading(true);
+        setLoadError(null);
+        
         const { data, error } = await supabase
           .from('profiles')
           .select('is_paying_customer')
@@ -42,11 +45,7 @@ const Home = () => {
       
         if (error) {
           console.error('Error fetching profile data:', error);
-          toast({
-            title: "Error",
-            description: "Could not load your profile information. Please try again.",
-            variant: "destructive"
-          });
+          setLoadError("Could not load your profile information");
           return;
         }
       
@@ -55,13 +54,14 @@ const Home = () => {
         }
       } catch (err) {
         console.error('Exception in checkPayingCustomerStatus:', err);
+        setLoadError("An unexpected error occurred");
       } finally {
         setIsLoading(false);
       }
     };
 
     checkPayingCustomerStatus();
-  }, [session?.user?.id, toast]);
+  }, [session?.user?.id]);
 
   if (!session) return null;
 
@@ -71,6 +71,17 @@ const Home = () => {
         <div className="flex flex-col items-center gap-4">
           <Loader2 className="h-10 w-10 animate-spin text-luxury-primary" />
           <p className="text-luxury-neutral">Loading your personalized feed...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (loadError) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="flex flex-col items-center gap-4">
+          <p className="text-red-500">{loadError}</p>
+          <Button onClick={() => window.location.reload()}>Retry</Button>
         </div>
       </div>
     );

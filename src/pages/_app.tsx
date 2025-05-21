@@ -3,7 +3,6 @@
 import { useEffect } from 'react';
 import { supabase, setUserIdForRls } from '@/integrations/supabase/client';
 import { useSession } from '@supabase/auth-helpers-react';
-import { ToastProvider } from '@/hooks/use-toast';
 
 function App({ Component, pageProps }) {
   const session = useSession();
@@ -15,11 +14,7 @@ function App({ Component, pageProps }) {
     }
   }, [session?.user?.id]);
   
-  return (
-    <ToastProvider>
-      <Component {...pageProps} />
-    </ToastProvider>
-  );
+  return <Component {...pageProps} />;
 }
 
 export default App;
