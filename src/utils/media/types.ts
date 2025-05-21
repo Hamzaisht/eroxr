@@ -30,7 +30,8 @@ export enum AvailabilityStatus {
   ONLINE = 'online',
   AWAY = 'away',
   BUSY = 'busy',
-  OFFLINE = 'offline'
+  OFFLINE = 'offline',
+  INVISIBLE = 'invisible'
 }
 
 /**
@@ -62,6 +63,7 @@ export interface UploadOptions {
   maxSizeMB?: number;
   folder?: string;
   accessLevel?: MediaAccessLevel;
+  contentCategory?: string; // Add this field
 }
 
 /**

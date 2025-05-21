@@ -1,5 +1,6 @@
 
-import { MediaType, MediaSource } from './types';
+import { MediaType, MediaSource, MediaAccessLevel, UploadOptions, UploadResult } from './types';
+import { supabase } from '@/integrations/supabase/client';
 
 /**
  * Extract a URL from a MediaSource object or return the string if it's already a string
@@ -120,4 +121,169 @@ export function calculateAspectRatioDimensions(
   
   // Fallback
   return { width: originalWidth, height: originalHeight };
+}
+
+/**
+ * Determine the media type from a URL or other source
+ */
+export function determineMediaType(source: string | MediaSource): MediaType {
+  // If it's already a MediaSource object, return its type
+  if (typeof source !== 'string' && source?.type) {
+    return source.type;
+  }
+  
+  // Get the URL string
+  const url = typeof source === 'string' ? source : (source?.url || '');
+  
+  // Check extensions
+  if (/\.(jpg|jpeg|png|gif|webp|svg|avif)($|\?)/i.test(url)) {
+    return MediaType.IMAGE;
+  } else if (/\.(mp4|webm|mov|avi|mkv)($|\?)/i.test(url)) {
+    return MediaType.VIDEO;
+  } else if (/\.(mp3|wav|ogg|aac|flac)($|\?)/i.test(url)) {
+    return MediaType.AUDIO;
+  } else if (/\.(pdf|doc|docx|xls|xlsx|ppt|pptx|txt)($|\?)/i.test(url)) {
+    return MediaType.DOCUMENT;
+  }
+  
+  // If we can't determine based on extension, try to make an educated guess
+  if (url.includes('image')) {
+    return MediaType.IMAGE;
+  } else if (url.includes('video')) {
+    return MediaType.VIDEO;
+  } else if (url.includes('audio')) {
+    return MediaType.AUDIO;
+  }
+  
+  // Default fallback
+  return MediaType.UNKNOWN;
+}
+
+/**
+ * Create a unique file path for storage
+ */
+export function createUniqueFilePath(file: File, options: { 
+  userId?: string, 
+  folder?: string 
+} = {}): string {
+  const { userId, folder } = options;
+  const timestamp = Date.now();
+  const random = Math.random().toString(36).substring(2, 10);
+  const fileExt = file.name.split('.').pop();
+  
+  const userPrefix = userId ? `${userId}/` : '';
+  const folderPrefix = folder ? `${folder}/` : '';
+  
+  return `${userPrefix}${folderPrefix}${timestamp}_${random}.${fileExt}`;
+}
+
+/**
+ * Format a file size in bytes to a human-readable string
+ */
+export function formatFileSize(bytes: number): string {
+  if (bytes === 0) return '0 Bytes';
+  
+  const k = 1024;
+  const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+}
+
+/**
+ * Add a cache buster to a URL
+ */
+export function addCacheBuster(url: string): string {
+  if (!url) return '';
+  
+  const separator = url.includes('?') ? '&' : '?';
+  return `${url}${separator}t=${Date.now()}`;
+}
+
+/**
+ * Upload a file to storage
+ */
+export async function uploadFileToStorage(
+  file: File, 
+  options: UploadOptions = {}
+): Promise<UploadResult> {
+  if (!file) {
+    return { success: false, error: 'No file provided' };
+  }
+  
+  const {
+    bucket = 'media',
+    path,
+    contentType = file.type,
+    folder = '',
+    accessLevel = MediaAccessLevel.PUBLIC
+  } = options;
+  
+  try {
+    // Generate file path if not provided
+    const filePath = path || createUniqueFilePath(file, { folder });
+    
+    // Upload file
+    const { data, error } = await supabase.storage
+      .from(bucket)
+      .upload(filePath, file, {
+        contentType,
+        cacheControl: '3600',
+        upsert: false
+      });
+      
+    if (error) {
+      console.error('File upload error:', error);
+      return { 
+        success: false, 
+        error: error.message,
+      };
+    }
+    
+    // Get the URL
+    let url;
+    if (accessLevel === MediaAccessLevel.PUBLIC) {
+      const { data: publicUrlData } = supabase.storage
+        .from(bucket)
+        .getPublicUrl(data.path);
+      
+      url = publicUrlData.publicUrl;
+    } else {
+      // For private files, create a signed URL
+      const { data: signedUrlData } = await supabase.storage
+        .from(bucket)
+        .createSignedUrl(data.path, 60 * 60); // 1 hour expiration
+        
+      url = signedUrlData?.signedUrl;
+    }
+    
+    return {
+      success: true,
+      url,
+      publicUrl: url,
+      path: data.path,
+      accessLevel
+    };
+  } catch (err: any) {
+    console.error('File upload unexpected error:', err);
+    return {
+      success: false,
+      error: err.message || 'Unknown upload error',
+    };
+  }
+}
+
+/**
+ * Get a playable media URL with cache busting
+ */
+export function getPlayableMediaUrl(url: string): string {
+  if (!url) return '';
+  
+  // Add cache busting for certain storage URLs
+  if ((url.includes('storage/v1/object') || url.includes('cloudfront.net')) && !url.includes('?t=')) {
+    const separator = url.includes('?') ? '&' : '?';
+    return `${url}${separator}t=${Date.now()}`;
+  }
+  
+  return url;
 }

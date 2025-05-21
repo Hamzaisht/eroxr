@@ -1,5 +1,4 @@
 
-
 // Re-export all media utilities from the various files
 export * from './mediaUtils';
 export * from './mediaTypeUtils';
@@ -19,17 +18,20 @@ export type {
   UploadResult 
 } from './types';
 
+// Export functions from mediaUtils
 export { 
-  determineMediaType,
-  extractMediaUrl, 
   normalizeMediaSource,
-  uploadFileToStorage,
+  extractMediaUrl,
   calculateAspectRatioDimensions,
-  getPlayableMediaUrl,
+  determineMediaType,
+  createUniqueFilePath,
   formatFileSize,
-  createUniqueFilePath
+  uploadFileToStorage,
+  getPlayableMediaUrl,
+  addCacheBuster
 } from './mediaUtils';
 
+// Export functions from mediaTypeUtils
 export { 
   isImageType, 
   isVideoType, 
@@ -39,28 +41,30 @@ export {
   mimeTypeToMediaType
 } from './mediaTypeUtils';
 
+// Export functions from urlUtils
 export {
   isVideoUrl,
   isImageUrl,
   isAudioUrl,
-  // Rename this export to avoid the duplicate
-  isValidUrl as isValidMediaUrl,
+  isValidUrl,
   getOptimizedImageUrl
 } from './urlUtils';
 
+// Export functions from generateVideoThumbnail
 export {
   generateVideoThumbnail,
   generateThumbnailFromUrl
 } from './generateVideoThumbnail';
 
-// Export validateMediaUrl from mediaOrchestrator but not isValidMediaUrl
-// since we're already exporting isValidUrl as isValidMediaUrl from urlUtils
+// Export functions from mediaOrchestrator
 export {
-  validateMediaUrl
+  isValidMediaUrl,
+  validateMediaUrl,
+  canAccessMedia
 } from './mediaOrchestrator';
 
+// Export functions from uploadUtils
 export {
   uploadMediaToSupabase,
   deleteMediaFromSupabase
 } from './uploadUtils';
-

@@ -30,7 +30,7 @@ export function isValidMediaUrl(url: string | undefined | null): boolean {
   }
 }
 
-// Alias for isValidMediaUrl for better semantic naming
+// Export validateMediaUrl as an alias of isValidMediaUrl for backwards compatibility
 export const validateMediaUrl = isValidMediaUrl;
 
 /**

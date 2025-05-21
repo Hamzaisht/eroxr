@@ -118,7 +118,7 @@ export const MediaRenderer = forwardRef<
   
   // Check for valid URL early to avoid unnecessary rendering
   const url = mediaUrl || initialUrl;
-  if (!validateMediaUrl(url)) {
+  if (!isValidMediaUrl(url)) {
     return (
       <div className="flex flex-col items-center justify-center h-full w-full p-4 bg-black/10 text-center">
         <AlertCircle className="h-8 w-8 text-red-500 mb-2" />
