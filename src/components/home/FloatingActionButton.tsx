@@ -1,5 +1,5 @@
 
-import { Plus, Heart } from "lucide-react";
+import { Plus } from "lucide-react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
@@ -11,7 +11,6 @@ interface FloatingActionButtonProps {
 }
 
 export const FloatingActionButton = ({ onClick }: FloatingActionButtonProps) => {
-  const [isBodyContactDialogOpen, setIsBodyContactDialogOpen] = useState(false);
   const [animateButton, setAnimateButton] = useState(false);
   const { toast } = useToast();
 
@@ -27,16 +26,7 @@ export const FloatingActionButton = ({ onClick }: FloatingActionButtonProps) => 
   const handleClick = () => {
     if (onClick) {
       onClick();
-    } else {
-      setIsBodyContactDialogOpen(true);
     }
-  };
-
-  const handleBodyContactSuccess = () => {
-    toast({
-      title: "Dating Ad Created",
-      description: "Your dating ad has been created successfully",
-    });
   };
 
   return (
@@ -58,8 +48,6 @@ export const FloatingActionButton = ({ onClick }: FloatingActionButtonProps) => 
           <div className="absolute inset-0 bg-gradient-to-br from-transparent via-white/10 to-transparent opacity-0 hover:opacity-100 transition-opacity duration-500"></div>
         </Button>
       </motion.div>
-      
-      <CreateBodyContactDialog onSuccess={handleBodyContactSuccess} />
     </>
   );
 };

@@ -13,6 +13,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
 import { useSuperAdminCheck } from "@/hooks/useSuperAdminCheck";
 import { useGhostMode } from "@/hooks/useGhostMode";
+import { CreateBodyContactDialog } from "@/components/ads/body-contact"; 
 
 const menuItems = [
   { icon: Home, label: "Home", path: "/home" },
@@ -32,6 +33,25 @@ export const InteractiveNav = () => {
   const isMobile = useMediaQuery("(max-width: 768px)");
   const { isSuperAdmin } = useSuperAdminCheck();
   const { isGhostMode } = useGhostMode();
+  
+  // Add state for body contact dialog
+  const [showBodyContactDialog, setShowBodyContactDialog] = useState(false);
+
+  const handleSuccessfulAdCreation = () => {
+    // Handle success logic if needed
+  };
+  
+  // Modified to handle the BD creation
+  const handleItemClick = (path: string, label: string) => {
+    if (label === "Create a BD" && location.pathname === "/dating") {
+      setShowBodyContactDialog(true);
+    } else {
+      navigate(path);
+      // Close mobile menu if it's open
+      const closeButton = document.querySelector('[data-radix-collection-item]') as HTMLElement;
+      if (closeButton && isMobile) closeButton.click();
+    }
+  };
 
   const MobileNav = () => (
     <Sheet>
@@ -65,11 +85,7 @@ export const InteractiveNav = () => {
                 path={item.path}
                 isActive={location.pathname === item.path}
                 isExpanded={true}
-                onClick={() => {
-                  navigate(item.path);
-                  const closeButton = document.querySelector('[data-radix-collection-item]') as HTMLElement;
-                  if (closeButton) closeButton.click();
-                }}
+                onClick={() => handleItemClick(item.path, item.label)}
               />
             ))}
             {isSuperAdmin && (
@@ -139,7 +155,7 @@ export const InteractiveNav = () => {
               path={item.path}
               isActive={location.pathname === item.path}
               isExpanded={isExpanded}
-              onClick={() => navigate(item.path)}
+              onClick={() => handleItemClick(item.path, item.label)}
             />
           ))}
           {isSuperAdmin && (
@@ -183,6 +199,9 @@ export const InteractiveNav = () => {
           )}
         </>
       )}
+      
+      {/* Add the dialog for creating body contact ads */}
+      <CreateBodyContactDialog onSuccess={handleSuccessfulAdCreation} />
     </>
   );
 };
