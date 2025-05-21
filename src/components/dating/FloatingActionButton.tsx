@@ -1,7 +1,7 @@
 
 import { motion, AnimatePresence } from "framer-motion";
-import { Heart, X, MessageCircle, Filter } from "lucide-react";
-import { useState } from "react";
+import { Heart, X, MessageCircle, Filter, Sparkles } from "lucide-react";
+import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { CreateBodyContactDialog } from "@/components/ads/body-contact"; // Add this import
 
@@ -28,6 +28,16 @@ export const FloatingActionButton = ({
   const [isOpen, setIsOpen] = useState(false);
   // Add state for body contact dialog
   const [showBodyContactDialog, setShowBodyContactDialog] = useState(false);
+  const [pulseEffect, setPulseEffect] = useState(false);
+  
+  // Add periodic pulse effect to make the button more noticeable
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setPulseEffect(true);
+      setTimeout(() => setPulseEffect(false), 1000);
+    }, 15000);
+    return () => clearInterval(interval);
+  }, []);
 
   const toggleMenu = () => {
     setIsOpen(!isOpen);
@@ -54,7 +64,7 @@ export const FloatingActionButton = ({
       icon: <Heart className="h-5 w-5" />,
       label: "Create Ad",
       onClick: handleCreateAd,
-      color: "bg-green-500 text-white"
+      color: "bg-gradient-to-r from-pink-500 to-purple-500 text-white"
     },
     {
       icon: <X className="h-5 w-5" />,
@@ -102,7 +112,7 @@ export const FloatingActionButton = ({
                 className="flex items-center gap-2"
               >
                 <motion.div
-                  className="bg-luxury-dark/80 backdrop-blur-sm text-white px-3 py-1 rounded-md shadow-md text-sm"
+                  className="bg-black/80 backdrop-blur-sm text-white px-3 py-1 rounded-md shadow-md text-sm"
                   initial={{ opacity: 0, x: 20 }}
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: 20 }}
@@ -111,6 +121,7 @@ export const FloatingActionButton = ({
                 </motion.div>
                 <motion.button
                   whileTap={{ scale: 0.9 }}
+                  whileHover={{ scale: 1.05 }}
                   className={cn(
                     "w-12 h-12 rounded-full shadow-lg flex items-center justify-center",
                     item.color
@@ -126,22 +137,36 @@ export const FloatingActionButton = ({
       </AnimatePresence>
 
       <motion.button
-        className="w-14 h-14 rounded-full bg-gradient-to-r from-luxury-primary to-luxury-accent text-white shadow-lg flex items-center justify-center"
+        className="w-14 h-14 rounded-full bg-gradient-to-r from-luxury-primary to-luxury-accent text-white shadow-lg flex items-center justify-center overflow-hidden relative"
         whileTap={{ scale: 0.9 }}
         animate={{ 
           rotate: isOpen ? 45 : 0,
-          boxShadow: isOpen 
+          scale: pulseEffect ? 1.1 : 1,
+          boxShadow: isOpen || pulseEffect
             ? "0 0 15px 5px rgba(155, 135, 245, 0.5)" 
             : "0 5px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1)"
         }}
+        transition={{ duration: 0.3 }}
         onClick={toggleMenu}
       >
         <motion.div 
           animate={{ rotate: isOpen ? 45 : 0 }}
-          className="text-2xl font-bold"
+          className="text-2xl font-bold relative z-10"
         >
           +
         </motion.div>
+        <div className="absolute inset-0 bg-gradient-to-br from-transparent via-luxury-accent/20 to-transparent animate-pulse"></div>
+      </motion.button>
+
+      {/* The dedicated Create Body Contact button for the dating page */}
+      <motion.button
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="fixed bottom-4 right-4 bg-gradient-to-r from-pink-500 to-purple-500 shadow-lg text-white rounded-full py-3 px-5 flex items-center gap-2 hover:shadow-xl transition-all duration-300 hover:from-purple-500 hover:to-pink-500"
+        onClick={handleCreateAd}
+      >
+        <Sparkles className="h-5 w-5" />
+        <span>Create Dating Ad</span>
       </motion.button>
 
       {/* Add the CreateBodyContactDialog */}
