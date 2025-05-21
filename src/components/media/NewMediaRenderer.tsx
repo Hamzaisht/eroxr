@@ -75,7 +75,7 @@ export const NewMediaRenderer = ({
       }
       
       // Determine if the media is a video
-      const mediaType = determineMediaType(item);
+      const mediaType = detectMediaType(item);
       
       // If the mediaType is indeterminate, check content type from URL
       if (mediaType === MediaType.UNKNOWN) {
