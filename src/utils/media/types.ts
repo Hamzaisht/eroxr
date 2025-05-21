@@ -39,6 +39,7 @@ export interface MediaSource {
   thumbnail_url?: string;
   post_id?: string;
   access_level?: MediaAccessLevel; // Added access level
+  path?: string; // Adding path property to fix the TS error
 }
 
 export interface MediaOptions {
