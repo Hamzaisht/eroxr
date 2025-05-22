@@ -1,5 +1,4 @@
 
-// Create this utility file if it doesn't exist
 import { MediaType } from './types';
 
 /**

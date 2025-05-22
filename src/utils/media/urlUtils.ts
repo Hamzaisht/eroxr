@@ -1,5 +1,15 @@
 
 /**
+ * Add a cache buster to a URL
+ */
+export function addCacheBuster(url: string): string {
+  if (!url) return '';
+  
+  const separator = url.includes('?') ? '&' : '?';
+  return `${url}${separator}t=${Date.now()}`;
+}
+
+/**
  * Get a playable media URL with cache busting
  */
 export function getPlayableMediaUrl(url: string): string {
@@ -69,16 +79,4 @@ export function isValidUrl(url: string): boolean {
   } catch (error) {
     return false;
   }
-}
-
-/**
- * Gets an optimized image URL (for thumbnails, etc)
- */
-export function getOptimizedImageUrl(url: string, options?: { width?: number; height?: number; quality?: number }): string {
-  if (!url) return '';
-  
-  // For now, we just return the original URL
-  // In a real implementation, you might append dimensions and quality parameters
-  // for image CDNs or resizing services
-  return url;
 }

@@ -1,7 +1,8 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { UploadOptions, UploadResult, MediaAccessLevel } from './types';
-import { createUniqueFilePath } from './mediaUtils';
+import { createUniqueFilePath } from './fileUtils';
+import { addCacheBuster } from './urlUtils';
 
 /**
  * Upload media to Supabase storage
@@ -74,7 +75,7 @@ export async function uploadMediaToSupabase(
     }
 
     // Add cache buster to ensure the URL is unique
-    const finalUrl = `${publicUrl}?t=${Date.now()}`;
+    const finalUrl = addCacheBuster(publicUrl);
     console.log('Upload successful. Public URL:', finalUrl);
 
     return {
