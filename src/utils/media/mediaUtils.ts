@@ -1,4 +1,5 @@
-import { MediaType, MediaSource, MediaAccessLevel, UploadOptions } from './types';
+
+import { MediaType, MediaSource, MediaAccessLevel, UploadOptions, UploadResult } from './types';
 import { supabase } from '@/integrations/supabase/client';
 
 /**
