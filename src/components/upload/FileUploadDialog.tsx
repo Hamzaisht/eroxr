@@ -14,8 +14,7 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { UploadCloud, Loader2 } from "lucide-react";
 import { useMediaUpload } from "@/hooks/useMediaUpload";
-import { MediaAccessLevel } from "@/utils/media/types";
-import { UploadResult } from "@/utils/media/types";
+import { MediaAccessLevel, UploadResult } from "@/utils/media/types";
 
 interface FileUploadDialogProps {
   open: boolean;
@@ -32,7 +31,6 @@ export const FileUploadDialog = ({
   const [contentCategory, setContentCategory] = useState("media");
   const [maxFileSizeMB, setMaxFileSizeMB] = useState(100);
   const [acceptedFileTypes, setAcceptedFileTypes] = useState<string[]>([]);
-  const [isUploading, setIsUploading] = useState(false);
   const [uploadedUrl, setUploadedUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const { uploadMedia, uploadState } = useMediaUpload();
@@ -42,6 +40,9 @@ export const FileUploadDialog = ({
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     setSelectedFile(file || null);
+    if (file) {
+      console.log(`Selected file: ${file.name} (${file.type}, ${Math.round(file.size/1024)}KB)`);
+    }
   };
 
   const handleFileUpload = async () => {
@@ -54,10 +55,11 @@ export const FileUploadDialog = ({
       return;
     }
 
-    setIsUploading(true);
+    setError(null);
 
     try {
-      // Fixed: Using proper parameter structure
+      console.log("Starting upload process...");
+      // Using proper parameter structure
       const result = await uploadMedia(
         selectedFile,
         {
@@ -72,6 +74,7 @@ export const FileUploadDialog = ({
 
       // Check if url exists before accessing it
       if ('url' in result && result.url) {
+        console.log("Upload successful, URL:", result.url);
         setUploadedUrl(result.url);
         onSuccess?.(result.url, selectedFile);
 
@@ -92,8 +95,6 @@ export const FileUploadDialog = ({
         description: error.message || "Failed to upload file",
         variant: "destructive"
       });
-    } finally {
-      setIsUploading(false);
     }
   };
 
@@ -106,6 +107,7 @@ export const FileUploadDialog = ({
 
   // Check if upload is complete
   const isComplete = uploadState.isComplete;
+  const isUploading = uploadState.isUploading;
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -187,7 +189,7 @@ export const FileUploadDialog = ({
             {isUploading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Uploading...
+                Uploading... {uploadState.progress}%
               </>
             ) : (
               <>

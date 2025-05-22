@@ -32,12 +32,14 @@ export const useMediaUpload = () => {
     options: { contentCategory: string; maxSizeInMB: number }
   ): Promise<UploadResult> => {
     if (!session?.user?.id) {
+      const errorMsg = "Authentication required";
       toast({
         title: "Authentication Required",
         description: "Please sign in to upload media",
         variant: "destructive"
       });
-      return { success: false, error: 'Authentication required' };
+      setError(errorMsg);
+      return { success: false, error: errorMsg };
     }
 
     setIsUploading(true);
@@ -47,6 +49,9 @@ export const useMediaUpload = () => {
     try {
       const { contentCategory, maxSizeInMB } = options;
 
+      // Log upload attempt
+      console.log(`Uploading file: ${file.name} (${file.type}, ${Math.round(file.size/1024)}KB)`);
+      
       // Simulate progress updates
       const progressInterval = setInterval(() => {
         setProgress(prev => Math.min(prev + 5, 90));
@@ -54,16 +59,23 @@ export const useMediaUpload = () => {
 
       const result = await uploadMediaToSupabase(
         file,
-        'media',
+        'media', // Always use 'media' bucket
         {
           folder: `${session.user.id}/${contentCategory}`,
           maxSizeMB: maxSizeInMB, 
-          accessLevel: MediaAccessLevel.PUBLIC
+          accessLevel: MediaAccessLevel.PUBLIC,
+          contentType: file.type
         }
       );
 
       clearInterval(progressInterval);
       setProgress(100);
+      
+      console.log("Upload result:", result);
+
+      if (!result.success) {
+        throw new Error(result.error || "Failed to upload media");
+      }
 
       return result;
     } catch (error: any) {

@@ -17,6 +17,7 @@ export async function uploadMediaToSupabase(
 ): Promise<UploadResult> {
   try {
     if (!file) {
+      console.error("No file provided to uploadMediaToSupabase");
       return { success: false, error: 'No file provided' };
     }
 
@@ -32,6 +33,7 @@ export async function uploadMediaToSupabase(
     // Check file size
     const maxSizeBytes = maxSizeMB * 1024 * 1024;
     if (file.size > maxSizeBytes) {
+      console.error(`File size exceeds maximum: ${file.size} > ${maxSizeBytes}`);
       return { 
         success: false, 
         error: `File exceeds maximum size of ${maxSizeMB}MB` 
@@ -40,9 +42,9 @@ export async function uploadMediaToSupabase(
 
     // Generate a unique path if not provided
     const filePath = path || createUniqueFilePath(file, { folder });
-    console.log(`Uploading to ${bucket}/${filePath}`);
+    console.log(`Uploading to ${bucket}/${filePath} (${contentType})`);
 
-    // Upload to Supabase Storage
+    // Upload to Supabase Storage with explicit content type
     const { data, error } = await supabase.storage
       .from(bucket)
       .upload(filePath, file, {
@@ -56,15 +58,29 @@ export async function uploadMediaToSupabase(
       return { success: false, error: error.message };
     }
 
-    // Get the public URL
+    if (!data || !data.path) {
+      console.error('Upload succeeded but no path returned');
+      return { success: false, error: 'Upload succeeded but no path returned' };
+    }
+
+    // Get the public URL - CRITICAL
     const { data: { publicUrl } } = supabase.storage
       .from(bucket)
       .getPublicUrl(data.path);
 
+    if (!publicUrl) {
+      console.error('Failed to generate public URL');
+      return { success: false, error: 'Failed to generate public URL' };
+    }
+
+    // Add cache buster to ensure the URL is unique
+    const finalUrl = `${publicUrl}?t=${Date.now()}`;
+    console.log('Upload successful. Public URL:', finalUrl);
+
     return {
       success: true,
-      url: publicUrl,
-      publicUrl,
+      url: finalUrl,
+      publicUrl: finalUrl,
       path: data.path,
       accessLevel,
       contentCategory

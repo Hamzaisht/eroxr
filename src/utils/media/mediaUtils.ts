@@ -1,4 +1,4 @@
-import { MediaType, MediaSource, MediaAccessLevel, UploadOptions, UploadResult } from './types';
+import { MediaType, MediaSource, MediaAccessLevel, UploadOptions } from './types';
 import { supabase } from '@/integrations/supabase/client';
 
 /**
@@ -160,20 +160,20 @@ export function determineMediaType(source: string | MediaSource): MediaType {
 
 /**
  * Create a unique file path for storage
+ * @param file The file to create a path for
+ * @param options Options for path creation
+ * @returns A unique file path
  */
-export function createUniqueFilePath(file: File, options: { 
-  userId?: string, 
-  folder?: string 
-} = {}): string {
-  const { userId, folder } = options;
+export function createUniqueFilePath(file: File, options: { folder?: string } = {}): string {
+  if (!file) return '';
+  
+  const { folder = '' } = options;
   const timestamp = Date.now();
-  const random = Math.random().toString(36).substring(2, 10);
-  const fileExt = file.name.split('.').pop();
+  const randomString = Math.random().toString(36).substring(2, 10);
+  const fileName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
   
-  const userPrefix = userId ? `${userId}/` : '';
-  const folderPrefix = folder ? `${folder}/` : '';
-  
-  return `${userPrefix}${folderPrefix}${timestamp}_${random}.${fileExt}`;
+  const folderPrefix = folder ? `${folder.replace(/\/*$/, '')}/` : '';
+  return `${folderPrefix}${timestamp}_${randomString}_${fileName}`;
 }
 
 /**
