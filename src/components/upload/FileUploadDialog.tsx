@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useSession } from "@supabase/auth-helpers-react";
 import {
@@ -14,7 +15,7 @@ import { useToast } from "@/hooks/use-toast";
 import { UploadCloud, Loader2 } from "lucide-react";
 import { useMediaUpload } from "@/hooks/useMediaUpload";
 import { MediaAccessLevel } from "@/utils/media/types";
-import { UploadResult } from "@/types/media";
+import { UploadResult } from "@/utils/media/types";
 
 interface FileUploadDialogProps {
   open: boolean;

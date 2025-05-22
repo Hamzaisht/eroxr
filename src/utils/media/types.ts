@@ -72,7 +72,7 @@ export interface UploadOptions {
   accessLevel?: MediaAccessLevel;
   contentCategory?: string;
   bucket?: string;
-  maxSizeInMB?: number; // Ensure this property exists
+  maxSizeInMB?: number;
 }
 
 export interface UploadResult {
