@@ -1,4 +1,3 @@
-
 import { useState, useRef, useEffect } from "react";
 import { useSession } from "@supabase/auth-helpers-react";
 import { useToast } from "@/hooks/use-toast";
@@ -37,7 +36,7 @@ export function VideoUploadForm({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const session = useSession();
   const { toast } = useToast();
-  const { upload, uploadState } = useMediaUpload({ maxSizeInMB });
+  const { uploadMedia, uploadState } = useMediaUpload();
   
   // Clean up preview URL when component unmounts
   useEffect(() => {
@@ -54,7 +53,6 @@ export function VideoUploadForm({
   };
   
   const handleFileSelect = (file: File | null) => {
-    // Clear previous preview
     if (videoPreview) {
       URL.revokeObjectURL(videoPreview);
       setVideoPreview(null);
@@ -67,13 +65,11 @@ export function VideoUploadForm({
       return;
     }
     
-    // Validate file type
     if (!file.type.startsWith("video/")) {
       setValidationError("Please select a valid video file");
       return;
     }
     
-    // Validate file size
     if (file.size > maxSizeInMB * 1024 * 1024) {
       setValidationError(`File size must be less than ${maxSizeInMB}MB`);
       return;
@@ -91,7 +87,6 @@ export function VideoUploadForm({
     setVideoPreview(null);
     setIsPreviewPlaying(false);
     
-    // Reset file input
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
@@ -100,7 +95,6 @@ export function VideoUploadForm({
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     
-    // Ensure we have a user ID
     const effectiveUserId = userId || session?.user?.id;
     
     if (!effectiveUserId) {
@@ -126,19 +120,19 @@ export function VideoUploadForm({
       setIsSubmitting(true);
       setValidationError(null);
       
-      // Upload video using our centralized upload hook
-      const videoUrl = await upload({
-        file: videoFile,
-        mediaType: 'video',
-        contentCategory: 'videos',
-        onProgress: (progress) => {
-          console.log(`Upload progress: ${progress}%`);
+      const result = await uploadMedia(
+        videoFile,
+        {
+          contentCategory: 'videos',
+          maxSizeInMB: maxSizeInMB
         }
-      });
+      );
       
-      if (!videoUrl) {
-        throw new Error("Failed to upload video");
+      if (!result.success || !result.url) {
+        throw new Error(result.error || "Failed to upload video");
       }
+      
+      const videoUrl = result.url;
       
       // Create video in database
       const { data, error } = await supabase
@@ -193,80 +187,71 @@ export function VideoUploadForm({
           </p>
         </div>
         
-        {/* Video upload section */}
-        <div className="space-y-2">
-          <Label htmlFor="video">Video File</Label>
-          
-          {!videoFile ? (
+        {!videoFile ? (
+          <div
+            className="border-2 border-dashed rounded-lg p-8 flex flex-col items-center justify-center cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-900/10"
+            onClick={() => fileInputRef.current?.click()}
+          >
+            <Upload className="h-10 w-10 text-gray-400 mb-4" />
+            <p className="text-sm text-center text-gray-600 mb-1">
+              Click to select a video
+            </p>
+            <p className="text-xs text-center text-gray-500">
+              MP4, WebM, MOV up to {maxSizeInMB}MB
+            </p>
+            <Input
+              ref={fileInputRef}
+              id="video"
+              type="file"
+              accept="video/*"
+              className="hidden"
+              onChange={handleFileChange}
+            />
+          </div>
+        ) : (
+          <div className="relative rounded-lg overflow-hidden aspect-video bg-black">
             <div
-              className="border-2 border-dashed rounded-lg p-8 flex flex-col items-center justify-center cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-900/10"
-              onClick={() => fileInputRef.current?.click()}
+              className="absolute inset-0"
+              onMouseEnter={() => setIsHovering(true)}
+              onMouseLeave={() => setIsHovering(false)}
+              onClick={togglePreviewPlayback}
             >
-              <Upload className="h-10 w-10 text-gray-400 mb-4" />
-              <p className="text-sm text-center text-gray-600 mb-1">
-                Click to select a video
-              </p>
-              <p className="text-xs text-center text-gray-500">
-                MP4, WebM, MOV up to {maxSizeInMB}MB
-              </p>
-              <Input
-                ref={fileInputRef}
-                id="video"
-                type="file"
-                accept="video/*"
-                className="hidden"
-                onChange={handleFileChange}
+              <video
+                src={videoPreview || undefined}
+                className="w-full h-full object-contain"
+                controls={isPreviewPlaying}
+                autoPlay={isPreviewPlaying}
+                muted={!isPreviewPlaying}
               />
-            </div>
-          ) : (
-            <div className="relative rounded-lg overflow-hidden aspect-video bg-black">
-              <div
-                className="absolute inset-0"
-                onMouseEnter={() => setIsHovering(true)}
-                onMouseLeave={() => setIsHovering(false)}
-                onClick={togglePreviewPlayback}
-              >
-                <video
-                  src={videoPreview || undefined}
-                  className="w-full h-full object-contain"
-                  controls={isPreviewPlaying}
-                  autoPlay={isPreviewPlaying}
-                  muted={!isPreviewPlaying}
-                />
-                
-                {/* Play button overlay */}
-                {!isPreviewPlaying && isHovering && (
-                  <div className="absolute inset-0 flex items-center justify-center bg-black/50">
-                    <Play className="h-16 w-16 text-white opacity-80" />
-                  </div>
-                )}
-              </div>
               
-              {/* File info overlay */}
-              <div className="absolute bottom-0 left-0 right-0 p-3 bg-black/70 text-white text-sm flex justify-between items-center">
-                <div className="truncate max-w-[300px]">
-                  {videoFile.name}
+              {!isPreviewPlaying && isHovering && (
+                <div className="absolute inset-0 flex items-center justify-center bg-black/50">
+                  <Play className="h-16 w-16 text-white opacity-80" />
                 </div>
-                <div>
-                  {(videoFile.size / (1024 * 1024)).toFixed(2)}MB
-                </div>
-              </div>
-              
-              {/* Remove button */}
-              <Button
-                type="button"
-                variant="destructive"
-                size="icon"
-                className="absolute top-2 right-2 rounded-full"
-                onClick={handleClearVideo}
-              >
-                <X className="h-4 w-4" />
-              </Button>
+              )}
             </div>
-          )}
-        </div>
+            
+            <div className="absolute bottom-0 left-0 right-0 p-3 bg-black/70 text-white text-sm flex justify-between items-center">
+              <div className="truncate max-w-[300px]">
+                {videoFile.name}
+              </div>
+              <div>
+                {(videoFile.size / (1024 * 1024)).toFixed(2)}MB
+              </div>
+            </div>
+            
+            <Button
+              type="button"
+              variant="destructive"
+              size="icon"
+              className="absolute top-2 right-2 rounded-full"
+              onClick={handleClearVideo}
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+        )}
         
-        {/* Upload progress */}
         {uploadState.isUploading && (
           <div className="space-y-1">
             <div className="flex justify-between text-sm">
@@ -277,14 +262,12 @@ export function VideoUploadForm({
           </div>
         )}
         
-        {/* Validation error */}
         {(validationError || uploadState.error) && (
           <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-2 rounded-md text-sm">
             {validationError || uploadState.error}
           </div>
         )}
         
-        {/* Video details */}
         <div className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="title">Title</Label>
@@ -310,7 +293,6 @@ export function VideoUploadForm({
           </div>
         </div>
         
-        {/* Form actions */}
         <div className="flex justify-end gap-2">
           <Button 
             type="button" 

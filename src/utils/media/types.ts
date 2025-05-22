@@ -71,6 +71,8 @@ export interface UploadOptions {
   folder?: string;
   accessLevel?: MediaAccessLevel;
   contentCategory?: string;
+  bucket?: string;
+  maxSizeInMB?: number; // Adding this to match expected interface
 }
 
 export interface UploadResult {

@@ -1,4 +1,3 @@
-
 import { MediaType, MediaSource, MediaAccessLevel, UploadOptions, UploadResult } from './types';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -212,7 +211,7 @@ export async function uploadFileToStorage(
   }
   
   const {
-    bucket = 'media',
+    bucket = 'media',  // Default bucket is 'media' if not specified
     path,
     contentType = file.type,
     folder = '',

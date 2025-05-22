@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useSession } from "@supabase/auth-helpers-react";
 import {
@@ -56,12 +57,14 @@ export const FileUploadDialog = ({
     setIsUploading(true);
 
     try {
-      const uploadOptions: UploadOptions = {
-        contentCategory: contentCategory,
-        maxSizeMB: maxFileSizeMB
-      };
-
-      const result = await uploadMedia(selectedFile, uploadOptions);
+      // Fixed: Using proper parameter names
+      const result = await uploadMedia(
+        selectedFile,
+        {
+          contentCategory: contentCategory,
+          maxSizeInMB: maxFileSizeMB
+        }
+      );
 
       if (!result.success) {
         throw new Error(result.error || "Upload failed");
