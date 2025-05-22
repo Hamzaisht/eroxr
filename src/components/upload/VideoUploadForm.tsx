@@ -128,11 +128,16 @@ export function VideoUploadForm({
         }
       );
       
-      if (!result.success || !result.url) {
+      if (!result.success) {
         throw new Error(result.error || "Failed to upload video");
       }
       
-      const videoUrl = result.url;
+      // Check if the result has a url property before accessing it
+      const videoUrl = 'url' in result ? result.url : undefined;
+      
+      if (!videoUrl) {
+        throw new Error("Upload succeeded but no URL returned");
+      }
       
       // Create video in database
       const { data, error } = await supabase

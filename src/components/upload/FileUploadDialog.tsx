@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useSession } from "@supabase/auth-helpers-react";
 import {
@@ -14,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { UploadCloud, Loader2 } from "lucide-react";
 import { useMediaUpload } from "@/hooks/useMediaUpload";
-import { UploadOptions } from "@/utils/media/types";
+import { MediaAccessLevel } from "@/utils/media/types";
 import { UploadResult } from "@/types/media";
 
 interface FileUploadDialogProps {
@@ -57,7 +56,7 @@ export const FileUploadDialog = ({
     setIsUploading(true);
 
     try {
-      // Fixed: Using proper parameter names
+      // Fixed: Using proper parameter structure
       const result = await uploadMedia(
         selectedFile,
         {
@@ -70,12 +69,10 @@ export const FileUploadDialog = ({
         throw new Error(result.error || "Upload failed");
       }
 
-      // Ensure properly typed result
-      const uploadResult = result as UploadResult;
-      
-      if (uploadResult.url) {
-        setUploadedUrl(uploadResult.url);
-        onSuccess?.(uploadResult.url, selectedFile);
+      // Check if url exists before accessing it
+      if ('url' in result && result.url) {
+        setUploadedUrl(result.url);
+        onSuccess?.(result.url, selectedFile);
 
         toast({
           title: "Upload successful",

@@ -3,7 +3,14 @@ import { useState, useCallback } from 'react';
 import { useSession } from '@supabase/auth-helpers-react';
 import { uploadMediaToSupabase } from '@/utils/media/uploadUtils';
 import { useToast } from './use-toast';
-import { MediaAccessLevel } from '@/utils/media/types';
+import { MediaAccessLevel, UploadOptions, UploadResult } from '@/utils/media/types';
+
+export interface UploadState {
+  isUploading: boolean;
+  progress: number;
+  error: string | null;
+  isComplete: boolean;
+}
 
 export const useMediaUpload = () => {
   const [isUploading, setIsUploading] = useState(false);
@@ -13,17 +20,17 @@ export const useMediaUpload = () => {
   const session = useSession();
 
   // Add uploadState object to match the expected interface
-  const uploadState = {
+  const uploadState: UploadState = {
     isUploading,
     progress,
     error,
-    isComplete: false,
+    isComplete: progress === 100 && !isUploading,
   };
 
   const uploadMedia = useCallback(async (
     file: File,
     options: { contentCategory: string; maxSizeInMB: number }
-  ) => {
+  ): Promise<UploadResult> => {
     if (!session?.user?.id) {
       toast({
         title: "Authentication Required",
@@ -50,7 +57,7 @@ export const useMediaUpload = () => {
         'media',
         {
           folder: `${session.user.id}/${contentCategory}`,
-          maxSizeMB: maxSizeInMB, // This matches the parameter name in uploadMediaToSupabase
+          maxSizeMB: maxSizeInMB, 
           accessLevel: MediaAccessLevel.PUBLIC
         }
       );
