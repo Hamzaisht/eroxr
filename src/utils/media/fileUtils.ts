@@ -1,31 +1,38 @@
 
 /**
- * Create a unique file path for storage
- * @param file The file to create a path for
- * @param options Options for path creation
- * @returns A unique file path
+ * Creates a unique file path for uploads
  */
-export function createUniqueFilePath(file: File, options: { folder?: string } = {}): string {
-  if (!file) return '';
-  
-  const { folder = '' } = options;
+export const createUniqueFilePath = (
+  file: File,
+  options: { folder?: string; userId?: string } = {}
+): string => {
+  const { folder = '', userId = '' } = options;
   const timestamp = Date.now();
   const randomString = Math.random().toString(36).substring(2, 10);
-  const fileName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+  const extension = file.name.split('.').pop() || '';
   
-  const folderPrefix = folder ? `${folder.replace(/\/*$/, '')}/` : '';
-  return `${folderPrefix}${timestamp}_${randomString}_${fileName}`;
-}
+  const basePath = folder ? `${folder}/` : '';
+  const userPath = userId ? `${userId}/` : '';
+  
+  return `${basePath}${userPath}${timestamp}-${randomString}.${extension}`;
+};
 
 /**
- * Format a file size in bytes to a human-readable string
+ * Gets file extension from filename
  */
-export function formatFileSize(bytes: number): string {
-  if (bytes === 0) return '0 Bytes';
+export const getFileExtension = (filename: string): string => {
+  return filename.split('.').pop()?.toLowerCase() || '';
+};
+
+/**
+ * Validates file type for media upload
+ */
+export const isValidMediaFile = (file: File): boolean => {
+  const validTypes = [
+    'image/jpeg', 'image/png', 'image/webp', 'image/gif',
+    'video/mp4', 'video/webm', 'video/quicktime',
+    'audio/mp3', 'audio/wav', 'audio/ogg'
+  ];
   
-  const k = 1024;
-  const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
-  
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-}
+  return validTypes.includes(file.type);
+};

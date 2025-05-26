@@ -1,7 +1,6 @@
 
 // Re-export all media utilities from the various files
 export * from './mediaUtils';
-export * from './mediaSourceUtils';
 export * from './dimensionUtils';
 export * from './fileUtils';
 export * from './urlUtils';

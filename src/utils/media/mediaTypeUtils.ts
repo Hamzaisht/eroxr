@@ -1,59 +1,38 @@
 
-import { MediaType } from './types';
+import { MediaType } from '@/types/media';
 
 /**
- * Check if media type is an image
+ * Determines media type from file extension
  */
-export function isImageType(type: MediaType): boolean {
-  return type === MediaType.IMAGE || type === MediaType.GIF;
-}
-
-/**
- * Check if media type is a video
- */
-export function isVideoType(type: MediaType): boolean {
-  return type === MediaType.VIDEO;
-}
-
-/**
- * Check if media type is audio
- */
-export function isAudioType(type: MediaType): boolean {
-  return type === MediaType.AUDIO;
-}
-
-/**
- * Check if media type is a document
- */
-export function isDocumentType(type: MediaType): boolean {
-  return type === MediaType.DOCUMENT;
-}
-
-/**
- * Determine media type from file object
- */
-export function getMediaTypeFromFile(file: File): MediaType {
-  if (!file || !file.type) return MediaType.UNKNOWN;
+export const getMediaTypeFromExtension = (extension: string): MediaType => {
+  const ext = extension.toLowerCase();
   
-  if (file.type.startsWith('image/')) {
-    return file.type.includes('gif') ? MediaType.GIF : MediaType.IMAGE;
-  }
-  
-  if (file.type.startsWith('video/')) {
+  if (['mp4', 'webm', 'mov', 'avi', 'mkv'].includes(ext)) {
     return MediaType.VIDEO;
   }
   
-  if (file.type.startsWith('audio/')) {
+  if (['jpg', 'jpeg', 'png', 'webp', 'bmp'].includes(ext)) {
+    return MediaType.IMAGE;
+  }
+  
+  if (ext === 'gif') {
+    return MediaType.GIF;
+  }
+  
+  if (['mp3', 'wav', 'ogg', 'aac'].includes(ext)) {
     return MediaType.AUDIO;
   }
   
-  if (file.type.includes('pdf') || 
-      file.type.includes('doc') || 
-      file.type.includes('xls') || 
-      file.type.includes('ppt') || 
-      file.type.includes('text/')) {
+  if (['pdf', 'doc', 'docx', 'txt'].includes(ext)) {
     return MediaType.DOCUMENT;
   }
   
   return MediaType.UNKNOWN;
-}
+};
+
+/**
+ * Checks if media type is playable in browser
+ */
+export const isPlayableMediaType = (type: MediaType): boolean => {
+  return [MediaType.VIDEO, MediaType.AUDIO, MediaType.IMAGE, MediaType.GIF].includes(type);
+};

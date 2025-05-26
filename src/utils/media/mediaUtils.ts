@@ -79,3 +79,62 @@ export const calculateAspectRatioDimensions = (
   
   return { width, height };
 };
+
+/**
+ * Normalizes a media source to ensure it has consistent structure
+ */
+export const normalizeMediaSource = (source: any): MediaSource => {
+  if (!source) {
+    return {
+      url: '',
+      type: MediaType.UNKNOWN
+    };
+  }
+  
+  // If it's already a string, create a proper MediaSource
+  if (typeof source === 'string') {
+    return {
+      url: source,
+      type: determineMediaType(source)
+    };
+  }
+  
+  // Extract the URL
+  const url = extractMediaUrl(source);
+  
+  return {
+    url: url || '',
+    type: source.type || determineMediaType(source),
+    thumbnail: source.thumbnail,
+    poster: source.poster,
+    duration: source.duration,
+    width: source.width,
+    height: source.height,
+    watermark: source.watermark,
+    creator_id: source.creator_id,
+    content_type: source.content_type,
+    media_url: source.media_url,
+    video_url: source.video_url,
+    thumbnail_url: source.thumbnail_url,
+    path: source.path,
+    post_id: source.post_id
+  };
+};
+
+/**
+ * Creates a unique file path for uploading
+ */
+export const createUniqueFilePath = (
+  file: File,
+  options: { folder?: string; userId?: string } = {}
+): string => {
+  const { folder = '', userId = '' } = options;
+  const timestamp = Date.now();
+  const randomString = Math.random().toString(36).substring(2, 10);
+  const extension = file.name.split('.').pop() || '';
+  
+  const basePath = folder ? `${folder}/` : '';
+  const userPath = userId ? `${userId}/` : '';
+  
+  return `${basePath}${userPath}${timestamp}-${randomString}.${extension}`;
+};

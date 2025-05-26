@@ -1,56 +1,44 @@
 
 /**
- * Calculate aspect ratio dimensions
+ * Calculates aspect ratio dimensions for media display
  */
-export function calculateAspectRatioDimensions(
-  originalWidth: number, 
-  originalHeight: number,
-  targetWidth?: number,
-  targetHeight?: number
-): { width: number; height: number } {
-  // If no target dimensions provided, return original dimensions
-  if (!targetWidth && !targetHeight) {
-    return { width: originalWidth, height: originalHeight };
+export const calculateAspectRatioDimensions = (
+  containerWidth: number,
+  containerHeight: number,
+  maxWidth: number,
+  maxHeight: number
+) => {
+  const aspectRatio = containerWidth / containerHeight;
+  
+  let width = maxWidth;
+  let height = maxWidth / aspectRatio;
+  
+  if (height > maxHeight) {
+    height = maxHeight;
+    width = maxHeight * aspectRatio;
   }
   
-  // Calculate aspect ratio
+  return { width, height };
+};
+
+/**
+ * Gets responsive dimensions based on container size
+ */
+export const getResponsiveDimensions = (
+  originalWidth: number,
+  originalHeight: number,
+  containerWidth: number,
+  containerHeight: number
+) => {
   const aspectRatio = originalWidth / originalHeight;
   
-  // If targetWidth is provided but not targetHeight
-  if (targetWidth && !targetHeight) {
-    return {
-      width: targetWidth,
-      height: Math.round(targetWidth / aspectRatio)
-    };
+  let width = containerWidth;
+  let height = containerWidth / aspectRatio;
+  
+  if (height > containerHeight) {
+    height = containerHeight;
+    width = containerHeight * aspectRatio;
   }
   
-  // If targetHeight is provided but not targetWidth
-  if (targetHeight && !targetWidth) {
-    return {
-      width: Math.round(targetHeight * aspectRatio),
-      height: targetHeight
-    };
-  }
-  
-  // If both are provided, maintain aspect ratio within bounds
-  if (targetWidth && targetHeight) {
-    const targetRatio = targetWidth / targetHeight;
-    
-    if (aspectRatio > targetRatio) {
-      // Width constrains
-      return {
-        width: targetWidth,
-        height: Math.round(targetWidth / aspectRatio)
-      };
-    } else {
-      // Height constrains
-      return {
-        width: Math.round(targetHeight * aspectRatio),
-        height: targetHeight
-      };
-    }
-  }
-  
-  // Fallback
-  return { width: originalWidth, height: originalHeight };
-}
+  return { width, height };
+};
