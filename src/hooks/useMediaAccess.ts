@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { MediaAccessLevel } from '@/utils/media/types';
 import { supabase } from '@/integrations/supabase/client';
+import { useGhostMode } from './useGhostMode';
 
 interface UseMediaAccessProps {
   creatorId: string;
@@ -12,10 +13,18 @@ interface UseMediaAccessProps {
 export const useMediaAccess = ({ creatorId, postId, accessLevel }: UseMediaAccessProps) => {
   const [canAccess, setCanAccess] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const { isGhostMode } = useGhostMode();
 
   useEffect(() => {
     const checkAccess = async () => {
       try {
+        // Ghost mode bypasses all restrictions
+        if (isGhostMode) {
+          setCanAccess(true);
+          setIsLoading(false);
+          return;
+        }
+
         const { data: { user } } = await supabase.auth.getUser();
         
         // Public content is always accessible
@@ -43,7 +52,7 @@ export const useMediaAccess = ({ creatorId, postId, accessLevel }: UseMediaAcces
             .select('id')
             .eq('user_id', user.id)
             .eq('creator_id', creatorId)
-            .single();
+            .maybeSingle();
           
           setCanAccess(!!subscription);
           return;
@@ -56,9 +65,22 @@ export const useMediaAccess = ({ creatorId, postId, accessLevel }: UseMediaAcces
             .select('id')
             .eq('user_id', user.id)
             .eq('post_id', postId)
-            .single();
+            .maybeSingle();
           
           setCanAccess(!!purchase);
+          return;
+        }
+
+        // Check follower status
+        if (accessLevel === MediaAccessLevel.FOLLOWERS) {
+          const { data: follow } = await supabase
+            .from('followers')
+            .select('id')
+            .eq('follower_id', user.id)
+            .eq('following_id', creatorId)
+            .maybeSingle();
+          
+          setCanAccess(!!follow);
           return;
         }
 
@@ -73,7 +95,7 @@ export const useMediaAccess = ({ creatorId, postId, accessLevel }: UseMediaAcces
     };
 
     checkAccess();
-  }, [creatorId, postId, accessLevel]);
+  }, [creatorId, postId, accessLevel, isGhostMode]);
 
   return { canAccess, isLoading };
 };

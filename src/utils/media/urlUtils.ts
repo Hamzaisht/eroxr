@@ -1,54 +1,35 @@
 
 import { MediaAccessLevel } from './types';
 
-/**
- * Get playable media URL with proper handling for different access levels
- */
-export const getPlayableMediaUrl = (url: string | undefined): string => {
+export const getPlayableMediaUrl = (url: string): string => {
   if (!url) return '';
   
-  // Handle URL without protocol
-  if (url.startsWith('//')) {
-    return `https:${url}`;
+  // If it's already a full URL, return as is
+  if (url.startsWith('http')) {
+    return url;
   }
   
-  // Add protocol if missing
-  if (!url.startsWith('http') && !url.startsWith('blob:') && !url.startsWith('data:')) {
-    return `https://${url}`;
+  // If it's a Supabase storage path, construct the full URL
+  if (url.startsWith('media/')) {
+    return `https://ysqbdaeohlupucdmivkt.supabase.co/storage/v1/object/public/media/${url.replace('media/', '')}`;
   }
   
   return url;
 };
 
-/**
- * Generate watermark text for media
- */
-export const generateWatermark = (creatorHandle?: string): string => {
-  if (!creatorHandle) return 'www.eroxr.com';
-  return `www.eroxr.com/@${creatorHandle}`;
+export const shouldBlurMedia = (accessLevel: MediaAccessLevel, canAccess: boolean): boolean => {
+  if (canAccess) return false;
+  return accessLevel !== MediaAccessLevel.PUBLIC;
 };
 
-/**
- * Check if media should be blurred based on access level
- */
-export const shouldBlurMedia = (
-  accessLevel: MediaAccessLevel,
-  hasAccess: boolean
-): boolean => {
-  if (accessLevel === MediaAccessLevel.PUBLIC) return false;
-  return !hasAccess;
-};
-
-/**
- * Get preview duration for PPV content (in seconds)
- */
 export const getPreviewDuration = (accessLevel: MediaAccessLevel): number => {
-  switch (accessLevel) {
-    case MediaAccessLevel.PPV:
-      return 10; // 10 seconds preview
-    case MediaAccessLevel.SUBSCRIBERS:
-      return 5; // 5 seconds preview
-    default:
-      return 0;
-  }
+  // PPV content gets a 10-second preview
+  if (accessLevel === MediaAccessLevel.PPV) return 10;
+  return 0;
+};
+
+export const generateSecureUrl = async (url: string, accessLevel: MediaAccessLevel): Promise<string> => {
+  // For now, just return the playable URL
+  // In the future, this could generate signed URLs for private content
+  return getPlayableMediaUrl(url);
 };

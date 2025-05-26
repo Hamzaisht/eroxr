@@ -1,63 +1,108 @@
 
-import { Lock, Users, CreditCard, Eye } from "lucide-react";
+import { Lock, Users, CreditCard, Eye, UserPlus, Ghost } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { AccessControlOverlayProps } from "@/utils/media/types";
+import { MediaAccessLevel } from "@/utils/media/types";
 import { useGhostMode } from "@/hooks/useGhostMode";
+import { useNavigate } from "react-router-dom";
+
+interface AccessControlOverlayProps {
+  accessLevel: MediaAccessLevel;
+  creatorHandle?: string;
+  ppvAmount?: number;
+  reason?: 'subscription' | 'purchase' | 'follow' | 'login' | 'private';
+  actionText?: string;
+  isBlurred?: boolean;
+  onSubscribe?: () => void;
+  onPurchase?: () => void;
+  onFollow?: () => void;
+  onUnlock?: () => void;
+}
 
 export const AccessControlOverlay = ({
   accessLevel,
   creatorHandle,
   ppvAmount,
+  reason,
+  actionText,
   isBlurred = true,
-  onUnlock,
   onSubscribe,
-  onPurchase
+  onPurchase,
+  onFollow,
+  onUnlock
 }: AccessControlOverlayProps) => {
   const { isGhostMode } = useGhostMode();
+  const navigate = useNavigate();
 
   // In ghost mode, show a minimal indicator
   if (isGhostMode) {
     return (
       <div className="absolute top-2 right-2 z-50 bg-black/70 backdrop-blur-sm px-3 py-1.5 rounded-md text-xs text-white border border-purple-500/30 shadow-lg flex items-center space-x-1">
-        <Eye className="h-3.5 w-3.5 text-purple-400" />
-        <span>Ghost Mode</span>
+        <Ghost className="h-3.5 w-3.5 text-purple-400" />
+        <span>Ghost Mode - {accessLevel}</span>
       </div>
     );
   }
 
   const getOverlayContent = () => {
-    switch (accessLevel) {
-      case 'subscribers_only':
+    switch (reason) {
+      case 'subscription':
         return {
           icon: <Users className="w-8 h-8 text-blue-500" />,
           title: "Subscribers Only",
           description: `Subscribe to @${creatorHandle || 'creator'} to unlock this content`,
-          actionText: "Subscribe",
-          onAction: onSubscribe
+          actionText: "Subscribe Now",
+          onAction: onSubscribe,
+          actionColor: "bg-blue-600 hover:bg-blue-700"
         };
-      case 'ppv':
+      case 'purchase':
         return {
           icon: <CreditCard className="w-8 h-8 text-green-500" />,
           title: "Premium Content",
-          description: `Unlock this content for $${ppvAmount || 0}`,
+          description: `Unlock this exclusive content for $${ppvAmount || 0}`,
           actionText: `Purchase ($${ppvAmount || 0})`,
-          onAction: onPurchase
+          onAction: onPurchase,
+          actionColor: "bg-green-600 hover:bg-green-700"
+        };
+      case 'follow':
+        return {
+          icon: <UserPlus className="w-8 h-8 text-purple-500" />,
+          title: "Follow Required",
+          description: `Follow @${creatorHandle || 'creator'} to view this content`,
+          actionText: "Follow",
+          onAction: onFollow,
+          actionColor: "bg-purple-600 hover:bg-purple-700"
+        };
+      case 'login':
+        return {
+          icon: <Eye className="w-8 h-8 text-yellow-500" />,
+          title: "Login Required",
+          description: "Please log in to view this content",
+          actionText: "Log In",
+          onAction: () => navigate('/auth'),
+          actionColor: "bg-yellow-600 hover:bg-yellow-700"
         };
       case 'private':
         return {
           icon: <Lock className="w-8 h-8 text-red-500" />,
           title: "Private Content",
-          description: "This content is private",
-          actionText: "Request Access",
-          onAction: onUnlock
+          description: "This content is private and not accessible",
+          actionText: null,
+          onAction: null,
+          actionColor: ""
         };
       default:
-        return null;
+        return {
+          icon: <Lock className="w-8 h-8 text-gray-500" />,
+          title: "Restricted Content",
+          description: actionText || "Access required to view this content",
+          actionText: actionText,
+          onAction: onUnlock,
+          actionColor: "bg-gray-600 hover:bg-gray-700"
+        };
     }
   };
 
   const overlayContent = getOverlayContent();
-  if (!overlayContent) return null;
 
   return (
     <div className={`absolute inset-0 flex items-center justify-center z-40 ${
@@ -73,10 +118,10 @@ export const AccessControlOverlay = ({
         <p className="text-gray-300 text-sm mb-4">
           {overlayContent.description}
         </p>
-        {overlayContent.onAction && (
+        {overlayContent.onAction && overlayContent.actionText && (
           <Button
             onClick={overlayContent.onAction}
-            className="bg-luxury-primary hover:bg-luxury-primary/90 text-white"
+            className={`${overlayContent.actionColor} text-white`}
           >
             {overlayContent.actionText}
           </Button>

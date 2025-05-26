@@ -2,9 +2,8 @@
 import { useState, useRef } from "react";
 import { Play, Pause, Volume2, VolumeX, Music, AlertCircle } from "lucide-react";
 import { MediaWatermark } from "../MediaWatermark";
-import { AccessControlOverlay } from "../AccessControlOverlay";
+import { AccessGate } from "../AccessGate";
 import { MediaRendererProps } from "@/utils/media/types";
-import { useMediaAccess } from "@/hooks/useMediaAccess";
 import { useSecureMediaUrl } from "@/hooks/useSecureMediaUrl";
 
 export const AudioRenderer = ({
@@ -14,8 +13,7 @@ export const AudioRenderer = ({
   autoPlay = false,
   onPlay,
   onPause,
-  onError,
-  onAccessRequired
+  onError
 }: MediaRendererProps) => {
   const audioRef = useRef<HTMLAudioElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -24,21 +22,13 @@ export const AudioRenderer = ({
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
 
-  const { canAccess, isLoading: accessLoading } = useMediaAccess({
-    creatorId: media.creatorId,
-    postId: media.postId,
-    accessLevel: media.accessLevel
-  });
-
   const { url: secureUrl, isLoading: urlLoading } = useSecureMediaUrl({
     url: media.url,
     accessLevel: media.accessLevel
   });
 
-  const isLoading = accessLoading || urlLoading;
-
   const handlePlayPause = () => {
-    if (!audioRef.current || !canAccess) return;
+    if (!audioRef.current) return;
 
     if (isPlaying) {
       audioRef.current.pause();
@@ -77,17 +67,13 @@ export const AudioRenderer = ({
     onError?.();
   };
 
-  const handleAccessAction = (type: 'subscription' | 'purchase' | 'login') => {
-    onAccessRequired?.(type);
-  };
-
   const formatTime = (time: number) => {
     const minutes = Math.floor(time / 60);
     const seconds = Math.floor(time % 60);
     return `${minutes}:${seconds.toString().padStart(2, '0')}`;
   };
 
-  if (isLoading) {
+  if (urlLoading) {
     return (
       <div className={`relative flex items-center justify-center bg-gray-900 p-8 ${className}`}>
         <Music className="w-8 h-8 text-gray-400 animate-pulse" />
@@ -107,81 +93,75 @@ export const AudioRenderer = ({
   }
 
   return (
-    <div className={`relative bg-gradient-to-br from-gray-800 to-gray-900 p-6 ${className}`}>
-      <audio
-        ref={audioRef}
-        src={secureUrl}
-        autoPlay={autoPlay && canAccess}
-        onTimeUpdate={handleTimeUpdate}
-        onLoadedMetadata={handleLoadedMetadata}
-        onError={handleError}
-        onPlay={() => setIsPlaying(true)}
-        onPause={() => setIsPlaying(false)}
-      />
+    <AccessGate
+      creatorId={media.creatorId}
+      creatorHandle={media.creatorHandle}
+      contentId={media.postId}
+      accessLevel={media.accessLevel}
+      ppvAmount={media.ppvAmount}
+      className={className}
+    >
+      <div className="relative bg-gradient-to-br from-gray-800 to-gray-900 p-6">
+        <audio
+          ref={audioRef}
+          src={secureUrl}
+          autoPlay={autoPlay}
+          onTimeUpdate={handleTimeUpdate}
+          onLoadedMetadata={handleLoadedMetadata}
+          onError={handleError}
+          onPlay={() => setIsPlaying(true)}
+          onPause={() => setIsPlaying(false)}
+        />
 
-      {/* Audio Player UI */}
-      <div className="flex items-center space-x-4">
-        {/* Play/Pause Button */}
-        <button
-          onClick={handlePlayPause}
-          disabled={!canAccess}
-          className="p-3 bg-luxury-primary rounded-full hover:bg-luxury-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {isPlaying ? (
-            <Pause className="w-6 h-6 text-white" />
-          ) : (
-            <Play className="w-6 h-6 text-white" />
-          )}
-        </button>
+        {/* Audio Player UI */}
+        <div className="flex items-center space-x-4">
+          {/* Play/Pause Button */}
+          <button
+            onClick={handlePlayPause}
+            className="p-3 bg-luxury-primary rounded-full hover:bg-luxury-primary/90"
+          >
+            {isPlaying ? (
+              <Pause className="w-6 h-6 text-white" />
+            ) : (
+              <Play className="w-6 h-6 text-white" />
+            )}
+          </button>
 
-        {/* Progress Bar */}
-        <div className="flex-1 space-y-1">
-          <div className="w-full bg-gray-700 rounded-full h-2">
-            <div 
-              className="bg-luxury-primary h-2 rounded-full transition-all duration-300"
-              style={{ width: duration ? `${(currentTime / duration) * 100}%` : '0%' }}
-            />
+          {/* Progress Bar */}
+          <div className="flex-1 space-y-1">
+            <div className="w-full bg-gray-700 rounded-full h-2">
+              <div 
+                className="bg-luxury-primary h-2 rounded-full transition-all duration-300"
+                style={{ width: duration ? `${(currentTime / duration) * 100}%` : '0%' }}
+              />
+            </div>
+            <div className="flex justify-between text-xs text-gray-400">
+              <span>{formatTime(currentTime)}</span>
+              <span>{formatTime(duration)}</span>
+            </div>
           </div>
-          <div className="flex justify-between text-xs text-gray-400">
-            <span>{formatTime(currentTime)}</span>
-            <span>{formatTime(duration)}</span>
-          </div>
+
+          {/* Volume Control */}
+          <button
+            onClick={handleMuteToggle}
+            className="p-2 hover:bg-gray-700 rounded"
+          >
+            {isMuted ? (
+              <VolumeX className="w-4 h-4 text-gray-400" />
+            ) : (
+              <Volume2 className="w-4 h-4 text-gray-400" />
+            )}
+          </button>
         </div>
 
-        {/* Volume Control */}
-        <button
-          onClick={handleMuteToggle}
-          disabled={!canAccess}
-          className="p-2 hover:bg-gray-700 rounded disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {isMuted ? (
-            <VolumeX className="w-4 h-4 text-gray-400" />
-          ) : (
-            <Volume2 className="w-4 h-4 text-gray-400" />
-          )}
-        </button>
+        {/* Watermark */}
+        {showWatermark && (
+          <MediaWatermark 
+            creatorHandle={media.creatorHandle}
+            className="bottom-1 right-1"
+          />
+        )}
       </div>
-
-      {/* Watermark */}
-      {showWatermark && canAccess && (
-        <MediaWatermark 
-          creatorHandle={media.creatorHandle}
-          className="bottom-1 right-1"
-        />
-      )}
-
-      {/* Access Control Overlay */}
-      {!canAccess && (
-        <AccessControlOverlay
-          accessLevel={media.accessLevel}
-          creatorHandle={media.creatorHandle}
-          ppvAmount={media.ppvAmount}
-          isBlurred={false}
-          onSubscribe={() => handleAccessAction('subscription')}
-          onPurchase={() => handleAccessAction('purchase')}
-          onUnlock={() => handleAccessAction('login')}
-        />
-      )}
-    </div>
+    </AccessGate>
   );
 };
