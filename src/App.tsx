@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { SessionContextProvider } from '@supabase/auth-helpers-react';
 import { GhostModeProvider } from '@/hooks/useGhostMode.tsx';
+import { ToastProvider } from '@/hooks/use-toast';
 import { Toaster } from '@/components/ui/toaster';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 
@@ -25,16 +26,18 @@ function App() {
   return (
     <QueryClientProvider client={new QueryClient()}>
       <SessionContextProvider supabaseClient={supabase} initialSession={session}>
-        <GhostModeProvider>
-          <Router>
-            <ErrorBoundary>
-              <Routes>
-                <Route path="/" element={<>Home</>} />
-              </Routes>
-            </ErrorBoundary>
-            <Toaster />
-          </Router>
-        </GhostModeProvider>
+        <ToastProvider>
+          <GhostModeProvider>
+            <Router>
+              <ErrorBoundary>
+                <Routes>
+                  <Route path="/" element={<>Home</>} />
+                </Routes>
+              </ErrorBoundary>
+              <Toaster />
+            </Router>
+          </GhostModeProvider>
+        </ToastProvider>
       </SessionContextProvider>
     </QueryClientProvider>
   );
