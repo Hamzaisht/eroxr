@@ -3,49 +3,53 @@ import { supabase } from "@/integrations/supabase/client";
 
 export async function ensureStorageBuckets() {
   try {
-    // List existing buckets
-    const { data: buckets, error } = await supabase.storage.listBuckets();
+    console.log("Checking storage buckets...");
     
-    if (error) {
-      console.error("Error listing buckets:", error);
+    // List existing buckets
+    const { data: buckets, error: listError } = await supabase.storage.listBuckets();
+    
+    if (listError) {
+      console.error("Error listing buckets:", listError);
       return;
     }
     
-    const bucketNames = buckets?.map(bucket => bucket.name) || [];
-    console.log("Existing buckets:", bucketNames);
+    const existingBuckets = buckets?.map(bucket => bucket.name) || [];
+    console.log("Existing buckets:", existingBuckets);
     
     // Required buckets with their configurations
     const requiredBuckets = [
       {
+        id: 'media',
         name: 'media',
-        config: {
-          public: true,
-          allowedMimeTypes: ['image/*', 'video/*'],
-          fileSizeLimit: 1024 * 1024 * 100 // 100MB
-        }
+        public: true,
+        allowedMimeTypes: ['image/*', 'video/*', 'audio/*'],
+        fileSizeLimit: 1024 * 1024 * 500 // 500MB
       },
       {
-        name: 'posts', 
-        config: {
-          public: true,
-          allowedMimeTypes: ['image/*', 'video/*'],
-          fileSizeLimit: 1024 * 1024 * 100 // 100MB
-        }
+        id: 'posts', 
+        name: 'posts',
+        public: true,
+        allowedMimeTypes: ['image/*', 'video/*'],
+        fileSizeLimit: 1024 * 1024 * 100 // 100MB
       },
       {
+        id: 'stories',
         name: 'stories',
-        config: {
-          public: true,
-          allowedMimeTypes: ['image/*', 'video/*'],
-          fileSizeLimit: 1024 * 1024 * 100 // 100MB
-        }
+        public: true,
+        allowedMimeTypes: ['image/*', 'video/*'],
+        fileSizeLimit: 1024 * 1024 * 100 // 100MB
       }
     ];
     
     for (const bucket of requiredBuckets) {
-      if (!bucketNames.includes(bucket.name)) {
+      if (!existingBuckets.includes(bucket.name)) {
         console.log(`Creating bucket: ${bucket.name}`);
-        const { error: createError } = await supabase.storage.createBucket(bucket.name, bucket.config);
+        
+        const { error: createError } = await supabase.storage.createBucket(bucket.id, {
+          public: bucket.public,
+          allowedMimeTypes: bucket.allowedMimeTypes,
+          fileSizeLimit: bucket.fileSizeLimit
+        });
         
         if (createError) {
           console.error(`Error creating bucket ${bucket.name}:`, createError);
@@ -56,6 +60,8 @@ export async function ensureStorageBuckets() {
         console.log(`Bucket ${bucket.name} already exists`);
       }
     }
+    
+    console.log("Storage bucket setup complete");
   } catch (error) {
     console.error("Error ensuring storage buckets:", error);
   }

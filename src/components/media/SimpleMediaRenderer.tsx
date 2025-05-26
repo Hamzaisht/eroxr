@@ -1,8 +1,8 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { MediaLoadingState } from './states/MediaLoadingState';
 import { MediaErrorState } from './states/MediaErrorState';
-import { isValidMediaUrl } from '@/utils/media/mediaOrchestrator';
+import { isValidMediaUrl, processMediaUrl } from '@/utils/media/mediaOrchestrator';
 
 interface SimpleMediaRendererProps {
   url: string;
@@ -35,56 +35,62 @@ export const SimpleMediaRenderer = ({
 }: SimpleMediaRendererProps) => {
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
-  const [retryCount, setRetryCount] = useState(0);
-  const maxRetries = 2;
+  const [processedUrl, setProcessedUrl] = useState<string>('');
+  const loadTimeoutRef = useRef<NodeJS.Timeout>();
 
-  // Reset state when URL changes
+  // Process URL and validate
   useEffect(() => {
+    if (!url || !isValidMediaUrl(url)) {
+      setHasError(true);
+      setIsLoading(false);
+      return;
+    }
+
+    const processed = processMediaUrl(url);
+    setProcessedUrl(processed);
     setIsLoading(true);
     setHasError(false);
-    setRetryCount(0);
-  }, [url]);
 
-  // Validate URL
-  if (!url || !isValidMediaUrl(url)) {
-    return (
-      <MediaErrorState 
-        className={className}
-        message="Invalid media URL"
-        compact={compact}
-      />
-    );
-  }
+    // Set a timeout to prevent infinite loading
+    loadTimeoutRef.current = setTimeout(() => {
+      console.warn('Media load timeout for:', processed);
+      setIsLoading(false);
+      setHasError(true);
+      if (onError) onError(new Error('Load timeout'));
+    }, 10000); // 10 second timeout
+
+    return () => {
+      if (loadTimeoutRef.current) {
+        clearTimeout(loadTimeoutRef.current);
+      }
+    };
+  }, [url, onError]);
 
   const handleLoad = () => {
+    if (loadTimeoutRef.current) {
+      clearTimeout(loadTimeoutRef.current);
+    }
     setIsLoading(false);
     setHasError(false);
     if (onLoad) onLoad();
   };
 
   const handleError = (error: any) => {
-    console.log(`Media error for ${url}:`, error);
+    if (loadTimeoutRef.current) {
+      clearTimeout(loadTimeoutRef.current);
+    }
+    console.warn(`Media error for ${type}:`, processedUrl, error);
     setIsLoading(false);
     setHasError(true);
     if (onError) onError(error);
   };
 
-  const handleRetry = () => {
-    if (retryCount < maxRetries) {
-      setRetryCount(prev => prev + 1);
-      setHasError(false);
-      setIsLoading(true);
-    }
-  };
-
-  if (hasError) {
+  // Show error if URL is invalid
+  if (!processedUrl || hasError) {
     return (
       <MediaErrorState 
         className={className}
-        message="Failed to load media"
-        onRetry={retryCount < maxRetries ? handleRetry : undefined}
-        retryCount={retryCount}
-        maxRetries={maxRetries}
+        message="Media not available"
         compact={compact}
       />
     );
@@ -95,14 +101,13 @@ export const SimpleMediaRenderer = ({
       <div className="relative w-full h-full">
         {isLoading && <MediaLoadingState />}
         <img
-          key={`${url}-${retryCount}`}
-          src={url}
-          className={className}
+          src={processedUrl}
+          className={`${className} ${isLoading ? 'opacity-0' : 'opacity-100'} transition-opacity duration-300`}
           onClick={onClick}
           onLoad={handleLoad}
           onError={handleError}
           alt=""
-          style={{ display: isLoading ? 'none' : 'block' }}
+          loading="lazy"
         />
       </div>
     );
@@ -113,9 +118,8 @@ export const SimpleMediaRenderer = ({
       <div className="relative w-full h-full">
         {isLoading && <MediaLoadingState />}
         <video
-          key={`${url}-${retryCount}`}
-          src={url}
-          className={className}
+          src={processedUrl}
+          className={`${className} ${isLoading ? 'opacity-0' : 'opacity-100'} transition-opacity duration-300`}
           autoPlay={autoPlay}
           controls={controls}
           muted={muted}
@@ -125,7 +129,7 @@ export const SimpleMediaRenderer = ({
           onLoadedData={handleLoad}
           onError={handleError}
           playsInline
-          style={{ display: isLoading ? 'none' : 'block' }}
+          preload="metadata"
         />
       </div>
     );

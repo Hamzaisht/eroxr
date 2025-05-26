@@ -9,15 +9,15 @@ interface MediaLoadingStateProps {
 
 export const MediaLoadingState = ({ 
   className, 
-  message = "Loading media..." 
+  message = "Loading..." 
 }: MediaLoadingStateProps) => {
   return (
     <div className={cn(
-      "flex flex-col items-center justify-center h-full w-full bg-black/10 rounded p-4",
+      "absolute inset-0 flex flex-col items-center justify-center bg-luxury-darker/30 backdrop-blur-sm rounded",
       className
     )}>
-      <Loader2 className="h-8 w-8 animate-spin text-luxury-primary mb-2" />
-      <p className="text-sm text-muted-foreground">{message}</p>
+      <Loader2 className="h-6 w-6 animate-spin text-luxury-primary mb-2" />
+      <p className="text-xs text-luxury-neutral/70">{message}</p>
     </div>
   );
 };

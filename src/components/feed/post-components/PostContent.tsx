@@ -26,11 +26,21 @@ export const PostContent = ({
   const hasMedia = (mediaUrls?.length ?? 0) > 0 || (videoUrls?.length ?? 0) > 0;
 
   const handleMediaError = (url: string) => {
-    // Silently handle media errors - just track retry count
+    console.warn("Media error in PostContent for URL:", url);
     const currentRetries = retries[url] || 0;
     const newRetryCount = currentRetries + 1;
     setRetries(prev => ({ ...prev, [url]: newRetryCount }));
   };
+
+  const handleMediaLoad = (url: string) => {
+    console.log("Media loaded successfully:", url);
+  };
+
+  // Debug logging
+  if (hasMedia) {
+    console.log("PostContent - Media URLs:", mediaUrls);
+    console.log("PostContent - Video URLs:", videoUrls);
+  }
 
   return (
     <motion.div
@@ -57,6 +67,8 @@ export const PostContent = ({
                       {videoUrls.map((url, index) => {
                         if (!url) return null;
                         
+                        console.log(`Rendering video ${index}:`, url);
+                        
                         return (
                           <motion.div
                             key={`video-${index}-${retries[url] || 0}`}
@@ -74,6 +86,7 @@ export const PostContent = ({
                               }}
                               className="w-full h-full rounded-lg overflow-hidden"
                               onError={() => handleMediaError(url)}
+                              onLoad={() => handleMediaLoad(url)}
                               controls={true}
                               compact={true}
                             />
@@ -88,6 +101,8 @@ export const PostContent = ({
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       {mediaUrls.map((url, index) => {
                         if (!url) return null;
+                        
+                        console.log(`Rendering image ${index}:`, url);
                         
                         return (
                           <motion.div
@@ -106,6 +121,7 @@ export const PostContent = ({
                               }}
                               className="w-full h-full object-cover rounded-lg transition-transform duration-300 group-hover:scale-105"
                               onError={() => handleMediaError(url)}
+                              onLoad={() => handleMediaLoad(url)}
                               compact={true}
                             />
                             <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-lg" />
