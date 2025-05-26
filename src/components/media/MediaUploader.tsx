@@ -22,7 +22,7 @@ export const MediaUploader = ({
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [dragActive, setDragActive] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const { uploadMultiple, isUploading, uploadProgress } = useMediaUpload();
+  const { uploadMedia, uploadState } = useMediaUpload();
 
   const handleFiles = (files: FileList) => {
     const newFiles = Array.from(files).slice(0, maxFiles - selectedFiles.length);
@@ -36,7 +36,10 @@ export const MediaUploader = ({
   const handleUpload = async () => {
     if (selectedFiles.length === 0) return;
 
-    const results = await uploadMultiple(selectedFiles, accessLevel);
+    const results = await Promise.all(
+      selectedFiles.map(file => uploadMedia(file, { contentCategory: 'media' }))
+    );
+    
     const successfulUploads = results.filter(r => r.success);
     
     if (successfulUploads.length > 0) {
@@ -104,26 +107,26 @@ export const MediaUploader = ({
                 size="sm"
                 variant="ghost"
                 onClick={() => removeFile(index)}
-                disabled={isUploading}
+                disabled={uploadState.isUploading}
               >
                 <X className="h-4 w-4" />
               </Button>
             </div>
           ))}
           
-          {isUploading && (
+          {uploadState.isUploading && (
             <div className="mt-2">
-              <Progress value={uploadProgress} className="w-full" />
-              <p className="text-sm text-gray-500 mt-1">Uploading... {uploadProgress}%</p>
+              <Progress value={uploadState.progress} className="w-full" />
+              <p className="text-sm text-gray-500 mt-1">Uploading... {uploadState.progress}%</p>
             </div>
           )}
           
           <Button 
             onClick={handleUpload}
-            disabled={isUploading}
+            disabled={uploadState.isUploading}
             className="w-full mt-2"
           >
-            {isUploading ? 'Uploading...' : `Upload ${selectedFiles.length} file(s)`}
+            {uploadState.isUploading ? 'Uploading...' : `Upload ${selectedFiles.length} file(s)`}
           </Button>
         </div>
       )}

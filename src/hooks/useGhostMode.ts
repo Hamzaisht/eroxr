@@ -1,10 +1,13 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { LiveAlert } from '@/types/alerts';
+import { LiveSession } from '@/types/surveillance';
 
 export const useGhostMode = () => {
   const [isGhostMode, setIsGhostMode] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [liveAlerts, setLiveAlerts] = useState<LiveAlert[]>([]);
 
   useEffect(() => {
     const checkGhostMode = async () => {
@@ -71,10 +74,34 @@ export const useGhostMode = () => {
     }
   };
 
+  const refreshAlerts = async (): Promise<boolean> => {
+    try {
+      // Mock alerts for now
+      setLiveAlerts([]);
+      return true;
+    } catch (error) {
+      console.error('Error refreshing alerts:', error);
+      return false;
+    }
+  };
+
+  const startSurveillance = async (session: LiveSession): Promise<boolean> => {
+    try {
+      console.log('Starting surveillance for session:', session);
+      return true;
+    } catch (error) {
+      console.error('Error starting surveillance:', error);
+      return false;
+    }
+  };
+
   return { 
     isGhostMode, 
     isLoading, 
     toggleGhostMode,
-    canUseGhostMode: true
+    canUseGhostMode: true,
+    liveAlerts,
+    refreshAlerts,
+    startSurveillance
   };
 };

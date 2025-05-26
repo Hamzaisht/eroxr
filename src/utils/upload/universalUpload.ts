@@ -30,7 +30,8 @@ export const uploadFile = async (
 
     return {
       success: true,
-      url: publicUrl
+      url: publicUrl,
+      assetId: data.path
     };
   } catch (error: any) {
     return {
@@ -38,4 +39,42 @@ export const uploadFile = async (
       error: error.message
     };
   }
+};
+
+export const uploadMedia = async (
+  file: File,
+  options: UploadOptions = {}
+): Promise<UploadResult> => {
+  return uploadFile(file, options);
+};
+
+export const uploadMultipleMedia = async (
+  files: File[],
+  options: UploadOptions = {}
+): Promise<UploadResult[]> => {
+  const results = await Promise.all(
+    files.map(file => uploadFile(file, options))
+  );
+  return results;
+};
+
+export const uploadWithProgress = async (
+  file: File,
+  options: UploadOptions = {},
+  onProgress?: (progress: number) => void
+): Promise<UploadResult> => {
+  // Simulate progress updates
+  if (onProgress) {
+    onProgress(25);
+    setTimeout(() => onProgress(50), 100);
+    setTimeout(() => onProgress(75), 200);
+  }
+  
+  const result = await uploadFile(file, options);
+  
+  if (onProgress) {
+    onProgress(100);
+  }
+  
+  return result;
 };

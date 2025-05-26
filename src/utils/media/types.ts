@@ -31,6 +31,7 @@ export interface UploadResult {
   success: boolean;
   url?: string;
   error?: string;
+  assetId?: string;
 }
 
 export interface UploadOptions {
@@ -64,4 +65,5 @@ export interface MediaRendererProps {
   onPlay?: () => void;
   onPause?: () => void;
   onError?: () => void;
+  onAccessRequired?: (type: 'subscription' | 'purchase' | 'login', mediaId: string) => void;
 }
