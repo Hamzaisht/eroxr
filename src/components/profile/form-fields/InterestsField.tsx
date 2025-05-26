@@ -1,36 +1,23 @@
-import { UseFormReturn } from "react-hook-form";
-import {
-  FormField,
-  FormItem,
-  FormLabel,
-  FormControl,
-  FormDescription,
-  FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import type { ProfileFormValues } from "../types";
+
+import { ProfileFormData } from '../types';
 
 interface InterestsFieldProps {
-  form: UseFormReturn<ProfileFormValues>;
+  value: string[];
+  onChange: (value: string[]) => void;
 }
 
-export const InterestsField = ({ form }: InterestsFieldProps) => {
+export const InterestsField = ({ value, onChange }: InterestsFieldProps) => {
   return (
-    <FormField
-      control={form.control}
-      name="interests"
-      render={({ field }) => (
-        <FormItem>
-          <FormLabel>Interests</FormLabel>
-          <FormControl>
-            <Input {...field} placeholder="e.g. photography, travel, music" />
-          </FormControl>
-          <FormDescription>
-            Separate interests with commas
-          </FormDescription>
-          <FormMessage />
-        </FormItem>
-      )}
-    />
+    <div className="space-y-2">
+      <label className="block text-sm font-medium text-gray-300">
+        Interests
+      </label>
+      <input
+        value={value.join(', ')}
+        onChange={(e) => onChange(e.target.value.split(', ').filter(Boolean))}
+        className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-md text-white"
+        placeholder="Music, Sports, Travel..."
+      />
+    </div>
   );
 };

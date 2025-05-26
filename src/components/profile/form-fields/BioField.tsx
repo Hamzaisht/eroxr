@@ -1,36 +1,24 @@
-import { UseFormReturn } from "react-hook-form";
-import {
-  FormField,
-  FormItem,
-  FormLabel,
-  FormControl,
-  FormDescription,
-  FormMessage,
-} from "@/components/ui/form";
-import { Textarea } from "@/components/ui/textarea";
-import type { ProfileFormValues } from "../types";
+
+import { ProfileFormData } from '../types';
 
 interface BioFieldProps {
-  form: UseFormReturn<ProfileFormValues>;
+  value: string;
+  onChange: (value: string) => void;
 }
 
-export const BioField = ({ form }: BioFieldProps) => {
+export const BioField = ({ value, onChange }: BioFieldProps) => {
   return (
-    <FormField
-      control={form.control}
-      name="bio"
-      render={({ field }) => (
-        <FormItem>
-          <FormLabel>Bio</FormLabel>
-          <FormControl>
-            <Textarea {...field} />
-          </FormControl>
-          <FormDescription>
-            Tell others about yourself (max 500 characters)
-          </FormDescription>
-          <FormMessage />
-        </FormItem>
-      )}
-    />
+    <div className="space-y-2">
+      <label className="block text-sm font-medium text-gray-300">
+        Bio
+      </label>
+      <textarea
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-md text-white"
+        rows={4}
+        placeholder="Tell us about yourself"
+      />
+    </div>
   );
 };

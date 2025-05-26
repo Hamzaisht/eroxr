@@ -1,45 +1,61 @@
 
-import { TabsContent } from "@/components/ui/tabs";
-import { LiveSession } from "@/types/surveillance";
-import { SessionList } from "../SessionList";
-
 interface SessionTabContentProps {
   value: string;
   activeTab: string;
-  sessions: LiveSession[];
+  sessions: any[];
   isLoading: boolean;
-  error: string | null;
-  onMonitorSession?: (session: LiveSession) => Promise<boolean>;
-  actionInProgress: string | null;
+  error: string;
+  onMonitorSession: (session: any) => Promise<boolean>;
+  actionInProgress: string;
   onRefresh: () => void;
 }
 
-export function SessionTabContent({
-  value,
-  activeTab,
-  sessions,
-  isLoading,
-  error,
-  onMonitorSession,
-  actionInProgress,
-  onRefresh
-}: SessionTabContentProps) {
+export const SessionTabContent = ({ 
+  value, 
+  activeTab, 
+  sessions, 
+  isLoading, 
+  error, 
+  onMonitorSession, 
+  actionInProgress, 
+  onRefresh 
+}: SessionTabContentProps) => {
+  if (activeTab !== value) return null;
+  
   return (
-    <TabsContent value={value} className="space-y-4">
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl font-bold capitalize">
-          {value === 'bodycontact' ? 'Body Contact' : value} Surveillance
-        </h2>
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <h3 className="text-lg font-semibold text-white">{value} Sessions</h3>
+        <button
+          onClick={onRefresh}
+          className="px-3 py-1 bg-gray-700 text-white rounded-md text-sm"
+        >
+          Refresh
+        </button>
       </div>
       
-      <SessionList
-        sessions={sessions}
-        isLoading={isLoading}
-        error={error}
-        onMonitorSession={onMonitorSession}
-        actionInProgress={actionInProgress}
-        onRefresh={onRefresh}
-      />
-    </TabsContent>
+      {isLoading ? (
+        <p className="text-gray-400">Loading sessions...</p>
+      ) : error ? (
+        <p className="text-red-400">Error: {error}</p>
+      ) : sessions.length === 0 ? (
+        <p className="text-gray-400">No active {value.toLowerCase()} sessions</p>
+      ) : (
+        <div className="space-y-2">
+          {sessions.map((session) => (
+            <div key={session.id} className="bg-gray-800 p-3 rounded-md">
+              <p className="text-white">{session.username || 'Unknown User'}</p>
+              <button
+                onClick={() => onMonitorSession(session)}
+                disabled={actionInProgress === session.id}
+                className="mt-2 px-3 py-1 bg-purple-600 text-white rounded-md text-sm hover:bg-purple-700 disabled:opacity-50"
+              >
+                {actionInProgress === session.id ? 'Monitoring...' : 'Monitor'}
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
   );
-}
+};

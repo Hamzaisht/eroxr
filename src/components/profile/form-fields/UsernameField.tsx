@@ -1,118 +1,39 @@
 
-import { useState, useEffect } from "react";
-import { UseFormReturn } from "react-hook-form";
-import { Check, X, Loader2 } from "lucide-react";
-import { useDebounce } from "@/hooks/use-debounce";
-import { supabase } from "@/integrations/supabase/client";
-import {
-  FormField,
-  FormItem,
-  FormLabel,
-  FormControl,
-  FormDescription,
-  FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { ProfileFormValues } from "../types";
-
 interface UsernameFieldProps {
-  form: UseFormReturn<ProfileFormValues>;
-  isLoading: boolean;
-  canChangeUsername: boolean;
-  currentUsername: string;
-  lastUsernameChange: string | null;
+  value: string;
+  onChange: (value: string) => void;
+  isAvailable?: boolean;
+  isChecking?: boolean;
 }
 
-export const UsernameField = ({
-  form,
-  isLoading,
-  canChangeUsername,
-  currentUsername,
-  lastUsernameChange,
-}: UsernameFieldProps) => {
-  const [isCheckingUsername, setIsCheckingUsername] = useState(false);
-  const debouncedUsername = useDebounce(form.watch("username"), 500);
-
-  // Check username availability
-  useEffect(() => {
-    const checkUsername = async () => {
-      if (!debouncedUsername || debouncedUsername === currentUsername) return;
-      
-      setIsCheckingUsername(true);
-      try {
-        const { data, error } = await supabase
-          .from("profiles")
-          .select("username")
-          .ilike("username", debouncedUsername)
-          .limit(1);
-
-        if (error) {
-          console.error("Error checking username:", error);
-          form.setError("username", {
-            type: "manual",
-            message: "Failed to check username availability",
-          });
-        } else if (data && data.length > 0) {
-          form.setError("username", {
-            type: "manual",
-            message: "Username is already taken",
-          });
-        } else {
-          form.clearErrors("username");
-        }
-      } catch (error) {
-        console.error("Error checking username:", error);
-      } finally {
-        setIsCheckingUsername(false);
-      }
-    };
-
-    checkUsername();
-  }, [debouncedUsername, currentUsername, form]);
-
-  const daysUntilChange = lastUsernameChange
-    ? 60 - Math.floor((Date.now() - new Date(lastUsernameChange).getTime()) / (1000 * 60 * 60 * 24))
-    : 0;
-
+export const UsernameField = ({ value, onChange, isAvailable, isChecking }: UsernameFieldProps) => {
   return (
-    <FormField
-      control={form.control}
-      name="username"
-      render={({ field }) => (
-        <FormItem>
-          <FormLabel>Username</FormLabel>
-          <div className="relative">
-            <FormControl>
-              <div className="relative">
-                <span className="absolute left-3 top-2.5 text-muted-foreground">@</span>
-                <Input
-                  {...field}
-                  className="pl-8"
-                  disabled={isLoading || !canChangeUsername}
-                  aria-label="Username"
-                  placeholder="username"
-                  autoComplete="username"
-                />
-              </div>
-            </FormControl>
-            {isCheckingUsername ? (
-              <Loader2 className="absolute right-3 top-2.5 h-5 w-5 animate-spin text-muted-foreground" />
-            ) : field.value && !form.formState.errors.username ? (
-              <Check className="absolute right-3 top-2.5 h-5 w-5 text-green-500" />
-            ) : field.value && form.formState.errors.username ? (
-              <X className="absolute right-3 top-2.5 h-5 w-5 text-red-500" />
-            ) : null}
+    <div className="space-y-2">
+      <label className="block text-sm font-medium text-gray-300">
+        Username
+      </label>
+      <div className="relative">
+        <input
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-md text-white"
+          placeholder="Your username"
+        />
+        {isChecking && (
+          <div className="absolute right-3 top-2.5">
+            <div className="w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full animate-spin"></div>
           </div>
-          <FormDescription>
-            {!canChangeUsername && lastUsernameChange && (
-              <span className="text-yellow-500">
-                Username can be changed once every 60 days. Next change available in {daysUntilChange} days.
-              </span>
+        )}
+        {isAvailable !== undefined && !isChecking && (
+          <div className="absolute right-3 top-2.5">
+            {isAvailable ? (
+              <span className="text-green-400">✓</span>
+            ) : (
+              <span className="text-red-400">✗</span>
             )}
-          </FormDescription>
-          <FormMessage />
-        </FormItem>
-      )}
-    />
+          </div>
+        )}
+      </div>
+    </div>
   );
 };

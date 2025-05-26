@@ -1,32 +1,21 @@
-import { UseFormReturn } from "react-hook-form";
-import {
-  FormField,
-  FormItem,
-  FormLabel,
-  FormControl,
-  FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import type { ProfileFormValues } from "../types";
 
 interface LocationFieldProps {
-  form: UseFormReturn<ProfileFormValues>;
+  value: string;
+  onChange: (value: string) => void;
 }
 
-export const LocationField = ({ form }: LocationFieldProps) => {
+export const LocationField = ({ value, onChange }: LocationFieldProps) => {
   return (
-    <FormField
-      control={form.control}
-      name="location"
-      render={({ field }) => (
-        <FormItem>
-          <FormLabel>Location</FormLabel>
-          <FormControl>
-            <Input {...field} />
-          </FormControl>
-          <FormMessage />
-        </FormItem>
-      )}
-    />
+    <div className="space-y-2">
+      <label className="block text-sm font-medium text-gray-300">
+        Location
+      </label>
+      <input
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-md text-white"
+        placeholder="Your location"
+      />
+    </div>
   );
 };

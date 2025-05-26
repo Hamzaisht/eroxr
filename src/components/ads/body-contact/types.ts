@@ -1,39 +1,40 @@
 
-export interface AdFormValues {
-  title: string;
-  description: string;
-  relationshipStatus: "single" | "couple" | "other";
-  lookingFor: string[];
-  tags: string[];
-  location: string;
-  ageRange: { lower: number; upper: number };
-  bodyType: string;
-  videoFile: File | null;
-  avatarFile: File | null;
+import { z } from "zod";
+
+export const adFormSchema = z.object({
+  title: z.string().min(1, "Title is required"),
+  description: z.string().min(10, "Description must be at least 10 characters"),
+  relationshipStatus: z.enum(["single", "taken", "complicated"]),
+  lookingFor: z.array(z.string()),
+  bodyType: z.enum(["slim", "average", "curvy", "athletic"]),
+  location: z.string().min(1, "Location is required"),
+  ageRange: z.object({
+    lower: z.number().min(18).max(100),
+    upper: z.number().min(18).max(100)
+  }),
+  tags: z.array(z.string())
+});
+
+export type AdFormValues = z.infer<typeof adFormSchema>;
+
+export interface BasicInfoFieldsProps {
+  form: any;
 }
 
-export interface BodyContactFormProps {
-  onSubmit: (values: AdFormValues) => void;
+export interface LocationAgeFieldsProps {
+  form: any;
+}
+
+export interface LookingForFieldProps {
+  form: any;
+}
+
+export interface TagsFieldProps {
+  form: any;
+}
+
+export interface FormSubmitButtonsProps {
   isLoading: boolean;
   onCancel: () => void;
-}
-
-export type ModerationStatus = "pending" | "approved" | "rejected";
-
-export interface BodyContactAccessCheckResult {
-  canAccess: boolean;
-  reasonCodes: string[];
-  reasonMessages: string[];
-}
-
-export interface BodyContactAdExtended {
-  id: string;
-  user_id: string;
-  title: string;
-  description: string;
-  relationship_status: string;
-  moderation_status: ModerationStatus;
-  isUserVerified: boolean;
-  isUserPremium: boolean;
-  createdAt: string;
+  onSubmit: () => void;
 }

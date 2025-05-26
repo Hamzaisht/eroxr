@@ -1,70 +1,44 @@
 
-import { useState, useEffect } from "react";
-import { useIsMobile } from "@/hooks/use-mobile";
-import { FeedContainer } from "./feed/components/FeedContainer";
-import { motion, AnimatePresence } from "framer-motion";
-import { useToast } from "@/hooks/use-toast";
-import { Sparkles } from "lucide-react";
-import type { MainFeedProps } from "./types";
+interface MainFeedProps {
+  userId: string;
+  isPayingCustomer: boolean;
+  onOpenCreatePost: () => void;
+  onFileSelect: (files: FileList) => void;
+  onOpenGoLive: () => void;
+}
 
-export const MainFeed = ({
-  userId,
-  isPayingCustomer,
-  onOpenCreatePost,
-  onFileSelect,
-  onOpenGoLive,
+export const MainFeed = ({ 
+  userId, 
+  isPayingCustomer, 
+  onOpenCreatePost, 
+  onFileSelect, 
+  onOpenGoLive 
 }: MainFeedProps) => {
-  const isMobile = useIsMobile();
-  const { toast } = useToast();
-  const [hasSeenTip, setHasSeenTip] = useState(() => 
-    localStorage.getItem("hasSeenEngagementTip") === "true"
-  );
-
-  // Show engagement tip for new users - but only once
-  useEffect(() => {
-    if (!hasSeenTip) {
-      const timer = setTimeout(() => {
-        toast({
-          title: "Pro Tip! 💡",
-          description: "Interact with content to see more of what you love. Try liking or commenting!",
-          duration: 5000,
-        });
-        localStorage.setItem("hasSeenEngagementTip", "true");
-        setHasSeenTip(true);
-      }, 5000);
-      
-      return () => clearTimeout(timer);
-    }
-  }, [hasSeenTip, toast]);
-
   return (
-    <div className={`w-full ${isMobile ? "px-2" : "px-4"} py-6`}>
-      {/* Trending Content Alert */}
-      <AnimatePresence>
-        {!hasSeenTip && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            className="mb-6 p-4 rounded-lg bg-luxury-primary/10 border border-luxury-primary/20"
+    <div className="space-y-4">
+      <div className="bg-gray-800 rounded-lg p-4">
+        <button
+          onClick={onOpenCreatePost}
+          className="w-full bg-luxury-primary text-white py-2 px-4 rounded-md hover:bg-luxury-primary/90"
+        >
+          Create Post
+        </button>
+      </div>
+      
+      {isPayingCustomer && (
+        <div className="bg-gray-800 rounded-lg p-4">
+          <button
+            onClick={onOpenGoLive}
+            className="w-full bg-red-600 text-white py-2 px-4 rounded-md hover:bg-red-700"
           >
-            <div className="flex items-center gap-3">
-              <Sparkles className="h-5 w-5 text-luxury-primary animate-pulse" />
-              <p className="text-sm text-luxury-neutral">
-                Your feed learns from your interactions. Engage with content you enjoy!
-              </p>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      <FeedContainer
-        userId={userId}
-        isPayingCustomer={isPayingCustomer}
-        onOpenCreatePost={onOpenCreatePost}
-        onFileSelect={onFileSelect}
-        onOpenGoLive={onOpenGoLive}
-      />
+            Go Live
+          </button>
+        </div>
+      )}
+      
+      <div className="text-center text-gray-400">
+        <p>No posts to show yet</p>
+      </div>
     </div>
   );
 };

@@ -40,11 +40,6 @@ export const BodyContactForm = ({
     isSuperAdmin
   });
 
-  const handleAvatarUpload = (file: File) => {
-    // Avatar upload will be implemented with the media system
-    console.log("Avatar upload:", file);
-  };
-
   return (
     <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
       <BasicInfoFields form={form} />
@@ -54,6 +49,7 @@ export const BodyContactForm = ({
       <FormSubmitButtons 
         isLoading={isLoading}
         onCancel={() => form.reset()}
+        onSubmit={() => form.handleSubmit(handleSubmit)()}
       />
     </form>
   );

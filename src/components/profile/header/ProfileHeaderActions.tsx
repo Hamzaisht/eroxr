@@ -1,52 +1,26 @@
 
-import { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import type { ProfileHeaderProps } from "../types";
+import { ProfileHeaderProps } from '../types';
 
-export const ProfileHeaderActions = ({ 
-  profile, 
-  isOwnProfile,
-  isEditing,
-  setIsEditing
-}: ProfileHeaderProps) => {
-  const [isFollowing, setIsFollowing] = useState(false);
-
-  if (isOwnProfile) {
+export const ProfileHeaderActions = ({ profile, isOwnProfile, onEdit }: ProfileHeaderProps) => {
+  if (!isOwnProfile) {
     return (
-      <div className="flex items-center gap-2">
-        {isEditing ? (
-          <Button 
-            variant="outline" 
-            size="sm"
-            onClick={() => setIsEditing?.(false)}
-          >
-            Cancel
-          </Button>
-        ) : (
-          <Button 
-            variant="default" 
-            size="sm"
-            onClick={() => setIsEditing?.(true)}
-          >
-            Edit Profile
-          </Button>
-        )}
+      <div className="flex space-x-2">
+        <button className="px-4 py-2 bg-luxury-primary text-white rounded-md hover:bg-luxury-primary/90">
+          Follow
+        </button>
+        <button className="px-4 py-2 bg-gray-700 text-white rounded-md hover:bg-gray-600">
+          Message
+        </button>
       </div>
     );
   }
 
   return (
-    <div className="flex items-center gap-2">
-      <Button 
-        variant={isFollowing ? "outline" : "default"} 
-        size="sm"
-        onClick={() => setIsFollowing(!isFollowing)}
-      >
-        {isFollowing ? "Following" : "Follow"}
-      </Button>
-      <Button variant="outline" size="sm">
-        Message
-      </Button>
-    </div>
+    <button
+      onClick={onEdit}
+      className="px-4 py-2 bg-gray-700 text-white rounded-md hover:bg-gray-600"
+    >
+      Edit Profile
+    </button>
   );
 };

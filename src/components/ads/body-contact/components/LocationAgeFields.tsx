@@ -1,60 +1,45 @@
 
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { LocationAgeFieldsProps } from '../types';
 
-interface LocationAgeFieldsProps {
-  location: string;
-  ageRange: { lower: number; upper: number };
-  onUpdateLocation: (value: string) => void;
-  onUpdateAgeRange: (value: { lower: number; upper: number }) => void;
-}
-
-export const LocationAgeFields = ({
-  location,
-  ageRange,
-  onUpdateLocation,
-  onUpdateAgeRange
-}: LocationAgeFieldsProps) => {
+export const LocationAgeFields = ({ form }: LocationAgeFieldsProps) => {
   return (
-    <>
-      <div className="space-y-2">
-        <Label htmlFor="location">Location</Label>
-        <Input
-          id="location"
-          placeholder="Enter your city"
-          value={location}
-          onChange={(e) => onUpdateLocation(e.target.value)}
+    <div className="space-y-4">
+      <div>
+        <label className="block text-sm font-medium text-gray-300 mb-2">
+          Location
+        </label>
+        <input
+          {...form.register('location')}
+          className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-md text-white"
+          placeholder="Your location"
         />
       </div>
-
       <div className="grid grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <Label>Minimum Age</Label>
-          <Input
+        <div>
+          <label className="block text-sm font-medium text-gray-300 mb-2">
+            Min Age
+          </label>
+          <input
             type="number"
+            {...form.register('ageRange.lower', { valueAsNumber: true })}
+            className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-md text-white"
             min="18"
-            max="99"
-            value={ageRange.lower}
-            onChange={(e) => onUpdateAgeRange({ 
-              ...ageRange, 
-              lower: parseInt(e.target.value) 
-            })}
+            max="100"
           />
         </div>
-        <div className="space-y-2">
-          <Label>Maximum Age</Label>
-          <Input
+        <div>
+          <label className="block text-sm font-medium text-gray-300 mb-2">
+            Max Age
+          </label>
+          <input
             type="number"
+            {...form.register('ageRange.upper', { valueAsNumber: true })}
+            className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-md text-white"
             min="18"
-            max="99"
-            value={ageRange.upper}
-            onChange={(e) => onUpdateAgeRange({ 
-              ...ageRange, 
-              upper: parseInt(e.target.value) 
-            })}
+            max="100"
           />
         </div>
       </div>
-    </>
+    </div>
   );
 };

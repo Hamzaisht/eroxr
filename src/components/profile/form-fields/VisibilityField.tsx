@@ -1,39 +1,39 @@
-import { UseFormReturn } from "react-hook-form";
-import {
-  FormField,
-  FormItem,
-  FormLabel,
-  FormControl,
-  FormDescription,
-} from "@/components/ui/form";
-import { Switch } from "@/components/ui/switch";
-import type { ProfileFormValues } from "../types";
+
+import { ProfileFormData } from '../types';
 
 interface VisibilityFieldProps {
-  form: UseFormReturn<ProfileFormValues>;
+  value: 'public' | 'private';
+  onChange: (value: 'public' | 'private') => void;
 }
 
-export const VisibilityField = ({ form }: VisibilityFieldProps) => {
+export const VisibilityField = ({ value, onChange }: VisibilityFieldProps) => {
   return (
-    <FormField
-      control={form.control}
-      name="profile_visibility"
-      render={({ field }) => (
-        <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-          <div className="space-y-0.5">
-            <FormLabel className="text-base">Profile Visibility</FormLabel>
-            <FormDescription>
-              Make your profile visible to other users
-            </FormDescription>
-          </div>
-          <FormControl>
-            <Switch
-              checked={field.value}
-              onCheckedChange={field.onChange}
-            />
-          </FormControl>
-        </FormItem>
-      )}
-    />
+    <div className="space-y-2">
+      <label className="block text-sm font-medium text-gray-300">
+        Profile Visibility
+      </label>
+      <div className="flex space-x-4">
+        <label className="flex items-center space-x-2 text-gray-300">
+          <input
+            type="radio"
+            value="public"
+            checked={value === 'public'}
+            onChange={(e) => onChange(e.target.value as 'public' | 'private')}
+            className="text-luxury-primary"
+          />
+          <span>Public</span>
+        </label>
+        <label className="flex items-center space-x-2 text-gray-300">
+          <input
+            type="radio"
+            value="private"
+            checked={value === 'private'}
+            onChange={(e) => onChange(e.target.value as 'public' | 'private')}
+            className="text-luxury-primary"
+          />
+          <span>Private</span>
+        </label>
+      </div>
+    </div>
   );
 };

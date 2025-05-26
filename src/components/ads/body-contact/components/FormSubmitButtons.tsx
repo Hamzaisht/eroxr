@@ -1,33 +1,26 @@
 
-import { Button } from "@/components/ui/button";
-import { Loader2 } from "lucide-react";
+import { Button } from '@/components/ui/button';
+import { FormSubmitButtonsProps } from '../types';
 
-interface FormSubmitButtonsProps {
-  onSubmit: () => void;
-  onCancel: () => void;
-  isLoading: boolean;
-}
-
-export const FormSubmitButtons = ({ onSubmit, onCancel, isLoading }: FormSubmitButtonsProps) => {
+export const FormSubmitButtons = ({ isLoading, onCancel, onSubmit }: FormSubmitButtonsProps) => {
   return (
-    <div className="flex justify-end gap-2 pt-2 sticky bottom-0 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 pb-2">
-      <Button variant="outline" onClick={onCancel} size="sm">
+    <div className="flex space-x-4">
+      <Button
+        type="button"
+        variant="outline"
+        onClick={onCancel}
+        disabled={isLoading}
+        className="flex-1"
+      >
         Cancel
       </Button>
-      <Button 
+      <Button
+        type="submit"
         onClick={onSubmit}
         disabled={isLoading}
-        size="sm"
-        className="bg-gradient-to-r from-luxury-primary to-luxury-secondary hover:from-luxury-secondary hover:to-luxury-primary text-white"
+        className="flex-1 bg-luxury-primary hover:bg-luxury-primary/90"
       >
-        {isLoading ? (
-          <>
-            <Loader2 className="mr-2 h-3 w-3 animate-spin" />
-            Creating...
-          </>
-        ) : (
-          "Create Ad"
-        )}
+        {isLoading ? 'Creating...' : 'Create Ad'}
       </Button>
     </div>
   );
