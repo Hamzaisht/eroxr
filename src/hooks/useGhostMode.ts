@@ -75,6 +75,6 @@ export const useGhostMode = () => {
     isGhostMode, 
     isLoading, 
     toggleGhostMode,
-    canUseGhostMode: true // For now, assume all users can use ghost mode
+    canUseGhostMode: true
   };
 };

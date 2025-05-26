@@ -12,10 +12,23 @@ export const adFormSchema = z.object({
     lower: z.number().min(18).max(100),
     upper: z.number().min(18).max(100)
   }),
-  tags: z.array(z.string())
+  tags: z.array(z.string()),
+  // Add file properties
+  avatarFile: z.instanceof(File).nullable().optional(),
+  videoFile: z.instanceof(File).nullable().optional()
 });
 
 export type AdFormValues = z.infer<typeof adFormSchema>;
+
+// Add missing types
+export type ModerationStatus = 'pending' | 'approved' | 'rejected';
+
+export interface BodyContactAccessCheckResult {
+  canAccess: boolean;
+  reason?: string;
+  requiresPremium?: boolean;
+  requiresVerification?: boolean;
+}
 
 export interface BasicInfoFieldsProps {
   form: any;

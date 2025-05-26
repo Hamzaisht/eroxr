@@ -18,12 +18,11 @@ export const useImmersiveCreation = (onSuccess?: () => void, onClose?: () => voi
     tags: [],
     location: "",
     ageRange: { lower: 18, upper: 99 },
-    bodyType: "",
+    bodyType: "average", // Set to valid default
     videoFile: null,
     avatarFile: null,
   });
 
-  // Flag to track if navigation is in progress
   const isNavigating = useRef(false);
 
   const { handleSubmit, isLoading } = useBodyContactSubmit({
@@ -38,7 +37,7 @@ export const useImmersiveCreation = (onSuccess?: () => void, onClose?: () => voi
     onComplete: () => {
       // Do nothing here, we'll handle the closing manually
     },
-    isSuperAdmin: false // This will be passed in from the parent
+    isSuperAdmin: false
   });
 
   useEffect(() => {
@@ -152,9 +151,60 @@ export const useImmersiveCreation = (onSuccess?: () => void, onClose?: () => voi
     formProgress,
     values,
     isLoading,
-    goToNextStep,
-    goToPrevStep,
-    jumpToStep,
+    goToNextStep: (maxSteps: number) => {
+      if (isNavigating.current || isExiting || currentStep >= maxSteps - 1) return;
+      
+      isNavigating.current = true;
+      setDirection(1);
+      setIsExiting(true);
+      
+      setTimeout(() => {
+        setCurrentStep((prev) => Math.min(prev + 1, maxSteps - 1));
+        setIsExiting(false);
+        
+        setTimeout(() => {
+          isNavigating.current = false;
+        }, 50);
+      }, 300);
+    },
+    goToPrevStep: () => {
+      if (isNavigating.current || isExiting || currentStep <= 0) return;
+      
+      isNavigating.current = true;
+      setDirection(-1);
+      setIsExiting(true);
+      
+      setTimeout(() => {
+        setCurrentStep((prev) => Math.max(prev - 1, 0));
+        setIsExiting(false);
+        
+        setTimeout(() => {
+          isNavigating.current = false;
+        }, 50);
+      }, 300);
+    },
+    jumpToStep: (index: number) => {
+      if (isNavigating.current || isExiting || index === currentStep) return;
+      
+      isNavigating.current = true;
+      
+      if (index < currentStep) {
+        setDirection(-1);
+      } else {
+        setDirection(1);
+      }
+      
+      setIsExiting(true);
+      
+      setTimeout(() => {
+        setCurrentStep(index);
+        setIsExiting(false);
+        
+        setTimeout(() => {
+          isNavigating.current = false;
+        }, 50);
+      }, 300);
+    },
     onUpdateValues,
     submitForm,
     setShowSuccess,

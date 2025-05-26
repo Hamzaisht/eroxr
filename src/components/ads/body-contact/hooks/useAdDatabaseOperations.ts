@@ -1,4 +1,3 @@
-
 import { useSession } from "@supabase/auth-helpers-react";
 import { supabase } from "@/integrations/supabase/client";
 import { AdFormValues } from "../types";
@@ -39,21 +38,21 @@ export const useAdDatabaseOperations = () => {
         description: values.description,
         relationship_status: values.relationshipStatus,
         looking_for: values.lookingFor,
-        tags: values.tags || [], // Handle tags properly
-        country: "sweden", // Default for demo
+        tags: values.tags || [],
+        country: "sweden",
         city: values.location,
         age_range: ageRangeStr,
         body_type: values.bodyType,
         video_url: videoUrl,
         avatar_url: avatarUrl,
-        user_type: values.relationshipStatus === "couple" ? "couple_mf" : "male",
+        // Fix the comparison - check for 'taken' which might indicate couple status
+        user_type: values.relationshipStatus === "taken" ? "couple_mf" : "male",
         is_active: true,
-        moderation_status: "approved", // Always set to approved - no need for pending state
+        moderation_status: "approved",
       };
       
       console.log("Submitting ad data:", adData);
 
-      // Insert ad and get the returned id
       const { data: insertedAd, error: insertError } = await supabase
         .from("dating_ads")
         .insert(adData)
@@ -63,7 +62,6 @@ export const useAdDatabaseOperations = () => {
       if (insertError) {
         console.error("Ad insertion error:", insertError);
         
-        // Check for common errors
         if (insertError.message.includes("moderation_status")) {
           throw new Error("The moderation_status column is missing. Please check database schema.");
         } else if (insertError.message.includes("permission denied")) {

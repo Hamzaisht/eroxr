@@ -1,91 +1,68 @@
 
-import { Session } from "@supabase/auth-helpers-react";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from '@/integrations/supabase/client';
 
-/**
- * Toggle ghost mode state
- */
 export const toggleGhostModeState = async (
-  session: Session | null,
+  session: any,
   canUseGhostMode: boolean,
   isGhostMode: boolean,
-  setIsGhostMode: (value: boolean) => void,
-  setIsLoading: (value: boolean) => void,
+  setIsGhostMode: (state: boolean) => void,
+  setIsLoading: (loading: boolean) => void,
   stopSurveillance: () => Promise<boolean>,
   activeSurveillance: any
 ) => {
   if (!session?.user || !canUseGhostMode) return;
   
   setIsLoading(true);
-  
   try {
-    // If surveillance is active, stop it first
-    if (isGhostMode && activeSurveillance.isWatching) {
+    const newGhostMode = !isGhostMode;
+    
+    if (!newGhostMode && activeSurveillance.isWatching) {
       await stopSurveillance();
     }
     
-    // Toggle ghost mode in database
-    const newGhostModeState = !isGhostMode;
     const { error } = await supabase
-      .from('admin_settings')
-      .upsert({ 
-        user_id: session.user.id,
-        settings_type: 'ghost_mode',
-        value: newGhostModeState 
+      .from('admin_sessions')
+      .upsert({
+        admin_id: session.user.id,
+        ghost_mode: newGhostMode,
+        last_active_at: new Date().toISOString()
       });
+
+    if (error) throw error;
     
-    if (error) {
-      console.error("Error updating ghost mode:", error);
-      return;
-    }
-    
-    // Log the action for audit purposes
-    await supabase.from('admin_logs').insert({
-      admin_id: session.user.id,
-      action: newGhostModeState ? 'enabled_ghost_mode' : 'disabled_ghost_mode',
-      action_type: 'admin_settings',
-      details: { timestamp: new Date().toISOString() }
-    });
-    
-    setIsGhostMode(newGhostModeState);
-  } catch (err) {
-    console.error("Error toggling ghost mode:", err);
+    setIsGhostMode(newGhostMode);
+  } catch (error) {
+    console.error('Error toggling ghost mode:', error);
   } finally {
     setIsLoading(false);
   }
 };
 
-/**
- * Sync ghost mode state from database
- */
 export const syncGhostModeState = async (
   userId: string,
   canUseGhostMode: boolean,
-  setIsGhostMode: (value: boolean) => void,
-  setIsLoading: (value: boolean) => void
+  setIsGhostMode: (state: boolean) => void,
+  setIsLoading: (loading: boolean) => void
 ) => {
-  if (!canUseGhostMode) {
-    setIsGhostMode(false);
-    return;
-  }
+  if (!canUseGhostMode) return;
   
   setIsLoading(true);
-  
   try {
     const { data, error } = await supabase
-      .from('admin_settings')
-      .select('value')
-      .eq('user_id', userId)
-      .eq('settings_type', 'ghost_mode')
+      .from('admin_sessions')
+      .select('ghost_mode')
+      .eq('admin_id', userId)
+      .order('created_at', { ascending: false })
+      .limit(1)
       .single();
-    
-    if (!error && data) {
-      setIsGhostMode(!!data.value);
-    } else {
-      setIsGhostMode(false);
+
+    if (error && error.code !== 'PGRST116') {
+      throw error;
     }
-  } catch (err) {
-    console.error("Error syncing ghost mode state:", err);
+    
+    setIsGhostMode(data?.ghost_mode || false);
+  } catch (error) {
+    console.error('Error syncing ghost mode:', error);
     setIsGhostMode(false);
   } finally {
     setIsLoading(false);

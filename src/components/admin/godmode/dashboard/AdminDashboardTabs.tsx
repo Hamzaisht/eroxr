@@ -1,6 +1,7 @@
 
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { LiveSurveillance } from "@/components/admin/platform/LiveSurveillance";
+import { useLiveSurveillanceData } from "@/hooks/useGhostMode";
 import React from "react";
 
 interface AdminDashboardTabsProps {
@@ -14,6 +15,18 @@ export const AdminDashboardTabs: React.FC<AdminDashboardTabsProps> = ({
   onTabChange,
   children
 }) => {
+  const { sessions, isLoading, error } = useLiveSurveillanceData();
+  
+  const handleMonitorSession = async (session: any) => {
+    console.log("Monitoring session:", session);
+    return true;
+  };
+  
+  const handleRefresh = async () => {
+    console.log("Refreshing surveillance data");
+    return true;
+  };
+  
   return (
     <Tabs value={activeTab} onValueChange={onTabChange}>
       <TabsList className="bg-[#0F141A]">
@@ -25,7 +38,14 @@ export const AdminDashboardTabs: React.FC<AdminDashboardTabsProps> = ({
       </TabsList>
       
       <TabsContent value="surveillance">
-        <LiveSurveillance />
+        <LiveSurveillance 
+          sessions={sessions}
+          isLoading={isLoading}
+          error={error}
+          onMonitorSession={handleMonitorSession}
+          actionInProgress=""
+          onRefresh={handleRefresh}
+        />
       </TabsContent>
       
       {children}
