@@ -1,13 +1,16 @@
 
+
 // Export core media utilities with explicit naming
 export { 
   determineMediaType,
   extractMediaUrl,
   processMediaSource,
   cleanMediaUrl,
-  isValidMediaSource,
-  MediaItem
+  isValidMediaSource
 } from './coreMediaUtils';
+
+// Export types separately
+export type { MediaItem } from './coreMediaUtils';
 
 export * from './urlUtils';
 
@@ -53,3 +56,4 @@ export type {
   UploadOptions,
   UploadResult 
 } from '@/types/media';
+
