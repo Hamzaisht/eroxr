@@ -16,4 +16,4 @@ export type {
   MediaOptions,
   UploadOptions,
   UploadResult 
-} from './types';
+} from '@/types/media';

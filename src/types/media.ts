@@ -8,6 +8,29 @@ export enum MediaType {
   UNKNOWN = 'unknown'
 }
 
+export enum MediaAccessLevel {
+  PUBLIC = 'public',
+  PRIVATE = 'private',
+  SUBSCRIBERS = 'subscribers',
+  FOLLOWERS = 'followers',
+  PPV = 'ppv',
+  PAID = 'paid',
+  INVISIBLE = 'invisible',
+}
+
+export enum AvailabilityStatus {
+  AVAILABLE = 'available',
+  PROCESSING = 'processing',
+  ERROR = 'error',
+  DELETED = 'deleted',
+  EXPIRED = 'expired',
+  ONLINE = 'online',
+  OFFLINE = 'offline',
+  AWAY = 'away',
+  BUSY = 'busy',
+  INVISIBLE = 'invisible',
+}
+
 export interface MediaItem {
   url: string;
   type: MediaType;
@@ -31,6 +54,7 @@ export interface MediaSource {
   thumbnail_url?: string;
   path?: string;
   post_id?: string;
+  access_level?: MediaAccessLevel;
 }
 
 export interface UploadResult {
@@ -45,4 +69,29 @@ export interface UploadState {
   error: string | null;
   isComplete: boolean;
   result?: UploadResult;
+}
+
+export interface MediaOptions {
+  className?: string;
+  autoPlay?: boolean;
+  controls?: boolean;
+  muted?: boolean;
+  loop?: boolean;
+  poster?: string;
+  onClick?: () => void;
+  onLoad?: () => void;
+  onError?: (error?: any) => void;
+  onEnded?: () => void;
+  onTimeUpdate?: (currentTime: number, duration: number) => void;
+}
+
+export interface UploadOptions {
+  path?: string;
+  contentType?: string;
+  maxSizeMB?: number;
+  folder?: string;
+  accessLevel?: MediaAccessLevel;
+  contentCategory?: string;
+  bucket?: string;
+  maxSizeInMB?: number;
 }

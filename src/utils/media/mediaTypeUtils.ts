@@ -36,3 +36,31 @@ export const getMediaTypeFromExtension = (extension: string): MediaType => {
 export const isPlayableMediaType = (type: MediaType): boolean => {
   return [MediaType.VIDEO, MediaType.AUDIO, MediaType.IMAGE, MediaType.GIF].includes(type);
 };
+
+/**
+ * Checks if media type is an image
+ */
+export const isImageType = (type: MediaType): boolean => {
+  return type === MediaType.IMAGE || type === MediaType.GIF;
+};
+
+/**
+ * Checks if media type is a video
+ */
+export const isVideoType = (type: MediaType): boolean => {
+  return type === MediaType.VIDEO;
+};
+
+/**
+ * Checks if media type is audio
+ */
+export const isAudioType = (type: MediaType): boolean => {
+  return type === MediaType.AUDIO;
+};
+
+/**
+ * Checks if media type is a document
+ */
+export const isDocumentType = (type: MediaType): boolean => {
+  return type === MediaType.DOCUMENT;
+};
