@@ -1,9 +1,9 @@
-
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Heart, MessageCircle, Share2, Bookmark, BookmarkCheck } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { VideoPlayer } from "@/components/video/VideoPlayer";
+import { OptimizedUniversalMedia } from "@/components/media/OptimizedUniversalMedia";
+import { MediaType } from "@/types/media";
 
 interface Creator {
   id: string;
@@ -124,6 +124,10 @@ export const ShortItem = ({
   const handleVideoError = () => {
     setError("Could not play video");
   };
+
+  const handleVideoLoad = () => {
+    setError(null);
+  };
   
   return (
     <motion.div
@@ -135,15 +139,21 @@ export const ShortItem = ({
       {/* Main video container */}
       <div className="w-full h-full flex items-center justify-center relative overflow-hidden">
         {/* Video player */}
-        <VideoPlayer
-          url={short.video_urls[0]}
-          poster={short.video_thumbnail_url}
+        <OptimizedUniversalMedia
+          item={{
+            url: short.video_urls[0],
+            type: MediaType.VIDEO,
+            poster: short.video_thumbnail_url,
+            creator_id: short.creator_id
+          }}
           className="w-full h-full object-contain"
           autoPlay={isVisible}
           controls={false}
           muted={false}
           loop={true}
           onError={handleVideoError}
+          onLoad={handleVideoLoad}
+          fallbackMessage="Could not load video"
         />
         
         {/* Error indicator */}

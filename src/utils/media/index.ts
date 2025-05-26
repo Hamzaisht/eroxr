@@ -1,6 +1,6 @@
 
-// Re-export all media utilities from the various files
-export * from './mediaTypeUtils';
+// Re-export core media utilities
+export * from './coreMediaUtils';
 export * from './urlUtils';
 
 // Export specific functions from mediaUtils to avoid conflicts

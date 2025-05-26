@@ -4,10 +4,9 @@ import { Avatar } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { Message } from "@/integrations/supabase/types/messages";
-import { UniversalMedia } from "@/components/media/UniversalMedia";
-import { MediaType } from "@/utils/media/types";
+import { OptimizedUniversalMedia } from "@/components/media/OptimizedUniversalMedia";
+import { MediaType } from "@/types/media";
 import { AlertCircle, RefreshCw } from "lucide-react";
-import { reportMediaError } from "@/utils/media/mediaMonitoring";
 
 interface MessageContentProps {
   message: Message;
@@ -17,38 +16,24 @@ interface MessageContentProps {
 
 export const MessageContent = ({ message, isCurrentUser, onMediaClick }: MessageContentProps) => {
   const [loadErrors, setLoadErrors] = useState<Record<string, boolean>>({});
-  const [isLoading, setIsLoading] = useState(true);
   const [retries, setRetries] = useState<Record<string, number>>({});
 
   const handleImageLoad = useCallback((url: string) => {
     setLoadErrors(prev => ({ ...prev, [url]: false }));
-    setIsLoading(false);
   }, []);
 
   const handleImageError = useCallback((url: string) => {
     console.error(`Image load error: ${url}`);
     setLoadErrors(prev => ({ ...prev, [url]: true }));
-    setIsLoading(false);
     
     // Track retry count
     const currentRetries = retries[url] || 0;
     const newRetryCount = currentRetries + 1;
     setRetries(prev => ({ ...prev, [url]: newRetryCount }));
-    
-    if (newRetryCount >= 2) {
-      reportMediaError(
-        url,
-        'load_failure',
-        newRetryCount,
-        'image',
-        'MessageContent'
-      );
-    }
   }, [retries]);
 
   const handleRetry = (url: string) => {
     setLoadErrors(prev => ({ ...prev, [url]: false }));
-    setIsLoading(true);
   };
 
   // Generic media error handler
@@ -59,17 +44,6 @@ export const MessageContent = ({ message, isCurrentUser, onMediaClick }: Message
     const currentRetries = retries[url] || 0;
     const newRetryCount = currentRetries + 1;
     setRetries(prev => ({ ...prev, [url]: newRetryCount }));
-    
-    if (newRetryCount >= 2) {
-      const isVideo = url.match(/\.(mp4|webm|mov|avi)$/i) ? true : false;
-      reportMediaError(
-        url,
-        'load_failure',
-        newRetryCount,
-        isVideo ? 'video' : 'image',
-        'MessageContent'
-      );
-    }
   };
 
   // Render image attachments
@@ -79,12 +53,6 @@ export const MessageContent = ({ message, isCurrentUser, onMediaClick }: Message
 
     return message.image_urls?.map((url, index) => (
       <div key={`img-${index}`} className="relative">
-        {isLoading && (
-          <div className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-lg">
-            <p className="text-white">Loading...</p>
-          </div>
-        )}
-        
         {loadErrors[url] ? (
           <div className="relative w-full h-full flex items-center justify-center bg-luxury-darker rounded-lg">
             <div className="flex flex-col items-center justify-center text-luxury-neutral/70 p-8">
@@ -100,7 +68,7 @@ export const MessageContent = ({ message, isCurrentUser, onMediaClick }: Message
             </div>
           </div>
         ) : (
-          <UniversalMedia
+          <OptimizedUniversalMedia
             item={{
               url: url,
               type: MediaType.IMAGE,
@@ -108,11 +76,11 @@ export const MessageContent = ({ message, isCurrentUser, onMediaClick }: Message
               creator_id: message.sender_id || undefined
             }}
             className="w-full max-h-60 object-cover"
-            showWatermark={false}
             onClick={() => onMediaClick?.(url)}
             onLoad={() => handleImageLoad(url)}
             onError={() => handleImageError(url)}
             maxRetries={2}
+            compact={true}
           />
         )}
       </div>
@@ -126,7 +94,7 @@ export const MessageContent = ({ message, isCurrentUser, onMediaClick }: Message
 
     return message.video_urls?.map((url, index) => (
       <div key={`vid-${index}`} className="relative">
-        <UniversalMedia
+        <OptimizedUniversalMedia
           item={{
             url: url,
             type: MediaType.VIDEO,
@@ -134,9 +102,9 @@ export const MessageContent = ({ message, isCurrentUser, onMediaClick }: Message
             creator_id: message.sender_id || undefined
           }}
           className="w-full max-h-60 object-cover"
-          showWatermark={false}
           onError={() => onError(url)}
           maxRetries={2}
+          compact={true}
         />
       </div>
     ));
@@ -149,7 +117,7 @@ export const MessageContent = ({ message, isCurrentUser, onMediaClick }: Message
 
     return message.audio_urls?.map((url, index) => (
       <div key={`aud-${index}`} className="relative">
-        <UniversalMedia
+        <OptimizedUniversalMedia
           item={{
             url: url,
             type: MediaType.AUDIO,
@@ -157,10 +125,10 @@ export const MessageContent = ({ message, isCurrentUser, onMediaClick }: Message
             creator_id: message.sender_id || undefined
           }}
           className="w-full"
-          showWatermark={false}
           controls={true}
           onError={() => onError(url)}
           maxRetries={2}
+          compact={true}
         />
       </div>
     ));
@@ -170,7 +138,7 @@ export const MessageContent = ({ message, isCurrentUser, onMediaClick }: Message
   if (message.video_url) {
     return (
       <div className="w-full overflow-hidden rounded-lg">
-        <UniversalMedia
+        <OptimizedUniversalMedia
           item={{
             url: message.video_url,
             type: MediaType.VIDEO, 
@@ -178,9 +146,9 @@ export const MessageContent = ({ message, isCurrentUser, onMediaClick }: Message
             creator_id: message.sender_id || undefined
           }}
           className="w-full max-h-60 object-cover"
-          showWatermark={false}
           onError={() => onError(message.video_url)}
           maxRetries={2}
+          compact={true}
         />
       </div>
     );
