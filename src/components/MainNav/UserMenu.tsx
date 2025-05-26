@@ -23,12 +23,9 @@ import {
   ProfileStatus,
   toValidProfileStatus
 } from "@/utils/supabase/type-guards";
-import { AvailabilityStatus } from "@/utils/media/types";
-import { AvailabilityIndicator } from "@/components/ui/availability-indicator";
 import { Button } from "@/components/ui/button";
 import { Database } from "@/integrations/supabase/types/database.types";
 import { updateProfileStatus } from "@/utils/supabase/db-helpers";
-import { isQueryError } from "@/utils/supabase/typeSafeOperations";
 
 // Define proper types for profiles table
 type ProfileRow = Database['public']['Tables']['profiles']['Row'];
@@ -36,7 +33,6 @@ type ProfileKey = keyof ProfileRow;
 
 export function UserMenu() {
   const [isSigningOut, setIsSigningOut] = useState(false);
-  const [currentStatus, setCurrentStatus] = useState<AvailabilityStatus>(AvailabilityStatus.OFFLINE);
   const navigate = useNavigate();
   const { toast } = useToast();
   const session = useSession();
@@ -72,14 +68,6 @@ export function UserMenu() {
   // Extract profile data safely with better error handling
   const safeProfile = profile ? getSafeProfile(profile) : null;
 
-  // Initialize status from profile data
-  useEffect(() => {
-    if (safeProfile?.status) {
-      const statusValue = convertToStatus(safeProfile.status);
-      setCurrentStatus(statusValue);
-    }
-  }, [safeProfile]);
-
   const signOut = async () => {
     setIsSigningOut(true);
     try {
@@ -96,46 +84,14 @@ export function UserMenu() {
     }
   };
 
-  const updateUserStatus = async (newStatus: AvailabilityStatus) => {
-    if (!session?.user?.id) return;
-    
-    try {
-      // Convert the enum status to a valid database status value
-      let dbStatus: ProfileStatus = 'offline';
-      
-      switch (newStatus) {
-        case AvailabilityStatus.ONLINE:
-          dbStatus = 'online';
-          break;
-        case AvailabilityStatus.AWAY:
-          dbStatus = 'away';
-          break;
-        case AvailabilityStatus.BUSY:
-          dbStatus = 'busy';
-          break;
-        case AvailabilityStatus.INVISIBLE:
-        case AvailabilityStatus.OFFLINE:
-          dbStatus = 'offline';
-          break;
-      }
-      
-      await updateProfileStatus(session.user.id, dbStatus);
-      
-      setCurrentStatus(newStatus);
-    } catch (error) {
-      console.error('Failed to update status:', error);
-    }
-  };
-
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" className="relative h-8 w-8 rounded-full">
           <Avatar className="h-8 w-8">
-            <AvatarImage src={safeProfile?.avatar_url || ""} alt={safeProfile?.username || "User"} />
+            <AvatarImage src={""} alt={safeProfile?.username || "User"} />
             <AvatarFallback>{safeProfile?.username?.slice(0, 2).toUpperCase() || "US"}</AvatarFallback>
           </Avatar>
-          <AvailabilityIndicator status={currentStatus} className="absolute bottom-0 right-0" onClick={(e) => e.stopPropagation()} />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-80" align="end">

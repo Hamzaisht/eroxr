@@ -1,98 +1,113 @@
 
 import { useState } from "react";
-import { motion } from "framer-motion";
-import { PostHeader } from "./post-components/PostHeader";
-import { PostContent } from "./post-components/PostContent";
-import { PostActions } from "./post-components/PostActions";
-import { PostComments } from "./post-components/PostComments";
+import { Card, CardContent } from "@/components/ui/card";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { PostContent } from "./PostContent";
 import { PostStats } from "./post-components/PostStats";
+import { PostComments } from "./post-components/PostComments";
 import { usePostActions } from "@/hooks/usePostActions";
 import { formatDistanceToNow } from "date-fns";
-import { Card } from "@/components/ui/card";
 
 interface PostProps {
-  id: string;
-  content: string;
-  creatorId: string;
-  createdAt: string;
-  likesCount: number;
-  commentsCount: number;
-  sharesCount: number;
-  creator: {
-    username: string;
-    avatarUrl?: string;
-    isVerified?: boolean;
+  post: {
+    id: string;
+    content: string;
+    creator: {
+      id: string;
+      username: string;
+      isVerified?: boolean;
+    };
+    createdAt: string;
+    likesCount: number;
+    commentsCount: number;
+    isLiked?: boolean;
+    isSaved?: boolean;
   };
-  isLiked?: boolean;
-  isSaved?: boolean;
-  showComments?: boolean;
-  className?: string;
+  currentUser?: {
+    id: string;
+    username: string;
+  };
 }
 
-export const Post = ({
-  id,
-  content,
-  creatorId,
-  createdAt,
-  likesCount,
-  commentsCount,
-  sharesCount,
-  creator,
-  isLiked = false,
-  isSaved = false,
-  showComments = true,
-  className
-}: PostProps) => {
-  const [isExpanded, setIsExpanded] = useState(false);
-  const [showCommentsSection, setShowCommentsSection] = useState(false);
-  
-  const {
-    handleLike,
-    handleSave,
-    handleShare,
-    handleComment
-  } = usePostActions(id);
+export const Post = ({ post, currentUser }: PostProps) => {
+  const [showComments, setShowComments] = useState(false);
+  const [comments, setComments] = useState<any[]>([]);
+  const { handleLike, handleDelete } = usePostActions();
+
+  const onLike = () => handleLike(post.id);
+  const onComment = () => setShowComments(!showComments);
+  const onShare = () => {
+    // Share functionality
+  };
+  const onSave = () => {
+    // Save functionality
+  };
+
+  const onAddComment = (content: string) => {
+    // Add comment functionality
+    const newComment = {
+      id: Date.now().toString(),
+      content,
+      author: {
+        username: currentUser?.username || "Anonymous"
+      },
+      createdAt: "just now"
+    };
+    setComments([...comments, newComment]);
+  };
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3 }}
-      className={className}
-    >
-      <Card className="bg-luxury-darker border-luxury-neutral/20 p-6">
-        <PostHeader
-          creator={creator}
-          createdAt={formatDistanceToNow(new Date(createdAt), { addSuffix: true })}
-          postId={id}
-          creatorId={creatorId}
-        />
+    <Card className="w-full">
+      <CardContent className="p-0">
+        {/* Post Header */}
+        <div className="flex items-center gap-3 p-4">
+          <Avatar className="h-10 w-10">
+            <AvatarImage src="" alt={post.creator.username} />
+            <AvatarFallback>{post.creator.username.slice(0, 2).toUpperCase()}</AvatarFallback>
+          </Avatar>
+          
+          <div className="flex-1">
+            <div className="flex items-center gap-2">
+              <span className="font-semibold">{post.creator.username}</span>
+              {post.creator.isVerified && (
+                <Badge variant="secondary" className="text-xs">Verified</Badge>
+              )}
+            </div>
+            <div className="text-sm text-gray-500">
+              {formatDistanceToNow(new Date(post.createdAt), { addSuffix: true })}
+            </div>
+          </div>
+        </div>
 
-        <PostContent
-          content={content}
-          creatorId={creatorId}
-        />
+        {/* Post Content */}
+        <div className="px-4 pb-4">
+          <PostContent content={post.content} creatorId={post.creator.id} />
+        </div>
 
+        {/* Post Stats */}
         <PostStats
-          likesCount={likesCount}
-          commentsCount={commentsCount}
-          sharesCount={sharesCount}
+          likesCount={post.likesCount}
+          commentsCount={post.commentsCount}
+          isLiked={post.isLiked || false}
+          isSaved={post.isSaved || false}
+          onLike={onLike}
+          onComment={onComment}
+          onShare={onShare}
+          onSave={onSave}
         />
 
-        <PostActions
-          postId={id}
-          isLiked={isLiked}
-          isSaved={isSaved}
-          onLike={handleLike}
-          onComment={() => setShowCommentsSection(!showCommentsSection)}
-          onShare={handleShare}
-          onSave={handleSave}
-        />
-
-        {showComments && showCommentsSection && (
-          <PostComments postId={id} />
+        {/* Comments Section */}
+        {showComments && (
+          <div className="px-4 pb-4 border-t border-gray-100">
+            <PostComments
+              postId={post.id}
+              comments={comments}
+              onAddComment={onAddComment}
+            />
+          </div>
         )}
-      </Card>
-    </motion.div>
+      </CardContent>
+    </Card>
   );
 };

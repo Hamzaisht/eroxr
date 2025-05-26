@@ -1,127 +1,78 @@
 
-import { useEffect } from "react";
-import { Post } from "@/components/feed/Post";
-import { Loader2, AlertTriangle } from "lucide-react";
-import type { FeedPost } from "../types";
-import { useSession } from "@supabase/auth-helpers-react";
-import { motion, AnimatePresence } from "framer-motion";
-import { useInfiniteQuery } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useInView } from "react-intersection-observer";
-import { EmptyFeed } from "@/components/feed/EmptyFeed";
-import { usePostActions } from "@/components/feed/usePostActions";
+import { Loader2 } from "lucide-react";
+import { Post } from "@/components/feed/Post";
+import { useSession } from "@supabase/auth-helpers-react";
+import { usePostActions } from "@/hooks/usePostActions";
 
-interface FeedContentProps {
-  userId?: string;
-}
-
-export const FeedContent = ({ userId }: FeedContentProps) => {
+export const FeedContent = () => {
   const session = useSession();
-  const { ref, inView } = useInView();
   const { handleLike, handleDelete } = usePostActions();
-
-  const {
-    data,
-    isLoading,
-    isError,
-    fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage,
-  } = useInfiniteQuery({
-    queryKey: ["posts", "feed", userId],
-    queryFn: async ({ pageParam }) => {
-      const from = (pageParam as number || 0) * 10;
-      const to = from + 9;
-
-      let query = supabase
-        .from("posts")
+  
+  const { data: posts, isLoading } = useQuery({
+    queryKey: ['feed-posts'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('posts')
         .select(`
           *,
-          creator:profiles(id, username, avatar_url),
-          post_likes(user_id)
+          creator:profiles(id, username)
         `)
-        .order("created_at", { ascending: false })
-        .range(from, to);
-
-      const { data: posts, error } = await query;
-
-      if (error) {
-        console.error("Feed fetch error:", error);
-        throw error;
-      }
-
-      return posts?.map(post => ({
-        ...post,
-        has_liked: post.post_likes?.some(like => like.user_id === session?.user?.id) || false,
-        creator: {
-          id: post.creator?.id || '',
-          username: post.creator?.username || "Anonymous",
-          avatar_url: post.creator?.avatar_url || null
-        }
-      })) || [];
-    },
-    getNextPageParam: (lastPage, allPages) => {
-      return lastPage?.length === 10 ? allPages.length : undefined;
+        .eq('visibility', 'public')
+        .order('created_at', { ascending: false })
+        .limit(10);
+      
+      if (error) throw error;
+      return data;
     }
   });
-
-  // Handle infinite scroll
-  useEffect(() => {
-    if (inView && hasNextPage && !isFetchingNextPage) {
-      fetchNextPage();
-    }
-  }, [inView, hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   if (isLoading) {
     return (
       <div className="flex justify-center p-8">
-        <Loader2 className="w-8 h-8 animate-spin text-luxury-primary" />
+        <Loader2 className="h-8 w-8 animate-spin" />
       </div>
     );
   }
 
-  if (isError) {
+  if (!posts?.length) {
     return (
-      <div className="flex flex-col items-center justify-center p-8 text-red-500">
-        <AlertTriangle className="w-8 h-8 mb-2" />
-        <p>Error loading feed</p>
+      <div className="text-center p-8 text-gray-500">
+        <p>No posts available yet. Be the first to share something!</p>
       </div>
     );
-  }
-
-  const allPosts = data?.pages.flatMap(page => page) || [];
-
-  if (!allPosts.length) {
-    return <EmptyFeed />;
   }
 
   return (
-    <AnimatePresence mode="wait">
-      <motion.div 
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        className="space-y-6"
-      >
-        {allPosts.map((post: any) => (
+    <div className="space-y-6">
+      {posts.map((post: any) => {
+        const creator = post.creator || { id: post.creator_id, username: "Unknown" };
+        
+        return (
           <Post
             key={post.id}
-            post={post}
-            creator={post.creator}
-            currentUser={session?.user || null}
-            onLike={() => handleLike(post.id)}
-            onDelete={() => handleDelete(post.id, post.creator_id)}
+            post={{
+              id: post.id,
+              content: post.content,
+              creator: {
+                id: creator.id,
+                username: creator.username,
+                isVerified: false
+              },
+              createdAt: post.created_at,
+              likesCount: post.likes_count || 0,
+              commentsCount: post.comments_count || 0,
+              isLiked: false,
+              isSaved: false
+            }}
+            currentUser={session?.user ? {
+              id: session.user.id,
+              username: "You"
+            } : undefined}
           />
-        ))}
-
-        <div ref={ref} className="h-10">
-          {isFetchingNextPage && hasNextPage && (
-            <div className="flex justify-center p-4">
-              <Loader2 className="w-6 w-6 animate-spin text-luxury-primary" />
-            </div>
-          )}
-        </div>
-      </motion.div>
-    </AnimatePresence>
+        );
+      })}
+    </div>
   );
 };

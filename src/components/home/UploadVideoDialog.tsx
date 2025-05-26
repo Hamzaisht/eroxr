@@ -1,15 +1,12 @@
 
-import { useRef } from "react";
+import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Video, CheckCircle2 } from "lucide-react";
-import { UploadProgress } from "@/components/ui/UploadProgress";
-import { motion } from "framer-motion";
-import { useVideoDialogState } from "./hooks/useVideoDialogState";
-import { VideoPreview } from "./components/VideoPreview";
-import { VideoFileSelector } from "./components/VideoFileSelector";
-import { VideoFormFields } from "./components/VideoFormFields";
-import { ValidationMessage } from "./components/ValidationMessage";
-import { VideoDialogActions } from "./components/VideoDialogActions";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { Upload, AlertCircle } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 interface UploadVideoDialogProps {
   open: boolean;
@@ -17,100 +14,67 @@ interface UploadVideoDialogProps {
 }
 
 export const UploadVideoDialog = ({ open, onOpenChange }: UploadVideoDialogProps) => {
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  
-  const {
-    state,
-    isSubmitting,
-    uploadProgress,
-    isUploading,
-    isError,
-    errorMessage,
-    uploadComplete,
-    handleFileSelect,
-    handleTitleChange,
-    handleDescriptionChange,
-    handleIsPremiumChange,
-    handleVideoLoad,
-    handleVideoError,
-    handleUpload,
-    handleCancel,
-    clearVideo
-  } = useVideoDialogState(open, onOpenChange);
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const { toast } = useToast();
+
+  const handleUpload = () => {
+    toast({
+      title: "Coming soon",
+      description: "Video upload functionality will be available soon"
+    });
+    onOpenChange(false);
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px] bg-black text-white">
+      <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle className="text-xl font-semibold flex items-center gap-2">
-            <Video className="h-5 w-5 text-luxury-primary" />
-            Upload Eros Video
-          </DialogTitle>
+          <DialogTitle>Upload Video</DialogTitle>
         </DialogHeader>
-
-        <div className="grid gap-6 py-4">
-          <div className="grid w-full gap-2">
-            <label htmlFor="video">Upload Video</label>
-            
-            {state.previewUrl ? (
-              <VideoPreview
-                previewUrl={state.previewUrl}
-                videoRef={videoRef}
-                isPreviewLoading={state.isPreviewLoading}
-                previewError={state.previewError}
-                onVideoLoad={handleVideoLoad}
-                onVideoError={handleVideoError}
-                onClear={clearVideo}
-              />
-            ) : (
-              <VideoFileSelector
-                fileInputRef={fileInputRef}
-                isSubmitting={isSubmitting}
-                onFileSelect={handleFileSelect}
-              />
-            )}
-            
-            <ValidationMessage message={state.validationError} />
+        
+        <div className="space-y-4">
+          <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
+            <AlertCircle className="mx-auto h-12 w-12 text-gray-400" />
+            <div className="mt-4">
+              <h3 className="text-lg font-medium">Video upload coming soon</h3>
+              <p className="text-sm text-gray-500 mt-2">
+                Video upload functionality will be available in a future update
+              </p>
+            </div>
           </div>
-
-          <VideoFormFields
-            title={state.title}
-            description={state.description}
-            isPremium={state.isPremium}
-            onTitleChange={handleTitleChange}
-            onDescriptionChange={handleDescriptionChange}
-            onIsPremiumChange={handleIsPremiumChange}
-          />
-
-          <UploadProgress 
-            isUploading={isUploading}
-            progress={uploadProgress}
-            isComplete={uploadComplete}
-            isError={isError}
-            errorMessage={errorMessage}
-            onRetry={handleUpload}
-          />
-
-          {uploadComplete && (
-            <motion.div 
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="bg-green-950/30 text-green-400 p-3 rounded-md flex items-center gap-2"
-            >
-              <CheckCircle2 className="h-5 w-5" />
-              <span>Upload complete! Your video will be available soon.</span>
-            </motion.div>
-          )}
+          
+          <div className="space-y-2">
+            <Label htmlFor="title">Title</Label>
+            <Input
+              id="title"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="Enter video title"
+            />
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="description">Description</Label>
+            <Textarea
+              id="description"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="Describe your video"
+              rows={3}
+            />
+          </div>
+          
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" onClick={() => onOpenChange(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleUpload}>
+              <Upload className="mr-2 h-4 w-4" />
+              Upload
+            </Button>
+          </div>
         </div>
-
-        <VideoDialogActions
-          onCancel={handleCancel}
-          onUpload={handleUpload}
-          isSubmitting={isSubmitting}
-          isValid={!!state.selectedFile && !!state.title}
-          isComplete={uploadComplete}
-        />
       </DialogContent>
     </Dialog>
   );

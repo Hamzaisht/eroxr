@@ -1,22 +1,25 @@
 
-import { MediaType } from "@/utils/media/types";
-
-export interface Creator {
-  id: string;
-  name: string;
-  avatar?: string;
-}
-
-export interface MediaItem {
+export interface EroboardPost {
   id: string;
   title: string;
-  type: MediaType;
-  url: string;
-  thumbnail?: string;
-  creator: Creator;
-  likeCount: number;
-  commentCount: number;
+  content: string;
+  creator: {
+    id: string;
+    username: string;
+    isVerified?: boolean;
+  };
   createdAt: string;
-  description?: string;
+  likes: number;
+  comments: number;
+  isLiked?: boolean;
+  category?: string;
   tags?: string[];
+}
+
+export interface EroboardCategory {
+  id: string;
+  name: string;
+  description: string;
+  postCount: number;
+  isNSFW?: boolean;
 }

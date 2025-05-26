@@ -1,68 +1,69 @@
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { Card } from "@/components/ui/card";
+import { PlusCircle, Loader2 } from "lucide-react";
 import { useSession } from "@supabase/auth-helpers-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { NewPostMediaUpload } from "@/components/post/NewPostMediaUpload";
-import { Loader2 } from "lucide-react";
 
-export const NewPostCreator: React.FC = () => {
+interface NewPostCreatorProps {
+  onPostCreated?: () => void;
+}
+
+export const NewPostCreator = ({ onPostCreated }: NewPostCreatorProps) => {
   const [content, setContent] = useState("");
-  const [mediaUrls, setMediaUrls] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isUploading, setIsUploading] = useState(false);
   const session = useSession();
   const { toast } = useToast();
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
+  const handleSubmit = async () => {
     if (!session?.user?.id) {
       toast({
-        title: "Authentication Required",
-        description: "Please sign in to create a post.",
+        title: "Authentication required",
+        description: "Please log in to create a post",
         variant: "destructive"
       });
       return;
     }
-    
-    if (!content.trim() && mediaUrls.length === 0) {
+
+    if (!content.trim()) {
       toast({
-        title: "Empty Post",
-        description: "Please add some content or media to your post.",
+        title: "Content required",
+        description: "Please enter some content for your post",
         variant: "destructive"
       });
       return;
     }
-    
+
     setIsSubmitting(true);
-    
+
     try {
       const { error } = await supabase
-        .from("posts")
+        .from('posts')
         .insert({
           creator_id: session.user.id,
-          content,
-          media_url: mediaUrls.length > 0 ? mediaUrls : null
+          content: content.trim(),
+          visibility: 'public'
         });
-      
+
       if (error) throw error;
-      
+
       toast({
-        title: "Post Created",
-        description: "Your post has been published successfully."
+        title: "Post created",
+        description: "Your post has been published successfully"
       });
-      
-      // Reset form
+
       setContent("");
-      setMediaUrls([]);
+      if (onPostCreated) {
+        onPostCreated();
+      }
     } catch (error: any) {
-      console.error("Post submission error:", error);
+      console.error("Error creating post:", error);
       toast({
         title: "Error",
-        description: error.message || "Failed to create post. Please try again.",
+        description: error.message || "Failed to create post",
         variant: "destructive"
       });
     } finally {
@@ -70,39 +71,40 @@ export const NewPostCreator: React.FC = () => {
     }
   };
 
-  const handleMediaUploadProgress = (isActive: boolean) => {
-    setIsUploading(isActive);
-  };
-
   return (
-    <form onSubmit={handleSubmit} className="space-y-4 p-4 border rounded-md">
-      <Textarea
-        placeholder="What's on your mind?"
-        value={content}
-        onChange={(e) => setContent(e.target.value)}
-        className="min-h-[100px]"
-      />
-      
-      <NewPostMediaUpload 
-        onMediaUrlsChange={setMediaUrls} 
-        onUploadProgress={handleMediaUploadProgress}
-      />
-      
-      <div className="flex justify-end">
-        <Button 
-          type="submit" 
-          disabled={isSubmitting || isUploading}
-        >
-          {isSubmitting ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Posting...
-            </>
-          ) : (
-            "Create Post"
-          )}
-        </Button>
+    <Card className="p-4 mb-6">
+      <div className="space-y-4">
+        <Textarea
+          placeholder="What's on your mind?"
+          value={content}
+          onChange={(e) => setContent(e.target.value)}
+          className="min-h-[100px] resize-none border-none focus-visible:ring-0 text-base"
+        />
+        
+        <div className="flex justify-between items-center">
+          <div className="text-sm text-gray-500">
+            Share your thoughts with the community
+          </div>
+          
+          <Button 
+            onClick={handleSubmit}
+            disabled={!content.trim() || isSubmitting}
+            className="bg-luxury-primary hover:bg-luxury-primary/90"
+          >
+            {isSubmitting ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Posting...
+              </>
+            ) : (
+              <>
+                <PlusCircle className="mr-2 h-4 w-4" />
+                Post
+              </>
+            )}
+          </Button>
+        </div>
       </div>
-    </form>
+    </Card>
   );
 };

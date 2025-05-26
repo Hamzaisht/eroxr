@@ -8,7 +8,6 @@ import { PremiumAccessRequired } from "../components/PremiumAccessRequired";
 import { SuccessStep } from "../steps/SuccessStep";
 import { BasicInfoStep } from "../steps/BasicInfoStep";
 import { PreferencesStep } from "../steps/PreferencesStep";
-import { MediaUploadStep } from "../steps/MediaUploadStep";
 import { ReviewStep } from "../steps/ReviewStep";
 import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
@@ -43,7 +42,7 @@ export const ImmersiveAdCreation = ({ onClose, onSuccess }: ImmersiveAdCreationP
     setShowSuccess
   } = useImmersiveCreation(onSuccess, onClose);
 
-  // Define steps
+  // Define steps (removed MediaUploadStep)
   const steps = [
     {
       title: "Basic Information",
@@ -60,16 +59,6 @@ export const ImmersiveAdCreation = ({ onClose, onSuccess }: ImmersiveAdCreationP
       description: "What are you looking for?",
       component: (
         <PreferencesStep 
-          values={values} 
-          onUpdateValues={onUpdateValues}
-        />
-      )
-    },
-    {
-      title: "Media Upload",
-      description: "Add your photos and video",
-      component: (
-        <MediaUploadStep 
           values={values} 
           onUpdateValues={onUpdateValues}
         />

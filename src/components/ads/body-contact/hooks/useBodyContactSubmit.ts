@@ -4,7 +4,6 @@ import { useSession } from "@supabase/auth-helpers-react";
 import { useToast } from "@/hooks/use-toast";
 import { AdFormValues } from "../types";
 import { validateAdSubmission } from "./useAdValidation";
-import { useAdMediaUpload } from "./useAdMediaUpload";
 import { useAdPermissionCheck } from "./useAdPermissionCheck";
 import { useAdDatabaseOperations } from "./useAdDatabaseOperations";
 
@@ -22,7 +21,6 @@ export const useBodyContactSubmit = ({
   const [isLoading, setIsLoading] = useState(false);
   const session = useSession();
   const { toast } = useToast();
-  const { uploadMedia } = useAdMediaUpload();
   const { checkPermissions } = useAdPermissionCheck();
   const { saveAd, saveAdMedia, updateProfileAvatar } = useAdDatabaseOperations();
 
@@ -36,7 +34,6 @@ export const useBodyContactSubmit = ({
       return;
     }
 
-    // Add debug logging to inspect the form values
     console.log("Form values submitted:", values);
     console.log("isSuperAdmin value:", isSuperAdmin, "type:", typeof isSuperAdmin);
     
@@ -60,20 +57,13 @@ export const useBodyContactSubmit = ({
         return;
       }
 
-      // 3. Upload media files (video and avatar)
-      const mediaResult = await uploadMedia();
-      if (mediaResult.error) {
-        throw new Error(mediaResult.error);
-      }
-
-      // 4. Save ad to the database
-      // Make sure isSuperAdmin is always a boolean
+      // 3. Save ad to the database without media
       const superAdminFlag = isSuperAdmin === true;
       
       const saveResult = await saveAd(
         values, 
-        mediaResult.videoUrl, 
-        mediaResult.avatarUrl,
+        null, // No video URL
+        null, // No avatar URL
         superAdminFlag
       );
       
@@ -81,19 +71,7 @@ export const useBodyContactSubmit = ({
         throw new Error(saveResult.error || "Failed to save ad");
       }
 
-      // 5. Record ad media
-      await saveAdMedia(
-        saveResult.data.id, 
-        mediaResult.videoUrl, 
-        mediaResult.avatarUrl
-      );
-
-      // 6. Update user profile avatar if provided
-      if (mediaResult.avatarUrl) {
-        await updateProfileAvatar(mediaResult.avatarUrl);
-      }
-
-      // 7. Show success message and trigger callbacks
+      // 4. Show success message and trigger callbacks
       toast({
         title: "Success!",
         description: "Your body contact ad has been published!", 
