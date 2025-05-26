@@ -5,8 +5,8 @@ export * from './urlUtils';
 
 // Export specific functions from mediaUtils to avoid conflicts
 export { 
-  determineMediaType, 
-  extractMediaUrl, 
+  determineMediaType as determineMediaTypeFromExtension, 
+  extractMediaUrl as extractUrlFromSource, 
   normalizeMediaSource,
   calculateAspectRatioDimensions,
   createUniqueFilePath
