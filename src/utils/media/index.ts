@@ -1,6 +1,14 @@
 
-// Re-export core media utilities
-export * from './coreMediaUtils';
+// Export core media utilities with explicit naming
+export { 
+  determineMediaType,
+  extractMediaUrl,
+  processMediaSource,
+  cleanMediaUrl,
+  isValidMediaSource,
+  MediaItem
+} from './coreMediaUtils';
+
 export * from './urlUtils';
 
 // Export specific functions from mediaUtils to avoid conflicts
