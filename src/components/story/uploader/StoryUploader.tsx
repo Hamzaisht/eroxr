@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useDropzone } from "react-dropzone";
 import { useSession } from "@supabase/auth-helpers-react";
@@ -66,8 +67,8 @@ export const StoryUploader = () => {
         throw new Error(result.error || 'Upload failed');
       }
 
-      // Check if result has url property (from successful upload)
-      if (!('url' in result) || !result.url) {
+      // Type guard to check if result has url property
+      if (!result.url) {
         throw new Error('Upload failed: No URL returned');
       }
 
