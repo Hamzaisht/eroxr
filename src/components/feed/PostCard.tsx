@@ -1,155 +1,155 @@
 
 import { useState } from "react";
+import { motion } from "framer-motion";
+import { Heart, MessageCircle, Share2, Bookmark, MoreHorizontal } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { MediaViewer } from "@/components/media/MediaViewer";
-import { ShareDialog } from "./ShareDialog";
-import { CommentSection } from "./CommentSection";
-import { PostHeader } from "./post-components/PostHeader";
+import { formatDistanceToNow } from "date-fns";
 import { PostContent } from "./post-components/PostContent";
-import { PostActions } from "./post-components/PostActions";
-import { PostMenu } from "./post-components/PostMenu";
-import { PostEditDialog } from "./post-components/PostEditDialog";
-import { DeleteConfirmDialog } from "./DeleteConfirmDialog";
-import type { Post } from "./types";
-import { Loader2 } from "lucide-react";
 
 interface PostCardProps {
-  post: Post;
-  onLike?: (postId: string) => Promise<void>;
-  onDelete?: (postId: string, creatorId: string) => Promise<void>;
-  onComment?: () => void;
-  currentUserId?: string;
+  id: string;
+  content: string;
+  creatorId: string;
+  createdAt: string;
+  creator: {
+    username: string;
+    avatarUrl?: string;
+    isVerified?: boolean;
+  };
+  likesCount?: number;
+  commentsCount?: number;
+  isLiked?: boolean;
+  isSaved?: boolean;
 }
 
-export const PostCard = ({ 
-  post, 
-  onLike, 
-  onDelete,
-  onComment,
-  currentUserId 
+export const PostCard = ({
+  id,
+  content,
+  creatorId,
+  createdAt,
+  creator,
+  likesCount = 0,
+  commentsCount = 0,
+  isLiked = false,
+  isSaved = false,
 }: PostCardProps) => {
-  const [selectedMedia, setSelectedMedia] = useState<string | null>(null);
-  const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
-  const [showComments, setShowComments] = useState(false);
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
-  const [deleteError, setDeleteError] = useState<string | null>(null);
   const { toast } = useToast();
-  const isOwner = currentUserId && post.creator_id === currentUserId;
+  const [liked, setLiked] = useState(isLiked);
+  const [saved, setSaved] = useState(isSaved);
 
-  console.log('PostCard - currentUserId:', currentUserId);
-  console.log('PostCard - post.creator_id:', post.creator_id);
-  console.log('PostCard - isOwner:', isOwner);
-
-  const handleLike = async () => {
-    if (onLike) {
-      await onLike(post.id);
-    }
+  const handleLike = () => {
+    setLiked(!liked);
+    toast({
+      title: liked ? "Post unliked" : "Post liked",
+      description: liked ? "Removed from your likes" : "Added to your likes",
+    });
   };
 
-  const handleCommentClick = () => {
-    if (onComment) {
-      onComment();
-    }
-    setShowComments(!showComments);
+  const handleSave = () => {
+    setSaved(!saved);
+    toast({
+      title: saved ? "Post unsaved" : "Post saved",
+      description: saved ? "Removed from saved posts" : "Added to saved posts",
+    });
   };
 
-  const handleDelete = async () => {
-    if (onDelete && isOwner) {
-      try {
-        setIsDeleting(true);
-        setDeleteError(null);
-        await onDelete(post.id, post.creator_id);
-        setIsDeleteDialogOpen(false);
-        toast({
-          title: "Post deleted",
-          description: "Your post has been successfully removed.",
-        });
-      } catch (error) {
-        console.error('Delete error:', error);
-        setDeleteError("Failed to delete post. Please try again.");
-      } finally {
-        setIsDeleting(false);
-      }
-    }
-  };
-
-  const handleRetryDelete = () => {
-    setDeleteError(null);
-    handleDelete();
+  const handleShare = () => {
+    toast({
+      title: "Sharing feature coming soon",
+      description: "We're working on implementing post sharing",
+    });
   };
 
   return (
-    <Card className="bg-[#0D1117] border-luxury-neutral/10 hover:border-luxury-neutral/20 transition-all duration-300">
-      <div className="p-4 space-y-4">
-        <div className="flex items-center justify-between">
-          <PostHeader
-            creator={post.creator}
-            createdAt={post.created_at}
-            updatedAt={post.updated_at}
-          />
-          {isOwner && (
-            <PostMenu 
-              onEdit={() => setIsEditDialogOpen(true)} 
-              onDelete={() => setIsDeleteDialogOpen(true)} 
-            />
-          )}
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3 }}
+    >
+      <Card className="p-6 bg-luxury-darker border-luxury-neutral/20">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-3">
+            <Avatar className="h-10 w-10">
+              <AvatarImage src={creator.avatarUrl} />
+              <AvatarFallback>
+                {creator.username.charAt(0).toUpperCase()}
+              </AvatarFallback>
+            </Avatar>
+            
+            <div>
+              <div className="flex items-center gap-1">
+                <span className="font-semibold text-luxury-text">
+                  {creator.username}
+                </span>
+                {creator.isVerified && (
+                  <span className="text-luxury-primary">✓</span>
+                )}
+              </div>
+              <span className="text-sm text-luxury-neutral">
+                {formatDistanceToNow(new Date(createdAt), { addSuffix: true })}
+              </span>
+            </div>
+          </div>
+          
+          <Button variant="ghost" size="icon">
+            <MoreHorizontal className="h-4 w-4" />
+          </Button>
         </div>
 
+        {/* Content */}
         <PostContent
-          content={post.content}
-          mediaUrls={post.media_url}
-          videoUrls={post.video_urls}
-          creatorId={post.creator_id}
-          onMediaClick={setSelectedMedia}
+          content={content}
+          creatorId={creatorId}
         />
 
-        <PostActions
-          hasLiked={post.has_liked}
-          likesCount={post.likes_count}
-          commentsCount={post.comments_count}
-          onLike={handleLike}
-          onComment={handleCommentClick}
-          onShare={() => setIsShareDialogOpen(true)}
-        />
-
-        {showComments && (
-          <CommentSection 
-            postId={post.id} 
-            commentsCount={post.comments_count} 
-          />
-        )}
-      </div>
-
-      <MediaViewer 
-        media={selectedMedia} 
-        onClose={() => setSelectedMedia(null)} 
-        creatorId={post.creator_id}
-      />
-
-      <ShareDialog 
-        open={isShareDialogOpen} 
-        onOpenChange={setIsShareDialogOpen}
-        postId={post.id}
-      />
-
-      <PostEditDialog
-        postId={post.id}
-        open={isEditDialogOpen}
-        onOpenChange={setIsEditDialogOpen}
-        initialContent={post.content}
-      />
-
-      <DeleteConfirmDialog
-        open={isDeleteDialogOpen}
-        onOpenChange={setIsDeleteDialogOpen}
-        onConfirm={handleDelete}
-        isDeleting={isDeleting}
-        error={deleteError}
-        onRetry={handleRetryDelete}
-      />
-    </Card>
+        {/* Actions */}
+        <div className="flex items-center justify-between pt-4 border-t border-luxury-neutral/20">
+          <div className="flex items-center gap-6">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleLike}
+              className={`flex items-center gap-2 ${
+                liked ? "text-red-500" : "text-luxury-neutral"
+              }`}
+            >
+              <Heart className={`h-5 w-5 ${liked ? "fill-current" : ""}`} />
+              <span>{likesCount}</span>
+            </Button>
+            
+            <Button
+              variant="ghost"
+              size="sm"
+              className="flex items-center gap-2 text-luxury-neutral"
+            >
+              <MessageCircle className="h-5 w-5" />
+              <span>{commentsCount}</span>
+            </Button>
+            
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleShare}
+              className="text-luxury-neutral"
+            >
+              <Share2 className="h-5 w-5" />
+            </Button>
+          </div>
+          
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleSave}
+            className={saved ? "text-luxury-primary" : "text-luxury-neutral"}
+          >
+            <Bookmark className={`h-5 w-5 ${saved ? "fill-current" : ""}`} />
+          </Button>
+        </div>
+      </Card>
+    </motion.div>
   );
 };

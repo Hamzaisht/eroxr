@@ -1,8 +1,6 @@
 
 import { cn } from "@/lib/utils";
-import { Avatar } from "@/components/ui/avatar";
-import { UniversalMedia } from "@/components/media/UniversalMedia";
-import { MediaType } from "@/utils/media/types";
+import { AlertCircle } from "lucide-react";
 
 interface StoryCardProps {
   id: string;
@@ -60,7 +58,7 @@ export const StoryCard = ({
         status === 'online' ? 'ring-4 ring-green-500 ring-offset-2' : '',
         status === 'offline' ? 'ring-2 ring-gray-400 ring-offset-1' : ''
       )}>
-        {avatarUrl && (
+        {avatarUrl ? (
           <div className={cn(
             "absolute inset-0",
             type === 'circle' ? 'rounded-full' : 'rounded-md'
@@ -73,23 +71,9 @@ export const StoryCard = ({
               className="object-cover w-full h-full rounded-full"
             />
           </div>
-        )}
-        
-        {(mediaUrl || videoUrl) && (
-          <div className={cn(
-            "absolute inset-0",
-            type === 'circle' ? 'rounded-full' : 'rounded-md'
-          )}>
-            <UniversalMedia
-              item={{
-                url: mediaUrl || videoUrl || '',
-                type: videoUrl ? MediaType.VIDEO : MediaType.IMAGE
-              }}
-              className="object-cover w-full h-full rounded-full"
-              autoPlay={false}
-              controls={false}
-              muted={true}
-            />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center bg-luxury-darker/50">
+            <AlertCircle className="w-6 h-6 text-luxury-neutral" />
           </div>
         )}
       </div>

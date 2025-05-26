@@ -1,8 +1,7 @@
 
 import { useState, useEffect } from "react";
 import { DatingAd } from "@/types/dating";
-import { UniversalMedia } from "@/components/media/UniversalMedia";
-import { MediaType } from "@/utils/media/types"; 
+import { Play } from "lucide-react";
 
 interface VideoProfileCarouselProps {
   ads: DatingAd[];
@@ -10,12 +9,10 @@ interface VideoProfileCarouselProps {
 
 export const VideoProfileCarousel = ({ ads }: VideoProfileCarouselProps) => {
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [isPlaying, setIsPlaying] = useState(false);
   
   // Reset player state when ads change
   useEffect(() => {
     setCurrentIndex(0);
-    setIsPlaying(false);
   }, [ads]);
   
   // No ads to display
@@ -32,19 +29,12 @@ export const VideoProfileCarousel = ({ ads }: VideoProfileCarouselProps) => {
   return (
     <div className="relative w-full max-w-3xl mx-auto">
       <div className="aspect-[4/3] md:aspect-video relative bg-black overflow-hidden rounded-xl">
-        <UniversalMedia
-          item={{
-            url: currentAd.videoUrl || '',
-            type: MediaType.VIDEO,
-            poster: currentAd.avatarUrl
-          }}
-          className="w-full h-full object-cover"
-          autoPlay={true}
-          controls={true}
-          muted={false}
-          loop={true}
-          onError={() => console.error("Error playing ad video", currentAd.id)}
-        />
+        <div className="w-full h-full flex items-center justify-center">
+          <div className="text-center">
+            <Play className="w-16 h-16 text-white/60 mx-auto mb-4" />
+            <p className="text-white/80">Video player coming soon</p>
+          </div>
+        </div>
       </div>
       
       <div className="mt-4 flex justify-between items-center">

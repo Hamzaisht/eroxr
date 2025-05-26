@@ -1,93 +1,134 @@
+
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Heart, MessageCircle, Share2, PlayCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { VerifiedMark } from "@/components/shared/VerifiedMark";
-import { Heart, MessageSquare, Eye } from "lucide-react";
-import { UniversalMedia } from "@/components/media/UniversalMedia";
-import { MediaType } from "@/utils/media/types";
+import { Badge } from "@/components/ui/badge";
 
 interface EroboardCardProps {
-  post: {
-    id: string;
-    creator: {
-      id: string;
-      username: string;
-      avatar_url: string;
-    };
-    content: string;
-    description: string;
-    media_url: string | null | string[];
-    video_url: string | null;
-    thumbnail_url: string | null;
-    media_type: MediaType;
-    likes_count: number;
-    comments_count: number;
-    view_count: number;
-    created_at: string;
+  videoUrl?: string;
+  title: string;
+  creator: {
+    username: string;
+    avatarUrl?: string;
   };
+  isLiked?: boolean;
+  likesCount: number;
+  commentsCount: number;
+  isPremium?: boolean;
+  isVerified?: boolean;
+  tags?: string[];
+  onLike?: () => void;
+  onComment?: () => void;
+  onShare?: () => void;
+  className?: string;
 }
 
-export const EroboardCard = ({ post }: EroboardCardProps) => {
-  const [isHovered, setIsHovered] = useState(false);
-  
+export const EroboardCard = ({
+  videoUrl,
+  title,
+  creator,
+  isLiked = false,
+  likesCount = 0,
+  commentsCount = 0,
+  isPremium = false,
+  isVerified = false,
+  tags = [],
+  onLike,
+  onComment,
+  onShare,
+  className
+}: EroboardCardProps) => {
   return (
-    <div
-      className="relative rounded-lg overflow-hidden bg-luxury-darker border border-luxury-primary/5 hover:border-luxury-primary/20 transition-colors"
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-    >
-      {/* Media Section */}
-      <div className="relative aspect-video w-full">
-        <UniversalMedia
-          item={{
-            url: post.video_url || (post.media_url && Array.isArray(post.media_url) ? post.media_url[0] : post.media_url as string),
-            type: post.media_type || MediaType.VIDEO,
-            thumbnail: post.thumbnail_url
-          }}
-          className="w-full h-full object-cover"
-          controls={false}
-          autoPlay={isHovered}
-          loop={true}
-          muted={true}
-        />
+    <Card className={cn("overflow-hidden bg-luxury-darker border-luxury-neutral/20", className)}>
+      <div className="relative aspect-video bg-black">
+        <div className="absolute inset-0 flex items-center justify-center">
+          <PlayCircle className="w-16 h-16 text-white/60" />
+        </div>
+        <div className="absolute bottom-2 right-2">
+          {isPremium && (
+            <Badge variant="secondary" className="bg-luxury-primary/80">
+              Premium
+            </Badge>
+          )}
+        </div>
       </div>
       
-      {/* Content Section */}
-      <div className="p-4">
-        {/* Header with Avatar and Username */}
-        <div className="flex items-center gap-2 mb-2">
-          <Avatar className="h-6 w-6">
-            <AvatarImage src={post.creator.avatar_url} alt={post.creator.username} />
-            <AvatarFallback>{post.creator.username.substring(0, 2)}</AvatarFallback>
-          </Avatar>
-          <Link to={`/user/${post.creator.id}`} className="flex items-center gap-1 text-sm font-medium hover:underline">
-            {post.creator.username}
-            <VerifiedMark size="sm" />
-          </Link>
+      <div className="p-4 space-y-3">
+        <div className="flex items-start gap-3">
+          <div className="w-10 h-10 rounded-full bg-luxury-neutral/20 overflow-hidden">
+            {creator.avatarUrl ? (
+              <img 
+                src={creator.avatarUrl} 
+                alt={creator.username}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center">
+                <span className="text-luxury-neutral text-sm">
+                  {creator.username.charAt(0).toUpperCase()}
+                </span>
+              </div>
+            )}
+          </div>
+          
+          <div className="flex-1 min-w-0">
+            <h3 className="font-semibold text-luxury-text truncate">{title}</h3>
+            <div className="flex items-center gap-1">
+              <span className="text-sm text-luxury-neutral">{creator.username}</span>
+              {isVerified && (
+                <span className="text-luxury-primary">✓</span>
+              )}
+            </div>
+          </div>
         </div>
         
-        {/* Post Description */}
-        <p className="text-sm text-luxury-neutral line-clamp-2">{post.description || post.content}</p>
+        {tags.length > 0 && (
+          <div className="flex flex-wrap gap-1">
+            {tags.slice(0, 3).map((tag, index) => (
+              <Badge key={index} variant="outline" className="text-xs">
+                {tag}
+              </Badge>
+            ))}
+          </div>
+        )}
         
-        {/* Footer with Stats */}
-        <div className="flex items-center justify-between mt-3 text-xs text-luxury-neutral/80">
-          <div className="flex items-center gap-2">
-            <button className="flex items-center gap-1 hover:text-luxury-primary transition-colors">
-              <Heart className="h-3.5 w-3.5" />
-              <span>{post.likes_count}</span>
-            </button>
-            <button className="flex items-center gap-1 hover:text-luxury-primary transition-colors">
-              <MessageSquare className="h-3.5 w-3.5" />
-              <span>{post.comments_count}</span>
-            </button>
+        <div className="flex items-center justify-between pt-2">
+          <div className="flex items-center gap-4">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onLike}
+              className={cn(
+                "flex items-center gap-1 px-2",
+                isLiked && "text-red-500"
+              )}
+            >
+              <Heart className={cn("w-4 h-4", isLiked && "fill-current")} />
+              <span className="text-sm">{likesCount}</span>
+            </Button>
+            
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onComment}
+              className="flex items-center gap-1 px-2"
+            >
+              <MessageCircle className="w-4 h-4" />
+              <span className="text-sm">{commentsCount}</span>
+            </Button>
           </div>
-          <div className="flex items-center gap-1">
-            <Eye className="h-3.5 w-3.5" />
-            <span>{post.view_count}</span>
-          </div>
+          
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onShare}
+          >
+            <Share2 className="w-4 h-4" />
+          </Button>
         </div>
       </div>
-    </div>
+    </Card>
   );
 };

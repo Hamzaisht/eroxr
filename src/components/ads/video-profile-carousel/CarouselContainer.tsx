@@ -3,7 +3,7 @@
 
 import { motion, AnimatePresence } from 'framer-motion';
 import { DatingAd } from '@/types/dating';
-import { VideoProfileCard } from './VideoProfileCard';
+import { AlertCircle } from 'lucide-react';
 
 interface CarouselContainerProps {
   ads: DatingAd[];
@@ -14,26 +14,20 @@ interface CarouselContainerProps {
 export const CarouselContainer = ({ ads, currentIndex, isActive }: CarouselContainerProps) => {
   // Handle edge cases to prevent errors
   if (!ads || ads.length === 0) {
-    return null;
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <AlertCircle className="w-12 h-12 text-luxury-neutral mx-auto mb-2" />
+          <p className="text-luxury-neutral">No content available</p>
+        </div>
+      </div>
+    );
   }
 
   return (
     <AnimatePresence mode="popLayout">
       <div className="absolute inset-0 flex items-center justify-center">
         {ads.map((ad, index) => {
-          // Ensure all required props are present with proper defaults for DatingAd
-          const enrichedAd: DatingAd = {
-            ...ad,
-            tags: ad.tags || [],
-            isPremium: ad.is_premium !== undefined ? ad.is_premium : ad.isPremium || false,
-            isVerified: ad.is_verified !== undefined ? ad.is_verified : ad.isVerified || false,
-            avatarUrl: ad.avatarUrl || ad.avatar_url || "",
-            videoUrl: ad.videoUrl || ad.video_url || "",
-            location: ad.location || "Unknown location", // Ensure location is provided
-            age: ad.age || 25, // Default age
-            views: ad.views || ad.view_count || 0 // Ensure views is provided
-          };
-          
           return (
             <motion.div
               key={ad?.id || index}
@@ -52,12 +46,12 @@ export const CarouselContainer = ({ ads, currentIndex, isActive }: CarouselConta
               }}
               className="absolute w-full h-full flex items-center justify-center px-8"
             >
-              <VideoProfileCard 
-                ad={enrichedAd} 
-                isActive={index === currentIndex && isActive}
-                isPreviewMode={false}
-                isAnimation={true}
-              />
+              <div className="w-full h-full flex items-center justify-center bg-luxury-darker/50">
+                <div className="text-center">
+                  <AlertCircle className="w-12 h-12 text-luxury-neutral mx-auto mb-2" />
+                  <p className="text-luxury-neutral">Content coming soon</p>
+                </div>
+              </div>
             </motion.div>
           );
         })}

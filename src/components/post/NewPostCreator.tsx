@@ -5,12 +5,10 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { NewPostMediaUpload } from "@/components/post/NewPostMediaUpload";
 import { Loader2 } from "lucide-react";
 
 export const NewPostCreator: React.FC = () => {
   const [content, setContent] = useState("");
-  const [mediaUrls, setMediaUrls] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const session = useSession();
   const { toast } = useToast();
@@ -27,10 +25,10 @@ export const NewPostCreator: React.FC = () => {
       return;
     }
     
-    if (!content.trim() && mediaUrls.length === 0) {
+    if (!content.trim()) {
       toast({
         title: "Empty Post",
-        description: "Please add some content or media to your post.",
+        description: "Please add some content to your post.",
         variant: "destructive"
       });
       return;
@@ -43,8 +41,7 @@ export const NewPostCreator: React.FC = () => {
         .from("posts")
         .insert({
           creator_id: session.user.id,
-          content,
-          media_url: mediaUrls.length > 0 ? mediaUrls : null
+          content
         });
       
       if (error) throw error;
@@ -56,7 +53,6 @@ export const NewPostCreator: React.FC = () => {
       
       // Reset form
       setContent("");
-      setMediaUrls([]);
     } catch (error: any) {
       console.error("Post submission error:", error);
       toast({
@@ -77,8 +73,6 @@ export const NewPostCreator: React.FC = () => {
         onChange={(e) => setContent(e.target.value)}
         className="min-h-[100px]"
       />
-      
-      <NewPostMediaUpload onMediaUrlsChange={setMediaUrls} />
       
       <div className="flex justify-end">
         <Button type="submit" disabled={isSubmitting}>
