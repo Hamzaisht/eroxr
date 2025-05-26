@@ -1,9 +1,8 @@
 
 import { useEffect, useRef, forwardRef, useState } from "react";
 import { motion } from "framer-motion";
-import { Loader2, AlertCircle, RefreshCw, VolumeX } from "lucide-react";
-import { OptimizedUniversalMedia } from "@/components/media/OptimizedUniversalMedia";
-import { MediaType } from "@/types/media";
+import { Loader2, AlertCircle, RefreshCw } from "lucide-react";
+import { SimpleMediaDisplay } from "@/components/media/SimpleMediaDisplay";
 
 interface StoryVideoProps {
   videoUrl: string;
@@ -17,12 +16,6 @@ export const StoryVideo = forwardRef<HTMLVideoElement, StoryVideoProps>(
   ({ videoUrl, onEnded, isPaused, creatorId, onError }, ref) => {
     const [isLoading, setIsLoading] = useState(true);
     const [loadError, setLoadError] = useState(false);
-    
-    const mediaItem = {
-      url: videoUrl,
-      type: MediaType.VIDEO,
-      creator_id: creatorId
-    };
     
     const handleError = () => {
       console.error(`Story video loading error: ${videoUrl}`);
@@ -69,16 +62,13 @@ export const StoryVideo = forwardRef<HTMLVideoElement, StoryVideoProps>(
           </motion.div>
         )}
         
-        <OptimizedUniversalMedia
-          item={mediaItem}
-          className="w-full h-full object-contain"
-          autoPlay={!isPaused && !isLoading && !loadError}
-          controls={false}
-          onError={handleError}
-          onLoad={handleLoad}
-          onEnded={onEnded}
-          fallbackMessage="Story video not available"
-        />
+        {!isLoading && !loadError && (
+          <SimpleMediaDisplay
+            url={videoUrl}
+            className="w-full h-full object-contain"
+            alt="Story video"
+          />
+        )}
       </div>
     );
   }

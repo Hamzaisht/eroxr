@@ -1,9 +1,9 @@
+
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Heart, MessageCircle, Share2, Bookmark, BookmarkCheck } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { OptimizedUniversalMedia } from "@/components/media/OptimizedUniversalMedia";
-import { MediaType } from "@/types/media";
+import { SimpleMediaDisplay } from "@/components/media/SimpleMediaDisplay";
 
 interface Creator {
   id: string;
@@ -41,12 +41,10 @@ export const ShortItem = ({
 }: ShortItemProps) => {
   const [isLiked, setIsLiked] = useState(short.has_liked);
   const [isSaved, setIsSaved] = useState(short.has_saved);
-  const [error, setError] = useState<string | null>(null);
   
   const isVisible = isCurrentVideo;
 
   useEffect(() => {
-    // Increment view count when visible
     if (isVisible) {
       const incrementView = async () => {
         try {
@@ -64,36 +62,25 @@ export const ShortItem = ({
     }
   }, [isVisible, short.id]);
   
-  // Format the created_at date
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     const now = new Date();
     const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
     
-    // Less than a minute
-    if (diffInSeconds < 60) {
-      return "Just now";
-    }
-    
-    // Less than an hour
+    if (diffInSeconds < 60) return "Just now";
     if (diffInSeconds < 3600) {
       const minutes = Math.floor(diffInSeconds / 60);
       return `${minutes} ${minutes === 1 ? "minute" : "minutes"} ago`;
     }
-    
-    // Less than a day
     if (diffInSeconds < 86400) {
       const hours = Math.floor(diffInSeconds / 3600);
       return `${hours} ${hours === 1 ? "hour" : "hours"} ago`;
     }
-    
-    // Less than a month
     if (diffInSeconds < 2592000) {
       const days = Math.floor(diffInSeconds / 86400);
       return `${days} ${days === 1 ? "day" : "days"} ago`;
     }
     
-    // Format as date
     const options: Intl.DateTimeFormatOptions = { month: 'short', day: 'numeric' };
     if (date.getFullYear() !== now.getFullYear()) {
       options.year = 'numeric';
@@ -102,7 +89,6 @@ export const ShortItem = ({
     return date.toLocaleDateString(undefined, options);
   };
   
-  // Animation variants
   const videoVariants = {
     hidden: { opacity: 0 },
     visible: { opacity: 1, transition: { duration: 0.5 } }
@@ -113,20 +99,8 @@ export const ShortItem = ({
     visible: { 
       x: 0, 
       opacity: 1,
-      transition: {
-        delay: 0.2,
-        duration: 0.5
-      }
+      transition: { delay: 0.2, duration: 0.5 }
     }
-  };
-
-  // Handle video error
-  const handleVideoError = () => {
-    setError("Could not play video");
-  };
-
-  const handleVideoLoad = () => {
-    setError(null);
   };
   
   return (
@@ -136,49 +110,25 @@ export const ShortItem = ({
       animate={isVisible ? "visible" : "hidden"}
       variants={videoVariants}
     >
-      {/* Main video container */}
       <div className="w-full h-full flex items-center justify-center relative overflow-hidden">
-        {/* Video player */}
-        <OptimizedUniversalMedia
-          item={{
-            url: short.video_urls[0],
-            type: MediaType.VIDEO,
-            poster: short.video_thumbnail_url,
-            creator_id: short.creator_id
-          }}
-          className="w-full h-full object-contain"
-          autoPlay={isVisible}
-          controls={false}
-          muted={false}
-          loop={true}
-          onError={handleVideoError}
-          onLoad={handleVideoLoad}
-          fallbackMessage="Could not load video"
-        />
-        
-        {/* Error indicator */}
-        {error && (
-          <div className="absolute inset-0 flex items-center justify-center bg-black/80 z-50">
-            <div className="text-white text-center p-4">
-              <p className="font-medium">{error}</p>
-              <button
-                className="mt-2 px-4 py-1 rounded-full bg-white/20 text-sm text-white"
-                onClick={() => setError(null)}
-              >
-                Try Again
-              </button>
-            </div>
+        {short.video_urls && short.video_urls[0] ? (
+          <SimpleMediaDisplay
+            url={short.video_urls[0]}
+            className="w-full h-full object-contain"
+            alt="Short video"
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center bg-gray-900">
+            <p className="text-white">No video available</p>
           </div>
         )}
         
-        {/* Caption/description */}
         <div className="absolute bottom-16 left-4 right-12 bg-gradient-to-t from-black/70 to-transparent p-4 rounded-lg">
           <h3 className="font-medium text-white mb-2">@{short.creator.username}</h3>
           <p className="text-white/90 text-sm line-clamp-2">{short.description || short.content}</p>
           <p className="text-white/60 text-xs mt-1">{formatDate(short.created_at)}</p>
         </div>
         
-        {/* Interaction buttons */}
         <AnimatePresence>
           {isVisible && (
             <motion.div

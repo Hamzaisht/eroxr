@@ -1,9 +1,6 @@
 
-import { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { ProtectedMedia } from "@/components/security/ProtectedMedia";
-import { OptimizedUniversalMedia } from "@/components/media/OptimizedUniversalMedia";
-import { MediaType } from "@/types/media";
+import { motion } from "framer-motion";
+import { SimpleMediaDisplay } from "@/components/media/SimpleMediaDisplay";
 
 interface PostContentProps {
   content: string;
@@ -20,31 +17,7 @@ export const PostContent = ({
   creatorId,
   onMediaClick,
 }: PostContentProps) => {
-  const [mediaErrors, setMediaErrors] = useState<Record<string, boolean>>({});
-  
-  // Safely check if either array has content
   const hasMedia = (mediaUrls?.length ?? 0) > 0 || (videoUrls?.length ?? 0) > 0;
-
-  const handleMediaError = (url: string) => {
-    console.warn("Media error in PostContent for URL:", url);
-    setMediaErrors(prev => ({ ...prev, [url]: true }));
-  };
-
-  const handleMediaLoad = (url: string) => {
-    console.log("Media loaded successfully:", url);
-    // Remove from error list if it was there
-    setMediaErrors(prev => {
-      const newErrors = { ...prev };
-      delete newErrors[url];
-      return newErrors;
-    });
-  };
-
-  // Debug logging
-  if (hasMedia) {
-    console.log("PostContent - Media URLs:", mediaUrls);
-    console.log("PostContent - Video URLs:", videoUrls);
-  }
 
   return (
     <motion.div
@@ -60,85 +33,49 @@ export const PostContent = ({
       )}
       
       {hasMedia && (
-        <ProtectedMedia contentOwnerId={creatorId}>
-          <div className="relative w-full overflow-hidden rounded-xl bg-luxury-darker/50">
-            <AnimatePresence mode="wait">
-              <div className="overflow-x-auto scrollbar-hide w-full">
-                <div className="flex flex-col gap-4 p-2">
-                  {/* Videos */}
-                  {videoUrls && videoUrls.length > 0 && (
-                    <div className="space-y-4">
-                      {videoUrls.map((url, index) => {
-                        if (!url) return null;
-                        
-                        console.log(`Rendering video ${index}:`, url);
-                        
-                        return (
-                          <motion.div
-                            key={`video-${index}`}
-                            initial={{ opacity: 0, scale: 0.95 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            exit={{ opacity: 0, scale: 0.95 }}
-                            className="relative aspect-video w-full cursor-pointer"
-                            onClick={() => onMediaClick(url)}
-                          >
-                            <OptimizedUniversalMedia
-                              item={{
-                                url: url,
-                                type: MediaType.VIDEO,
-                                creator_id: creatorId
-                              }}
-                              className="w-full h-full rounded-lg overflow-hidden"
-                              onError={() => handleMediaError(url)}
-                              onLoad={() => handleMediaLoad(url)}
-                              controls={true}
-                              compact={false}
-                            />
-                          </motion.div>
-                        );
-                      })}
-                    </div>
-                  )}
+        <div className="space-y-4">
+          {/* Videos */}
+          {videoUrls && videoUrls.length > 0 && (
+            <div className="space-y-4">
+              {videoUrls.map((url, index) => (
+                <motion.div
+                  key={`video-${index}`}
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  className="relative aspect-video w-full cursor-pointer"
+                  onClick={() => onMediaClick(url)}
+                >
+                  <SimpleMediaDisplay
+                    url={url}
+                    className="w-full h-full rounded-lg overflow-hidden"
+                    alt={`Video ${index + 1}`}
+                  />
+                </motion.div>
+              ))}
+            </div>
+          )}
 
-                  {/* Images */}
-                  {mediaUrls && mediaUrls.length > 0 && (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      {mediaUrls.map((url, index) => {
-                        if (!url) return null;
-                        
-                        console.log(`Rendering image ${index}:`, url);
-                        
-                        return (
-                          <motion.div
-                            key={`image-${index}`}
-                            initial={{ opacity: 0, scale: 0.95 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            exit={{ opacity: 0, scale: 0.95 }}
-                            className="relative aspect-[4/3] cursor-pointer group"
-                            onClick={() => onMediaClick(url)}
-                          >
-                            <OptimizedUniversalMedia
-                              item={{
-                                url: url,
-                                type: MediaType.IMAGE,
-                                creator_id: creatorId
-                              }}
-                              className="w-full h-full object-cover rounded-lg transition-transform duration-300 group-hover:scale-105"
-                              onError={() => handleMediaError(url)}
-                              onLoad={() => handleMediaLoad(url)}
-                              compact={false}
-                            />
-                            <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-lg" />
-                          </motion.div>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
-              </div>
-            </AnimatePresence>
-          </div>
-        </ProtectedMedia>
+          {/* Images */}
+          {mediaUrls && mediaUrls.length > 0 && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {mediaUrls.map((url, index) => (
+                <motion.div
+                  key={`image-${index}`}
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  className="relative aspect-[4/3] cursor-pointer group"
+                  onClick={() => onMediaClick(url)}
+                >
+                  <SimpleMediaDisplay
+                    url={url}
+                    className="w-full h-full object-cover rounded-lg transition-transform duration-300 group-hover:scale-105"
+                    alt={`Image ${index + 1}`}
+                  />
+                </motion.div>
+              ))}
+            </div>
+          )}
+        </div>
       )}
     </motion.div>
   );
