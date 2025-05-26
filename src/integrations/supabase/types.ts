@@ -136,20 +136,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "blacklisted_content_added_by_fkey"
-            columns: ["added_by"]
-            isOneToOne: false
-            referencedRelation: "profiles_with_stats"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "blacklisted_content_added_by_fkey"
-            columns: ["added_by"]
-            isOneToOne: false
-            referencedRelation: "top_creators_by_earnings"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "blacklisted_content_related_dmca_id_fkey"
             columns: ["related_dmca_id"]
             isOneToOne: false
@@ -210,20 +196,6 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "booking_slots_creator_id_fkey"
-            columns: ["creator_id"]
-            isOneToOne: false
-            referencedRelation: "profiles_with_stats"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "booking_slots_creator_id_fkey"
-            columns: ["creator_id"]
-            isOneToOne: false
-            referencedRelation: "top_creators_by_earnings"
-            referencedColumns: ["id"]
-          },
         ]
       }
       bookings: {
@@ -278,38 +250,10 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "bookings_creator_id_fkey"
-            columns: ["creator_id"]
-            isOneToOne: false
-            referencedRelation: "profiles_with_stats"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "bookings_creator_id_fkey"
-            columns: ["creator_id"]
-            isOneToOne: false
-            referencedRelation: "top_creators_by_earnings"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "bookings_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "bookings_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles_with_stats"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "bookings_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "top_creators_by_earnings"
             referencedColumns: ["id"]
           },
         ]
@@ -352,20 +296,6 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "comments_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles_with_stats"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "comments_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "top_creators_by_earnings"
             referencedColumns: ["id"]
           },
         ]
@@ -418,20 +348,6 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "content_classifications_classified_by_fkey"
-            columns: ["classified_by"]
-            isOneToOne: false
-            referencedRelation: "profiles_with_stats"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "content_classifications_classified_by_fkey"
-            columns: ["classified_by"]
-            isOneToOne: false
-            referencedRelation: "top_creators_by_earnings"
-            referencedColumns: ["id"]
-          },
         ]
       }
       creator_content_prices: {
@@ -470,20 +386,6 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "creator_content_prices_creator_id_fkey"
-            columns: ["creator_id"]
-            isOneToOne: false
-            referencedRelation: "profiles_with_stats"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "creator_content_prices_creator_id_fkey"
-            columns: ["creator_id"]
-            isOneToOne: false
-            referencedRelation: "top_creators_by_earnings"
-            referencedColumns: ["id"]
-          },
         ]
       }
       creator_likes: {
@@ -511,20 +413,6 @@ export type Database = {
             columns: ["creator_id"]
             isOneToOne: false
             referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "creator_likes_creator_id_fkey"
-            columns: ["creator_id"]
-            isOneToOne: false
-            referencedRelation: "profiles_with_stats"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "creator_likes_creator_id_fkey"
-            columns: ["creator_id"]
-            isOneToOne: false
-            referencedRelation: "top_creators_by_earnings"
             referencedColumns: ["id"]
           },
         ]
@@ -571,20 +459,6 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "creator_metrics_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles_with_stats"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "creator_metrics_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "top_creators_by_earnings"
-            referencedColumns: ["id"]
-          },
         ]
       }
       creator_subscriptions: {
@@ -614,27 +488,12 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "creator_subscriptions_creator_id_fkey"
-            columns: ["creator_id"]
-            isOneToOne: false
-            referencedRelation: "profiles_with_stats"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "creator_subscriptions_creator_id_fkey"
-            columns: ["creator_id"]
-            isOneToOne: false
-            referencedRelation: "top_creators_by_earnings"
-            referencedColumns: ["id"]
-          },
         ]
       }
       dating_ads: {
         Row: {
           about_me: string | null
           age_range: unknown
-          avatar_url: string | null
           body_type: string | null
           city: string
           click_count: number | null
@@ -666,14 +525,12 @@ export type Database = {
           updated_at: string | null
           user_id: string | null
           user_type: string
-          video_url: string | null
           view_count: number | null
           views_count: number | null
         }
         Insert: {
           about_me?: string | null
           age_range: unknown
-          avatar_url?: string | null
           body_type?: string | null
           city: string
           click_count?: number | null
@@ -705,14 +562,12 @@ export type Database = {
           updated_at?: string | null
           user_id?: string | null
           user_type: string
-          video_url?: string | null
           view_count?: number | null
           views_count?: number | null
         }
         Update: {
           about_me?: string | null
           age_range?: unknown
-          avatar_url?: string | null
           body_type?: string | null
           city?: string
           click_count?: number | null
@@ -744,7 +599,6 @@ export type Database = {
           updated_at?: string | null
           user_id?: string | null
           user_type?: string
-          video_url?: string | null
           view_count?: number | null
           views_count?: number | null
         }
@@ -758,14 +612,12 @@ export type Database = {
           expires_at: string | null
           id: string
           is_expired: boolean | null
-          media_url: string[] | null
           message_source: string | null
           message_type: string | null
           original_content: string | null
           recipient_id: string | null
           sender_id: string | null
           updated_at: string | null
-          video_url: string | null
           viewed_at: string | null
         }
         Insert: {
@@ -775,14 +627,12 @@ export type Database = {
           expires_at?: string | null
           id?: string
           is_expired?: boolean | null
-          media_url?: string[] | null
           message_source?: string | null
           message_type?: string | null
           original_content?: string | null
           recipient_id?: string | null
           sender_id?: string | null
           updated_at?: string | null
-          video_url?: string | null
           viewed_at?: string | null
         }
         Update: {
@@ -792,14 +642,12 @@ export type Database = {
           expires_at?: string | null
           id?: string
           is_expired?: boolean | null
-          media_url?: string[] | null
           message_source?: string | null
           message_type?: string | null
           original_content?: string | null
           recipient_id?: string | null
           sender_id?: string | null
           updated_at?: string | null
-          video_url?: string | null
           viewed_at?: string | null
         }
         Relationships: [
@@ -811,38 +659,10 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "direct_messages_recipient_id_fkey"
-            columns: ["recipient_id"]
-            isOneToOne: false
-            referencedRelation: "profiles_with_stats"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "direct_messages_recipient_id_fkey"
-            columns: ["recipient_id"]
-            isOneToOne: false
-            referencedRelation: "top_creators_by_earnings"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "direct_messages_sender_id_fkey"
             columns: ["sender_id"]
             isOneToOne: false
             referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "direct_messages_sender_id_fkey"
-            columns: ["sender_id"]
-            isOneToOne: false
-            referencedRelation: "profiles_with_stats"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "direct_messages_sender_id_fkey"
-            columns: ["sender_id"]
-            isOneToOne: false
-            referencedRelation: "top_creators_by_earnings"
             referencedColumns: ["id"]
           },
         ]
@@ -899,38 +719,10 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "dmca_requests_handled_by_fkey"
-            columns: ["handled_by"]
-            isOneToOne: false
-            referencedRelation: "profiles_with_stats"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "dmca_requests_handled_by_fkey"
-            columns: ["handled_by"]
-            isOneToOne: false
-            referencedRelation: "top_creators_by_earnings"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "dmca_requests_reporter_id_fkey"
             columns: ["reporter_id"]
             isOneToOne: false
             referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "dmca_requests_reporter_id_fkey"
-            columns: ["reporter_id"]
-            isOneToOne: false
-            referencedRelation: "profiles_with_stats"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "dmca_requests_reporter_id_fkey"
-            columns: ["reporter_id"]
-            isOneToOne: false
-            referencedRelation: "top_creators_by_earnings"
             referencedColumns: ["id"]
           },
         ]
@@ -1008,38 +800,10 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "followers_follower_id_fkey"
-            columns: ["follower_id"]
-            isOneToOne: false
-            referencedRelation: "profiles_with_stats"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "followers_follower_id_fkey"
-            columns: ["follower_id"]
-            isOneToOne: false
-            referencedRelation: "top_creators_by_earnings"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "followers_following_id_fkey"
             columns: ["following_id"]
             isOneToOne: false
             referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "followers_following_id_fkey"
-            columns: ["following_id"]
-            isOneToOne: false
-            referencedRelation: "profiles_with_stats"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "followers_following_id_fkey"
-            columns: ["following_id"]
-            isOneToOne: false
-            referencedRelation: "top_creators_by_earnings"
             referencedColumns: ["id"]
           },
         ]
@@ -1108,20 +872,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "live_stream_chat_sender_id_fkey"
-            columns: ["sender_id"]
-            isOneToOne: false
-            referencedRelation: "profiles_with_stats"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "live_stream_chat_sender_id_fkey"
-            columns: ["sender_id"]
-            isOneToOne: false
-            referencedRelation: "top_creators_by_earnings"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "live_stream_chat_stream_id_fkey"
             columns: ["stream_id"]
             isOneToOne: false
@@ -1165,20 +915,6 @@ export type Database = {
             columns: ["viewer_id"]
             isOneToOne: false
             referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "live_stream_viewers_viewer_id_fkey"
-            columns: ["viewer_id"]
-            isOneToOne: false
-            referencedRelation: "profiles_with_stats"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "live_stream_viewers_viewer_id_fkey"
-            columns: ["viewer_id"]
-            isOneToOne: false
-            referencedRelation: "top_creators_by_earnings"
             referencedColumns: ["id"]
           },
         ]
@@ -1237,63 +973,7 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "live_streams_creator_id_fkey"
-            columns: ["creator_id"]
-            isOneToOne: false
-            referencedRelation: "profiles_with_stats"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "live_streams_creator_id_fkey"
-            columns: ["creator_id"]
-            isOneToOne: false
-            referencedRelation: "top_creators_by_earnings"
-            referencedColumns: ["id"]
-          },
         ]
-      }
-      media_assets: {
-        Row: {
-          access_level: string
-          content_owner_id: string | null
-          content_type: string | null
-          created_at: string | null
-          id: string
-          original_name: string | null
-          size: number | null
-          storage_path: string | null
-          type: string | null
-          url: string
-          user_id: string | null
-        }
-        Insert: {
-          access_level?: string
-          content_owner_id?: string | null
-          content_type?: string | null
-          created_at?: string | null
-          id?: string
-          original_name?: string | null
-          size?: number | null
-          storage_path?: string | null
-          type?: string | null
-          url: string
-          user_id?: string | null
-        }
-        Update: {
-          access_level?: string
-          content_owner_id?: string | null
-          content_type?: string | null
-          created_at?: string | null
-          id?: string
-          original_name?: string | null
-          size?: number | null
-          storage_path?: string | null
-          type?: string | null
-          url?: string
-          user_id?: string | null
-        }
-        Relationships: []
       }
       nordic_cities: {
         Row: {
@@ -1555,17 +1235,12 @@ export type Database = {
           last_engagement_at: string | null
           last_modified_by: string | null
           likes_count: number | null
-          media_url: string[] | null
           metadata: Json | null
           ppv_amount: number | null
           screenshots_count: number | null
           share_count: number | null
           tags: string[] | null
           updated_at: string
-          video_duration: number | null
-          video_processing_status: string | null
-          video_thumbnail_url: string | null
-          video_urls: string[] | null
           view_count: number | null
           visibility: string | null
         }
@@ -1583,17 +1258,12 @@ export type Database = {
           last_engagement_at?: string | null
           last_modified_by?: string | null
           likes_count?: number | null
-          media_url?: string[] | null
           metadata?: Json | null
           ppv_amount?: number | null
           screenshots_count?: number | null
           share_count?: number | null
           tags?: string[] | null
           updated_at?: string
-          video_duration?: number | null
-          video_processing_status?: string | null
-          video_thumbnail_url?: string | null
-          video_urls?: string[] | null
           view_count?: number | null
           visibility?: string | null
         }
@@ -1611,17 +1281,12 @@ export type Database = {
           last_engagement_at?: string | null
           last_modified_by?: string | null
           likes_count?: number | null
-          media_url?: string[] | null
           metadata?: Json | null
           ppv_amount?: number | null
           screenshots_count?: number | null
           share_count?: number | null
           tags?: string[] | null
           updated_at?: string
-          video_duration?: number | null
-          video_processing_status?: string | null
-          video_thumbnail_url?: string | null
-          video_urls?: string[] | null
           view_count?: number | null
           visibility?: string | null
         }
@@ -1633,26 +1298,10 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "posts_creator_id_fkey"
-            columns: ["creator_id"]
-            isOneToOne: false
-            referencedRelation: "profiles_with_stats"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "posts_creator_id_fkey"
-            columns: ["creator_id"]
-            isOneToOne: false
-            referencedRelation: "top_creators_by_earnings"
-            referencedColumns: ["id"]
-          },
         ]
       }
       profiles: {
         Row: {
-          avatar_url: string | null
-          banner_url: string | null
           bio: string | null
           created_at: string
           date_of_birth: string | null
@@ -1677,8 +1326,6 @@ export type Database = {
           username: string | null
         }
         Insert: {
-          avatar_url?: string | null
-          banner_url?: string | null
           bio?: string | null
           created_at?: string
           date_of_birth?: string | null
@@ -1703,8 +1350,6 @@ export type Database = {
           username?: string | null
         }
         Update: {
-          avatar_url?: string | null
-          banner_url?: string | null
           bio?: string | null
           created_at?: string
           date_of_birth?: string | null
@@ -1794,20 +1439,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "reports_reported_id_fkey"
-            columns: ["reported_id"]
-            isOneToOne: false
-            referencedRelation: "profiles_with_stats"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "reports_reported_id_fkey"
-            columns: ["reported_id"]
-            isOneToOne: false
-            referencedRelation: "top_creators_by_earnings"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "reports_reporter_id_fkey"
             columns: ["reporter_id"]
             isOneToOne: false
@@ -1815,38 +1446,10 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "reports_reporter_id_fkey"
-            columns: ["reporter_id"]
-            isOneToOne: false
-            referencedRelation: "profiles_with_stats"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "reports_reporter_id_fkey"
-            columns: ["reporter_id"]
-            isOneToOne: false
-            referencedRelation: "top_creators_by_earnings"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "reports_resolved_by_fkey"
             columns: ["resolved_by"]
             isOneToOne: false
             referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "reports_resolved_by_fkey"
-            columns: ["resolved_by"]
-            isOneToOne: false
-            referencedRelation: "profiles_with_stats"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "reports_resolved_by_fkey"
-            columns: ["resolved_by"]
-            isOneToOne: false
-            referencedRelation: "top_creators_by_earnings"
             referencedColumns: ["id"]
           },
         ]
@@ -1911,25 +1514,10 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "sounds_creator_id_fkey"
-            columns: ["creator_id"]
-            isOneToOne: false
-            referencedRelation: "profiles_with_stats"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "sounds_creator_id_fkey"
-            columns: ["creator_id"]
-            isOneToOne: false
-            referencedRelation: "top_creators_by_earnings"
-            referencedColumns: ["id"]
-          },
         ]
       }
       stories: {
         Row: {
-          content_type: string | null
           created_at: string
           creator_id: string
           duration: number | null
@@ -1938,13 +1526,9 @@ export type Database = {
           is_active: boolean | null
           is_public: boolean | null
           last_modified_by: string | null
-          media_type: string | null
-          media_url: string | null
           screenshot_disabled: boolean | null
-          video_url: string | null
         }
         Insert: {
-          content_type?: string | null
           created_at?: string
           creator_id: string
           duration?: number | null
@@ -1953,13 +1537,9 @@ export type Database = {
           is_active?: boolean | null
           is_public?: boolean | null
           last_modified_by?: string | null
-          media_type?: string | null
-          media_url?: string | null
           screenshot_disabled?: boolean | null
-          video_url?: string | null
         }
         Update: {
-          content_type?: string | null
           created_at?: string
           creator_id?: string
           duration?: number | null
@@ -1968,10 +1548,7 @@ export type Database = {
           is_active?: boolean | null
           is_public?: boolean | null
           last_modified_by?: string | null
-          media_type?: string | null
-          media_url?: string | null
           screenshot_disabled?: boolean | null
-          video_url?: string | null
         }
         Relationships: [
           {
@@ -1979,20 +1556,6 @@ export type Database = {
             columns: ["creator_id"]
             isOneToOne: false
             referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "stories_creator_id_fkey"
-            columns: ["creator_id"]
-            isOneToOne: false
-            referencedRelation: "profiles_with_stats"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "stories_creator_id_fkey"
-            columns: ["creator_id"]
-            isOneToOne: false
-            referencedRelation: "top_creators_by_earnings"
             referencedColumns: ["id"]
           },
         ]
@@ -2111,20 +1674,6 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "user_roles_profile_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles_with_stats"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "user_roles_profile_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "top_creators_by_earnings"
-            referencedColumns: ["id"]
-          },
         ]
       }
       user_subscriptions: {
@@ -2218,20 +1767,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "video_comments_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles_with_stats"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "video_comments_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "top_creators_by_earnings"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "video_comments_video_id_fkey"
             columns: ["video_id"]
             isOneToOne: false
@@ -2265,20 +1800,6 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "video_likes_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles_with_stats"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "video_likes_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "top_creators_by_earnings"
             referencedColumns: ["id"]
           },
           {
@@ -2368,38 +1889,10 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "video_reports_reporter_id_fkey"
-            columns: ["reporter_id"]
-            isOneToOne: false
-            referencedRelation: "profiles_with_stats"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "video_reports_reporter_id_fkey"
-            columns: ["reporter_id"]
-            isOneToOne: false
-            referencedRelation: "top_creators_by_earnings"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "video_reports_resolved_by_fkey"
             columns: ["resolved_by"]
             isOneToOne: false
             referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "video_reports_resolved_by_fkey"
-            columns: ["resolved_by"]
-            isOneToOne: false
-            referencedRelation: "profiles_with_stats"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "video_reports_resolved_by_fkey"
-            columns: ["resolved_by"]
-            isOneToOne: false
-            referencedRelation: "top_creators_by_earnings"
             referencedColumns: ["id"]
           },
           {
@@ -2439,20 +1932,6 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "video_views_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles_with_stats"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "video_views_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "top_creators_by_earnings"
             referencedColumns: ["id"]
           },
           {
@@ -2536,135 +2015,11 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "videos_creator_id_fkey"
-            columns: ["creator_id"]
-            isOneToOne: false
-            referencedRelation: "profiles_with_stats"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "videos_creator_id_fkey"
-            columns: ["creator_id"]
-            isOneToOne: false
-            referencedRelation: "top_creators_by_earnings"
-            referencedColumns: ["id"]
-          },
         ]
       }
     }
     Views: {
-      active_ads_with_location: {
-        Row: {
-          about_me: string | null
-          age_range: unknown | null
-          avatar_url: string | null
-          body_type: string | null
-          city: string | null
-          country: Database["public"]["Enums"]["nordic_country"] | null
-          created_at: string | null
-          description: string | null
-          drinking_status: string | null
-          education_level: string | null
-          height: number | null
-          id: string | null
-          id_verification_status: string | null
-          interests: string[] | null
-          is_active: boolean | null
-          is_age_verified: boolean | null
-          languages: string[] | null
-          last_active: string | null
-          latitude: number | null
-          longitude: number | null
-          looking_for: string[] | null
-          occupation: string | null
-          preferred_age_range: unknown | null
-          profile_completion_score: number | null
-          relationship_status:
-            | Database["public"]["Enums"]["relationship_status"]
-            | null
-          seeking_description: string | null
-          smoking_status: string | null
-          title: string | null
-          updated_at: string | null
-          user_id: string | null
-          username: string | null
-          views_count: number | null
-        }
-        Relationships: []
-      }
-      profiles_with_stats: {
-        Row: {
-          avatar_url: string | null
-          banner_url: string | null
-          bio: string | null
-          created_at: string | null
-          follower_count: number | null
-          following_count: number | null
-          id: string | null
-          post_count: number | null
-          status: string | null
-          subscriber_count: number | null
-          updated_at: string | null
-          username: string | null
-        }
-        Insert: {
-          avatar_url?: string | null
-          banner_url?: string | null
-          bio?: string | null
-          created_at?: string | null
-          follower_count?: never
-          following_count?: never
-          id?: string | null
-          post_count?: never
-          status?: string | null
-          subscriber_count?: never
-          updated_at?: string | null
-          username?: string | null
-        }
-        Update: {
-          avatar_url?: string | null
-          banner_url?: string | null
-          bio?: string | null
-          created_at?: string | null
-          follower_count?: never
-          following_count?: never
-          id?: string | null
-          post_count?: never
-          status?: string | null
-          subscriber_count?: never
-          updated_at?: string | null
-          username?: string | null
-        }
-        Relationships: []
-      }
-      top_creators_by_earnings: {
-        Row: {
-          avatar_url: string | null
-          bio: string | null
-          earnings_percentile: number | null
-          id: string | null
-          subscriber_count: number | null
-          total_earnings: number | null
-          username: string | null
-        }
-        Relationships: []
-      }
-      trending_content: {
-        Row: {
-          comments: number | null
-          content_id: string | null
-          content_type: string | null
-          created_at: string | null
-          creator_avatar: string | null
-          creator_id: string | null
-          creator_username: string | null
-          likes: number | null
-          media_interactions: number | null
-          trending_rank: number | null
-        }
-        Relationships: []
-      }
+      [_ in never]: never
     }
     Functions: {
       check_column_exists: {
@@ -2674,10 +2029,6 @@ export type Database = {
       cleanup_expired_demo_content: {
         Args: Record<PropertyKey, never>
         Returns: undefined
-      }
-      get_active_ads_with_location: {
-        Args: Record<PropertyKey, never>
-        Returns: unknown[]
       }
       get_current_user_id: {
         Args: Record<PropertyKey, never>
@@ -2690,10 +2041,6 @@ export type Database = {
           count: number
           percentageincrease: number
         }[]
-      }
-      get_trending_content: {
-        Args: Record<PropertyKey, never>
-        Returns: unknown[]
       }
       increment_counter: {
         Args: { row_id: string; counter_name: string; table_name?: string }

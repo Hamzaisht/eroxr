@@ -23,15 +23,8 @@ export const SnapPreview = ({ message, onClick }: SnapPreviewProps) => {
       <div className="flex flex-col items-center justify-center z-10">
         <Camera className="h-10 w-10 text-luxury-primary mb-2" />
         <p className="text-xs font-medium text-white">
-          {hasBeenViewed ? "Snap viewed" : "Tap to view snap"}
+          Snap feature coming soon
         </p>
-        
-        {message.expires_at && !hasBeenViewed && (
-          <div className="flex items-center gap-1 mt-2 text-xs text-white/70">
-            <Timer className="h-3 w-3" />
-            <span>Expires after viewing</span>
-          </div>
-        )}
       </div>
     </div>
   );

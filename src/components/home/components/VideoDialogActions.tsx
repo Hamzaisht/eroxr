@@ -27,23 +27,11 @@ export const VideoDialogActions = ({
         Cancel
       </Button>
       <Button
-        onClick={onUpload}
+        onClick={() => alert("Upload feature coming soon")}
         disabled={!isValid || isSubmitting || isComplete}
         className="bg-luxury-primary hover:bg-luxury-primary/80"
       >
-        {isSubmitting ? (
-          <>
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            Uploading...
-          </>
-        ) : isComplete ? (
-          <>
-            <CheckCircle2 className="mr-2 h-4 w-4" />
-            Complete
-          </>
-        ) : (
-          'Post Eros'
-        )}
+        Post Eros
       </Button>
     </div>
   );

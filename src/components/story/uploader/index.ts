@@ -1,2 +1,0 @@
-
-export { StoryUploader } from './StoryUploader';

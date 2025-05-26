@@ -1,2 +1,0 @@
-
-export { useShortPostSubmit } from './useShortPostSubmit';

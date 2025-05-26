@@ -17,7 +17,7 @@ export const UploadShortButton: React.FC<UploadShortButtonProps> = ({ onUploadCl
       whileTap={{ scale: 0.95 }}
     >
       <Button 
-        onClick={onUploadClick}
+        onClick={() => alert("Upload feature coming soon")}
         size="lg" 
         className="rounded-full h-14 w-14 shadow-lg bg-luxury-primary hover:bg-luxury-secondary transition-colors"
       >

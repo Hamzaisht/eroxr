@@ -3,12 +3,10 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Heart, MessageCircle, Share2, Bookmark, BookmarkCheck } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { SimpleMediaDisplay } from "@/components/media/SimpleMediaDisplay";
 
 interface Creator {
   id: string;
   username: string;
-  avatar_url: string;
 }
 
 interface ShortItemProps {
@@ -18,8 +16,6 @@ interface ShortItemProps {
     creator_id: string;
     content: string;
     description: string;
-    video_urls: string[];
-    video_thumbnail_url?: string;
     likes_count: number;
     comments_count: number;
     view_count: number;
@@ -111,17 +107,9 @@ export const ShortItem = ({
       variants={videoVariants}
     >
       <div className="w-full h-full flex items-center justify-center relative overflow-hidden">
-        {short.video_urls && short.video_urls[0] ? (
-          <SimpleMediaDisplay
-            url={short.video_urls[0]}
-            className="w-full h-full object-contain"
-            alt="Short video"
-          />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center bg-gray-900">
-            <p className="text-white">No video available</p>
-          </div>
-        )}
+        <div className="w-full h-full flex items-center justify-center bg-gray-900">
+          <p className="text-white">Content Coming Soon</p>
+        </div>
         
         <div className="absolute bottom-16 left-4 right-12 bg-gradient-to-t from-black/70 to-transparent p-4 rounded-lg">
           <h3 className="font-medium text-white mb-2">@{short.creator.username}</h3>

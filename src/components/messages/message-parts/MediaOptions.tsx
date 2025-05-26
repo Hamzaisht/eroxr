@@ -17,7 +17,7 @@ export const MediaOptions = ({ onImageSelect, onDocumentSelect, onClose }: Media
           size="sm" 
           className="flex justify-start px-3 py-1.5 h-auto text-xs"
           onClick={() => {
-            onImageSelect();
+            alert("Photo uploads coming soon");
             onClose();
           }}
         >
@@ -29,7 +29,7 @@ export const MediaOptions = ({ onImageSelect, onDocumentSelect, onClose }: Media
           size="sm" 
           className="flex justify-start px-3 py-1.5 h-auto text-xs"
           onClick={() => {
-            onDocumentSelect();
+            alert("Document uploads coming soon");
             onClose();
           }}
         >
