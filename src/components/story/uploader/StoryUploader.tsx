@@ -4,16 +4,17 @@ import { useDropzone } from "react-dropzone";
 import { useSession } from "@supabase/auth-helpers-react";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
-import { supabase } from "@/integrations/supabase/client";
-import { toDbValue } from "@/utils/supabase/helpers";
 import { Camera, X } from "lucide-react";
+import { useUniversalUpload } from "@/hooks/useUniversalUpload";
+import { MediaAccessLevel } from "@/utils/media/types";
+import { supabase } from "@/integrations/supabase/client";
 
 export const StoryUploader = () => {
-  const [isUploading, setIsUploading] = useState(false);
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const { toast } = useToast();
   const session = useSession();
+  const { upload, isUploading, progress } = useUniversalUpload();
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     accept: {
@@ -52,47 +53,34 @@ export const StoryUploader = () => {
       return;
     }
 
-    setIsUploading(true);
-
     try {
-      // 1. Upload file to storage
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${session.user.id}-${Date.now()}.${fileExt}`;
-      const filePath = `stories/${fileName}`;
-      
-      const { error: uploadError } = await supabase.storage
-        .from('media')
-        .upload(filePath, file);
-        
-      if (uploadError) throw uploadError;
-      
-      // 2. Get public URL
-      const { data: publicUrlData } = supabase.storage
-        .from('media')
-        .getPublicUrl(filePath);
-        
-      const publicUrl = publicUrlData.publicUrl;
-      
-      // 3. Determine media type
-      const isVideo = file.type.startsWith('video/');
-      
-      // 4. Create database entry
-      const storyData = {
-        creator_id: session.user.id,
-        media_url: isVideo ? null : publicUrl,
-        video_url: isVideo ? publicUrl : null,
-        is_active: true,
-        content_type: isVideo ? 'video' : 'image',
-        expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24 hours from now
-      };
-      
+      // Upload file using universal uploader
+      const result = await upload(file, {
+        accessLevel: MediaAccessLevel.PUBLIC,
+        category: 'stories',
+        metadata: {
+          type: file.type.startsWith('video/') ? 'video' : 'image'
+        }
+      });
+
+      if (!result.success) {
+        throw new Error(result.error || 'Upload failed');
+      }
+
+      // Create story record
       const { error: dbError } = await supabase
         .from('stories')
-        .insert(toDbValue(storyData));
+        .insert({
+          creator_id: session.user.id,
+          media_url: result.url,
+          video_url: file.type.startsWith('video/') ? result.url : null,
+          is_active: true,
+          content_type: file.type.startsWith('video/') ? 'video' : 'image',
+          expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24 hours from now
+        });
         
       if (dbError) throw dbError;
       
-      // Success
       toast({
         title: "Story uploaded",
         description: "Your story has been shared successfully!"
@@ -108,14 +96,15 @@ export const StoryUploader = () => {
         description: error.message || "Failed to upload story.",
         variant: "destructive"
       });
-    } finally {
-      setIsUploading(false);
     }
   };
   
   const cancelUpload = () => {
     setFile(null);
     setPreview(null);
+    if (preview) {
+      URL.revokeObjectURL(preview);
+    }
   };
 
   return (
@@ -171,7 +160,7 @@ export const StoryUploader = () => {
               disabled={isUploading}
               className="w-full"
             >
-              {isUploading ? "Uploading..." : "Share"}
+              {isUploading ? `Uploading... ${progress}%` : "Share"}
             </Button>
           </div>
         </div>

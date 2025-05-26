@@ -1,91 +1,79 @@
 
-// Create this hook if it doesn't exist
 import { useState, useEffect } from 'react';
-import { useSession } from '@supabase/auth-helpers-react';
 import { MediaAccessLevel } from '@/utils/media/types';
+import { supabase } from '@/integrations/supabase/client';
 
 interface UseMediaAccessProps {
-  creatorId?: string;
+  creatorId: string;
   postId?: string;
-  accessLevel?: MediaAccessLevel;
+  accessLevel: MediaAccessLevel;
 }
 
-export function useMediaAccess({
-  creatorId,
-  postId,
-  accessLevel = MediaAccessLevel.PUBLIC
-}: UseMediaAccessProps) {
-  const session = useSession();
-  const [canAccess, setCanAccess] = useState<boolean>(true);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [reason, setReason] = useState<string | null>(null);
-  
+export const useMediaAccess = ({ creatorId, postId, accessLevel }: UseMediaAccessProps) => {
+  const [canAccess, setCanAccess] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
   useEffect(() => {
     const checkAccess = async () => {
-      setIsLoading(true);
-      
       try {
+        const { data: { user } } = await supabase.auth.getUser();
+        
         // Public content is always accessible
         if (accessLevel === MediaAccessLevel.PUBLIC) {
           setCanAccess(true);
-          setReason(null);
           return;
         }
-        
-        // If not logged in, can't access any non-public content
-        const userId = session?.user?.id;
-        if (!userId) {
+
+        // Not logged in users can't access restricted content
+        if (!user) {
           setCanAccess(false);
-          setReason('authentication_required');
           return;
         }
-        
-        // Owner can always access their own content
-        if (creatorId && userId === creatorId) {
+
+        // Own content is always accessible
+        if (user.id === creatorId) {
           setCanAccess(true);
-          setReason(null);
           return;
         }
-        
-        // For subscriber content, check if user is subscribed to creator
+
+        // Check subscription status for subscribers-only content
         if (accessLevel === MediaAccessLevel.SUBSCRIBERS) {
-          // This would typically involve checking a subscription table
-          // Simplified version: assume not subscribed for demo purposes
-          setCanAccess(false);
-          setReason('subscription_required');
+          const { data: subscription } = await supabase
+            .from('creator_subscriptions')
+            .select('id')
+            .eq('user_id', user.id)
+            .eq('creator_id', creatorId)
+            .single();
+          
+          setCanAccess(!!subscription);
           return;
         }
-        
-        // For PPV content, check if user has purchased this post
+
+        // Check PPV purchase status
         if (accessLevel === MediaAccessLevel.PPV && postId) {
-          // This would typically involve checking a purchases table
-          // Simplified version: assume not purchased for demo purposes
-          setCanAccess(false);
-          setReason('purchase_required');
+          const { data: purchase } = await supabase
+            .from('post_purchases')
+            .select('id')
+            .eq('user_id', user.id)
+            .eq('post_id', postId)
+            .single();
+          
+          setCanAccess(!!purchase);
           return;
         }
-        
-        // For private content, only creator can access
-        if (accessLevel === MediaAccessLevel.PRIVATE) {
-          setCanAccess(userId === creatorId);
-          setReason(userId === creatorId ? null : 'private_content');
-          return;
-        }
-        
-        // Default fallback - deny access
+
+        // Private content is only accessible to the creator
         setCanAccess(false);
-        setReason('unknown_restriction');
       } catch (error) {
         console.error('Error checking media access:', error);
         setCanAccess(false);
-        setReason('error_checking_access');
       } finally {
         setIsLoading(false);
       }
     };
-    
+
     checkAccess();
-  }, [accessLevel, creatorId, postId, session]);
-  
-  return { canAccess, isLoading, reason };
-}
+  }, [creatorId, postId, accessLevel]);
+
+  return { canAccess, isLoading };
+};

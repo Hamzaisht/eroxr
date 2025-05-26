@@ -8,6 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2, X } from "lucide-react";
 import { MediaUploadSection } from "./post/MediaUploadSection";
+import { MediaAccessLevel } from "@/utils/media/types";
 
 interface CreatePostDialogProps {
   open: boolean;
@@ -24,8 +25,8 @@ export const CreatePostDialog = ({
 }: CreatePostDialogProps) => {
   const [content, setContent] = useState("");
   const [mediaUrls, setMediaUrls] = useState<string[]>([]);
+  const [mediaAssetIds, setMediaAssetIds] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isUploading, setIsUploading] = useState(false);
   const session = useSession();
   const { toast } = useToast();
 
@@ -58,7 +59,10 @@ export const CreatePostDialog = ({
         .insert({
           creator_id: session.user.id,
           content: content.trim(),
-          media_url: mediaUrls.length > 0 ? mediaUrls : null
+          media_url: mediaUrls.length > 0 ? mediaUrls : null,
+          metadata: {
+            media_asset_ids: mediaAssetIds
+          }
         });
         
       if (error) throw error;
@@ -71,6 +75,7 @@ export const CreatePostDialog = ({
       // Reset form and close dialog
       setContent("");
       setMediaUrls([]);
+      setMediaAssetIds([]);
       onOpenChange(false);
     } catch (error: any) {
       console.error("Error submitting post:", error);
@@ -84,12 +89,14 @@ export const CreatePostDialog = ({
     }
   };
   
-  const handleMediaSelect = (urls: string[]) => {
+  const handleMediaUpload = (urls: string[], assetIds: string[]) => {
     setMediaUrls(prev => [...prev, ...urls]);
+    setMediaAssetIds(prev => [...prev, ...assetIds]);
   };
   
   const removeMedia = (index: number) => {
     setMediaUrls(prev => prev.filter((_, i) => i !== index));
+    setMediaAssetIds(prev => prev.filter((_, i) => i !== index));
   };
 
   return (
@@ -132,14 +139,14 @@ export const CreatePostDialog = ({
           )}
           
           <MediaUploadSection 
-            onMediaSelect={handleMediaSelect}
-            isUploading={isUploading}
+            onUploadComplete={handleMediaUpload}
+            defaultAccessLevel={MediaAccessLevel.PUBLIC}
           />
           
           <div className="flex justify-end">
             <Button 
               type="submit" 
-              disabled={isSubmitting || isUploading}
+              disabled={isSubmitting}
             >
               {isSubmitting ? (
                 <>

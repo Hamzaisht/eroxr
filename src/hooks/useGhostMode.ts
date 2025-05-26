@@ -48,5 +48,33 @@ export const useGhostMode = () => {
     checkGhostMode();
   }, []);
 
-  return { isGhostMode, isLoading };
+  const toggleGhostMode = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const newGhostMode = !isGhostMode;
+      
+      const { error } = await supabase
+        .from('admin_sessions')
+        .upsert({
+          admin_id: user.id,
+          ghost_mode: newGhostMode,
+          last_active_at: new Date().toISOString()
+        });
+
+      if (error) throw error;
+      
+      setIsGhostMode(newGhostMode);
+    } catch (error) {
+      console.error('Error toggling ghost mode:', error);
+    }
+  };
+
+  return { 
+    isGhostMode, 
+    isLoading, 
+    toggleGhostMode,
+    canUseGhostMode: true // For now, assume all users can use ghost mode
+  };
 };
