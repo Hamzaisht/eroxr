@@ -28,6 +28,8 @@ export interface BodyContactAccessCheckResult {
   reason?: string;
   requiresPremium?: boolean;
   requiresVerification?: boolean;
+  reasonCodes: string[];
+  reasonMessages: string[];
 }
 
 export interface BasicInfoFieldsProps {

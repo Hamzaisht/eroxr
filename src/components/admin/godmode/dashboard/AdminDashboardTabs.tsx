@@ -1,7 +1,7 @@
 
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { LiveSurveillance } from "@/components/admin/platform/LiveSurveillance";
-import { useLiveSurveillanceData } from "@/hooks/useGhostMode";
+import { useLiveSurveillanceData } from "@/hooks/useLiveSurveillanceData";
 import React from "react";
 
 interface AdminDashboardTabsProps {
@@ -22,9 +22,8 @@ export const AdminDashboardTabs: React.FC<AdminDashboardTabsProps> = ({
     return true;
   };
   
-  const handleRefresh = async () => {
+  const handleRefresh = async (): Promise<void> => {
     console.log("Refreshing surveillance data");
-    return true;
   };
   
   return (

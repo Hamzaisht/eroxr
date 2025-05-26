@@ -1,215 +1,43 @@
 
-import { useState, useCallback, useRef, useEffect } from 'react';
-import { MessageInput } from './MessageInput';
-import { useChatActions } from './chat/ChatActions';
-import { DirectMessage } from '@/integrations/supabase/types/message';
-import { supabase } from '@/integrations/supabase/client';
-import { useSession } from '@supabase/auth-helpers-react';
-import { useMessageAudit } from '@/hooks/useMessageAudit';
-import { useToast } from '@/hooks/use-toast';
-import { useTypingIndicator } from '@/hooks/useTypingIndicator';
-import { MediaDialog } from './MediaDialog';
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Send } from "lucide-react";
+import { useMessages } from "@/hooks/useMessages";
 
 interface ChatInputProps {
-  onSendMessage: (content: string) => void;
-  onTyping: () => void;
   recipientId: string;
-  onMessageSent?: () => void;
-  onMessageError?: (error: string) => void;
+  onSendMessage: (content: string) => void;
 }
 
-export const ChatInput = ({ 
-  onSendMessage, 
-  onTyping, 
-  recipientId,
-  onMessageSent,
-  onMessageError
-}: ChatInputProps) => {
-  const [replyTo, setReplyTo] = useState<DirectMessage | null>(null);
-  const [isSending, setIsSending] = useState(false);
-  const [showMediaDialog, setShowMediaDialog] = useState(false);
-  const session = useSession();
-  const { toast } = useToast();
-  
+export const ChatInput = ({ recipientId, onSendMessage }: ChatInputProps) => {
+  const [message, setMessage] = useState("");
   const { 
-    isUploading, 
-    handleMediaSelect, 
-    handleSnapCapture 
-  } = useChatActions({ recipientId });
+    isUploading,
+    handleMediaSelect,
+    handleSnapCapture
+  } = useMessages();
 
-  const { logMessageActivity, logMediaUpload } = useMessageAudit(recipientId);
-  const { sendTypingStatus } = useTypingIndicator(recipientId);
-  const lastTypingRef = useRef<number>(0);
-  const typingDebounceTime = 500; // ms
-
-  // Enhanced send message handler
-  const handleSendMessage = useCallback(async (content: string) => {
-    if (!session?.user?.id || content.trim() === '') return;
-    
-    setIsSending(true);
-    
-    try {
-      // Call the parent handler
-      onSendMessage(content);
-      
-      // Log message activity
-      logMessageActivity({
-        recipient_id: recipientId,
-        activity_type: 'send',
-        details: { content_preview: content.substring(0, 50) },
-        length: content.length
-      });
-      
-      if (onMessageSent) {
-        onMessageSent();
-      }
-    } catch (error: any) {
-      console.error('Error sending message:', error);
-      toast({
-        title: "Failed to send message",
-        description: error.message || "Please try again",
-        variant: "destructive"
-      });
-      
-      if (onMessageError) {
-        onMessageError(error.message || "Failed to send message");
-      }
-    } finally {
-      setIsSending(false);
-    }
-  }, [session?.user?.id, recipientId, onSendMessage, logMessageActivity, toast, onMessageSent, onMessageError]);
-
-  const handleTyping = useCallback(() => {
-    const now = Date.now();
-    
-    // Only send typing indicator if enough time has passed since last one
-    if (now - lastTypingRef.current > typingDebounceTime) {
-      sendTypingStatus(true);
-      onTyping();
-      lastTypingRef.current = now;
-    }
-  }, [sendTypingStatus, onTyping]);
-
-  const handleSendVoiceMessage = async (audioBlob: Blob) => {
-    if (!session?.user?.id) return;
-    
-    setIsSending(true);
-    
-    try {
-      // Create a file from the blob
-      const file = new File([audioBlob], `voice-message-${Date.now()}.webm`, {
-        type: 'audio/webm',
-      });
-      
-      // Upload audio file
-      const fileName = `${crypto.randomUUID()}.webm`;
-      
-      const { error: uploadError, data } = await supabase.storage
-        .from('messages')
-        .upload(fileName, file);
-
-      if (uploadError) throw uploadError;
-
-      const { data: { publicUrl } } = supabase.storage
-        .from('messages')
-        .getPublicUrl(fileName);
-      
-      // Insert message with audio URL
-      await supabase.from('direct_messages').insert({
-        sender_id: session.user.id,
-        recipient_id: recipientId,
-        media_url: [publicUrl],
-        message_type: 'audio',
-        reply_to_id: replyTo?.id,
-        created_at: new Date().toISOString(),
-      });
-      
-      // Log the activity
-      logMediaUpload({
-        recipient_id: recipientId, 
-        file_count: 1, 
-        file_types: ['audio/webm'],
-        size_bytes: file.size
-      });
-      
-      // Clear reply
-      setReplyTo(null);
-      
-      if (onMessageSent) {
-        onMessageSent();
-      }
-      
-      toast({
-        title: "Voice message sent",
-        description: "Your voice message has been sent successfully"
-      });
-    } catch (error: any) {
-      console.error('Error sending voice message:', error);
-      
-      toast({
-        title: "Failed to send voice message",
-        description: error.message || "Please try again",
-        variant: "destructive"
-      });
-      
-      if (onMessageError) {
-        onMessageError(error.message || "Failed to send voice message");
-      }
-    } finally {
-      setIsSending(false);
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (message.trim()) {
+      onSendMessage(message);
+      setMessage("");
     }
   };
-  
-  const handleOpenMediaDialog = () => {
-    setShowMediaDialog(true);
-  };
-  
-  const handleCloseMediaDialog = () => {
-    setShowMediaDialog(false);
-  };
-  
-  // Fixed to handle both string arrays and FileList
-  const handleMediaUpload = (files: FileList | string[]) => {
-    // If it's a FileList, pass it directly
-    if ('item' in files) {
-      handleMediaSelect(files);
-    } 
-    // If it's a string array, create a FileList-like object
-    else if (Array.isArray(files)) {
-      // Here we would normally fetch the files from URLs or convert Data URLs
-      // For now, just log a message and close the dialog
-      console.log('String array media not supported yet:', files);
-      toast({
-        title: "Media not supported",
-        description: "This media type is not supported yet."
-      });
-    }
-  };
-  
+
   return (
-    <>
-      <MessageInput
-        onSendMessage={handleSendMessage}
-        onMediaSelect={handleOpenMediaDialog}
-        onSnapStart={() => {
-          // In a real implementation, this would likely trigger a camera UI
-          // For now we're just implementing the interface correctly
-          const dummyDataUrl = 'data:image/png;base64,dummy';
-          handleSnapCapture(dummyDataUrl);
-        }}
-        onVoiceMessage={handleSendVoiceMessage}
-        isLoading={isUploading || isSending}
-        recipientId={recipientId}
-        replyToMessage={replyTo}
-        onReplyCancel={() => setReplyTo(null)}
-        onTyping={handleTyping}
+    <form onSubmit={handleSubmit} className="flex gap-2 p-4 border-t">
+      <Input
+        value={message}
+        onChange={(e) => setMessage(e.target.value)}
+        placeholder="Type a message..."
+        className="flex-1"
+        disabled={isUploading}
       />
-      
-      <MediaDialog 
-        isOpen={showMediaDialog} 
-        onClose={handleCloseMediaDialog} 
-        onMediaSelect={handleMediaUpload}
-      />
-    </>
+      <Button type="submit" size="icon" disabled={!message.trim() || isUploading}>
+        <Send className="h-4 w-4" />
+      </Button>
+    </form>
   );
 };
