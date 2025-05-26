@@ -5,7 +5,7 @@ import { Session } from '@supabase/supabase-js';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { SessionContextProvider } from '@supabase/auth-helpers-react';
-import { GhostModeProvider } from '@/hooks/useGhostMode';
+import { GhostModeProvider } from '@/hooks/useGhostMode.tsx';
 import { Toaster } from '@/components/ui/toaster';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 

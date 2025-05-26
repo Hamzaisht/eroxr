@@ -5,7 +5,7 @@ import { GodmodeSidebar } from "./GodmodeSidebar";
 import { BackgroundEffects } from "@/components/layout/BackgroundEffects";
 import { useSuperAdminCheck } from "@/hooks/useSuperAdminCheck";
 import { LoadingScreen } from "@/components/layout/LoadingScreen";
-import { useGhostMode } from "@/hooks/useGhostMode";
+import { useGhostMode } from "@/hooks/useGhostMode.tsx";
 import { SurveillanceProvider } from "@/components/admin/platform/surveillance/SurveillanceContext";
 import { LiveAlert } from "@/types/alerts";
 import { LiveSession } from "@/types/surveillance";
