@@ -18,7 +18,12 @@ export interface ProfileHeaderProps {
     username?: string;
     bio?: string;
     avatar_url?: string;
+    post_count?: number;
+    follower_count?: number;
+    following_count?: number;
   };
   isOwnProfile: boolean;
+  isEditing?: boolean;
+  setIsEditing?: (editing: boolean) => void;
   onEdit?: () => void;
 }

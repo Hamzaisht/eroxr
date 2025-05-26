@@ -1,77 +1,83 @@
 
 import { useState } from 'react';
-import { MediaService, UploadResult } from '@/services/mediaService';
-import { useToast } from '@/hooks/use-toast';
+import { uploadFile } from '@/utils/upload/universalUpload';
+import { MediaAccessLevel, UploadResult } from '@/utils/media/types';
+
+interface UploadState {
+  isUploading: boolean;
+  isComplete: boolean;
+  progress: number;
+  error?: string;
+}
+
+interface UploadMediaOptions {
+  contentCategory?: string;
+  maxSizeInMB?: number;
+}
 
 export const useMediaUpload = () => {
-  const [isUploading, setIsUploading] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState(0);
-  const { toast } = useToast();
+  const [uploadState, setUploadState] = useState<UploadState>({
+    isUploading: false,
+    isComplete: false,
+    progress: 0
+  });
 
-  const uploadFile = async (
+  const uploadMedia = async (
     file: File,
-    accessLevel: 'private' | 'public' | 'subscribers_only' = 'private'
+    options: UploadMediaOptions = {}
   ): Promise<UploadResult> => {
-    setIsUploading(true);
-    setUploadProgress(0);
+    setUploadState({
+      isUploading: true,
+      isComplete: false,
+      progress: 0
+    });
 
     try {
-      // Simulate upload progress
-      const progressInterval = setInterval(() => {
-        setUploadProgress(prev => Math.min(prev + 10, 90));
-      }, 100);
+      const { contentCategory = 'media', maxSizeInMB = 100 } = options;
 
-      const result = await MediaService.uploadFile(file, accessLevel);
+      // Check file size
+      if (file.size > maxSizeInMB * 1024 * 1024) {
+        throw new Error(`File size exceeds ${maxSizeInMB}MB limit`);
+      }
 
-      clearInterval(progressInterval);
-      setUploadProgress(100);
+      // Simulate progress
+      setUploadState(prev => ({ ...prev, progress: 25 }));
+
+      const result = await uploadFile(file, {
+        accessLevel: MediaAccessLevel.PUBLIC,
+        category: contentCategory
+      });
+
+      setUploadState(prev => ({ ...prev, progress: 100 }));
 
       if (result.success) {
-        toast({
-          title: "Upload successful",
-          description: `${file.name} has been uploaded successfully`
-        });
+        setUploadState(prev => ({ ...prev, isComplete: true, isUploading: false }));
       } else {
-        toast({
-          title: "Upload failed",
-          description: result.error || "Failed to upload file",
-          variant: "destructive"
-        });
+        setUploadState(prev => ({ 
+          ...prev, 
+          isUploading: false, 
+          error: result.error || 'Upload failed' 
+        }));
       }
 
       return result;
     } catch (error: any) {
-      toast({
-        title: "Upload error",
-        description: error.message || "An unexpected error occurred",
-        variant: "destructive"
+      setUploadState({
+        isUploading: false,
+        isComplete: false,
+        progress: 0,
+        error: error.message
       });
 
-      return { success: false, error: error.message };
-    } finally {
-      setIsUploading(false);
-      setTimeout(() => setUploadProgress(0), 1000);
+      return {
+        success: false,
+        error: error.message
+      };
     }
-  };
-
-  const uploadMultiple = async (
-    files: File[],
-    accessLevel: 'private' | 'public' | 'subscribers_only' = 'private'
-  ): Promise<UploadResult[]> => {
-    const results: UploadResult[] = [];
-    
-    for (const file of files) {
-      const result = await uploadFile(file, accessLevel);
-      results.push(result);
-    }
-
-    return results;
   };
 
   return {
-    uploadFile,
-    uploadMultiple,
-    isUploading,
-    uploadProgress
+    uploadMedia,
+    uploadState
   };
 };

@@ -42,8 +42,12 @@ export const BasicInfoStep = ({ values, onUpdateValues }: BasicInfoStepProps) =>
         <StatusBodyTypeSelects
           relationshipStatus={values.relationshipStatus}
           bodyType={values.bodyType}
-          onRelationshipStatusChange={(value) => onUpdateValues({ relationshipStatus: value })}
-          onBodyTypeChange={(value) => onUpdateValues({ bodyType: value })}
+          onRelationshipStatusChange={(value) => onUpdateValues({ 
+            relationshipStatus: value as "single" | "taken" | "complicated" 
+          })}
+          onBodyTypeChange={(value) => onUpdateValues({ 
+            bodyType: value as "slim" | "average" | "curvy" | "athletic" 
+          })}
         />
       </div>
     </motion.div>
