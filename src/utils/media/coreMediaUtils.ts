@@ -1,7 +1,4 @@
-
-/**
- * Core media utilities - rebuilt from scratch
- */
+import { MediaType } from '@/types/media';
 
 export interface MediaItem {
   url: string;
@@ -9,76 +6,51 @@ export interface MediaItem {
   thumbnail?: string;
 }
 
-/**
- * Simple, reliable URL validation
- */
-export function isValidUrl(url: string | null | undefined): boolean {
-  if (!url || typeof url !== 'string' || url.trim().length === 0) {
-    return false;
-  }
-  
-  try {
-    const urlObj = new URL(url);
-    return ['http:', 'https:', 'data:', 'blob:'].includes(urlObj.protocol);
-  } catch {
-    return false;
-  }
-}
-
-/**
- * Determine media type from URL or filename
- */
-export function getMediaType(url: string): 'image' | 'video' | 'audio' {
-  const videoExts = /\.(mp4|webm|mov|avi|mkv|wmv|m4v|3gp|flv)($|\?)/i;
-  const audioExts = /\.(mp3|wav|ogg|aac|flac|m4a)($|\?)/i;
-  
-  if (videoExts.test(url)) return 'video';
-  if (audioExts.test(url)) return 'audio';
-  return 'image';
-}
-
-/**
- * Process any media source into a standardized format
- */
-export function processMediaSource(source: any): MediaItem | null {
+export const processMediaSource = (source: any): MediaItem | null => {
   if (!source) return null;
   
-  let url = '';
+  let url: string | null = null;
   
-  // Handle different source formats
+  // Extract URL from various source formats
   if (typeof source === 'string') {
     url = source;
-  } else if (typeof source === 'object') {
-    url = source.url || source.media_url || source.video_url || source.src || '';
-    
-    // Handle arrays
-    if (Array.isArray(url) && url.length > 0) {
-      url = url[0];
-    }
+  } else if (source.url) {
+    url = source.url;
+  } else if (source.media_url) {
+    url = Array.isArray(source.media_url) ? source.media_url[0] : source.media_url;
+  } else if (source.video_url) {
+    url = source.video_url;
   }
   
-  if (!isValidUrl(url)) return null;
+  if (!url) return null;
+  
+  // Determine media type from URL
+  const extension = url.split('.').pop()?.toLowerCase() || '';
+  let type: 'image' | 'video' | 'audio' = 'image';
+  
+  if (['mp4', 'webm', 'mov', 'avi'].includes(extension)) {
+    type = 'video';
+  } else if (['mp3', 'wav', 'ogg'].includes(extension)) {
+    type = 'audio';
+  }
   
   return {
     url,
-    type: getMediaType(url),
-    thumbnail: source?.thumbnail_url || source?.poster
+    type,
+    thumbnail: source.thumbnail
   };
-}
+};
 
-/**
- * Clean and optimize media URL
- */
-export function cleanMediaUrl(url: string): string {
+export const cleanMediaUrl = (url: string): string => {
   if (!url) return '';
   
-  // Remove multiple query parameters that might cause issues
-  const cleanUrl = url.split('?')[0];
-  
-  // Add simple cache busting for Supabase URLs
-  if (cleanUrl.includes('supabase.co')) {
-    return `${cleanUrl}?v=${Date.now()}`;
+  // Remove any query parameters that might cause issues
+  try {
+    const urlObj = new URL(url);
+    // Keep essential parameters, remove problematic ones
+    urlObj.searchParams.delete('token');
+    return urlObj.toString();
+  } catch {
+    return url;
   }
-  
-  return cleanUrl;
-}
+};

@@ -1,98 +1,81 @@
 
-import { MediaType, MediaAccessLevel, UploadOptions, UploadResult } from './types';
-import { supabase } from '@/integrations/supabase/client';
-import { createUniqueFilePath } from './fileUtils';
+import { MediaType, MediaSource } from '@/types/media';
 
-/**
- * Upload a file to storage
- */
-export async function uploadFileToStorage(
-  file: File, 
-  options: UploadOptions = {}
-): Promise<UploadResult> {
-  if (!file) {
-    return { success: false, error: 'No file provided' };
+export const determineMediaType = (source: any): MediaType => {
+  if (!source) return MediaType.UNKNOWN;
+  
+  // If source has explicit type
+  if (source.type) return source.type;
+  
+  // Extract URL to check extension
+  const url = extractMediaUrl(source);
+  if (!url) return MediaType.UNKNOWN;
+  
+  const extension = url.split('.').pop()?.toLowerCase() || '';
+  
+  // Video extensions
+  if (['mp4', 'webm', 'mov', 'avi', 'mkv'].includes(extension)) {
+    return MediaType.VIDEO;
   }
   
-  const {
-    bucket = 'media',  // Default bucket is 'media' if not specified
-    path,
-    contentType = file.type,
-    folder = '',
-    accessLevel = MediaAccessLevel.PUBLIC
-  } = options;
-  
-  try {
-    // Generate file path if not provided
-    const filePath = path || createUniqueFilePath(file, { folder });
-    
-    // Upload file
-    const { data, error } = await supabase.storage
-      .from(bucket)
-      .upload(filePath, file, {
-        contentType,
-        cacheControl: '3600',
-        upsert: false
-      });
-      
-    if (error) {
-      console.error('File upload error:', error);
-      return { 
-        success: false, 
-        error: error.message,
-      };
-    }
-    
-    // Get the URL
-    let url;
-    if (accessLevel === MediaAccessLevel.PUBLIC) {
-      const { data: publicUrlData } = supabase.storage
-        .from(bucket)
-        .getPublicUrl(data.path);
-      
-      url = publicUrlData.publicUrl;
-    } else {
-      // For private files, create a signed URL
-      const { data: signedUrlData } = await supabase.storage
-        .from(bucket)
-        .createSignedUrl(data.path, 60 * 60); // 1 hour expiration
-        
-      url = signedUrlData?.signedUrl;
-    }
-    
-    return {
-      success: true,
-      url,
-      publicUrl: url,
-      path: data.path,
-      accessLevel
-    };
-  } catch (err: any) {
-    console.error('File upload unexpected error:', err);
-    return {
-      success: false,
-      error: err.message || 'Unknown upload error',
-    };
+  // Image extensions
+  if (['jpg', 'jpeg', 'png', 'webp', 'bmp'].includes(extension)) {
+    return MediaType.IMAGE;
   }
-}
+  
+  // GIF extension
+  if (extension === 'gif') {
+    return MediaType.GIF;
+  }
+  
+  // Audio extensions
+  if (['mp3', 'wav', 'ogg', 'aac'].includes(extension)) {
+    return MediaType.AUDIO;
+  }
+  
+  // Document extensions
+  if (['pdf', 'doc', 'docx', 'txt'].includes(extension)) {
+    return MediaType.DOCUMENT;
+  }
+  
+  return MediaType.UNKNOWN;
+};
 
-// Re-export functions from other files to maintain backward compatibility
-export { 
-  extractMediaUrl, 
-  normalizeMediaSource,
-  determineMediaType 
-} from './mediaSourceUtils';
+export const extractMediaUrl = (source: any): string | null => {
+  if (!source) return null;
+  
+  // If source is already a string URL
+  if (typeof source === 'string') return source;
+  
+  // Check common URL properties
+  if (source.url) return source.url;
+  if (source.media_url) {
+    if (Array.isArray(source.media_url)) {
+      return source.media_url[0] || null;
+    }
+    return source.media_url;
+  }
+  if (source.video_url) return source.video_url;
+  if (source.src) return source.src;
+  
+  return null;
+};
 
-export { 
-  calculateAspectRatioDimensions 
-} from './dimensionUtils';
-
-export {
-  createUniqueFilePath,
-  formatFileSize
-} from './fileUtils';
-
-export {
-  addCacheBuster,
-  getPlayableMediaUrl
-} from './urlUtils';
+export const calculateAspectRatioDimensions = (
+  containerWidth: number,
+  containerHeight: number,
+  maxWidth: number,
+  maxHeight: number
+) => {
+  const aspectRatio = containerWidth / containerHeight;
+  
+  let width = maxWidth;
+  let height = maxWidth / aspectRatio;
+  
+  if (height > maxHeight) {
+    height = maxHeight;
+    width = maxHeight * aspectRatio;
+  }
+  
+  return { width, height };
+};

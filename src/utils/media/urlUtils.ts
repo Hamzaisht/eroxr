@@ -1,82 +1,16 @@
 
-/**
- * Add a cache buster to a URL
- */
-export function addCacheBuster(url: string): string {
+export const getPlayableMediaUrl = (url: string): string => {
   if (!url) return '';
   
-  const separator = url.includes('?') ? '&' : '?';
-  return `${url}${separator}t=${Date.now()}`;
-}
-
-/**
- * Get a playable media URL with cache busting
- */
-export function getPlayableMediaUrl(url: string): string {
-  if (!url) return '';
+  // If it's already a complete URL, return as-is
+  if (url.startsWith('http://') || url.startsWith('https://')) {
+    return url;
+  }
   
-  // Add cache busting for certain storage URLs
-  if ((url.includes('storage/v1/object') || url.includes('cloudfront.net')) && !url.includes('?t=')) {
-    const separator = url.includes('?') ? '&' : '?';
-    return `${url}${separator}t=${Date.now()}`;
+  // If it's a relative path, construct the full URL
+  if (url.startsWith('/')) {
+    return `${window.location.origin}${url}`;
   }
   
   return url;
-}
-
-/**
- * Check if URL points to a video file
- */
-export function isVideoUrl(url: string): boolean {
-  if (!url) return false;
-  
-  // Check by file extension in the URL
-  const hasVideoExtension = /\.(mp4|webm|mov|avi|wmv|flv|mkv)($|\?)/i.test(url);
-  
-  // Check by content type in URL if it exists
-  const hasVideoContentType = url.includes('video/');
-  
-  return hasVideoExtension || hasVideoContentType;
-}
-
-/**
- * Check if URL points to an image file
- */
-export function isImageUrl(url: string): boolean {
-  if (!url) return false;
-  
-  // Check by file extension in the URL
-  const hasImageExtension = /\.(jpg|jpeg|png|gif|webp|svg|bmp|tiff)($|\?)/i.test(url);
-  
-  // Check by content type in URL if it exists
-  const hasImageContentType = url.includes('image/');
-  
-  return hasImageExtension || hasImageContentType;
-}
-
-/**
- * Check if URL points to an audio file
- */
-export function isAudioUrl(url: string): boolean {
-  if (!url) return false;
-  
-  // Check by file extension in the URL
-  const hasAudioExtension = /\.(mp3|wav|ogg|aac|flac|m4a)($|\?)/i.test(url);
-  
-  // Check by content type in URL if it exists
-  const hasAudioContentType = url.includes('audio/');
-  
-  return hasAudioExtension || hasAudioContentType;
-}
-
-/**
- * Checks if a URL is valid
- */
-export function isValidUrl(url: string): boolean {
-  try {
-    new URL(url);
-    return true;
-  } catch (error) {
-    return false;
-  }
-}
+};
