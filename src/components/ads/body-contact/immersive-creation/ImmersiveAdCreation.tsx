@@ -1,3 +1,4 @@
+
 import { useSession } from "@supabase/auth-helpers-react";
 import { motion } from "framer-motion";
 import { useBodyContactAccess } from "../hooks/useBodyContactAccess";
@@ -36,7 +37,7 @@ export const ImmersiveAdCreation = ({ onClose, onSuccess }: ImmersiveAdCreationP
     goToNextStep,
     goToPrevStep,
     jumpToStep,
-    updateField,
+    updateValues, // Changed from updateField
     submitForm,
     setShowSuccess
   } = useImmersiveCreation(onSuccess, onClose);
@@ -49,7 +50,7 @@ export const ImmersiveAdCreation = ({ onClose, onSuccess }: ImmersiveAdCreationP
       component: (
         <BasicInfoStep 
           values={values} 
-          onUpdateValues={updateField}
+          onUpdateValues={updateValues} // Now matches the expected signature
         />
       )
     },
@@ -59,7 +60,7 @@ export const ImmersiveAdCreation = ({ onClose, onSuccess }: ImmersiveAdCreationP
       component: (
         <PreferencesStep 
           values={values} 
-          onUpdateValues={updateField}
+          onUpdateValues={updateValues}
         />
       )
     },

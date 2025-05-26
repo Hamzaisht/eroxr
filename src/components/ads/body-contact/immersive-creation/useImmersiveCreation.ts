@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef } from "react";
 import { AdFormValues } from "../types";
 import { useBodyContactSubmit } from "../hooks/useBodyContactSubmit";
@@ -128,8 +129,9 @@ export const useImmersiveCreation = (onSuccess?: () => void, onClose?: () => voi
     }, 300);
   };
 
-  const updateField = (field: string, value: any) => {
-    setValues(prev => ({ ...prev, [field]: value }));
+  // Fixed: Change function signature to accept partial values object
+  const updateValues = (newValues: Partial<AdFormValues>) => {
+    setValues(prev => ({ ...prev, ...newValues }));
   };
 
   const submitForm = () => {
@@ -147,7 +149,7 @@ export const useImmersiveCreation = (onSuccess?: () => void, onClose?: () => voi
     goToNextStep,
     goToPrevStep,
     jumpToStep,
-    updateField,
+    updateValues, // Changed from updateField
     submitForm,
     setShowSuccess,
   };

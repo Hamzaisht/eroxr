@@ -1,26 +1,43 @@
 
-export interface UploadResult {
-  success: boolean;
-  url?: string;
-  error?: string;
-}
+import { supabase } from "@/integrations/supabase/client";
+import { UploadResult, MediaAccessLevel } from "./types";
 
-export const uploadFile = async (file: File): Promise<UploadResult> => {
+export const uploadMediaToSupabase = async (
+  file: File,
+  bucket: string,
+  options?: {
+    maxSizeMB?: number;
+    folder?: string;
+  }
+): Promise<UploadResult> => {
   try {
-    // Mock upload implementation
-    console.log('Uploading file:', file.name);
+    const { maxSizeMB = 10, folder = '' } = options || {};
     
-    // Simulate upload delay
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    // Check file size
+    if (file.size > maxSizeMB * 1024 * 1024) {
+      throw new Error(`File size exceeds ${maxSizeMB}MB limit`);
+    }
+
+    const fileName = `${folder ? folder + '/' : ''}${Date.now()}_${file.name}`;
     
+    const { data, error } = await supabase.storage
+      .from(bucket)
+      .upload(fileName, file);
+
+    if (error) throw error;
+
+    const { data: { publicUrl } } = supabase.storage
+      .from(bucket)
+      .getPublicUrl(fileName);
+
     return {
       success: true,
-      url: URL.createObjectURL(file) // Temporary URL for demo
+      url: publicUrl
     };
-  } catch (error) {
+  } catch (error: any) {
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'Upload failed'
+      error: error.message
     };
   }
 };

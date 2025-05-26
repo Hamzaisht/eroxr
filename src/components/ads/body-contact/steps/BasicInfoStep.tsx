@@ -3,15 +3,16 @@ import { motion } from "framer-motion";
 import { TitleDescriptionInputs } from "./components/TitleDescriptionInputs";
 import { StatusBodyTypeSelects } from "./components/StatusBodyTypeSelects";
 import { ProfileImageUploader } from "./components/ProfileImageUploader";
+import { AdFormValues } from "../types";
 
 interface BasicInfoStepProps {
-  values: any;
-  onUpdateValues: (field: string, value: any) => void;
+  values: AdFormValues;
+  onUpdateValues: (values: Partial<AdFormValues>) => void;
 }
 
 export const BasicInfoStep = ({ values, onUpdateValues }: BasicInfoStepProps) => {
   const handleImageUpload = (file: File | null, preview: string) => {
-    onUpdateValues('avatarFile', file);
+    onUpdateValues({ avatarFile: file });
   };
 
   return (
@@ -34,15 +35,15 @@ export const BasicInfoStep = ({ values, onUpdateValues }: BasicInfoStepProps) =>
         <TitleDescriptionInputs
           title={values.title}
           description={values.description}
-          onTitleChange={(value) => onUpdateValues('title', value)}
-          onDescriptionChange={(value) => onUpdateValues('description', value)}
+          onTitleChange={(value) => onUpdateValues({ title: value })}
+          onDescriptionChange={(value) => onUpdateValues({ description: value })}
         />
 
         <StatusBodyTypeSelects
           relationshipStatus={values.relationshipStatus}
           bodyType={values.bodyType}
-          onRelationshipStatusChange={(value) => onUpdateValues('relationshipStatus', value)}
-          onBodyTypeChange={(value) => onUpdateValues('bodyType', value)}
+          onRelationshipStatusChange={(value) => onUpdateValues({ relationshipStatus: value })}
+          onBodyTypeChange={(value) => onUpdateValues({ bodyType: value })}
         />
       </div>
     </motion.div>

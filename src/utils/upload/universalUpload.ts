@@ -1,114 +1,41 @@
 
-import { supabase } from '@/integrations/supabase/client';
-import { createUniqueFilePath, validateFileForUpload, runFileDiagnostic } from './fileUtils';
-import { uploadFileToStorage, storeMediaAsset, UploadOptions, UploadResult } from './storageService';
+import { supabase } from "@/integrations/supabase/client";
+import { MediaAccessLevel, UploadResult } from "../media/types";
 
-/**
- * Universal media upload function
- * Handles file upload to storage and metadata storage in database
- */
-export const uploadMedia = async (
-  file: File,
+export interface UploadOptions {
+  accessLevel?: MediaAccessLevel;
+  category?: string;
+  metadata?: Record<string, any>;
+}
+
+export const uploadFile = async (
+  file: File, 
   options: UploadOptions = {}
 ): Promise<UploadResult> => {
   try {
-    // Run diagnostic
-    runFileDiagnostic(file);
+    const { accessLevel = MediaAccessLevel.PUBLIC, category = 'general' } = options;
+    
+    const fileName = `${category}/${Date.now()}_${file.name}`;
+    const bucket = accessLevel === MediaAccessLevel.PRIVATE ? 'private-media' : 'media';
+    
+    const { data, error } = await supabase.storage
+      .from(bucket)
+      .upload(fileName, file);
 
-    // Validate file
-    const validation = validateFileForUpload(file);
-    if (!validation.valid) {
-      return { success: false, error: validation.error };
-    }
+    if (error) throw error;
 
-    // Check authentication
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      return { success: false, error: 'Authentication required' };
-    }
-
-    // Generate unique file path
-    const storagePath = createUniqueFilePath(file, user.id);
-    const bucket = options.bucket || 'media';
-
-    // Upload to storage
-    const storageResult = await uploadFileToStorage(bucket, storagePath, file);
-    if (!storageResult.success) {
-      return storageResult;
-    }
-
-    // Store metadata in database
-    const metadataResult = await storeMediaAsset(
-      file,
-      storagePath,
-      storageResult.url!,
-      options
-    );
-
-    if (!metadataResult.success) {
-      // Cleanup storage if metadata storage fails
-      await supabase.storage.from(bucket).remove([storagePath]);
-      return metadataResult;
-    }
+    const { data: { publicUrl } } = supabase.storage
+      .from(bucket)
+      .getPublicUrl(fileName);
 
     return {
       success: true,
-      url: storageResult.url,
-      assetId: metadataResult.assetId
+      url: publicUrl
     };
   } catch (error: any) {
-    console.error('Universal upload error:', error);
-    return { 
-      success: false, 
-      error: error.message || 'Upload failed' 
+    return {
+      success: false,
+      error: error.message
     };
-  }
-};
-
-/**
- * Upload multiple files
- */
-export const uploadMultipleMedia = async (
-  files: File[],
-  options: UploadOptions = {}
-): Promise<UploadResult[]> => {
-  const results: UploadResult[] = [];
-  
-  for (const file of files) {
-    const result = await uploadMedia(file, options);
-    results.push(result);
-  }
-  
-  return results;
-};
-
-/**
- * Upload with progress tracking
- */
-export const uploadWithProgress = async (
-  file: File,
-  options: UploadOptions = {},
-  onProgress?: (progress: number) => void
-): Promise<UploadResult> => {
-  // Start progress
-  onProgress?.(0);
-  
-  const progressInterval = setInterval(() => {
-    // Simulate progress (in real implementation, this would be actual upload progress)
-    const randomProgress = Math.random() * 20;
-    onProgress?.(Math.min(90, randomProgress));
-  }, 300);
-
-  try {
-    const result = await uploadMedia(file, options);
-    
-    clearInterval(progressInterval);
-    onProgress?.(100);
-    
-    return result;
-  } catch (error: any) {
-    clearInterval(progressInterval);
-    onProgress?.(0);
-    throw error;
   }
 };
