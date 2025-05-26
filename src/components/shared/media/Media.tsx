@@ -2,7 +2,8 @@
 import { useState, useEffect, forwardRef } from 'react';
 import { AlertCircle, Loader2 } from 'lucide-react';
 import { MediaType } from '@/types/media';
-import { determineMediaType, extractMediaUrl } from '@/utils/media/mediaUtils';
+import { MediaRenderer } from '@/components/media/MediaRenderer';
+import { normalizeMediaSource } from '@/utils/media/mediaUtils';
 
 type MediaProps = {
   source: any;
@@ -39,49 +40,53 @@ export const Media = forwardRef<HTMLVideoElement | HTMLImageElement, MediaProps>
     },
     ref
   ) => {
-    const [url, setUrl] = useState<string | null>(null);
-    const [mediaType, setMediaType] = useState<MediaType>(MediaType.UNKNOWN);
-    const [isLoading, setIsLoading] = useState(true);
+    const [mediaSource, setMediaSource] = useState<any>(null);
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
+      console.log('Media component - Processing source:', source);
+      
       if (!source) {
         setError('No media source provided');
-        setIsLoading(false);
         return;
       }
 
       try {
-        // Extract URL from source
-        const extractedUrl = extractMediaUrl(source as any);
-        if (!extractedUrl) {
+        const normalized = normalizeMediaSource(source);
+        console.log('Media component - Normalized source:', normalized);
+        
+        if (!normalized.url) {
           setError('Could not extract media URL');
-          setIsLoading(false);
           return;
         }
-
-        // Set URL
-        setUrl(extractedUrl);
-
-        // Determine media type - using the extracted URL string for type detection
-        const type = determineMediaType(extractedUrl);
-        setMediaType(type);
+        
+        setMediaSource(normalized);
+        setError(null);
       } catch (err) {
-        console.error('Error processing media:', err);
+        console.error('Media component - Error processing source:', err);
         setError('Failed to process media');
-      } finally {
-        setIsLoading(false);
       }
     }, [source]);
 
-    // Custom handler for video time updates that converts event to time
-    const handleTimeUpdate = (e: React.SyntheticEvent<HTMLVideoElement>) => {
+    // Custom handler for video time updates
+    const handleTimeUpdate = (currentTime: number, duration: number) => {
       if (onTimeUpdate) {
-        onTimeUpdate(e.currentTarget.currentTime);
+        onTimeUpdate(currentTime);
       }
     };
 
-    if (isLoading) {
+    if (error) {
+      return (
+        <div className={`flex items-center justify-center bg-black/10 ${className}`}>
+          <div className="text-center p-4">
+            <AlertCircle className="mx-auto h-8 w-8 text-red-500 mb-2" />
+            <p className="text-sm text-gray-500">{error}</p>
+          </div>
+        </div>
+      );
+    }
+
+    if (!mediaSource) {
       return (
         <div className={`flex items-center justify-center bg-black/10 ${className}`}>
           <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
@@ -89,92 +94,25 @@ export const Media = forwardRef<HTMLVideoElement | HTMLImageElement, MediaProps>
       );
     }
 
-    if (error || !url) {
-      return (
-        <div className={`flex items-center justify-center bg-black/10 ${className}`}>
-          <div className="text-center p-4">
-            <AlertCircle className="mx-auto h-8 w-8 text-red-500 mb-2" />
-            <p className="text-sm text-gray-500">{error || 'Media unavailable'}</p>
-          </div>
-        </div>
-      );
-    }
-
-    // For video content
-    if (mediaType === MediaType.VIDEO) {
-      return (
-        <div className="relative w-full h-full">
-          <video
-            ref={ref as React.RefObject<HTMLVideoElement>}
-            src={url}
-            className={className}
-            autoPlay={autoPlay}
-            controls={controls}
-            muted={muted}
-            loop={loop}
-            poster={poster}
-            onClick={onClick}
-            onLoadedData={onLoad}
-            onError={onError}
-            onEnded={onEnded}
-            onTimeUpdate={handleTimeUpdate}
-            playsInline
-          />
-          {showWatermark && (
-            <div className="absolute bottom-2 right-2 text-xs text-white bg-black/50 px-1.5 py-0.5 rounded">
-              eroxr
-            </div>
-          )}
-        </div>
-      );
-    }
-
-    // For image content (including GIF)
-    if (mediaType === MediaType.IMAGE || mediaType === MediaType.GIF) {
-      return (
-        <div className="relative w-full h-full">
-          <img
-            ref={ref as React.RefObject<HTMLImageElement>}
-            src={url}
-            className={className}
-            onClick={onClick}
-            onLoad={onLoad}
-            onError={onError}
-            alt="Media content"
-          />
-          {showWatermark && (
-            <div className="absolute bottom-2 right-2 text-xs text-white bg-black/50 px-1.5 py-0.5 rounded">
-              eroxr
-            </div>
-          )}
-        </div>
-      );
-    }
-
-    // For audio content
-    if (mediaType === MediaType.AUDIO) {
-      return (
-        <div className={`audio-player ${className}`}>
-          <audio
-            src={url}
-            controls={controls}
-            autoPlay={autoPlay}
-            muted={muted}
-            loop={loop}
-            onLoadedData={onLoad}
-            onError={onError}
-            onEnded={onEnded}
-            className="w-full"
-          />
-        </div>
-      );
-    }
-
-    // For document or unknown content types
     return (
-      <div className={`flex items-center justify-center bg-black/10 ${className}`}>
-        <p className="text-sm text-gray-500">Unsupported media format</p>
-      </div>
+      <MediaRenderer
+        ref={ref}
+        src={mediaSource}
+        className={className}
+        autoPlay={autoPlay}
+        controls={controls}
+        muted={muted}
+        loop={loop}
+        poster={poster}
+        showWatermark={showWatermark}
+        onClick={onClick}
+        onLoad={onLoad}
+        onError={onError}
+        onEnded={onEnded}
+        onTimeUpdate={handleTimeUpdate}
+        allowRetry={true}
+        maxRetries={3}
+      />
     );
   }
 );

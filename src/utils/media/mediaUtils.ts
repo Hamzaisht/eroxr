@@ -14,12 +14,12 @@ export const determineMediaType = (source: any): MediaType => {
   const extension = url.split('.').pop()?.toLowerCase() || '';
   
   // Video extensions
-  if (['mp4', 'webm', 'mov', 'avi', 'mkv'].includes(extension)) {
+  if (['mp4', 'webm', 'mov', 'avi', 'mkv', 'm4v'].includes(extension)) {
     return MediaType.VIDEO;
   }
   
   // Image extensions
-  if (['jpg', 'jpeg', 'png', 'webp', 'bmp'].includes(extension)) {
+  if (['jpg', 'jpeg', 'png', 'webp', 'bmp', 'svg'].includes(extension)) {
     return MediaType.IMAGE;
   }
   
@@ -29,7 +29,7 @@ export const determineMediaType = (source: any): MediaType => {
   }
   
   // Audio extensions
-  if (['mp3', 'wav', 'ogg', 'aac'].includes(extension)) {
+  if (['mp3', 'wav', 'ogg', 'aac', 'm4a'].includes(extension)) {
     return MediaType.AUDIO;
   }
   
@@ -45,39 +45,22 @@ export const extractMediaUrl = (source: any): string | null => {
   if (!source) return null;
   
   // If source is already a string URL
-  if (typeof source === 'string') return source;
+  if (typeof source === 'string') {
+    return source.trim();
+  }
   
   // Check common URL properties
-  if (source.url) return source.url;
+  if (source.url) return source.url.trim();
   if (source.media_url) {
     if (Array.isArray(source.media_url)) {
-      return source.media_url[0] || null;
+      return source.media_url[0]?.trim() || null;
     }
-    return source.media_url;
+    return source.media_url.trim();
   }
-  if (source.video_url) return source.video_url;
-  if (source.src) return source.src;
+  if (source.video_url) return source.video_url.trim();
+  if (source.src) return source.src.trim();
   
   return null;
-};
-
-export const calculateAspectRatioDimensions = (
-  containerWidth: number,
-  containerHeight: number,
-  maxWidth: number,
-  maxHeight: number
-) => {
-  const aspectRatio = containerWidth / containerHeight;
-  
-  let width = maxWidth;
-  let height = maxWidth / aspectRatio;
-  
-  if (height > maxHeight) {
-    height = maxHeight;
-    width = maxHeight * aspectRatio;
-  }
-  
-  return { width, height };
 };
 
 /**
@@ -94,7 +77,7 @@ export const normalizeMediaSource = (source: any): MediaSource => {
   // If it's already a string, create a proper MediaSource
   if (typeof source === 'string') {
     return {
-      url: source,
+      url: source.trim(),
       type: determineMediaType(source)
     };
   }
@@ -117,24 +100,7 @@ export const normalizeMediaSource = (source: any): MediaSource => {
     video_url: source.video_url,
     thumbnail_url: source.thumbnail_url,
     path: source.path,
-    post_id: source.post_id
+    post_id: source.post_id,
+    access_level: source.access_level
   };
-};
-
-/**
- * Creates a unique file path for uploading
- */
-export const createUniqueFilePath = (
-  file: File,
-  options: { folder?: string; userId?: string } = {}
-): string => {
-  const { folder = '', userId = '' } = options;
-  const timestamp = Date.now();
-  const randomString = Math.random().toString(36).substring(2, 10);
-  const extension = file.name.split('.').pop() || '';
-  
-  const basePath = folder ? `${folder}/` : '';
-  const userPath = userId ? `${userId}/` : '';
-  
-  return `${basePath}${userPath}${timestamp}-${randomString}.${extension}`;
 };

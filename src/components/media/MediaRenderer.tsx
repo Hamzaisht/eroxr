@@ -1,17 +1,12 @@
 
-import React, { useState, useEffect, forwardRef } from 'react';
-import { MediaSource, MediaType, MediaAccessLevel } from '@/utils/media/types';
+import React, { useState, useRef, useEffect, forwardRef } from 'react';
+import { AlertCircle, Loader2, RefreshCw } from 'lucide-react';
+import { MediaSource, MediaType } from '@/types/media';
 import { isImageType, isVideoType, isAudioType } from '@/utils/media/mediaTypeUtils';
-import { extractMediaUrl } from '@/utils/media/mediaUtils';
-import { isValidMediaUrl } from '@/utils/media/mediaOrchestrator';
-import { useMediaAccess } from '@/hooks/useMediaAccess';
-import { LockedMediaOverlay } from './LockedMediaOverlay';
-import { MediaErrorState } from './states/MediaErrorState';
-import { MediaLoadingState } from './states/MediaLoadingState';
-import { supabase } from '@/integrations/supabase/client';
+import { extractMediaUrl, determineMediaType } from '@/utils/media/mediaUtils';
 
 interface MediaRendererProps {
-  src: MediaSource;
+  src: MediaSource | string;
   className?: string;
   autoPlay?: boolean;
   controls?: boolean;
@@ -26,279 +21,215 @@ interface MediaRendererProps {
   onTimeUpdate?: (currentTime: number, duration: number) => void;
   allowRetry?: boolean;
   maxRetries?: number;
-  compact?: boolean;
 }
 
-export const MediaRenderer = forwardRef<
-  HTMLVideoElement | HTMLImageElement,
-  MediaRendererProps
->(({
-  src,
-  className = "",
-  autoPlay = false,
-  controls = true,
-  muted = true,
-  loop = false,
-  poster,
-  showWatermark = false,
-  onClick,
-  onLoad,
-  onError,
-  onEnded,
-  onTimeUpdate,
-  allowRetry = true,
-  maxRetries = 2,
-  compact = false
-}, ref) => {
-  const [hasError, setHasError] = useState(false);
-  const [retries, setRetries] = useState(0);
-  const [isLoading, setIsLoading] = useState(true);
-  const [forceRender, setForceRender] = useState(false);
-  const [mediaUrl, setMediaUrl] = useState<string | null>(null);
-  
-  // Extract the URL from the source
-  const initialUrl = extractMediaUrl(src);
-  const mediaType = src.type || MediaType.UNKNOWN;
-  const accessLevel = src.access_level || MediaAccessLevel.PUBLIC;
-  const creatorId = src.creator_id;
-  const postId = src.post_id;
-  const storagePath = src.path || extractStoragePath(initialUrl);
-  
-  // Check if user has access to this media
-  const { canAccess, isLoading: isAccessLoading, reason } = useMediaAccess({
-    creatorId,
-    postId,
-    accessLevel
-  });
-  
-  // Extract storage path from URL
-  function extractStoragePath(url: string): string | undefined {
-    if (!url) return undefined;
-    
-    const match = url.match(/\/storage\/v1\/object\/public\/([^?]+)/);
-    return match ? match[1] : undefined;
-  }
-  
-  // Function to refresh signed URL for restricted content
-  const refreshSignedUrl = async () => {
-    if (!storagePath || accessLevel === MediaAccessLevel.PUBLIC) return initialUrl;
-    
-    try {
-      const { data, error } = await supabase.storage
-        .from("media")
-        .createSignedUrl(storagePath, 60 * 10); // 10 minutes expiration
-        
-      if (error || !data?.signedUrl) {
-        console.error("Error refreshing signed URL:", error);
-        return initialUrl;
-      }
+export const MediaRenderer = forwardRef<HTMLVideoElement | HTMLImageElement, MediaRendererProps>(
+  (
+    {
+      src,
+      className = '',
+      autoPlay = false,
+      controls = true,
+      muted = true,
+      loop = false,
+      poster,
+      showWatermark = false,
+      onClick,
+      onLoad,
+      onError,
+      onEnded,
+      onTimeUpdate,
+      allowRetry = true,
+      maxRetries = 3,
+    },
+    ref
+  ) => {
+    const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+    const [retryCount, setRetryCount] = useState(0);
+    const [mediaUrl, setMediaUrl] = useState<string | null>(null);
+    const [mediaType, setMediaType] = useState<MediaType>(MediaType.UNKNOWN);
+
+    useEffect(() => {
+      console.log('MediaRenderer - Processing source:', src);
       
-      return data.signedUrl;
-    } catch (err) {
-      console.error("Failed to refresh signed URL:", err);
-      return initialUrl;
-    }
-  };
-  
-  // Handle unlock action
-  const handleUnlock = () => {
-    setForceRender(prev => !prev);
-  };
-  
-  // Refresh URL when access changes or forced refresh
-  useEffect(() => {
-    const loadMediaUrl = async () => {
-      if (canAccess && accessLevel !== MediaAccessLevel.PUBLIC && storagePath) {
-        const freshUrl = await refreshSignedUrl();
-        setMediaUrl(freshUrl);
-      } else {
-        setMediaUrl(initialUrl);
+      if (!src) {
+        setError('No media source provided');
+        setIsLoading(false);
+        return;
+      }
+
+      try {
+        // Extract URL from source
+        const url = extractMediaUrl(src);
+        console.log('MediaRenderer - Extracted URL:', url);
+        
+        if (!url) {
+          setError('Could not extract media URL');
+          setIsLoading(false);
+          return;
+        }
+
+        // Determine media type
+        const type = typeof src === 'object' && 'type' in src ? src.type : determineMediaType(url);
+        console.log('MediaRenderer - Determined type:', type);
+        
+        setMediaUrl(url);
+        setMediaType(type);
+        setError(null);
+        setIsLoading(true);
+      } catch (err) {
+        console.error('MediaRenderer - Error processing source:', err);
+        setError('Failed to process media source');
+        setIsLoading(false);
+      }
+    }, [src, retryCount]);
+
+    const handleLoad = () => {
+      console.log('MediaRenderer - Media loaded successfully:', mediaUrl);
+      setIsLoading(false);
+      setError(null);
+      onLoad?.();
+    };
+
+    const handleError = (e?: any) => {
+      console.error('MediaRenderer - Media load error:', e, 'URL:', mediaUrl);
+      setIsLoading(false);
+      setError('Failed to load media');
+      onError?.(e);
+    };
+
+    const handleRetry = () => {
+      if (retryCount < maxRetries) {
+        console.log(`MediaRenderer - Retrying (${retryCount + 1}/${maxRetries}):`, mediaUrl);
+        setRetryCount(prev => prev + 1);
+        setError(null);
+        setIsLoading(true);
       }
     };
-    
-    loadMediaUrl();
-  }, [canAccess, forceRender, accessLevel, storagePath]);
-  
-  // Check for valid URL early to avoid unnecessary rendering
-  const url = mediaUrl || initialUrl;
-  if (!isValidMediaUrl(url)) {
-    return (
-      <MediaErrorState 
-        className={className}
-        message="Invalid media source"
-        compact={compact}
-      />
-    );
-  }
-  
-  // Show locked content overlay if user doesn't have access
-  if (!canAccess && !isAccessLoading && accessLevel !== MediaAccessLevel.PUBLIC) {
-    return (
-      <div className="relative w-full h-full">
-        <LockedMediaOverlay
-          accessLevel={accessLevel}
-          creatorId={creatorId || ''}
-          postId={postId}
-          thumbnailUrl={poster}
-          onUnlock={handleUnlock}
-        />
-      </div>
-    );
-  }
-  
-  // Reset error state on src change
-  useEffect(() => {
-    setHasError(false);
-    setIsLoading(true);
-    setRetries(0);
-  }, [url, forceRender]);
-  
-  // Handle load event
-  const handleLoad = () => {
-    setIsLoading(false);
-    if (onLoad) onLoad();
-  };
-  
-  // Handle error event
-  const handleError = (error: any) => {
-    console.error(`Media loading error for ${url}:`, error);
-    setHasError(true);
-    setIsLoading(false);
-    
-    if (retries < maxRetries && allowRetry) {
-      const nextRetryCount = retries + 1;
-      setRetries(nextRetryCount);
-      
-      // If error is due to expired signed URL, refresh it
-      if (accessLevel !== MediaAccessLevel.PUBLIC && storagePath) {
-        refreshSignedUrl().then(freshUrl => {
-          if (freshUrl !== url) {
-            setMediaUrl(freshUrl);
-          }
-        });
+
+    const handleTimeUpdate = (e: React.SyntheticEvent<HTMLVideoElement>) => {
+      if (onTimeUpdate) {
+        const video = e.currentTarget;
+        onTimeUpdate(video.currentTime, video.duration);
       }
-      
-      // Attempt to reload after a delay
-      setTimeout(() => {
-        setHasError(false);
-        setIsLoading(true);
-      }, 1000);
-    }
-    
-    if (onError) onError(error);
-  };
-  
-  // Handle time update for video
-  const handleTimeUpdate = (e: React.SyntheticEvent<HTMLVideoElement>) => {
-    if (onTimeUpdate) {
-      const video = e.currentTarget;
-      onTimeUpdate(video.currentTime, video.duration);
-    }
-  };
+    };
 
-  // Retry media loading
-  const handleRetry = async () => {
-    setHasError(false);
-    setIsLoading(true);
-    
-    // Refresh URL on manual retry
-    if (accessLevel !== MediaAccessLevel.PUBLIC && storagePath) {
-      const freshUrl = await refreshSignedUrl();
-      setMediaUrl(freshUrl);
+    // Loading state
+    if (isLoading && !error) {
+      return (
+        <div className={`flex items-center justify-center bg-black/10 ${className}`}>
+          <div className="text-center p-4">
+            <Loader2 className="mx-auto h-8 w-8 animate-spin text-gray-400 mb-2" />
+            <p className="text-sm text-gray-500">Loading media...</p>
+          </div>
+        </div>
+      );
     }
-    
-    setRetries(prev => prev + 1);
-  };
-  
-  // Loading display while checking access or loading media
-  if (isAccessLoading) {
-    return <MediaLoadingState className={className} />;
-  }
-  
-  // Error display
-  if (hasError) {
-    return (
-      <MediaErrorState 
-        className={className}
-        message="Media not available"
-        onRetry={allowRetry && retries < maxRetries ? handleRetry : undefined}
-        retryCount={retries}
-        maxRetries={maxRetries}
-        compact={compact}
-      />
-    );
-  }
 
-  // Render based on media type
-  if (isImageType(mediaType)) {
+    // Error state with retry option
+    if (error || !mediaUrl) {
+      return (
+        <div className={`flex items-center justify-center bg-black/10 ${className}`}>
+          <div className="text-center p-4">
+            <AlertCircle className="mx-auto h-8 w-8 text-red-500 mb-2" />
+            <p className="text-sm text-gray-500 mb-3">{error || 'Media unavailable'}</p>
+            {allowRetry && retryCount < maxRetries && (
+              <button
+                onClick={handleRetry}
+                className="inline-flex items-center gap-2 px-3 py-1 text-xs bg-blue-600 hover:bg-blue-700 text-white rounded-md transition-colors"
+              >
+                <RefreshCw className="h-3 w-3" />
+                Retry ({retryCount + 1}/{maxRetries})
+              </button>
+            )}
+          </div>
+        </div>
+      );
+    }
+
+    // Render based on media type
+    if (isVideoType(mediaType)) {
+      return (
+        <div className="relative w-full h-full">
+          <video
+            ref={ref as React.RefObject<HTMLVideoElement>}
+            src={mediaUrl}
+            className={className}
+            autoPlay={autoPlay}
+            controls={controls}
+            muted={muted}
+            loop={loop}
+            poster={poster}
+            onClick={onClick}
+            onLoadedData={handleLoad}
+            onError={handleError}
+            onEnded={onEnded}
+            onTimeUpdate={handleTimeUpdate}
+            playsInline
+            preload="metadata"
+          />
+          {showWatermark && (
+            <div className="absolute bottom-2 right-2 text-xs text-white bg-black/50 px-1.5 py-0.5 rounded">
+              eroxr
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    if (isImageType(mediaType)) {
+      return (
+        <div className="relative w-full h-full">
+          <img
+            ref={ref as React.RefObject<HTMLImageElement>}
+            src={mediaUrl}
+            className={className}
+            onClick={onClick}
+            onLoad={handleLoad}
+            onError={handleError}
+            alt="Media content"
+            loading="lazy"
+          />
+          {showWatermark && (
+            <div className="absolute bottom-2 right-2 text-xs text-white bg-black/50 px-1.5 py-0.5 rounded">
+              eroxr
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    if (isAudioType(mediaType)) {
+      return (
+        <div className={`audio-player ${className}`}>
+          <audio
+            src={mediaUrl}
+            controls={controls}
+            autoPlay={autoPlay}
+            muted={muted}
+            loop={loop}
+            onLoadedData={handleLoad}
+            onError={handleError}
+            onEnded={onEnded}
+            className="w-full"
+            preload="metadata"
+          />
+        </div>
+      );
+    }
+
+    // Unsupported media type
     return (
-      <div className="relative w-full h-full">
-        {isLoading && <MediaLoadingState />}
-        
-        <img
-          src={url}
-          className={className}
-          onClick={onClick}
-          onLoad={handleLoad}
-          onError={(e) => handleError(e)}
-          ref={ref as React.Ref<HTMLImageElement>}
-          alt=""
-          style={{ display: isLoading ? 'none' : 'block' }}
-        />
-      </div>
-    );
-  } else if (isVideoType(mediaType)) {
-    return (
-      <div className="relative w-full h-full">
-        {isLoading && <MediaLoadingState />}
-        
-        <video
-          src={url}
-          className={className}
-          autoPlay={autoPlay}
-          controls={controls}
-          muted={muted}
-          loop={loop}
-          poster={poster}
-          onClick={onClick}
-          onLoadedData={handleLoad}
-          onError={(e) => handleError(e)}
-          onEnded={onEnded}
-          onTimeUpdate={handleTimeUpdate}
-          ref={ref as React.Ref<HTMLVideoElement>}
-          playsInline
-          style={{ display: isLoading ? 'none' : 'block' }}
-        />
-      </div>
-    );
-  } else if (isAudioType(mediaType)) {
-    return (
-      <div className="relative w-full">
-        {isLoading && <MediaLoadingState />}
-        
-        <audio
-          src={url}
-          className={className}
-          autoPlay={autoPlay}
-          controls={controls}
-          muted={muted}
-          loop={loop}
-          onLoadedData={handleLoad}
-          onError={(e) => handleError(e)}
-          onEnded={onEnded}
-        />
+      <div className={`flex items-center justify-center bg-black/10 ${className}`}>
+        <div className="text-center p-4">
+          <AlertCircle className="mx-auto h-8 w-8 text-gray-400 mb-2" />
+          <p className="text-sm text-gray-500">Unsupported media format</p>
+          <p className="text-xs text-gray-400 mt-1">Type: {mediaType}</p>
+        </div>
       </div>
     );
   }
-  
-  // Unknown media type
-  return (
-    <MediaErrorState 
-      className={className}
-      message="Unsupported media type"
-      compact={compact}
-    />
-  );
-});
+);
 
 MediaRenderer.displayName = 'MediaRenderer';
