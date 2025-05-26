@@ -7,7 +7,6 @@ import { useInfiniteQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2, AlertTriangle } from "lucide-react";
 import type { FeedPost } from "../types";
-import type { Post as PostType } from "@/integrations/supabase/types/post";
 
 export const TrendingContent = () => {
   const session = useSession();
@@ -37,7 +36,7 @@ export const TrendingContent = () => {
 
       if (error) throw error;
 
-      return posts as PostType[];
+      return posts || [];
     },
     getNextPageParam: (lastPage, allPages) => {
       return lastPage?.length === 10 ? allPages.length : undefined;
@@ -84,11 +83,15 @@ export const TrendingContent = () => {
             {page && Array.isArray(page) && 
               page
                 .filter(post => post && typeof post === 'object' && post.likes_count && post.likes_count > 50)
-                .map((post: PostType) => (
+                .map((post: any) => (
                   <Post
                     key={post.id}
                     post={post}
-                    creator={post.creator}
+                    creator={{
+                      id: post.creator?.id || '',
+                      username: post.creator?.username || 'Anonymous',
+                      avatar_url: post.creator?.avatar_url || null
+                    }}
                     currentUser={session?.user || null}
                   />
                 ))

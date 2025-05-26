@@ -34,7 +34,7 @@ export const Post = ({
   onLike 
 }: PostProps) => {
   const isOwner = currentUser?.id === creator.id;
-  const hasAccess = !post.is_ppv || post.has_purchased || isOwner;
+  const hasAccess = !post.is_ppv || (post.has_purchased ?? false) || isOwner;
 
   const handleEdit = () => {
     if (onEdit) onEdit(post.id);
@@ -54,11 +54,11 @@ export const Post = ({
         <div className="flex items-start space-x-3">
           <Avatar className="w-10 h-10">
             <AvatarImage src={creator.avatar_url || ''} alt={creator.username || ''} />
-            <AvatarFallback>{creator.username?.[0]?.toUpperCase()}</AvatarFallback>
+            <AvatarFallback>{creator.username?.[0]?.toUpperCase() || 'U'}</AvatarFallback>
           </Avatar>
           <div className="flex-1 min-w-0">
             <div className="flex items-center justify-between">
-              <h3 className="font-medium truncate">{creator.username}</h3>
+              <h3 className="font-medium truncate">{creator.username || 'Anonymous'}</h3>
               {isOwner && (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>

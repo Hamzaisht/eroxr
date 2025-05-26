@@ -9,7 +9,7 @@ import { useRealtimeUpdates } from "@/hooks/useRealtimeUpdates";
 import { useEffect, useCallback, memo } from "react";
 import { useInView } from "react-intersection-observer";
 import { useParams } from "react-router-dom";
-import type { Post } from "@/integrations/supabase/types/post";
+import type { Post } from "./feed/types";
 import { Loader2, RefreshCw } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "./ui/button";
@@ -106,7 +106,7 @@ export const CreatorsFeed = memo(({ feedType = 'feed' }: CreatorsFeedProps) => {
       <ScrollArea className="h-[calc(100vh-20rem)]">
         <div className="space-y-4 max-w-3xl mx-auto">
           <AnimatePresence mode="popLayout">
-            {posts.map((post: Post) => {
+            {posts.map((post: any) => {
               const typedPost: Post = {
                 ...post,
                 id: post.id,
@@ -124,11 +124,12 @@ export const CreatorsFeed = memo(({ feedType = 'feed' }: CreatorsFeedProps) => {
                 video_urls: post.video_urls || null,
                 has_liked: post.has_liked || false,
                 has_saved: post.has_saved || false,
+                has_purchased: post.has_purchased || false,
                 screenshots_count: post.screenshots_count || 0,
                 downloads_count: post.downloads_count || 0,
                 creator: {
                   id: post.creator?.id || '',
-                  username: post.creator?.username || '',
+                  username: post.creator?.username || 'Anonymous',
                   avatar_url: post.creator?.avatar_url || null
                 }
               };

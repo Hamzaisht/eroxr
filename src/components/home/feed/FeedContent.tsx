@@ -54,7 +54,7 @@ export const FeedContent = ({ userId }: FeedContentProps) => {
         ...post,
         has_liked: post.post_likes?.some(like => like.user_id === session?.user?.id) || false,
         creator: {
-          id: post.creator?.id,
+          id: post.creator?.id || '',
           username: post.creator?.username || "Anonymous",
           avatar_url: post.creator?.avatar_url || null
         }
@@ -103,7 +103,7 @@ export const FeedContent = ({ userId }: FeedContentProps) => {
         exit={{ opacity: 0 }}
         className="space-y-6"
       >
-        {allPosts.map((post: FeedPost) => (
+        {allPosts.map((post: any) => (
           <Post
             key={post.id}
             post={post}
@@ -117,7 +117,7 @@ export const FeedContent = ({ userId }: FeedContentProps) => {
         <div ref={ref} className="h-10">
           {isFetchingNextPage && hasNextPage && (
             <div className="flex justify-center p-4">
-              <Loader2 className="w-6 h-6 animate-spin text-luxury-primary" />
+              <Loader2 className="w-6 w-6 animate-spin text-luxury-primary" />
             </div>
           )}
         </div>

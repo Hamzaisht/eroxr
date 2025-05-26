@@ -1,8 +1,8 @@
 
 export interface Creator {
   id: string;
-  username: string;
-  avatar_url: string;
+  username: string | null;
+  avatar_url: string | null;
 }
 
 export interface Post {
@@ -23,4 +23,10 @@ export interface Post {
   is_ppv: boolean;
   screenshots_count: number;
   downloads_count: number;
+  has_purchased?: boolean;
+  has_saved?: boolean;
+  view_count?: number;
+  share_count?: number;
+  engagement_score?: number;
+  video_duration?: number;
 }
