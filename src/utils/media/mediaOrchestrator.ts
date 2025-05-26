@@ -1,35 +1,39 @@
-import { isValidUrl } from './urlUtils';
 
 /**
- * Determines if a URL is a valid media URL
- * @param url URL to check
- * @returns Boolean indicating if URL is valid
+ * Media orchestrator utilities for validating and processing media URLs
+ */
+
+/**
+ * Check if a media URL is valid
  */
 export function isValidMediaUrl(url: string | null | undefined): boolean {
-  if (!url) return false;
+  if (!url || typeof url !== 'string') return false;
   
-  return isValidUrl(url);
+  try {
+    // Basic URL validation
+    new URL(url);
+    
+    // Check if it's not an empty string or just whitespace
+    if (url.trim().length === 0) return false;
+    
+    // Allow common media file extensions and Supabase storage URLs
+    const isValidExtension = /\.(jpg|jpeg|png|gif|webp|svg|mp4|webm|mov|avi|mp3|wav|ogg|aac)($|\?)/i.test(url);
+    const isSupabaseStorage = url.includes('supabase.co/storage/') || url.includes('storage/v1/object/');
+    const isHttpUrl = url.startsWith('http://') || url.startsWith('https://');
+    
+    return isHttpUrl && (isValidExtension || isSupabaseStorage);
+  } catch (error) {
+    return false;
+  }
 }
 
 /**
- * Alias for isValidMediaUrl for backward compatibility
+ * Process media URL for better compatibility
  */
-export const validateMediaUrl = isValidMediaUrl;
-
-/**
- * Check if a user can access a specific piece of media
- * @param params Access parameters
- * @returns Boolean indicating if user can access media
- */
-export function canAccessMedia(params: { 
-  creatorId?: string | null; 
-  postId?: string | null;
-  accessLevel?: string;
-  userId?: string | null;
-  isPremium?: boolean;
-}): boolean {
-  // This is just a placeholder function - actual implementation would check
-  // if the current user has access to the media based on subscription status,
-  // payment status, etc.
-  return true;
+export function processMediaUrl(url: string): string {
+  if (!url) return '';
+  
+  // Add cache busting for better reliability
+  const separator = url.includes('?') ? '&' : '?';
+  return `${url}${separator}t=${Date.now()}`;
 }

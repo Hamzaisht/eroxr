@@ -15,6 +15,7 @@ interface UniversalMediaProps extends MediaOptions {
   alt?: string;
   maxRetries?: number;
   accessLevel?: MediaAccessLevel;
+  compact?: boolean;
 }
 
 export const UniversalMedia = forwardRef(({
@@ -34,7 +35,8 @@ export const UniversalMedia = forwardRef(({
   objectFit = 'cover',
   alt = "Media content",
   maxRetries = 2,
-  accessLevel
+  accessLevel,
+  compact = false
 }: UniversalMediaProps, ref: Ref<HTMLVideoElement | HTMLImageElement>) => {
   const { toast } = useToast();
   const [retryCount, setRetryCount] = useState(0);
@@ -63,6 +65,17 @@ export const UniversalMedia = forwardRef(({
   
   // Early validation of URL
   if (!isValidMediaUrl(mediaItem?.url)) {
+    if (compact) {
+      return (
+        <div className="flex items-center justify-center h-32 w-full bg-luxury-darker/50 rounded-lg border border-luxury-neutral/10">
+          <div className="text-center p-4">
+            <AlertCircle className="h-6 w-6 text-luxury-neutral/50 mx-auto mb-2" />
+            <p className="text-xs text-luxury-neutral/70">Media not available</p>
+          </div>
+        </div>
+      );
+    }
+    
     return (
       <div className="flex flex-col items-center justify-center h-full w-full p-4 bg-black/10 text-center">
         <AlertCircle className="h-8 w-8 text-red-500 mb-2" />
@@ -72,24 +85,27 @@ export const UniversalMedia = forwardRef(({
   }
   
   const handleError = (error?: any) => {
-    console.error("Media loading error:", error, mediaItem);
-    
-    // Track retry count
-    const newRetryCount = retryCount + 1;
-    setRetryCount(newRetryCount);
-    
-    // If we've exceeded max retries, display toast error
-    if (newRetryCount >= maxRetries) {
-      toast({
-        title: "Media failed to load",
-        description: "Please try again later",
-        variant: "destructive",
-        action: (
-          <ToastAction altText="Retry" onClick={() => window.location.reload()}>
-            Retry
-          </ToastAction>
-        ),
-      });
+    // For compact mode, don't show toasts - just silently handle errors
+    if (!compact) {
+      console.error("Media loading error:", error, mediaItem);
+      
+      // Track retry count
+      const newRetryCount = retryCount + 1;
+      setRetryCount(newRetryCount);
+      
+      // If we've exceeded max retries, display toast error (only for non-compact)
+      if (newRetryCount >= maxRetries) {
+        toast({
+          title: "Media failed to load",
+          description: "Please try again later",
+          variant: "destructive",
+          action: (
+            <ToastAction altText="Retry" onClick={() => window.location.reload()}>
+              Retry
+            </ToastAction>
+          ),
+        });
+      }
     }
     
     // Call the original error handler if provided
@@ -116,6 +132,7 @@ export const UniversalMedia = forwardRef(({
       ref={ref}
       allowRetry={retryCount < maxRetries}
       maxRetries={maxRetries}
+      compact={compact}
     />
   );
 });

@@ -30,15 +30,16 @@ export const PostContent = ({
   const hasMedia = (mediaUrls?.length ?? 0) > 0 || (videoUrls?.length ?? 0) > 0;
 
   const handleMediaError = (url: string) => {
-    console.error('Media load error for URL:', url);
+    // Silently handle media errors - don't spam console or show toasts
     setLoadError(prev => ({ ...prev, [url]: true }));
     
-    // Track retry count
+    // Track retry count but don't report as critical error
     const currentRetries = retries[url] || 0;
     const newRetryCount = currentRetries + 1;
     setRetries(prev => ({ ...prev, [url]: newRetryCount }));
     
-    if (newRetryCount >= 2) {
+    // Only report after multiple failures and don't show toast
+    if (newRetryCount >= 3) {
       reportMediaError(
         url,
         'load_failure',
@@ -46,12 +47,6 @@ export const PostContent = ({
         url.match(/\.(mp4|webm|mov)($|\?)/i) ? 'video' : 'image',
         'PostContent'
       );
-      
-      toast({
-        title: "Error loading media",
-        description: "Failed to load media content after multiple attempts",
-        variant: "destructive",
-      });
     }
   };
 
@@ -102,6 +97,7 @@ export const PostContent = ({
                               className="w-full h-full rounded-lg overflow-hidden"
                               onError={() => handleMediaError(url)}
                               controls={true}
+                              compact={true}
                             />
                           </motion.div>
                         );
@@ -132,6 +128,7 @@ export const PostContent = ({
                               }}
                               className="w-full h-full object-cover rounded-lg transition-transform duration-300 group-hover:scale-105"
                               onError={() => handleMediaError(url)}
+                              compact={true}
                             />
                             <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-lg" />
                           </motion.div>

@@ -3,10 +3,11 @@ import React, { useState, useEffect, forwardRef } from 'react';
 import { MediaSource, MediaType, MediaAccessLevel } from '@/utils/media/types';
 import { isImageType, isVideoType, isAudioType } from '@/utils/media/mediaTypeUtils';
 import { extractMediaUrl } from '@/utils/media/mediaUtils';
-import { AlertCircle, RefreshCw } from 'lucide-react';
 import { isValidMediaUrl } from '@/utils/media/mediaOrchestrator';
 import { useMediaAccess } from '@/hooks/useMediaAccess';
 import { LockedMediaOverlay } from './LockedMediaOverlay';
+import { MediaErrorState } from './states/MediaErrorState';
+import { MediaLoadingState } from './states/MediaLoadingState';
 import { supabase } from '@/integrations/supabase/client';
 
 interface MediaRendererProps {
@@ -25,6 +26,7 @@ interface MediaRendererProps {
   onTimeUpdate?: (currentTime: number, duration: number) => void;
   allowRetry?: boolean;
   maxRetries?: number;
+  compact?: boolean;
 }
 
 export const MediaRenderer = forwardRef<
@@ -45,7 +47,8 @@ export const MediaRenderer = forwardRef<
   onEnded,
   onTimeUpdate,
   allowRetry = true,
-  maxRetries = 2
+  maxRetries = 2,
+  compact = false
 }, ref) => {
   const [hasError, setHasError] = useState(false);
   const [retries, setRetries] = useState(0);
@@ -120,10 +123,11 @@ export const MediaRenderer = forwardRef<
   const url = mediaUrl || initialUrl;
   if (!isValidMediaUrl(url)) {
     return (
-      <div className="flex flex-col items-center justify-center h-full w-full p-4 bg-black/10 text-center">
-        <AlertCircle className="h-8 w-8 text-red-500 mb-2" />
-        <p className="text-sm text-gray-200">Invalid media URL</p>
-      </div>
+      <MediaErrorState 
+        className={className}
+        message="Invalid media source"
+        compact={compact}
+      />
     );
   }
   
@@ -164,7 +168,6 @@ export const MediaRenderer = forwardRef<
     if (retries < maxRetries && allowRetry) {
       const nextRetryCount = retries + 1;
       setRetries(nextRetryCount);
-      console.log(`Retry ${nextRetryCount}/${maxRetries} for ${url}`);
       
       // If error is due to expired signed URL, refresh it
       if (accessLevel !== MediaAccessLevel.PUBLIC && storagePath) {
@@ -209,114 +212,92 @@ export const MediaRenderer = forwardRef<
   
   // Loading display while checking access or loading media
   if (isAccessLoading) {
-    return (
-      <div className="flex items-center justify-center h-full w-full bg-black/10">
-        <div className="w-6 h-6 border-2 border-t-primary rounded-full animate-spin" />
-      </div>
-    );
+    return <MediaLoadingState className={className} />;
   }
   
-  // Error display component
-  const ErrorDisplay = () => (
-    <div className="flex flex-col items-center justify-center h-full w-full p-4 bg-black/10 text-center">
-      <AlertCircle className="h-8 w-8 text-red-500 mb-2" />
-      <p className="text-sm text-gray-200 mb-3">Failed to load media</p>
-      {allowRetry && retries < maxRetries && (
-        <button 
-          onClick={handleRetry}
-          className="flex items-center gap-1 px-3 py-1.5 bg-primary/90 hover:bg-primary text-white rounded-md text-sm"
-        >
-          <RefreshCw className="h-3 w-3" /> 
-          Retry
-        </button>
-      )}
-    </div>
-  );
-  
-  // Loading display
-  const LoadingDisplay = () => (
-    <div className="flex items-center justify-center h-full w-full bg-black/10">
-      <div className="w-6 h-6 border-2 border-t-primary rounded-full animate-spin" />
-    </div>
-  );
+  // Error display
+  if (hasError) {
+    return (
+      <MediaErrorState 
+        className={className}
+        message="Media not available"
+        onRetry={allowRetry && retries < maxRetries ? handleRetry : undefined}
+        retryCount={retries}
+        maxRetries={maxRetries}
+        compact={compact}
+      />
+    );
+  }
 
   // Render based on media type
   if (isImageType(mediaType)) {
     return (
       <div className="relative w-full h-full">
-        {isLoading && <LoadingDisplay />}
+        {isLoading && <MediaLoadingState />}
         
-        {hasError ? (
-          <ErrorDisplay />
-        ) : (
-          <img
-            src={url}
-            className={className}
-            onClick={onClick}
-            onLoad={handleLoad}
-            onError={(e) => handleError(e)}
-            ref={ref as React.Ref<HTMLImageElement>}
-            alt=""
-          />
-        )}
+        <img
+          src={url}
+          className={className}
+          onClick={onClick}
+          onLoad={handleLoad}
+          onError={(e) => handleError(e)}
+          ref={ref as React.Ref<HTMLImageElement>}
+          alt=""
+          style={{ display: isLoading ? 'none' : 'block' }}
+        />
       </div>
     );
   } else if (isVideoType(mediaType)) {
     return (
       <div className="relative w-full h-full">
-        {isLoading && <LoadingDisplay />}
+        {isLoading && <MediaLoadingState />}
         
-        {hasError ? (
-          <ErrorDisplay />
-        ) : (
-          <video
-            src={url}
-            className={className}
-            autoPlay={autoPlay}
-            controls={controls}
-            muted={muted}
-            loop={loop}
-            poster={poster}
-            onClick={onClick}
-            onLoadedData={handleLoad}
-            onError={(e) => handleError(e)}
-            onEnded={onEnded}
-            onTimeUpdate={handleTimeUpdate}
-            ref={ref as React.Ref<HTMLVideoElement>}
-            playsInline
-          />
-        )}
+        <video
+          src={url}
+          className={className}
+          autoPlay={autoPlay}
+          controls={controls}
+          muted={muted}
+          loop={loop}
+          poster={poster}
+          onClick={onClick}
+          onLoadedData={handleLoad}
+          onError={(e) => handleError(e)}
+          onEnded={onEnded}
+          onTimeUpdate={handleTimeUpdate}
+          ref={ref as React.Ref<HTMLVideoElement>}
+          playsInline
+          style={{ display: isLoading ? 'none' : 'block' }}
+        />
       </div>
     );
   } else if (isAudioType(mediaType)) {
     return (
       <div className="relative w-full">
-        {isLoading && <LoadingDisplay />}
+        {isLoading && <MediaLoadingState />}
         
-        {hasError ? (
-          <ErrorDisplay />
-        ) : (
-          <audio
-            src={url}
-            className={className}
-            autoPlay={autoPlay}
-            controls={controls}
-            muted={muted}
-            loop={loop}
-            onLoadedData={handleLoad}
-            onError={(e) => handleError(e)}
-            onEnded={onEnded}
-          />
-        )}
+        <audio
+          src={url}
+          className={className}
+          autoPlay={autoPlay}
+          controls={controls}
+          muted={muted}
+          loop={loop}
+          onLoadedData={handleLoad}
+          onError={(e) => handleError(e)}
+          onEnded={onEnded}
+        />
       </div>
     );
   }
   
   // Unknown media type
   return (
-    <div className="flex items-center justify-center h-full w-full bg-black/10 text-sm text-gray-400">
-      Unsupported media type
-    </div>
+    <MediaErrorState 
+      className={className}
+      message="Unsupported media type"
+      compact={compact}
+    />
   );
 });
 
