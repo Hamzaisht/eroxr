@@ -1,5 +1,3 @@
 
-export * from './MediaUploader';
-export * from './media/Media';
-export * from './media/MediaViewer';
-export * from './media/UniversalMedia';
+export { Button } from "@/components/ui/button";
+export { Card } from "@/components/ui/card";

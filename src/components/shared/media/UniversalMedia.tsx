@@ -1,82 +1,49 @@
 
-import { forwardRef, Ref, useMemo } from 'react';
-import { MediaRenderer } from '@/components/media/MediaRenderer';
-import { MediaSource, MediaType, MediaAccessLevel } from '@/utils/media/types';
-import { normalizeMediaSource } from '@/utils/media/mediaUtils';
+import { Card } from "@/components/ui/card";
+import { Image, Video, FileText } from "lucide-react";
 
 interface UniversalMediaProps {
-  item: MediaSource | string;
-  className?: string;
-  autoPlay?: boolean;
-  controls?: boolean;
-  muted?: boolean;
-  loop?: boolean;
-  poster?: string;
-  showWatermark?: boolean;
-  onClick?: () => void;
-  onLoad?: () => void;
-  onError?: (error?: any) => void;
-  onEnded?: () => void;
-  onTimeUpdate?: (currentTime: number, duration: number) => void;
-  objectFit?: 'cover' | 'contain' | 'fill' | 'none' | 'scale-down';
+  src: string;
+  type: 'image' | 'video' | 'audio' | 'document';
   alt?: string;
-  maxRetries?: number;
-  accessLevel?: MediaAccessLevel;
+  className?: string;
 }
 
-export const UniversalMedia = forwardRef(({
-  item,
-  className = "",
-  autoPlay = false,
-  controls = true,
-  muted = true,
-  loop = false,
-  poster,
-  showWatermark = false,
-  onClick,
-  onLoad,
-  onError,
-  onEnded,
-  onTimeUpdate,
-  objectFit = 'cover',
-  alt = "Media content",
-  maxRetries = 2,
-  accessLevel
-}: UniversalMediaProps, ref: Ref<HTMLVideoElement | HTMLImageElement>) => {
-  // Process the item to ensure it has a url property
-  const mediaItem = useMemo(() => {
-    const normalized = normalizeMediaSource(item);
-    // If poster prop was passed, add it to the mediaSource
-    if (poster) {
-      normalized.poster = poster;
+export const UniversalMedia = ({ src, type, alt, className }: UniversalMediaProps) => {
+  const renderMedia = () => {
+    switch (type) {
+      case 'image':
+        return (
+          <img 
+            src={src} 
+            alt={alt} 
+            className={`w-full h-full object-cover ${className || ''}`}
+          />
+        );
+      case 'video':
+        return (
+          <div className="relative w-full h-full bg-black flex items-center justify-center">
+            <Video className="w-12 h-12 text-white opacity-80" />
+          </div>
+        );
+      case 'document':
+        return (
+          <div className="w-full h-full bg-gray-100 flex items-center justify-center">
+            <FileText className="w-12 h-12 text-gray-400" />
+          </div>
+        );
+      default:
+        return (
+          <div className="w-full h-full bg-gray-100 flex items-center justify-center">
+            <Image className="w-12 h-12 text-gray-400" />
+          </div>
+        );
     }
-    // If access level is explicitly provided, use it
-    if (accessLevel) {
-      normalized.access_level = accessLevel;
-    }
-    return normalized as MediaSource;
-  }, [item, poster, accessLevel]);
+  };
 
   return (
-    <MediaRenderer
-      src={mediaItem}
-      className={className}
-      autoPlay={autoPlay}
-      controls={controls}
-      muted={muted}
-      loop={loop}
-      poster={poster || (mediaItem && typeof mediaItem === 'object' && 'poster' in mediaItem ? mediaItem.poster : undefined)}
-      showWatermark={showWatermark}
-      onClick={onClick}
-      onLoad={onLoad}
-      onError={onError}
-      onEnded={onEnded}
-      onTimeUpdate={onTimeUpdate}
-      ref={ref}
-      allowRetry={true}
-      maxRetries={maxRetries}
-    />
+    <Card className="overflow-hidden">
+      {renderMedia()}
+    </Card>
   );
-});
-
-UniversalMedia.displayName = 'UniversalMedia';
+};

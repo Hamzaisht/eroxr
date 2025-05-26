@@ -1,157 +1,47 @@
 
-import { useState, useCallback } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { ImagePlus, Loader2 } from "lucide-react";
+import { Card } from "@/components/ui/card";
+import { Upload, Image, Video } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { useSession } from "@supabase/auth-helpers-react";
-import { createUniqueFilePath } from "@/utils/upload/fileUtils";
-import { uploadFileToStorage } from "@/utils/upload/storageService";
 
 interface MediaUploadSectionProps {
-  onMediaSelect: (urls: string[]) => void;
-  isUploading: boolean;
+  onFilesSelected?: (files: File[]) => void;
 }
 
-export const MediaUploadSection = ({ onMediaSelect, isUploading }: MediaUploadSectionProps) => {
-  const [selectedFiles, setSelectedFiles] = useState<FileList | null>(null);
-  const [localIsUploading, setLocalIsUploading] = useState(false);
+export const MediaUploadSection = ({ onFilesSelected }: MediaUploadSectionProps) => {
+  const [dragActive, setDragActive] = useState(false);
   const { toast } = useToast();
-  const session = useSession();
 
-  const handleFileChange = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const files = event.target.files;
-    if (!files || !session?.user?.id) return;
-
-    setSelectedFiles(files);
-    setLocalIsUploading(true);
-    
-    try {
-      const uploadPromises = Array.from(files).map(async (file) => {
-        // Create optimized version of image if it's too large
-        let fileToUpload = file;
-        if (file.type.startsWith('image/') && file.size > 1024 * 1024) {
-          fileToUpload = await optimizeImage(file);
-        }
-
-        // Generate a unique path for the file
-        const path = createUniqueFilePath(fileToUpload);
-        
-        // Upload to storage with improved service
-        const result = await uploadFileToStorage('media', path, fileToUpload);
-        
-        if (!result.success || !result.url) {
-          throw new Error(result.error || "Failed to upload file");
-        }
-        
-        return result.url;
-      });
-
-      const urls = await Promise.all(uploadPromises);
-      onMediaSelect(urls);
-
-      toast({
-        title: "Media uploaded",
-        description: "Your media has been uploaded successfully",
-      });
-    } catch (error: any) {
-      console.error('Upload error:', error);
-      toast({
-        title: "Upload failed",
-        description: error.message || "Failed to upload media. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setLocalIsUploading(false);
-      setSelectedFiles(null);
-    }
-  }, [onMediaSelect, toast, session?.user?.id]);
-
-  const optimizeImage = async (file: File): Promise<File> => {
-    return new Promise((resolve) => {
-      const img = new Image();
-      img.src = URL.createObjectURL(file);
-      
-      img.onload = () => {
-        const canvas = document.createElement('canvas');
-        const ctx = canvas.getContext('2d')!;
-        
-        // Calculate new dimensions while maintaining aspect ratio
-        let width = img.width;
-        let height = img.height;
-        const maxDimension = 1920;
-        
-        if (width > height && width > maxDimension) {
-          height *= maxDimension / width;
-          width = maxDimension;
-        } else if (height > maxDimension) {
-          width *= maxDimension / height;
-          height = maxDimension;
-        }
-        
-        canvas.width = width;
-        canvas.height = height;
-        
-        // Draw and compress image
-        ctx.drawImage(img, 0, 0, width, height);
-        
-        canvas.toBlob((blob) => {
-          if (blob) {
-            resolve(new File([blob], file.name, {
-              type: 'image/jpeg',
-              lastModified: Date.now(),
-            }));
-          }
-        }, 'image/jpeg', 0.85); // Adjust quality as needed
-        
-        URL.revokeObjectURL(img.src);
-      };
+  const handleUpload = () => {
+    toast({
+      title: "Coming soon",
+      description: "Media upload functionality will be available soon"
     });
   };
 
-  const isUploadingState = isUploading || localIsUploading;
-
   return (
-    <div className="space-y-4">
-      <input
-        type="file"
-        id="media-upload"
-        multiple
-        accept="image/*,video/*"
-        className="hidden"
-        onChange={handleFileChange}
-        disabled={isUploadingState}
-      />
-
-      <Button
-        type="button"
-        variant="outline"
-        className="w-full h-32 relative border-dashed border-2"
-        onClick={() => document.getElementById('media-upload')?.click()}
-        disabled={isUploadingState}
+    <Card className="p-6">
+      <div 
+        className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
+          dragActive ? 'border-blue-500 bg-blue-50' : 'border-gray-300'
+        }`}
       >
-        {isUploadingState ? (
-          <div className="flex flex-col items-center gap-2">
-            <Loader2 className="h-6 w-6 animate-spin" />
-            <span>Uploading...</span>
-          </div>
-        ) : (
-          <div className="flex flex-col items-center gap-2">
-            <ImagePlus className="h-6 w-6" />
-            <span>Upload Media</span>
-          </div>
-        )}
-      </Button>
-
-      {selectedFiles && (
-        <div className="text-sm text-muted-foreground">
-          {Array.from(selectedFiles).map((file, index) => (
-            <div key={index} className="flex items-center gap-2">
-              <span>{file.name}</span>
-              <span className="text-xs">({Math.round(file.size / 1024)}KB)</span>
-            </div>
-          ))}
+        <div className="flex justify-center space-x-4 mb-4">
+          <Image className="w-8 h-8 text-gray-400" />
+          <Video className="w-8 h-8 text-gray-400" />
         </div>
-      )}
-    </div>
+        
+        <h3 className="text-lg font-medium mb-2">Upload Media</h3>
+        <p className="text-sm text-gray-500 mb-4">
+          Drag and drop files here or click to browse
+        </p>
+        
+        <Button onClick={handleUpload}>
+          <Upload className="w-4 h-4 mr-2" />
+          Choose Files
+        </Button>
+      </div>
+    </Card>
   );
 };

@@ -1,64 +1,44 @@
 
-import React, { useState } from 'react';
-import { UniversalMedia } from '@/components/media/UniversalMedia';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Short } from '@/components/home/types/short';
-import { MediaType } from '@/types/media';
+import { Card } from "@/components/ui/card";
+import { Play } from "lucide-react";
+
+interface Short {
+  id: string;
+  title: string;
+  thumbnailUrl?: string;
+  videoUrl: string;
+  views: number;
+}
 
 interface ShortsListProps {
   shorts: Short[];
 }
 
-export const ShortsList: React.FC<ShortsListProps> = ({ shorts }) => {
-  const [selectedShort, setSelectedShort] = useState<Short | null>(null);
-  const [shortErrors, setShortErrors] = useState<Record<string, boolean>>({});
-
-  const handleShortClick = (short: Short) => {
-    setSelectedShort(short);
-  };
-
-  const handleShortError = (shortId: string) => {
-    setShortErrors(prev => ({ ...prev, [shortId]: true }));
-  };
-
+export const ShortsList = ({ shorts }: ShortsListProps) => {
   return (
-    <div className="grid grid-cols-3 gap-4">
+    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
       {shorts.map((short) => (
-        <div key={short.id} className="relative">
-          <img
-            src={short.video_thumbnail_url || short.media_url?.[0] || ''}
-            alt={`Short ${short.id}`}
-            className="w-full h-auto rounded-md cursor-pointer"
-            onClick={() => handleShortClick(short)}
-          />
-          {shortErrors[short.id] && (
-            <div className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-md">
-              <span className="text-white">Error</span>
+        <Card key={short.id} className="relative overflow-hidden cursor-pointer">
+          <div className="aspect-[9/16] bg-black flex items-center justify-center">
+            {short.thumbnailUrl ? (
+              <img 
+                src={short.thumbnailUrl} 
+                alt={short.title}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <div className="text-white">Video</div>
+            )}
+            <div className="absolute inset-0 flex items-center justify-center">
+              <Play className="w-8 h-8 text-white opacity-80" />
             </div>
-          )}
-        </div>
+          </div>
+          <div className="p-2">
+            <p className="text-sm font-medium truncate">{short.title}</p>
+            <p className="text-xs text-gray-500">{short.views} views</p>
+          </div>
+        </Card>
       ))}
-
-      <Dialog open={!!selectedShort} onOpenChange={() => setSelectedShort(null)}>
-        <DialogContent className="sm:max-w-[75%] md:max-w-[60%] lg:max-w-[50%] xl:max-w-[40%]">
-          <DialogHeader>
-            <DialogTitle>Short Video</DialogTitle>
-          </DialogHeader>
-          {selectedShort && (
-            <UniversalMedia
-              item={{
-                url: selectedShort.video_urls?.[0] || '',
-                type: MediaType.VIDEO,
-                thumbnail: selectedShort.video_thumbnail_url || selectedShort.media_url?.[0] || ''
-              }}
-              className="w-full aspect-video"
-              controls={true}
-              autoPlay={true}
-              onError={() => handleShortError(selectedShort.id)}
-            />
-          )}
-        </DialogContent>
-      </Dialog>
     </div>
   );
 };

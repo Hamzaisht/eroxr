@@ -1,137 +1,60 @@
 
-import { motion } from "framer-motion";
-import { useState } from "react";
-import { PlayCircle, ImageIcon } from "lucide-react";
-import { Story } from "@/integrations/supabase/types/story";
-import { Avatar } from "@/components/ui/avatar";
-import { AvatarImage } from "@/components/ui/avatar";
-import { AvatarFallback } from "@/components/ui/avatar";
-import { UniversalMedia } from "@/components/media/UniversalMedia";
-import { MediaType } from "@/utils/media/types";
-import { normalizeMediaSource } from "@/utils/media/mediaUtils";
+import { Card } from "@/components/ui/card";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { formatDistanceToNow } from "date-fns";
 
 interface StoryItemProps {
-  story: Story;
-  isStacked?: boolean;
-  stackCount?: number;
-  onClick: () => void;
-  onDelete?: () => void;
+  story: {
+    id: string;
+    creator: {
+      id: string;
+      username: string;
+      avatar_url?: string;
+    };
+    created_at: string;
+    expires_at: string;
+    media_url?: string;
+  };
+  onClick?: () => void;
 }
 
-export const StoryItem = ({
-  story,
-  isStacked = false,
-  stackCount = 0,
-  onClick,
-  onDelete,
-}: StoryItemProps) => {
-  const [isMediaLoaded, setIsMediaLoaded] = useState(false);
-  const [hasMediaError, setHasMediaError] = useState(false);
-  
-  // Format the timestamp
-  const timestamp = new Date(story.created_at);
-  const timeAgo = Math.floor((Date.now() - timestamp.getTime()) / (1000 * 60));
-  const timeDisplay = timeAgo < 60 
-    ? `${timeAgo}m` 
-    : `${Math.floor(timeAgo / 60)}h`;
-    
-  // Determine if story is a video
-  const isVideo = 
-    story.content_type === "video" || 
-    story.media_type === MediaType.VIDEO || 
-    !!story.video_url;
-
-  const handleLoad = () => {
-    setIsMediaLoaded(true);
-    setHasMediaError(false);
-  };
-
-  const handleError = () => {
-    setHasMediaError(true);
-    setIsMediaLoaded(false);
-  };
-
-  // Create a proper media source object for UniversalMedia
-  const mediaItem = normalizeMediaSource({
-    url: story.media_url || story.video_url || '',
-    media_url: story.media_url,
-    video_url: story.video_url,
-    creator_id: story.creator_id,
-    type: isVideo ? MediaType.VIDEO : MediaType.IMAGE
-  });
+export const StoryItem = ({ story, onClick }: StoryItemProps) => {
+  const isExpired = new Date(story.expires_at) < new Date();
 
   return (
-    <motion.div
-      whileHover={{ scale: 1.05 }}
-      whileTap={{ scale: 0.95 }}
+    <Card 
+      className={`relative overflow-hidden cursor-pointer aspect-[9/16] ${
+        isExpired ? 'opacity-50' : ''
+      }`}
       onClick={onClick}
-      className="relative w-24 h-36 rounded-xl overflow-hidden cursor-pointer group"
     >
-      {/* Stacked indicator */}
-      {isStacked && stackCount > 0 && (
-        <div className="absolute -right-1 -top-1 z-20 bg-luxury-primary text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-          +{stackCount}
-        </div>
+      {story.media_url ? (
+        <img 
+          src={story.media_url} 
+          alt="Story"
+          className="w-full h-full object-cover"
+        />
+      ) : (
+        <div className="w-full h-full bg-gradient-to-b from-purple-500 to-pink-500" />
       )}
-
-      {/* Background gradient overlay */}
-      <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-black/70 z-10" />
-
-      {/* Media thumbnail */}
-      <div className="w-full h-full bg-luxury-darker">
-        {!isMediaLoaded && !hasMediaError && (
-          <div className="absolute inset-0 flex items-center justify-center bg-luxury-darker/80 z-5 animate-pulse">
-            <div className="h-full w-full bg-luxury-dark/50" />
-          </div>
-        )}
-        
-        {hasMediaError ? (
-          <div className="absolute inset-0 flex items-center justify-center bg-luxury-darker">
-            <div className="text-luxury-neutral/50 flex flex-col items-center">
-              <ImageIcon className="h-6 w-6 mb-1" />
-              <span className="text-xs">No preview</span>
-            </div>
-          </div>
-        ) : (
-          <UniversalMedia
-            item={mediaItem}
-            className="w-full h-full object-cover"
-            onLoad={handleLoad}
-            onError={handleError}
-          />
-        )}
-        
-        {/* Media type indicator */}
-        {isVideo && isMediaLoaded && (
-          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-15">
-            <PlayCircle className="h-8 w-8 text-white/80" />
-          </div>
-        )}
-      </div>
-
-      {/* User info at bottom */}
-      <div className="absolute bottom-2 left-2 right-2 z-20">
-        <div className="flex items-center gap-1.5">
-          <Avatar className="h-5 w-5 border border-white/20">
-            <AvatarImage 
-              src={story.creator?.avatar_url || ''} 
-              alt={story.creator?.username || 'User'} 
-            />
-            <AvatarFallback className="text-[10px]">
-              {(story.creator?.username || 'U').substring(0, 1).toUpperCase()}
-            </AvatarFallback>
-          </Avatar>
-          <div className="flex flex-col">
-            <span className="text-xs text-white font-medium truncate leading-none">
-              {story.creator?.username || 'user'}
-            </span>
-            <span className="text-[10px] text-white/70">{timeDisplay}</span>
-          </div>
-        </div>
+      
+      <div className="absolute top-2 left-2">
+        <Avatar className="h-8 w-8 border-2 border-white">
+          <AvatarImage src={story.creator.avatar_url} />
+          <AvatarFallback>
+            {story.creator.username.slice(0, 2).toUpperCase()}
+          </AvatarFallback>
+        </Avatar>
       </div>
       
-      {/* Story view indicator (ring) */}
-      <div className="absolute inset-0 border-2 border-luxury-primary rounded-xl" />
-    </motion.div>
+      <div className="absolute bottom-2 left-2 right-2">
+        <p className="text-white text-sm font-medium">
+          {story.creator.username}
+        </p>
+        <p className="text-white text-xs opacity-75">
+          {formatDistanceToNow(new Date(story.created_at), { addSuffix: true })}
+        </p>
+      </div>
+    </Card>
   );
 };

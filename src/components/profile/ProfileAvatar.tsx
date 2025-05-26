@@ -1,94 +1,59 @@
 
 import { useState } from "react";
-import { AvatarStatus } from "./avatar/AvatarStatus";
-import { ProfileAvatarImage } from "./avatar/AvatarImage";
-import { ImageCropDialog } from "./ImageCropDialog";
-import { useAvatarUpload } from "./avatar/AvatarUpload";
-import { usePresence } from "./avatar/usePresence";
-import { AvatarPreview } from "./avatar/AvatarPreview";
-import type { ProfileAvatarProps } from "./avatar/types";
-import { AvailabilityStatus } from "@/utils/media/types";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import { Camera } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
-export const ProfileAvatar = ({ profile, getMediaType, isOwnProfile }: ProfileAvatarProps) => {
-  const [showPreview, setShowPreview] = useState(false);
-  
-  const { 
-    availability, 
-    setAvailability,
-    setIsInCall,
-    setIsMessaging
-  } = usePresence(profile?.id, !!isOwnProfile);
-  
-  const {
-    showCropDialog,
-    setShowCropDialog,
-    tempImageUrl,
-    setTempImageUrl,
-    setSelectedFile,
-    handleFileSelect,
-    handleCropComplete
-  } = useAvatarUpload({
-    profile,
-    onSuccess: () => window.location.reload()
-  });
+interface ProfileAvatarProps {
+  avatarUrl?: string;
+  username: string;
+  isEditable?: boolean;
+  size?: "sm" | "md" | "lg";
+}
 
-  const handleAvatarClick = () => {
-    if (profile?.avatar_url) {
-      setShowPreview(true);
-    }
+export const ProfileAvatar = ({ 
+  avatarUrl, 
+  username, 
+  isEditable = false,
+  size = "md" 
+}: ProfileAvatarProps) => {
+  const [isUploading, setIsUploading] = useState(false);
+  const { toast } = useToast();
+
+  const sizeClasses = {
+    sm: "h-8 w-8",
+    md: "h-16 w-16", 
+    lg: "h-24 w-24"
   };
 
-  // Create a wrapper function that ensures the correct type for React state setters
-  const handleStatusChange = (newStatus: AvailabilityStatus) => {
-    // TypeScript treats this as a valid state update
-    setAvailability(newStatus);
+  const handleUpload = () => {
+    toast({
+      title: "Coming soon",
+      description: "Avatar upload functionality will be available soon"
+    });
   };
 
   return (
-    <>
-      <div className="relative inline-block">
-        <div className="relative">
-          <ProfileAvatarImage
-            src={profile?.avatar_url}
-            username={profile?.username}
-            onImageClick={handleAvatarClick}
-            onFileSelect={isOwnProfile ? handleFileSelect : undefined}
-          />
-          
-          {isOwnProfile && (
-            <div className="absolute -bottom-1 -right-1 z-10" onClick={e => e.stopPropagation()}>
-              <AvatarStatus
-                profileId={profile?.id}
-                isOwnProfile={!!isOwnProfile}
-                status={availability}
-                onStatusChange={handleStatusChange}
-              />
-            </div>
-          )}
-        </div>
-      </div>
-
-      <AvatarPreview
-        isOpen={showPreview}
-        onClose={() => setShowPreview(false)}
-        mediaUrl={profile?.avatar_url}
-        mediaType={getMediaType(profile?.avatar_url)}
-      />
-
-      {showCropDialog && tempImageUrl && (
-        <ImageCropDialog
-          isOpen={showCropDialog}
-          onClose={() => {
-            setShowCropDialog(false);
-            setTempImageUrl('');
-            setSelectedFile(null);
-          }}
-          imageUrl={tempImageUrl}
-          onCropComplete={handleCropComplete}
-          aspectRatio={1}
-          isCircular={true}
-        />
+    <div className="relative">
+      <Avatar className={sizeClasses[size]}>
+        <AvatarImage src={avatarUrl} alt={username} />
+        <AvatarFallback>
+          {username.slice(0, 2).toUpperCase()}
+        </AvatarFallback>
+      </Avatar>
+      
+      {isEditable && (
+        <Button
+          size="sm"
+          variant="outline"
+          className="absolute -bottom-2 -right-2 h-8 w-8 rounded-full p-0"
+          onClick={handleUpload}
+          disabled={isUploading}
+        >
+          <Camera className="h-4 w-4" />
+        </Button>
       )}
-    </>
+    </div>
   );
 };

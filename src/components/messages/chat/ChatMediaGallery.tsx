@@ -1,69 +1,40 @@
 
-import { cn } from "@/lib/utils";
-import { UniversalMedia } from "@/components/media/UniversalMedia";
-import { MediaType } from "@/utils/media/types";
+import { Card } from "@/components/ui/card";
+import { Image, Video, FileText } from "lucide-react";
 
-interface ChatMediaGalleryProps {
-  images?: string[];
-  videos?: string[];
-  userId?: string;
-  onMediaClick?: (url: string) => void;
+interface MediaItem {
+  id: string;
+  type: 'image' | 'video' | 'document';
+  url: string;
+  name: string;
 }
 
-export const ChatMediaGallery = ({ images, videos, userId, onMediaClick }: ChatMediaGalleryProps) => {
-  const renderImages = () => {
-    if (!images || images.length === 0) return null;
-    
-    return (
-      <div className={cn("grid grid-cols-2 gap-1", images.length === 1 && "grid-cols-1")}>
-        {images.map((image, i) => (
-          <div key={`img-${i}`} className="relative aspect-square">
-            <UniversalMedia
-              item={{
-                url: image,
-                type: MediaType.IMAGE,
-                creator_id: userId || undefined
-              }}
-              className="w-full h-full object-cover rounded-md cursor-pointer"
-              showWatermark={false}
-              onClick={() => onMediaClick?.(image)}
-            />
-          </div>
-        ))}
-      </div>
-    );
-  };
-  
-  const renderVideos = () => {
-    if (!videos || videos.length === 0) return null;
-    
-    return (
-      <div className={cn("grid grid-cols-2 gap-1", videos.length === 1 && "grid-cols-1")}>
-        {videos.map((video, i) => (
-          <div key={`vid-${i}`} className="relative aspect-square">
-            <UniversalMedia
-              item={{
-                url: video,
-                type: MediaType.VIDEO,
-                creator_id: userId || undefined
-              }}
-              className="w-full h-full object-cover rounded-md cursor-pointer"
-              controls={true}
-              autoPlay={false}
-              muted={true}
-              showWatermark={false}
-              onClick={() => onMediaClick?.(video)}
-            />
-          </div>
-        ))}
-      </div>
-    );
+interface ChatMediaGalleryProps {
+  mediaItems: MediaItem[];
+}
+
+export const ChatMediaGallery = ({ mediaItems }: ChatMediaGalleryProps) => {
+  const getIcon = (type: string) => {
+    switch (type) {
+      case 'image':
+        return <Image className="w-6 h-6" />;
+      case 'video':
+        return <Video className="w-6 h-6" />;
+      default:
+        return <FileText className="w-6 h-6" />;
+    }
   };
 
   return (
-    <div className="space-y-2">
-      {renderImages()}
-      {renderVideos()}
+    <div className="grid grid-cols-2 gap-2">
+      {mediaItems.map((item) => (
+        <Card key={item.id} className="p-4 text-center">
+          <div className="flex flex-col items-center gap-2">
+            {getIcon(item.type)}
+            <span className="text-sm truncate w-full">{item.name}</span>
+          </div>
+        </Card>
+      ))}
     </div>
   );
 };
