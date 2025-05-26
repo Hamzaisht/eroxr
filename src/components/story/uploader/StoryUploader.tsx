@@ -67,8 +67,8 @@ export const StoryUploader = () => {
         throw new Error(result.error || 'Upload failed');
       }
 
-      // Type guard to check if result has url property
-      if (!result.url) {
+      // Type guard to check if result has url property and it exists
+      if (!result.success || !('url' in result) || !result.url) {
         throw new Error('Upload failed: No URL returned');
       }
 
