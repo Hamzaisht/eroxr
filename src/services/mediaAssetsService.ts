@@ -1,130 +1,207 @@
 
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from '@/integrations/supabase/client';
 
-/**
- * Service for managing media assets in the database
- */
 export interface MediaAsset {
   id: string;
   user_id: string;
-  url: string;
-  type: 'image' | 'video' | 'audio' | 'document';
-  original_name?: string;
-  size?: number;
-  content_type?: string;
-  storage_path?: string;
+  storage_path: string;
+  original_name: string;
+  file_size: number;
+  mime_type: string;
+  media_type: 'image' | 'video' | 'audio' | 'document';
+  access_level: 'private' | 'public' | 'subscribers_only';
+  moderation_status: 'pending' | 'approved' | 'rejected' | 'flagged';
+  view_count: number;
+  download_count: number;
+  content_hash?: string;
+  alt_text?: string;
+  tags: string[];
+  metadata: Record<string, any>;
   created_at: string;
+  updated_at: string;
 }
 
 /**
- * Get all media assets for the current user
+ * Get user's media assets
  */
-export const getUserMediaAssets = async (): Promise<{ 
-  data: MediaAsset[] | null; 
-  error: Error | null;
+export const getUserMediaAssets = async (): Promise<{
+  data: MediaAsset[] | null;
+  error: any;
 }> => {
-  const { data, error } = await supabase
-    .from('media_assets')
-    .select('*')
-    .order('created_at', { ascending: false });
-  
-  return { data, error };
+  try {
+    const { data, error } = await supabase
+      .from('media_assets')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    return { data, error };
+  } catch (error: any) {
+    return { data: null, error };
+  }
 };
 
 /**
- * Get media assets by type for the current user
+ * Get media assets by type
  */
 export const getUserMediaByType = async (
   type: 'image' | 'video' | 'audio' | 'document'
-): Promise<{ 
-  data: MediaAsset[] | null; 
-  error: Error | null;
+): Promise<{
+  data: MediaAsset[] | null;
+  error: any;
 }> => {
-  const { data, error } = await supabase
-    .from('media_assets')
-    .select('*')
-    .eq('type', type)
-    .order('created_at', { ascending: false });
-  
-  return { data, error };
+  try {
+    const { data, error } = await supabase
+      .from('media_assets')
+      .select('*')
+      .eq('media_type', type)
+      .order('created_at', { ascending: false });
+
+    return { data, error };
+  } catch (error: any) {
+    return { data: null, error };
+  }
 };
 
 /**
- * Delete a media asset
+ * Get single media asset
  */
-export const deleteMediaAsset = async (
-  id: string
-): Promise<{ success: boolean; error: Error | null }> => {
+export const getMediaAsset = async (id: string): Promise<{
+  data: MediaAsset | null;
+  error: any;
+}> => {
   try {
-    // First get the asset to find the storage path
+    const { data, error } = await supabase
+      .from('media_assets')
+      .select('*')
+      .eq('id', id)
+      .single();
+
+    return { data, error };
+  } catch (error: any) {
+    return { data: null, error };
+  }
+};
+
+/**
+ * Update media asset
+ */
+export const updateMediaAsset = async (
+  id: string,
+  updates: Partial<MediaAsset>
+): Promise<{
+  data: MediaAsset | null;
+  error: any;
+}> => {
+  try {
+    const { data, error } = await supabase
+      .from('media_assets')
+      .update(updates)
+      .eq('id', id)
+      .select()
+      .single();
+
+    return { data, error };
+  } catch (error: any) {
+    return { data: null, error };
+  }
+};
+
+/**
+ * Delete media asset
+ */
+export const deleteMediaAsset = async (id: string): Promise<{
+  success: boolean;
+  error?: any;
+}> => {
+  try {
+    // Get storage path first
     const { data: asset } = await supabase
       .from('media_assets')
       .select('storage_path')
       .eq('id', id)
       .single();
-    
-    if (asset?.storage_path) {
-      // Determine bucket from storage path
-      const pathSegments = asset.storage_path.split('/');
-      let bucketName = 'media'; // Default bucket
-      
-      // Try to infer bucket from path
-      if (pathSegments[0] === 'images' || pathSegments[0] === 'videos' || 
-          pathSegments[0] === 'audios' || pathSegments[0] === 'documents') {
-        bucketName = pathSegments[0];
-      }
-      
+
+    if (asset) {
       // Delete from storage
       await supabase.storage
-        .from(bucketName)
+        .from('media')
         .remove([asset.storage_path]);
     }
-    
+
     // Delete from database
     const { error } = await supabase
       .from('media_assets')
       .delete()
       .eq('id', id);
-    
+
     return { success: !error, error };
   } catch (error: any) {
-    console.error("Error deleting media asset:", error);
     return { success: false, error };
   }
 };
 
 /**
- * Get a single media asset by ID
+ * Increment view/download counter
  */
-export const getMediaAssetById = async (
-  id: string
-): Promise<{ 
-  data: MediaAsset | null; 
-  error: Error | null;
-}> => {
-  const { data, error } = await supabase
-    .from('media_assets')
-    .select('*')
-    .eq('id', id)
-    .single();
-  
-  return { data, error };
+export const incrementCounter = async (
+  assetId: string,
+  counterType: 'view' | 'download'
+): Promise<void> => {
+  try {
+    await supabase.rpc('increment_media_counter', {
+      asset_id: assetId,
+      counter_type: counterType
+    });
+  } catch (error) {
+    console.error('Failed to increment counter:', error);
+  }
 };
 
 /**
- * Update metadata for a media asset
+ * Search media assets
  */
-export const updateMediaAssetMetadata = async (
-  id: string, 
-  metadata: Partial<Omit<MediaAsset, 'id' | 'user_id' | 'created_at'>>
+export const searchMediaAssets = async (
+  query: string,
+  filters?: {
+    mediaType?: string;
+    accessLevel?: string;
+    tags?: string[];
+  }
 ): Promise<{
-  success: boolean;
-  error: Error | null;
+  data: MediaAsset[] | null;
+  error: any;
 }> => {
-  const { error } = await supabase
-    .from('media_assets')
-    .update(metadata)
-    .eq('id', id);
-  
-  return { success: !error, error };
+  try {
+    let queryBuilder = supabase
+      .from('media_assets')
+      .select('*');
+
+    // Text search in name and alt text
+    if (query) {
+      queryBuilder = queryBuilder.or(
+        `original_name.ilike.%${query}%,alt_text.ilike.%${query}%`
+      );
+    }
+
+    // Apply filters
+    if (filters?.mediaType) {
+      queryBuilder = queryBuilder.eq('media_type', filters.mediaType);
+    }
+
+    if (filters?.accessLevel) {
+      queryBuilder = queryBuilder.eq('access_level', filters.accessLevel);
+    }
+
+    if (filters?.tags && filters.tags.length > 0) {
+      queryBuilder = queryBuilder.overlaps('tags', filters.tags);
+    }
+
+    const { data, error } = await queryBuilder
+      .order('created_at', { ascending: false })
+      .limit(50);
+
+    return { data, error };
+  } catch (error: any) {
+    return { data: null, error };
+  }
 };
