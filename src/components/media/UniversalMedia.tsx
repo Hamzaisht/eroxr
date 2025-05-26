@@ -1,16 +1,25 @@
 
-import { forwardRef, Ref, useMemo, useState } from 'react';
-import { MediaRenderer } from './MediaRenderer';
-import { MediaSource, MediaType, MediaOptions, MediaAccessLevel } from '@/utils/media/types';
+import { forwardRef, Ref, useMemo } from 'react';
+import { SimpleMediaRenderer } from './SimpleMediaRenderer';
+import { MediaSource, MediaType, MediaAccessLevel } from '@/utils/media/types';
 import { normalizeMediaSource } from '@/utils/media/mediaUtils';
-import { useToast } from "@/hooks/use-toast";
 import { isValidMediaUrl } from '@/utils/media/mediaOrchestrator';
 import { AlertCircle } from 'lucide-react';
-import { ToastAction } from "@/components/ui/toast";
 
-interface UniversalMediaProps extends MediaOptions {
-  item: any; // Accepting various formats for backward compatibility
+interface UniversalMediaProps {
+  item: any;
+  className?: string;
+  autoPlay?: boolean;
+  controls?: boolean;
+  muted?: boolean;
+  loop?: boolean;
+  poster?: string;
   showWatermark?: boolean;
+  onClick?: () => void;
+  onLoad?: () => void;
+  onError?: (error?: any) => void;
+  onEnded?: () => void;
+  onTimeUpdate?: (currentTime: number, duration: number) => void;
   objectFit?: 'cover' | 'contain' | 'fill' | 'none' | 'scale-down';
   alt?: string;
   maxRetries?: number;
@@ -26,42 +35,21 @@ export const UniversalMedia = forwardRef(({
   muted = true,
   loop = false,
   poster,
-  showWatermark = false,
   onClick,
   onLoad,
   onError,
-  onEnded,
-  onTimeUpdate,
-  objectFit = 'cover',
-  alt = "Media content",
-  maxRetries = 2,
-  accessLevel,
   compact = false
 }: UniversalMediaProps, ref: Ref<HTMLVideoElement | HTMLImageElement>) => {
-  const { toast } = useToast();
-  const [retryCount, setRetryCount] = useState(0);
   
   // Process the item to ensure it has a url property
   const mediaItem = useMemo(() => {
     try {
-      const normalized = normalizeMediaSource(item);
-      
-      // If poster prop was passed, add it to the mediaSource
-      if (poster) {
-        normalized.poster = poster;
-      }
-      
-      // If access level is explicitly provided, use it
-      if (accessLevel) {
-        normalized.access_level = accessLevel;
-      }
-      
-      return normalized;
+      return normalizeMediaSource(item);
     } catch (error) {
       console.error("Error normalizing media source:", error, item);
       return { url: '', type: MediaType.UNKNOWN };
     }
-  }, [item, poster, accessLevel]);
+  }, [item]);
   
   // Early validation of URL
   if (!isValidMediaUrl(mediaItem?.url)) {
@@ -83,55 +71,24 @@ export const UniversalMedia = forwardRef(({
       </div>
     );
   }
-  
-  const handleError = (error?: any) => {
-    // For compact mode, don't show toasts - just silently handle errors
-    if (!compact) {
-      console.error("Media loading error:", error, mediaItem);
-      
-      // Track retry count
-      const newRetryCount = retryCount + 1;
-      setRetryCount(newRetryCount);
-      
-      // If we've exceeded max retries, display toast error (only for non-compact)
-      if (newRetryCount >= maxRetries) {
-        toast({
-          title: "Media failed to load",
-          description: "Please try again later",
-          variant: "destructive",
-          action: (
-            <ToastAction altText="Retry" onClick={() => window.location.reload()}>
-              Retry
-            </ToastAction>
-          ),
-        });
-      }
-    }
-    
-    // Call the original error handler if provided
-    if (onError) {
-      onError(error);
-    }
-  };
 
+  // Determine media type
+  const isVideo = mediaItem.type === MediaType.VIDEO || 
+                  mediaItem.url.match(/\.(mp4|webm|mov|avi)($|\?)/i);
+  
   return (
-    <MediaRenderer
-      src={mediaItem}
+    <SimpleMediaRenderer
+      url={mediaItem.url}
+      type={isVideo ? 'video' : 'image'}
       className={className}
       autoPlay={autoPlay}
       controls={controls}
       muted={muted}
       loop={loop}
-      poster={poster || (mediaItem && typeof mediaItem === 'object' && 'poster' in mediaItem ? mediaItem.poster : undefined)}
-      showWatermark={showWatermark}
+      poster={poster}
       onClick={onClick}
       onLoad={onLoad}
-      onError={handleError}
-      onEnded={onEnded}
-      onTimeUpdate={onTimeUpdate}
-      ref={ref}
-      allowRetry={retryCount < maxRetries}
-      maxRetries={maxRetries}
+      onError={onError}
       compact={compact}
     />
   );

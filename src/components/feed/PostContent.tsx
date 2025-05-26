@@ -1,11 +1,9 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useToast } from "@/hooks/use-toast";
 import { ProtectedMedia } from "@/components/security/ProtectedMedia";
 import { UniversalMedia } from "@/components/media/UniversalMedia"; 
 import { MediaType } from "@/types/media";
-import { reportMediaError } from "@/utils/media/mediaMonitoring";
 
 interface PostContentProps {
   content: string;
@@ -22,36 +20,16 @@ export const PostContent = ({
   creatorId,
   onMediaClick,
 }: PostContentProps) => {
-  const [loadError, setLoadError] = useState<Record<string, boolean>>({});
   const [retries, setRetries] = useState<Record<string, number>>({});
-  const { toast } = useToast();
   
   // Safely check if either array has content
   const hasMedia = (mediaUrls?.length ?? 0) > 0 || (videoUrls?.length ?? 0) > 0;
 
   const handleMediaError = (url: string) => {
-    // Silently handle media errors - don't spam console or show toasts
-    setLoadError(prev => ({ ...prev, [url]: true }));
-    
-    // Track retry count but don't report as critical error
+    // Silently handle media errors - just track retry count
     const currentRetries = retries[url] || 0;
     const newRetryCount = currentRetries + 1;
     setRetries(prev => ({ ...prev, [url]: newRetryCount }));
-    
-    // Only report after multiple failures and don't show toast
-    if (newRetryCount >= 3) {
-      reportMediaError(
-        url,
-        'load_failure',
-        newRetryCount,
-        url.match(/\.(mp4|webm|mov)($|\?)/i) ? 'video' : 'image',
-        'PostContent'
-      );
-    }
-  };
-
-  const handleRetry = (url: string) => {
-    setLoadError(prev => ({ ...prev, [url]: false }));
   };
 
   return (
