@@ -5,6 +5,7 @@ import { SessionContextProvider } from "@supabase/auth-helpers-react";
 import { Toaster } from "@/components/ui/toaster";
 import { ThemeProvider } from "@/components/layout/ThemeProvider";
 import { ToastProvider } from "@/hooks/use-toast";
+import { GhostModeProvider } from "@/hooks/useGhostMode";
 import { supabase } from "@/integrations/supabase/client";
 import { MainLayout } from "@/components/layout/MainLayout";
 import Index from "./pages/Index";
@@ -24,23 +25,25 @@ function App() {
     <SessionContextProvider supabaseClient={supabase}>
       <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
         <ToastProvider>
-          <BrowserRouter>
-            <Routes>
-              {/* Public routes */}
-              <Route path="/" element={<Index />} />
-              <Route path="/login" element={<Login />} />
-              
-              {/* Protected routes with MainLayout */}
-              <Route path="/*" element={<MainLayout />}>
-                <Route path="home" element={<Home />} />
-                {/* Add other protected routes here as needed */}
-              </Route>
-              
-              {/* Catch-all redirect */}
-              <Route path="*" element={<Navigate to="/" replace />} />
-            </Routes>
-          </BrowserRouter>
-          <Toaster />
+          <GhostModeProvider>
+            <BrowserRouter>
+              <Routes>
+                {/* Public routes */}
+                <Route path="/" element={<Index />} />
+                <Route path="/login" element={<Login />} />
+                
+                {/* Protected routes with MainLayout */}
+                <Route path="/*" element={<MainLayout />}>
+                  <Route path="home" element={<Home />} />
+                  {/* Add other protected routes here as needed */}
+                </Route>
+                
+                {/* Catch-all redirect */}
+                <Route path="*" element={<Navigate to="/" replace />} />
+              </Routes>
+            </BrowserRouter>
+            <Toaster />
+          </GhostModeProvider>
         </ToastProvider>
       </ThemeProvider>
     </SessionContextProvider>
