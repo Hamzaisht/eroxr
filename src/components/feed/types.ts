@@ -1,23 +1,26 @@
 
-import { Creator, Profile } from "@/integrations/supabase/types/profile";
-
-export type Post = {
+export interface Creator {
   id: string;
-  creator_id: string;
+  username: string;
+  avatar_url: string;
+}
+
+export interface Post {
+  id: string;
   content: string;
   media_url: string[] | null;
-  likes_count: number | null;
-  comments_count: number | null;
+  video_urls: string[] | null;
+  creator_id: string;
   created_at: string;
   updated_at: string;
+  likes_count: number;
+  comments_count: number;
+  has_liked: boolean;
+  creator: Creator;
   visibility: 'public' | 'subscribers_only';
   tags: string[] | null;
   ppv_amount: number | null;
   is_ppv: boolean;
-  video_urls: string[] | null;
-  has_liked: boolean;
-  has_purchased?: boolean;
   screenshots_count: number;
   downloads_count: number;
-  creator: Creator | Profile;
-};
+}

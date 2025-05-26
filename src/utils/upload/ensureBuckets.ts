@@ -51,8 +51,8 @@ export async function ensureStorageBuckets() {
         
         const { error: createError } = await supabase.storage.createBucket(bucket.id, {
           public: bucket.public,
-          fileSizeLimit: 1024 * 1024 * 100, // 100MB limit
-          allowedMimeTypes: ['image/*', 'video/*', 'audio/*']
+          fileSizeLimit: bucket.name === 'avatars' ? 1024 * 1024 * 10 : 1024 * 1024 * 100, // 10MB for avatars, 100MB for others
+          allowedMimeTypes: bucket.name === 'avatars' ? ['image/*'] : ['image/*', 'video/*', 'audio/*']
         });
         
         if (createError) {
