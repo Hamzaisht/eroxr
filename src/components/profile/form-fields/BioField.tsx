@@ -1,6 +1,4 @@
 
-import { ProfileFormData } from '../types';
-
 interface BioFieldProps {
   value: string;
   onChange: (value: string) => void;

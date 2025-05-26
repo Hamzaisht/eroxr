@@ -36,7 +36,7 @@ export const ProfileForm = ({ profile, onSuccess }: ProfileFormProps) => {
       username: "",
       bio: "",
       location: "",
-      interests: "",
+      interests: [],
       profile_visibility: true,
     },
   });
@@ -49,7 +49,7 @@ export const ProfileForm = ({ profile, onSuccess }: ProfileFormProps) => {
         username: profile.username || "",
         bio: profile.bio || "",
         location: profile.location || "",
-        interests: profile.interests?.join(", ") || "",
+        interests: profile.interests || [],
         profile_visibility: profile.profile_visibility ?? true,
       });
 
@@ -83,7 +83,7 @@ export const ProfileForm = ({ profile, onSuccess }: ProfileFormProps) => {
         username: values.username,
         bio: values.bio,
         location: values.location,
-        interests: values.interests ? values.interests.split(",").map(i => i.trim()) : [],
+        interests: values.interests,
         profile_visibility: values.profile_visibility,
         ...(values.username !== currentUsername && {
           last_username_change: new Date().toISOString(),
@@ -100,7 +100,6 @@ export const ProfileForm = ({ profile, onSuccess }: ProfileFormProps) => {
 
       if (error) throw error;
 
-      // Invalidate profile queries to trigger a refresh
       await queryClient.invalidateQueries({ queryKey: ["profile"] });
       await queryClient.invalidateQueries({ queryKey: ["profileStats"] });
 
@@ -126,16 +125,29 @@ export const ProfileForm = ({ profile, onSuccess }: ProfileFormProps) => {
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
         <UsernameField
-          form={form}
+          value={form.watch('username')}
+          onChange={(value) => form.setValue('username', value)}
           isLoading={isLoading}
           canChangeUsername={canChangeUsername}
           currentUsername={currentUsername}
           lastUsernameChange={lastUsernameChange}
         />
-        <BioField form={form} />
-        <LocationField form={form} />
-        <InterestsField form={form} />
-        <VisibilityField form={form} />
+        <BioField
+          value={form.watch('bio')}
+          onChange={(value) => form.setValue('bio', value)}
+        />
+        <LocationField
+          value={form.watch('location')}
+          onChange={(value) => form.setValue('location', value)}
+        />
+        <InterestsField
+          value={form.watch('interests')}
+          onChange={(value) => form.setValue('interests', value)}
+        />
+        <VisibilityField
+          value={form.watch('profile_visibility') ? 'public' : 'private'}
+          onChange={(value) => form.setValue('profile_visibility', value === 'public')}
+        />
 
         <div className="flex gap-4 justify-end">
           <Button 

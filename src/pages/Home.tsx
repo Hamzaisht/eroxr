@@ -45,7 +45,6 @@ const Home = () => {
 
       console.log("Home - Posts fetched:", data?.length || 0);
       
-      // Transform the data to match our Post interface
       const postsWithLikes: Post[] = (data || []).map(post => ({
         id: post.id,
         content: post.content || '',
@@ -62,7 +61,7 @@ const Home = () => {
         is_ppv: post.is_ppv || false,
         screenshots_count: post.screenshots_count || 0,
         downloads_count: post.downloads_count || 0,
-        has_liked: false, // We'll implement this properly later
+        has_liked: false,
         creator: Array.isArray(post.creator) && post.creator.length > 0 
           ? {
               id: post.creator[0].id || '',
@@ -104,10 +103,8 @@ const Home = () => {
   return (
     <div className="container mx-auto px-4 py-8 max-w-4xl">
       <div className="space-y-8">
-        {/* Suggested Creators */}
         <SuggestedCreators />
         
-        {/* Posts Feed */}
         <div className="space-y-6">
           {posts && posts.length > 0 ? (
             posts.map((post) => (
@@ -117,15 +114,9 @@ const Home = () => {
                 currentUserId={session?.user?.id}
                 onLike={async (postId) => {
                   console.log("Home - Like post:", postId);
-                  // Implement like functionality
                 }}
                 onDelete={async (postId, creatorId) => {
                   console.log("Home - Delete post:", postId);
-                  // Implement delete functionality
-                }}
-                onComment={() => {
-                  console.log("Home - Comment on post");
-                  // Implement comment functionality
                 }}
               />
             ))

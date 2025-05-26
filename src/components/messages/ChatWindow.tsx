@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useSession } from '@supabase/auth-helpers-react';
 import { supabase } from '@/integrations/supabase/client';
@@ -29,7 +28,6 @@ export const ChatWindow = ({ recipient, onToggleDetails, onClose }: ChatWindowPr
   const { handleSendMessage, resendMessage, isUploading } = useChatActions({ recipientId: recipient.id });
   const [sendError, setSendError] = useState<string | null>(null);
   
-  // Get chat messages
   const { 
     data: messages = [], 
     isLoading, 
@@ -60,13 +58,11 @@ export const ChatWindow = ({ recipient, onToggleDetails, onClose }: ChatWindowPr
     },
     enabled: !!session?.user?.id && !!recipient.id,
     refetchOnWindowFocus: true,
-    staleTime: 30000, // 30 seconds
+    staleTime: 30000,
   });
 
-  // Mark messages as seen when user views them
   useEffect(() => {
     if (messages && messages.length > 0) {
-      // Mark messages as seen after a short delay
       const timer = setTimeout(() => {
         console.log('Marking messages as seen');
         markAllAsSeen();
@@ -108,11 +104,10 @@ export const ChatWindow = ({ recipient, onToggleDetails, onClose }: ChatWindowPr
     }
   };
   
-  // Convert recipient object to profile format expected by ChatMessageList
   const recipientProfile = {
     username: recipient.username,
     avatar_url: recipient.avatar_url,
-    online_status: 'unknown' // This would ideally come from a real-time presence system
+    online_status: 'unknown'
   };
   
   return (
@@ -125,7 +120,6 @@ export const ChatWindow = ({ recipient, onToggleDetails, onClose }: ChatWindowPr
         onBack={onClose}
       />
       
-      {/* Connection status indicator */}
       {connectionStatus !== 'connected' && (
         <ConnectionIndicator 
           status={connectionStatus} 
@@ -133,7 +127,6 @@ export const ChatWindow = ({ recipient, onToggleDetails, onClose }: ChatWindowPr
         />
       )}
       
-      {/* Error display */}
       {sendError && (
         <div className="mx-4 mt-2">
           <ErrorComponent 
@@ -143,7 +136,6 @@ export const ChatWindow = ({ recipient, onToggleDetails, onClose }: ChatWindowPr
         </div>
       )}
       
-      {/* Messages */}
       {isLoading ? (
         <div className="flex-1 flex items-center justify-center">
           <div className="text-center">
@@ -168,7 +160,6 @@ export const ChatWindow = ({ recipient, onToggleDetails, onClose }: ChatWindowPr
         />
       )}
       
-      {/* Input Area */}
       <div className="p-3 border-t border-luxury-neutral/20">
         <ChatInput 
           onSendMessage={handleSend} 

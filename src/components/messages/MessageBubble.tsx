@@ -1,45 +1,68 @@
 
+import { DirectMessage } from "@/integrations/supabase/types/message";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { formatDistanceToNow } from "date-fns";
+import { cn } from "@/lib/utils";
 
 interface MessageBubbleProps {
-  message: {
-    id: string;
-    content: string;
-    sender: {
-      id: string;
-      username: string;
-      avatar_url?: string;
-    };
-    created_at: string;
-  };
-  isOwn: boolean;
+  message: DirectMessage;
+  isOwnMessage: boolean;
+  currentUserId: string;
+  profile?: {
+    username: string;
+    avatar_url?: string;
+    online_status?: string;
+  } | null;
+  showAvatar?: boolean;
 }
 
-export const MessageBubble = ({ message, isOwn }: MessageBubbleProps) => {
+export const MessageBubble = ({ 
+  message, 
+  isOwnMessage, 
+  currentUserId, 
+  profile, 
+  showAvatar = true 
+}: MessageBubbleProps) => {
   return (
-    <div className={`flex gap-3 ${isOwn ? 'flex-row-reverse' : ''}`}>
-      <Avatar className="h-8 w-8">
-        <AvatarImage src={message.sender.avatar_url} />
-        <AvatarFallback>
-          {message.sender.username.slice(0, 2).toUpperCase()}
-        </AvatarFallback>
-      </Avatar>
+    <div className={cn(
+      "flex gap-2 max-w-[75%]",
+      isOwnMessage ? "flex-row-reverse ml-auto" : "flex-row"
+    )}>
+      {!isOwnMessage && showAvatar && (
+        <Avatar className="h-8 w-8 flex-shrink-0">
+          <AvatarImage src={profile?.avatar_url || ""} />
+          <AvatarFallback>
+            {profile?.username?.[0]?.toUpperCase() || "U"}
+          </AvatarFallback>
+        </Avatar>
+      )}
       
-      <div className={`max-w-xs lg:max-w-md ${isOwn ? 'text-right' : ''}`}>
-        <div
-          className={`px-4 py-2 rounded-lg ${
-            isOwn
-              ? 'bg-blue-500 text-white'
-              : 'bg-gray-100 text-gray-900'
-          }`}
-        >
-          {message.content}
-        </div>
+      <div className={cn(
+        "rounded-lg px-3 py-2 break-words",
+        isOwnMessage 
+          ? "bg-luxury-primary text-white rounded-br-none"
+          : "bg-luxury-neutral/10 text-white rounded-bl-none"
+      )}>
+        {message.content && (
+          <div className="text-sm">{message.content}</div>
+        )}
         
-        <p className="text-xs text-gray-500 mt-1">
+        {message.media_url && message.media_url.length > 0 && (
+          <div className="mt-2 space-y-2">
+            {message.media_url.map((url, index) => (
+              <img 
+                key={index}
+                src={url} 
+                alt="Message attachment" 
+                className="max-w-full h-auto rounded"
+              />
+            ))}
+          </div>
+        )}
+        
+        <div className="text-xs opacity-70 mt-1">
           {formatDistanceToNow(new Date(message.created_at), { addSuffix: true })}
-        </p>
+        </div>
       </div>
     </div>
   );

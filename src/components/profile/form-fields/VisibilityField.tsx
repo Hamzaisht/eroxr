@@ -1,6 +1,4 @@
 
-import { ProfileFormData } from '../types';
-
 interface VisibilityFieldProps {
   value: 'public' | 'private';
   onChange: (value: 'public' | 'private') => void;

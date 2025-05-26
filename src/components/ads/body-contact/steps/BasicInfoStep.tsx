@@ -28,7 +28,6 @@ export const BasicInfoStep = ({ values, onUpdateValues }: BasicInfoStepProps) =>
 
       <div className="space-y-6">
         <ProfileImageUploader
-          currentImage={values.avatarFile}
           onImageChange={handleImageUpload}
         />
 

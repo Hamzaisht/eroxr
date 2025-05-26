@@ -14,7 +14,7 @@ export const LocationField = ({ value, onChange }: LocationFieldProps) => {
         value={value}
         onChange={(e) => onChange(e.target.value)}
         className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-md text-white"
-        placeholder="Your location"
+        placeholder="City, Country"
       />
     </div>
   );

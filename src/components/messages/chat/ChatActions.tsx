@@ -1,16 +1,42 @@
 
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+import { DirectMessage } from "@/integrations/supabase/types/message";
+
 interface ChatActionsReturn {
-  sendMessage: (recipientId: string, content: string) => Promise<void>;
+  handleSendMessage: (content: string) => Promise<{ success: boolean; error?: string }>;
+  resendMessage: (message: DirectMessage) => Promise<{ success: boolean; error?: string }>;
   isUploading: boolean;
   handleMediaSelect: (files: FileList) => void;
   handleSnapCapture: (dataUrl: string) => void;
-  handleSendMessage: (content: string) => Promise<{ success: boolean; error?: string }>;
-  resendMessage: (message: any) => Promise<{ success: boolean; error?: string }>;
 }
 
 export const useChatActions = ({ recipientId }: { recipientId: string }): ChatActionsReturn => {
+  const { toast } = useToast();
+
   const sendMessage = async (recipientId: string, content: string) => {
-    console.log('Sending message to:', recipientId, content);
+    try {
+      const { error } = await supabase
+        .from('direct_messages')
+        .insert({
+          recipient_id: recipientId,
+          content: content.trim()
+        });
+
+      if (error) throw error;
+
+      toast({
+        title: "Message sent",
+        description: "Your message has been delivered"
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to send message",
+        variant: "destructive"
+      });
+      throw error;
+    }
   };
 
   const handleSendMessage = async (content: string) => {
@@ -25,9 +51,9 @@ export const useChatActions = ({ recipientId }: { recipientId: string }): ChatAc
     }
   };
 
-  const resendMessage = async (message: any) => {
+  const resendMessage = async (message: DirectMessage) => {
     try {
-      await sendMessage(recipientId, message.content);
+      await sendMessage(recipientId, message.content || '');
       return { success: true };
     } catch (error) {
       return { 
@@ -46,11 +72,10 @@ export const useChatActions = ({ recipientId }: { recipientId: string }): ChatAc
   };
 
   return {
-    sendMessage,
+    handleSendMessage,
+    resendMessage,
     isUploading: false,
     handleMediaSelect,
-    handleSnapCapture,
-    handleSendMessage,
-    resendMessage
+    handleSnapCapture
   };
 };
