@@ -17,15 +17,16 @@ export const MainLayout = () => {
   const isMobile = useIsMobile();
   
   useEffect(() => {
-    // Give session time to load
+    // Shorter loading time to get users to content faster
     const timer = setTimeout(() => {
       setIsLoading(false);
-    }, 1000);
+    }, 500);
     
     return () => clearTimeout(timer);
   }, []);
   
-  console.log("MainLayout - session:", session ? "exists" : "null");
+  console.log("MainLayout - Current path:", location.pathname);
+  console.log("MainLayout - Session exists:", !!session);
   
   // Show loading screen while session is being determined
   if (isLoading && session === undefined) {
@@ -53,7 +54,7 @@ export const MainLayout = () => {
           <Outlet />
         </MainContent>
 
-        {/* Single source for all upload buttons */}
+        {/* Floating action menu */}
         <FloatingActionMenu currentPath={location.pathname} />
       </div>
     </div>

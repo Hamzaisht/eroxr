@@ -15,6 +15,8 @@ import { ensureStorageBuckets } from "./utils/upload/ensureBuckets";
 
 function App() {
   useEffect(() => {
+    console.log("App - Initializing application");
+    
     // Ensure all required storage buckets exist
     ensureStorageBuckets().catch(err => 
       console.error("Error initializing storage buckets:", err)
@@ -35,7 +37,11 @@ function App() {
                 {/* Protected routes with MainLayout */}
                 <Route path="/*" element={<MainLayout />}>
                   <Route path="home" element={<Home />} />
-                  {/* Add other protected routes here as needed */}
+                  <Route path="messages" element={<div className="p-8 text-white">Messages Page - Coming Soon</div>} />
+                  <Route path="dating" element={<div className="p-8 text-white">Dating Page - Coming Soon</div>} />
+                  <Route path="shorts" element={<div className="p-8 text-white">Shorts Page - Coming Soon</div>} />
+                  <Route path="stories" element={<div className="p-8 text-white">Stories Page - Coming Soon</div>} />
+                  <Route path="profile" element={<div className="p-8 text-white">Profile Page - Coming Soon</div>} />
                 </Route>
                 
                 {/* Catch-all redirect */}

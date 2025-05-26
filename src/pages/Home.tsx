@@ -1,162 +1,128 @@
 
-import { useSession } from "@supabase/auth-helpers-react";
-import { useEffect, useState } from "react";
-import { CreatePostDialog } from "@/components/CreatePostDialog";
-import { GoLiveDialog } from "@/components/home/GoLiveDialog";
-import { MainFeed } from "@/components/home/MainFeed";
-import { RightSidebar } from "@/components/home/RightSidebar";
-import { HomeLayout } from "@/components/home/HomeLayout";
-import { StoryReel } from "@/components/StoryReel";
-import { useToast } from "@/hooks/use-toast";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useMediaQuery } from "@/hooks/use-mobile";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Video, Loader2 } from "lucide-react";
+import { useSession } from "@supabase/auth-helpers-react";
+import { PostCard } from "@/components/feed/PostCard";
+import { SuggestedCreators } from "@/components/home/SuggestedCreators";
+import { Loader2 } from "lucide-react";
+
+interface Post {
+  id: string;
+  content: string;
+  media_url: string[] | null;
+  video_urls: string[] | null;
+  creator_id: string;
+  created_at: string;
+  updated_at: string;
+  likes_count: number;
+  comments_count: number;
+  has_liked: boolean;
+  creator: {
+    id: string;
+    username: string;
+    avatar_url: string;
+  };
+}
 
 const Home = () => {
-  const [isCreatePostOpen, setIsCreatePostOpen] = useState(false);
-  const [selectedFiles, setSelectedFiles] = useState<FileList | null>(null);
-  const [isGoLiveOpen, setIsGoLiveOpen] = useState(false);
-  const [isPayingCustomer, setIsPayingCustomer] = useState<boolean | null>(null);
-  const [isErosDialogOpen, setIsErosDialogOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-  const [loadError, setLoadError] = useState<string | null>(null);
   const session = useSession();
-  const { toast } = useToast();
-  const isMobile = useMediaQuery("(max-width: 768px)");
 
-  useEffect(() => {
-    const checkPayingCustomerStatus = async () => {
-      if (!session?.user?.id) {
-        setIsLoading(false);
-        return;
+  const { data: posts, isLoading, error } = useQuery({
+    queryKey: ['posts'],
+    queryFn: async () => {
+      console.log("Home - Fetching posts...");
+      
+      const { data, error } = await supabase
+        .from('posts')
+        .select(`
+          id,
+          content,
+          media_url,
+          video_urls,
+          creator_id,
+          created_at,
+          updated_at,
+          likes_count,
+          comments_count,
+          creator:profiles(id, username, avatar_url)
+        `)
+        .order('created_at', { ascending: false })
+        .limit(20);
+
+      if (error) {
+        console.error("Home - Error fetching posts:", error);
+        throw error;
       }
-      
-      try {
-        setIsLoading(true);
-        setLoadError(null);
-        
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('is_paying_customer')
-          .eq('id', session.user.id)
-          .single();
-      
-        if (error) {
-          console.error('Error fetching profile data:', error);
-          setLoadError("Could not load your profile information");
-          return;
-        }
-      
-        if (data) {
-          setIsPayingCustomer(data.is_paying_customer);
-        }
-      } catch (err) {
-        console.error('Exception in checkPayingCustomerStatus:', err);
-        setLoadError("An unexpected error occurred");
-      } finally {
-        setIsLoading(false);
-      }
-    };
 
-    checkPayingCustomerStatus();
-  }, [session?.user?.id]);
+      console.log("Home - Posts fetched:", data?.length || 0);
+      
+      // Add has_liked field (simplified - you can enhance this with actual like status)
+      const postsWithLikes = data?.map(post => ({
+        ...post,
+        has_liked: false
+      })) || [];
 
-  if (!session) return null;
+      return postsWithLikes as Post[];
+    },
+    enabled: !!session
+  });
 
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="flex flex-col items-center gap-4">
-          <Loader2 className="h-10 w-10 animate-spin text-luxury-primary" />
-          <p className="text-luxury-neutral">Loading your personalized feed...</p>
-        </div>
+        <Loader2 className="h-8 w-8 animate-spin text-luxury-primary" />
       </div>
     );
   }
 
-  if (loadError) {
+  if (error) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="flex flex-col items-center gap-4">
-          <p className="text-red-500">{loadError}</p>
-          <Button onClick={() => window.location.reload()}>Retry</Button>
+        <div className="text-center">
+          <p className="text-red-400 mb-4">Error loading posts</p>
+          <p className="text-gray-400 text-sm">{error.message}</p>
         </div>
       </div>
     );
   }
 
   return (
-    <HomeLayout>
-      <div className="w-full max-w-[2000px] mx-auto px-0">
-        <div className="mb-6">
-          <StoryReel />
-        </div>
+    <div className="container mx-auto px-4 py-8 max-w-4xl">
+      <div className="space-y-8">
+        {/* Suggested Creators */}
+        <SuggestedCreators />
         
-        <div className="grid grid-cols-1 lg:grid-cols-[1fr,400px] gap-4 md:gap-8 px-4 md:px-6">
-          <MainFeed
-            userId={session.user.id}
-            isPayingCustomer={isPayingCustomer}
-            onOpenCreatePost={() => setIsCreatePostOpen(true)}
-            onFileSelect={setSelectedFiles}
-            onOpenGoLive={() => setIsGoLiveOpen(true)}
-          />
-          <div className={`${isMobile ? 'hidden' : 'block'}`}>
-            <RightSidebar />
-          </div>
-        </div>
-      </div>
-
-      <CreatePostDialog 
-        open={isCreatePostOpen} 
-        onOpenChange={setIsCreatePostOpen}
-        selectedFiles={selectedFiles}
-        onFileSelect={setSelectedFiles}
-      />
-
-      <GoLiveDialog 
-        open={isGoLiveOpen}
-        onOpenChange={setIsGoLiveOpen}
-      />
-
-      <Dialog open={isErosDialogOpen} onOpenChange={setIsErosDialogOpen}>
-        <DialogContent className={`${isMobile ? 'w-[95vw] max-w-none mx-auto rounded-lg mt-auto' : 'sm:max-w-[425px]'}`}>
-          <div className="grid gap-4 py-4">
-            <div className="flex flex-col items-center gap-4">
-              <input
-                type="file"
-                id="eros-upload"
-                accept="video/*"
-                className="hidden"
-                onChange={(e) => {
-                  const file = e.target.files?.[0];
-                  if (file) {
-                    toast({
-                      title: "Video selected",
-                      description: "Your Eros video is ready to be edited",
-                    });
-                    setIsErosDialogOpen(false);
-                  }
+        {/* Posts Feed */}
+        <div className="space-y-6">
+          {posts && posts.length > 0 ? (
+            posts.map((post) => (
+              <PostCard
+                key={post.id}
+                post={post}
+                currentUserId={session?.user?.id}
+                onLike={async (postId) => {
+                  console.log("Home - Like post:", postId);
+                  // Implement like functionality
+                }}
+                onDelete={async (postId, creatorId) => {
+                  console.log("Home - Delete post:", postId);
+                  // Implement delete functionality
+                }}
+                onComment={() => {
+                  console.log("Home - Comment on post");
+                  // Implement comment functionality
                 }}
               />
-              <Button
-                onClick={() => document.getElementById('eros-upload')?.click()}
-                className="w-full h-32 rounded-lg border-2 border-dashed border-luxury-primary/20 hover:border-luxury-primary/40 transition-colors"
-              >
-                <div className="flex flex-col items-center gap-2">
-                  <Video className="h-8 w-8" />
-                  <span>Upload video</span>
-                  <span className="text-sm text-luxury-neutral/60">
-                    Maximum length: 60 seconds
-                  </span>
-                </div>
-              </Button>
+            ))
+          ) : (
+            <div className="text-center py-12">
+              <p className="text-gray-400">No posts found</p>
+              <p className="text-gray-500 text-sm mt-2">Be the first to create a post!</p>
             </div>
-          </div>
-        </DialogContent>
-      </Dialog>
-    </HomeLayout>
+          )}
+        </div>
+      </div>
+    </div>
   );
 };
 

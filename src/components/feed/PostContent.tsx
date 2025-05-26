@@ -2,8 +2,7 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ProtectedMedia } from "@/components/security/ProtectedMedia";
-import { UniversalMedia } from "@/components/media/UniversalMedia"; 
-import { MediaType } from "@/types/media";
+import { ReliableMediaRenderer } from "@/components/media/ReliableMediaRenderer";
 
 interface PostContentProps {
   content: string;
@@ -20,17 +19,11 @@ export const PostContent = ({
   creatorId,
   onMediaClick,
 }: PostContentProps) => {
-  const [retries, setRetries] = useState<Record<string, number>>({});
-  
+  console.log("PostContent - mediaUrls:", mediaUrls);
+  console.log("PostContent - videoUrls:", videoUrls);
+
   // Safely check if either array has content
   const hasMedia = (mediaUrls?.length ?? 0) > 0 || (videoUrls?.length ?? 0) > 0;
-
-  const handleMediaError = (url: string) => {
-    // Silently handle media errors - just track retry count
-    const currentRetries = retries[url] || 0;
-    const newRetryCount = currentRetries + 1;
-    setRetries(prev => ({ ...prev, [url]: newRetryCount }));
-  };
 
   return (
     <motion.div
@@ -59,23 +52,17 @@ export const PostContent = ({
                         
                         return (
                           <motion.div
-                            key={`video-${index}-${retries[url] || 0}`}
+                            key={`video-${index}`}
                             initial={{ opacity: 0, scale: 0.95 }}
                             animate={{ opacity: 1, scale: 1 }}
                             exit={{ opacity: 0, scale: 0.95 }}
                             className="relative aspect-video w-full cursor-pointer"
                             onClick={() => onMediaClick(url)}
                           >
-                            <UniversalMedia
-                              item={{
-                                url: url,
-                                type: MediaType.VIDEO,
-                                creator_id: creatorId
-                              }}
+                            <ReliableMediaRenderer
+                              source={url}
                               className="w-full h-full rounded-lg overflow-hidden"
-                              onError={() => handleMediaError(url)}
                               controls={true}
-                              compact={true}
                             />
                           </motion.div>
                         );
@@ -91,22 +78,16 @@ export const PostContent = ({
                         
                         return (
                           <motion.div
-                            key={`image-${index}-${retries[url] || 0}`}
+                            key={`image-${index}`}
                             initial={{ opacity: 0, scale: 0.95 }}
                             animate={{ opacity: 1, scale: 1 }}
                             exit={{ opacity: 0, scale: 0.95 }}
                             className="relative aspect-[4/3] cursor-pointer group"
                             onClick={() => onMediaClick(url)}
                           >
-                            <UniversalMedia
-                              item={{
-                                url: url,
-                                type: MediaType.IMAGE,
-                                creator_id: creatorId
-                              }}
+                            <ReliableMediaRenderer
+                              source={url}
                               className="w-full h-full object-cover rounded-lg transition-transform duration-300 group-hover:scale-105"
-                              onError={() => handleMediaError(url)}
-                              compact={true}
                             />
                             <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-lg" />
                           </motion.div>
