@@ -1,5 +1,5 @@
 
-import { AvailabilityStatus } from '@/utils/media/types';
+import { AvailabilityStatus } from '@/components/ui/availability-indicator';
 import { Database } from '@/integrations/supabase/types';
 
 /**
