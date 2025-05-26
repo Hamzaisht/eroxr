@@ -1,28 +1,37 @@
 
 import { supabase } from "@/integrations/supabase/client";
 
-/**
- * Ensure all required storage buckets exist
- * This can be called during app initialization
- */
-export const ensureStorageBuckets = async (): Promise<void> => {
-  const requiredBuckets = ['media', 'avatars', 'posts'];
-  
-  for (const bucketName of requiredBuckets) {
-    try {
-      // Check if bucket exists
-      const { data: existingBuckets } = await supabase.storage.listBuckets();
-      const bucketExists = existingBuckets?.some(bucket => bucket.name === bucketName);
-      
-      if (!bucketExists) {
-        console.log(`Creating missing bucket: ${bucketName}`);
-        await supabase.storage.createBucket(bucketName, {
-          public: true,
-          fileSizeLimit: bucketName === 'avatars' ? 5242880 : 104857600 // 5MB for avatars, 100MB for others
-        });
-      }
-    } catch (error) {
-      console.error(`Error ensuring bucket ${bucketName} exists:`, error);
+export async function ensureStorageBuckets() {
+  try {
+    // List existing buckets
+    const { data: buckets, error } = await supabase.storage.listBuckets();
+    
+    if (error) {
+      console.error("Error listing buckets:", error);
+      return;
     }
+    
+    const bucketNames = buckets?.map(bucket => bucket.name) || [];
+    console.log("Existing buckets:", bucketNames);
+    
+    // Required buckets
+    const requiredBuckets = ['media', 'stories', 'posts'];
+    
+    for (const bucketName of requiredBuckets) {
+      if (!bucketNames.includes(bucketName)) {
+        console.log(`Creating bucket: ${bucketName}`);
+        const { error: createError } = await supabase.storage.createBucket(bucketName, {
+          public: true,
+          allowedMimeTypes: ['image/*', 'video/*'],
+          fileSizeLimit: 1024 * 1024 * 100 // 100MB
+        });
+        
+        if (createError) {
+          console.error(`Error creating bucket ${bucketName}:`, createError);
+        }
+      }
+    }
+  } catch (error) {
+    console.error("Error ensuring storage buckets:", error);
   }
-};
+}

@@ -1,188 +1,94 @@
-import { useEffect, useState, useRef, lazy, Suspense } from "react";
-import { motion, useScroll, useTransform } from "framer-motion";
-import { useIntersectionObserver } from "@/hooks/use-intersection-observer";
-import { useParallax } from "@/hooks/use-parallax";
-import { useMouseParallax } from "@/hooks/use-mouse-parallax";
-import { useIsMobile } from "@/hooks/use-mobile";
 
-import { Navbar } from "@/components/landing/Navbar";
-import Footer from "@/components/landing/Footer";
-import { HeroSection } from "@/components/landing/HeroSection";
-import { ExplainerSection } from "@/components/landing/ExplainerSection";
-import { FeaturesSection } from "@/components/landing/FeaturesSection";
-import { TrustSection } from "@/components/landing/TrustSection";
-import { TestimonialsSection } from "@/components/landing/TestimonialsSection";
-import { PricingSection } from "@/components/landing/PricingSection";
-import { MegaCTASection } from "@/components/landing/MegaCTASection";
-import { BackgroundVideo } from "@/components/video/BackgroundVideo"; // Add the import
-import { RotatingCardSection } from "@/components/landing/RotatingCardSection";
-import CustomCursor from "@/components/landing/components/CustomCursor";
-import "../styles/animations.css";
-import { LoadingState } from "@/components/ui/LoadingState";
-import { StickySignupCTA } from "@/components/landing/components/StickySignupCTA";
-import { ScrollProgress } from "@/components/landing/components/ScrollProgress";
-import { ThemeToggle } from "@/components/landing/components/ThemeToggle";
-import { throttle } from "@/utils/throttle";
-import { useReducedMotion } from "@/hooks/use-reduced-motion";
-
-// Lazy load non-critical components
-const ROICalculator = lazy(() => import("@/components/landing/components/ROICalculator"));
-const PressLogos = lazy(() => import("@/components/landing/components/PressLogos"));
-const SuccessStoriesCarousel = lazy(() => import("@/components/landing/components/SuccessStoriesCarousel"));
-const CommunityHighlights = lazy(() => import("@/components/landing/components/CommunityHighlights"));
-const FeatureComparisonTable = lazy(() => import("@/components/landing/components/FeatureComparisonTable"));
-const FAQSection = lazy(() => import("@/components/landing/components/FAQSection"));
-
-// Pre-load critical images
-const preloadImages = [
-  "/logo-glow.png",
-  "/grid.svg",
-];
+import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 const Landing = () => {
-  const [mounted, setMounted] = useState(false);
-  const isMobile = useIsMobile();
-  const prefersReducedMotion = useReducedMotion();
-  const mainRef = useRef<HTMLDivElement>(null);
-  const { scrollY } = useScroll();
-  const opacity = useTransform(scrollY, [0, 200], [1, 0.2]);
-  
-  const { scrollYProgress } = useScroll({
-    target: mainRef,
-    offset: ["start start", "end end"],
-  });
-  
-  const scrollProgressScale = useTransform(scrollYProgress, [0, 1], [1, 0.98]);
-  const scrollProgressBorder = useTransform(
-    scrollYProgress,
-    [0, 0.3, 0.7, 1],
-    [
-      "0px 0px 0px rgba(155, 135, 245, 0)",
-      "0px 30px 60px rgba(155, 135, 245, 0.15)",
-      "0px 30px 60px rgba(217, 70, 239, 0.15)",
-      "0px 0px 0px rgba(217, 70, 239, 0)"
-    ]
-  );
-  
-  useEffect(() => {
-    setMounted(true);
-    
-    // Preload critical images
-    preloadImages.forEach(src => {
-      const img = new Image();
-      img.src = src;
-    });
-    
-    // Enable smooth scrolling behavior
-    document.documentElement.style.scrollBehavior = prefersReducedMotion ? "auto" : "smooth";
-    
-    // Add performance optimization
-    const handleScroll = throttle(() => {
-      // No-op, just for event throttling
-    }, 100);
-    
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    
-    return () => {
-      document.documentElement.style.scrollBehavior = "";
-      window.removeEventListener('scroll', handleScroll);
-    };
-  }, [prefersReducedMotion]);
-
-  if (!mounted) return <LoadingState message="Initializing..." />;
+  const navigate = useNavigate();
 
   return (
-    <div className="relative w-screen overflow-x-hidden bg-luxury-dark text-white">
-      {/* Scroll progress indicator */}
-      <ScrollProgress />
-      
-      {/* Theme toggle */}
-      <div className="fixed top-4 right-4 z-[60]">
-        <ThemeToggle />
-      </div>
-      
-      {!isMobile && !prefersReducedMotion && <CustomCursor />}
-      
-      {/* Replace VideoBackground with our new BackgroundVideo component */}
-      <BackgroundVideo 
-        videoUrl="/background.mp4"
-        overlayOpacity={50}
-      />
-      
-      <Navbar />
-      
-      {/* Sticky CTA that appears after scrolling */}
-      <StickySignupCTA />
-      
-      <motion.main 
-        ref={mainRef}
-        className="relative w-screen"
-        style={{
-          scale: prefersReducedMotion ? 1 : scrollProgressScale,
-          boxShadow: prefersReducedMotion ? "none" : scrollProgressBorder,
-        }}
-      >
-        <HeroSection scrollOpacity={opacity} />
-        
-        <Suspense fallback={<div className="py-12 flex justify-center"><LoadingState /></div>}>
-          <PressLogos />
-        </Suspense>
-        
-        <ExplainerSection />
-        
-        {/* Add our new Rotating Card Section here */}
-        <RotatingCardSection />
-        
-        <section className="py-24 px-4 sm:px-6">
-          <div className="container mx-auto text-center">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.7 }}
-              className="mb-12"
-            >
-              <h2 className="text-3xl md:text-4xl lg:text-5xl font-display font-bold mb-4">
-                Calculate Your <span className="gradient-text">Earning Potential</span>
-              </h2>
-              <p className="text-luxury-neutral/80 max-w-2xl mx-auto text-lg">
-                See how much you could earn on EROXR with our interactive calculator
-              </p>
-            </motion.div>
-            
-            <Suspense fallback={<div className="h-96 flex justify-center items-center"><LoadingState /></div>}>
-              <ROICalculator />
-            </Suspense>
+    <div className="min-h-screen bg-[#0D1117] flex flex-col">
+      {/* Header */}
+      <header className="p-6 border-b border-luxury-neutral/10">
+        <div className="max-w-7xl mx-auto flex justify-between items-center">
+          <h1 className="text-2xl font-bold text-white">Platform</h1>
+          <Button 
+            onClick={() => navigate("/login")}
+            variant="outline"
+          >
+            Sign In
+          </Button>
+        </div>
+      </header>
+
+      {/* Hero Section */}
+      <main className="flex-1 flex items-center justify-center p-6">
+        <div className="max-w-4xl mx-auto text-center space-y-8">
+          <div className="space-y-4">
+            <h2 className="text-4xl md:text-6xl font-bold text-white">
+              Welcome to Our Platform
+            </h2>
+            <p className="text-xl text-luxury-neutral max-w-2xl mx-auto">
+              Connect, create, and share with a community that celebrates authenticity and creativity.
+            </p>
           </div>
-        </section>
-        
-        <FeaturesSection />
-        
-        <TrustSection />
-        
-        <TestimonialsSection />
-        
-        <PricingSection />
-        
-        <Suspense fallback={<div className="py-12 flex justify-center"><LoadingState /></div>}>
-          <SuccessStoriesCarousel />
-        </Suspense>
-        
-        <Suspense fallback={<div className="py-12 flex justify-center"><LoadingState /></div>}>
-          <CommunityHighlights />
-        </Suspense>
-        
-        <Suspense fallback={<div className="py-12 flex justify-center"><LoadingState /></div>}>
-          <FeatureComparisonTable />
-        </Suspense>
-        
-        <Suspense fallback={<div className="py-12 flex justify-center"><LoadingState /></div>}>
-          <FAQSection />
-        </Suspense>
-        
-        <MegaCTASection />
-      </motion.main>
-      
-      <Footer />
+
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Button 
+              size="lg"
+              onClick={() => navigate("/login")}
+              className="px-8 py-3"
+            >
+              Get Started
+            </Button>
+            <Button 
+              size="lg"
+              variant="outline"
+              onClick={() => navigate("/login")}
+              className="px-8 py-3"
+            >
+              Learn More
+            </Button>
+          </div>
+
+          {/* Feature Cards */}
+          <div className="grid md:grid-cols-3 gap-6 mt-16">
+            <Card className="bg-luxury-darker border-luxury-neutral/10">
+              <CardHeader>
+                <CardTitle className="text-white">Create Content</CardTitle>
+                <CardDescription>
+                  Share your stories, photos, and videos with the world
+                </CardDescription>
+              </CardHeader>
+            </Card>
+            
+            <Card className="bg-luxury-darker border-luxury-neutral/10">
+              <CardHeader>
+                <CardTitle className="text-white">Connect</CardTitle>
+                <CardDescription>
+                  Build meaningful relationships with like-minded people
+                </CardDescription>
+              </CardHeader>
+            </Card>
+            
+            <Card className="bg-luxury-darker border-luxury-neutral/10">
+              <CardHeader>
+                <CardTitle className="text-white">Earn</CardTitle>
+                <CardDescription>
+                  Monetize your content and build your personal brand
+                </CardDescription>
+              </CardHeader>
+            </Card>
+          </div>
+        </div>
+      </main>
+
+      {/* Footer */}
+      <footer className="p-6 border-t border-luxury-neutral/10">
+        <div className="max-w-7xl mx-auto text-center text-luxury-neutral">
+          <p>&copy; 2024 Platform. All rights reserved.</p>
+        </div>
+      </footer>
     </div>
   );
 };

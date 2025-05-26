@@ -7,17 +7,28 @@ import { MainContent } from "./components/MainContent";
 import { FloatingActionMenu } from "./FloatingActionMenu";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { LoadingScreen } from "./LoadingScreen";
+import { useEffect, useState } from "react";
 
 export const MainLayout = () => {
   const session = useSession();
   const location = useLocation();
+  const [isLoading, setIsLoading] = useState(true);
   const isErosRoute = location.pathname.includes('/shorts');
   const isMobile = useIsMobile();
   
-  console.log("MainLayout - session:", session ? "exists" : "null"); // Debug logging
+  useEffect(() => {
+    // Give session time to load
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 1000);
+    
+    return () => clearTimeout(timer);
+  }, []);
+  
+  console.log("MainLayout - session:", session ? "exists" : "null");
   
   // Show loading screen while session is being determined
-  if (session === undefined) {
+  if (isLoading && session === undefined) {
     return <LoadingScreen />;
   }
   
