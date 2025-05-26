@@ -129,7 +129,7 @@ export const Media = forwardRef<HTMLVideoElement | HTMLImageElement, MediaProps>
       );
     }
 
-    // For image content
+    // For image content (including GIF)
     if (mediaType === MediaType.IMAGE || mediaType === MediaType.GIF) {
       return (
         <div className="relative w-full h-full">
