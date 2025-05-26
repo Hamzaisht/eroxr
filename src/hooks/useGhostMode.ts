@@ -1,10 +1,52 @@
 
-// This file is a re-export of the main implementation in useGhostMode.tsx
-// It exists to maintain backward compatibility for imports
+import { useState, useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 
-export { 
-  useGhostMode, 
-  GhostModeProvider, 
-  useModerationActions, 
-  useLiveSurveillanceData 
-} from './useGhostMode.tsx';
+export const useGhostMode = () => {
+  const [isGhostMode, setIsGhostMode] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const checkGhostMode = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        
+        if (!user) {
+          setIsGhostMode(false);
+          setIsLoading(false);
+          return;
+        }
+
+        // Check if user is admin and has an active ghost mode session
+        const { data: userRole } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', user.id)
+          .single();
+
+        if (userRole?.role === 'admin') {
+          const { data: session } = await supabase
+            .from('admin_sessions')
+            .select('ghost_mode')
+            .eq('admin_id', user.id)
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .single();
+
+          setIsGhostMode(session?.ghost_mode || false);
+        } else {
+          setIsGhostMode(false);
+        }
+      } catch (error) {
+        console.error('Error checking ghost mode:', error);
+        setIsGhostMode(false);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    checkGhostMode();
+  }, []);
+
+  return { isGhostMode, isLoading };
+};
