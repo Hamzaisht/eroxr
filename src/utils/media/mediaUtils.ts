@@ -104,3 +104,43 @@ export const normalizeMediaSource = (source: any): MediaSource => {
     access_level: source.access_level
   };
 };
+
+/**
+ * Calculates aspect ratio dimensions for media display
+ */
+export const calculateAspectRatioDimensions = (
+  containerWidth: number,
+  containerHeight: number,
+  maxWidth: number,
+  maxHeight: number
+) => {
+  const aspectRatio = containerWidth / containerHeight;
+  
+  let width = maxWidth;
+  let height = maxWidth / aspectRatio;
+  
+  if (height > maxHeight) {
+    height = maxHeight;
+    width = maxHeight * aspectRatio;
+  }
+  
+  return { width, height };
+};
+
+/**
+ * Creates a unique file path for uploads
+ */
+export const createUniqueFilePath = (
+  file: File,
+  options: { folder?: string; userId?: string } = {}
+): string => {
+  const { folder = '', userId = '' } = options;
+  const timestamp = Date.now();
+  const randomString = Math.random().toString(36).substring(2, 10);
+  const extension = file.name.split('.').pop() || '';
+  
+  const basePath = folder ? `${folder}/` : '';
+  const userPath = userId ? `${userId}/` : '';
+  
+  return `${basePath}${userPath}${timestamp}-${randomString}.${extension}`;
+};
