@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -113,7 +112,7 @@ export const CreatePostDialog = ({ open, onOpenChange, selectedFiles, onFileSele
         visibility,
       });
 
-      // Simple post creation - no trending content operations at all
+      // Create post - database triggers handle trending_content automatically
       const postData = {
         content: content.trim(),
         creator_id: session.user.id,

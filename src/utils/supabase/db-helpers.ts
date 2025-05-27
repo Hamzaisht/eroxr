@@ -8,7 +8,7 @@ export async function createPost(
   errorCallback?: (error: any) => void
 ) {
   try {
-    // Simple post creation without any trending content operations
+    // Create post - database triggers automatically handle trending_content
     const { data, error } = await supabase
       .from('posts')
       .insert(post)
