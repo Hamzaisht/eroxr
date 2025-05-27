@@ -2,7 +2,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "./use-toast";
-import { updateTrendingMetrics } from "@/utils/supabase/trending-helpers";
 
 export const usePostActions = () => {
   const queryClient = useQueryClient();
@@ -14,7 +13,7 @@ export const usePostActions = () => {
       if (!user) throw new Error("User not authenticated");
 
       if (isLiked) {
-        // Unlike
+        // Unlike - remove from post_likes
         const { error } = await supabase
           .from('post_likes')
           .delete()
@@ -47,18 +46,10 @@ export const usePostActions = () => {
           }
         }
 
-        // Update trending metrics
-        const { data: post } = await supabase
-          .from('posts')
-          .select('likes_count')
-          .eq('id', postId)
-          .single();
-        
-        if (post) {
-          await updateTrendingMetrics(postId, { likes: post.likes_count || 0 });
-        }
+        // NO MANUAL TRENDING_CONTENT UPDATES - Database triggers handle this!
+
       } else {
-        // Like
+        // Like - add to post_likes
         const { error } = await supabase
           .from('post_likes')
           .insert({
@@ -92,16 +83,7 @@ export const usePostActions = () => {
           }
         }
 
-        // Update trending metrics
-        const { data: post } = await supabase
-          .from('posts')
-          .select('likes_count')
-          .eq('id', postId)
-          .single();
-        
-        if (post) {
-          await updateTrendingMetrics(postId, { likes: post.likes_count || 0 });
-        }
+        // NO MANUAL TRENDING_CONTENT UPDATES - Database triggers handle this!
       }
     },
     onSuccess: () => {
@@ -120,6 +102,7 @@ export const usePostActions = () => {
 
   const handleDelete = useMutation({
     mutationFn: async (postId: string) => {
+      // Just delete the post - triggers will handle trending_content cleanup
       const { error } = await supabase
         .from('posts')
         .delete()

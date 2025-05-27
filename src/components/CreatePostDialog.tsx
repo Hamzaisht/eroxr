@@ -111,11 +111,10 @@ export const CreatePostDialog = ({ open, onOpenChange, selectedFiles, onFileSele
         content: content.trim(),
         creator_id: session.user.id,
         visibility,
-        media_urls: uploadedMediaUrls,
-        asset_ids: uploadedAssetIds
       });
 
-      // Create the post with proper field mapping
+      // Create the post - ONLY insert into posts table
+      // Database triggers will handle trending_content automatically
       const postData = {
         content: content.trim(),
         creator_id: session.user.id,
@@ -128,6 +127,8 @@ export const CreatePostDialog = ({ open, onOpenChange, selectedFiles, onFileSele
         is_ppv: false,
         is_featured: false
       };
+
+      console.log("Inserting post data:", postData);
 
       const { data: post, error: postError } = await supabase
         .from('posts')
@@ -159,7 +160,7 @@ export const CreatePostDialog = ({ open, onOpenChange, selectedFiles, onFileSele
         }
       }
 
-      // Triggers will automatically handle trending_content insertion
+      // NO TRENDING_CONTENT INSERTS - Database triggers handle this automatically!
 
       toast({
         title: "Success",

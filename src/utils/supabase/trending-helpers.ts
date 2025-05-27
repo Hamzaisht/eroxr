@@ -15,19 +15,13 @@ export async function updateTrendingMetrics(
   }
 ) {
   try {
-    const { error } = await supabase
-      .from('trending_content')
-      .update(metrics)
-      .eq('post_id', postId);
+    // DO NOT insert/update trending_content directly!
+    // Database triggers handle this automatically when posts are liked/commented/etc.
+    console.log('Trending metrics will be updated by database triggers for post:', postId);
     
-    if (error) {
-      console.error('Error updating trending metrics:', error);
-      return;
-    }
-
-    // Update the score using our function
+    // If you need to manually trigger a score update, use the RPC function
     await supabase.rpc('update_trending_score', { p_post_id: postId });
   } catch (err) {
-    console.error('Failed to update trending metrics:', err);
+    console.error('Failed to update trending score:', err);
   }
 }
