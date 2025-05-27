@@ -28,7 +28,7 @@ const Home = () => {
       console.log("Home - Fetching posts with profiles...");
       
       try {
-        // Fetch posts with creator profiles
+        // Fetch posts with creator profiles - using proper field mapping
         const { data: postsData, error: postsError } = await supabase
           .from('posts')
           .select(`
@@ -40,7 +40,17 @@ const Home = () => {
             likes_count,
             comments_count,
             visibility,
-            creator:profiles!posts_creator_id_fkey(id, username)
+            view_count,
+            share_count,
+            engagement_score,
+            is_ppv,
+            ppv_amount,
+            creator:profiles!posts_creator_id_fkey(
+              id, 
+              username,
+              bio,
+              location
+            )
           `)
           .eq('visibility', 'public')
           .order('created_at', { ascending: false })
@@ -51,17 +61,22 @@ const Home = () => {
           throw new Error(postsError.message || "Failed to fetch posts");
         }
 
-        console.log("Home - Posts fetched:", postsData?.length || 0);
+        console.log("Home - Posts fetched successfully:", postsData?.length || 0);
+        
+        if (!postsData || postsData.length === 0) {
+          console.log("Home - No posts found");
+          return [];
+        }
         
         // For each post, fetch associated media assets and creator avatars
         const postsWithMedia = await Promise.all(
-          (postsData || []).map(async (post) => {
+          postsData.map(async (post) => {
             try {
               // Query media assets for this post
               const { data: mediaAssets, error: mediaError } = await supabase
                 .from('media_assets')
                 .select('id, storage_path, original_name, media_type, alt_text, metadata')
-                .eq('metadata->post_id', post.id)
+                .eq('metadata->>post_id', post.id)
                 .order('created_at', { ascending: false })
                 .limit(4);
 
@@ -77,7 +92,7 @@ const Home = () => {
                   .select('storage_path')
                   .eq('user_id', post.creator_id)
                   .eq('media_type', 'image')
-                  .eq('metadata->usage', 'avatar')
+                  .eq('metadata->>usage', 'avatar')
                   .order('created_at', { ascending: false })
                   .limit(1)
                   .maybeSingle();
@@ -110,7 +125,9 @@ const Home = () => {
                 creator: {
                   id: creator?.id || post.creator_id || '',
                   username: creator?.username || 'Anonymous',
-                  avatar_url: creatorAvatarUrl
+                  avatar_url: creatorAvatarUrl,
+                  bio: creator?.bio || '',
+                  location: creator?.location || ''
                 },
                 media_assets: transformedMedia
               };
@@ -121,7 +138,9 @@ const Home = () => {
                 creator: {
                   id: post.creator_id || '',
                   username: 'Anonymous',
-                  avatar_url: null
+                  avatar_url: null,
+                  bio: '',
+                  location: ''
                 },
                 media_assets: []
               };
@@ -129,33 +148,44 @@ const Home = () => {
           })
         );
 
+        console.log("Home - Posts with media processed:", postsWithMedia.length);
         return postsWithMedia;
       } catch (error) {
         console.error("Home - Failed to fetch posts:", error);
         throw error;
       }
     },
-    enabled: !!session
+    enabled: !!session,
+    retry: 3,
+    staleTime: 30000 // 30 seconds
   });
 
+  // Show loading state
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="h-8 w-8 animate-spin text-luxury-primary" />
+      <div className="flex items-center justify-center min-h-screen bg-luxury-darker">
+        <div className="text-center">
+          <Loader2 className="h-8 w-8 animate-spin text-luxury-primary mx-auto mb-4" />
+          <p className="text-white">Loading your feed...</p>
+        </div>
       </div>
     );
   }
 
+  // Show error state
   if (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
+      <div className="flex items-center justify-center min-h-screen bg-luxury-darker">
+        <div className="text-center max-w-md">
           <p className="text-red-400 mb-4">Error loading posts</p>
-          <p className="text-gray-400 text-sm mb-4">{errorMessage}</p>
-          <Button onClick={() => refetch()} variant="outline">
+          <p className="text-gray-400 text-sm mb-6">{errorMessage}</p>
+          <Button onClick={() => refetch()} variant="outline" className="mr-4">
             <RefreshCw className="h-4 w-4 mr-2" />
             Try Again
+          </Button>
+          <Button onClick={() => window.location.reload()}>
+            Refresh Page
           </Button>
         </div>
       </div>
@@ -172,7 +202,7 @@ const Home = () => {
   };
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-7xl">
+    <div className="container mx-auto px-4 py-8 max-w-7xl bg-luxury-darker min-h-screen">
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         {/* Main Content */}
         <div className="lg:col-span-2 lg:col-start-2 space-y-6">
@@ -207,9 +237,12 @@ const Home = () => {
                 />
               ))
             ) : (
-              <div className="text-center py-12">
-                <p className="text-gray-400">No posts found</p>
-                <p className="text-gray-500 text-sm mt-2">Be the first to create a post!</p>
+              <div className="text-center py-12 bg-luxury-card rounded-lg">
+                <p className="text-gray-400 mb-2">No posts found</p>
+                <p className="text-gray-500 text-sm mb-4">Be the first to create a post!</p>
+                <Button onClick={openCreatePost} className="bg-luxury-primary hover:bg-luxury-primary/90">
+                  Create First Post
+                </Button>
               </div>
             )}
           </div>

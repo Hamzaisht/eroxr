@@ -17,6 +17,8 @@ export const MediaUploadSection = ({
   defaultAccessLevel = MediaAccessLevel.PUBLIC
 }: MediaUploadSectionProps) => {
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { uploadMedia, uploadState } = useMediaUpload();
 
@@ -32,16 +34,23 @@ export const MediaUploadSection = ({
   const handleUpload = async () => {
     if (selectedFiles.length === 0) return;
 
+    setIsUploading(true);
+    setUploadProgress(0);
+
     try {
-      const results = await Promise.all(
-        selectedFiles.map(file => uploadMedia(file, {
+      const uploadPromises = selectedFiles.map(async (file, index) => {
+        setUploadProgress(((index + 1) / selectedFiles.length) * 100);
+        
+        return uploadMedia(file, {
           contentCategory: 'post',
           accessLevel: defaultAccessLevel,
-          metadata: { usage: 'post' } // This will be updated with post_id later
-        }))
-      );
+          metadata: { usage: 'post' }
+        });
+      });
 
+      const results = await Promise.all(uploadPromises);
       const successfulUploads = results.filter(r => r.success);
+      
       if (successfulUploads.length > 0) {
         const urls = successfulUploads.map(r => r.url!);
         const assetIds = successfulUploads.map(r => r.assetId!);
@@ -50,6 +59,9 @@ export const MediaUploadSection = ({
       }
     } catch (error) {
       console.error('Upload error:', error);
+    } finally {
+      setIsUploading(false);
+      setUploadProgress(0);
     }
   };
 
@@ -68,10 +80,10 @@ export const MediaUploadSection = ({
           variant="outline"
           size="sm"
           onClick={() => fileInputRef.current?.click()}
-          disabled={uploadState.isUploading}
+          disabled={isUploading}
         >
           <Upload className="h-4 w-4 mr-2" />
-          Add Media
+          Add More Media
         </Button>
         
         <Input
@@ -101,18 +113,18 @@ export const MediaUploadSection = ({
                 size="sm"
                 variant="ghost"
                 onClick={() => removeFile(index)}
-                disabled={uploadState.isUploading}
+                disabled={isUploading}
               >
                 <X className="h-4 w-4" />
               </Button>
             </div>
           ))}
           
-          {uploadState.isUploading && (
+          {(isUploading || uploadProgress > 0) && (
             <div className="space-y-2">
-              <Progress value={uploadState.progress} className="w-full" />
+              <Progress value={uploadProgress} className="w-full" />
               <p className="text-sm text-luxury-neutral/60 text-center">
-                Uploading... {uploadState.progress}%
+                Uploading... {Math.round(uploadProgress)}%
               </p>
             </div>
           )}
@@ -120,11 +132,11 @@ export const MediaUploadSection = ({
           <Button 
             type="button"
             onClick={handleUpload}
-            disabled={uploadState.isUploading}
+            disabled={isUploading}
             className="w-full"
             size="sm"
           >
-            {uploadState.isUploading ? 'Uploading...' : `Upload ${selectedFiles.length} file(s)`}
+            {isUploading ? 'Uploading...' : `Upload ${selectedFiles.length} file(s)`}
           </Button>
         </div>
       )}
