@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -112,8 +113,7 @@ export const CreatePostDialog = ({ open, onOpenChange, selectedFiles, onFileSele
         visibility,
       });
 
-      // Create the post - ONLY insert into posts table
-      // Database triggers will handle trending_content automatically
+      // Simple post creation - no trending content operations at all
       const postData = {
         content: content.trim(),
         creator_id: session.user.id,
@@ -158,8 +158,6 @@ export const CreatePostDialog = ({ open, onOpenChange, selectedFiles, onFileSele
           // Don't fail the post creation for this
         }
       }
-
-      // Database triggers handle trending_content automatically!
 
       toast({
         title: "Success",
