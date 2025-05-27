@@ -10,7 +10,10 @@ import { Toaster } from '@/components/ui/toaster';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import Index from '@/pages/Index';
 import Home from '@/pages/Home';
+import Login from '@/pages/Login';
+import Register from '@/pages/Register';
 import { MainLayout } from '@/components/layout/MainLayout';
+import { AuthLayout } from '@/components/layout/AuthLayout';
 
 function App() {
   const [session, setSession] = useState<Session | null>(null);
@@ -40,9 +43,18 @@ function App() {
           <Router>
             <ErrorBoundary>
               <Routes>
+                {/* Landing page - public */}
                 <Route path="/" element={<Index />} />
-                <Route path="/*" element={<MainLayout />}>
-                  <Route path="home" element={<Home />} />
+                
+                {/* Auth routes */}
+                <Route element={<AuthLayout />}>
+                  <Route path="/login" element={<Login />} />
+                  <Route path="/register" element={<Register />} />
+                </Route>
+                
+                {/* Protected routes */}
+                <Route element={<MainLayout />}>
+                  <Route path="/home" element={<Home />} />
                 </Route>
               </Routes>
               <Toaster />

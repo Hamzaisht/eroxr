@@ -103,6 +103,11 @@ const Home = () => {
   return (
     <div className="container mx-auto px-4 py-8 max-w-4xl">
       <div className="space-y-8">
+        <div className="text-center">
+          <h1 className="text-3xl font-bold text-white mb-2">Welcome to Eroxr</h1>
+          <p className="text-gray-400">Discover amazing content from creators around the world</p>
+        </div>
+        
         <SuggestedCreators />
         
         <div className="space-y-6">
