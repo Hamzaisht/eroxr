@@ -1,10 +1,8 @@
 
 import React from "react";
 import { cn } from "@/lib/utils";
-import { AvailabilityStatus } from "@/utils/media/types";
 
-// Re-export the AvailabilityStatus enum so it can be imported from this file
-export { AvailabilityStatus };
+export type AvailabilityStatus = 'online' | 'offline' | 'away' | 'busy' | 'invisible';
 
 export interface AvailabilityIndicatorProps {
   status?: AvailabilityStatus;
@@ -14,20 +12,20 @@ export interface AvailabilityIndicatorProps {
 }
 
 export const AvailabilityIndicator: React.FC<AvailabilityIndicatorProps> = ({
-  status = AvailabilityStatus.OFFLINE,
+  status = 'offline',
   size = 12,
   className,
   onClick
 }) => {
   const getStatusColor = () => {
     switch (status) {
-      case AvailabilityStatus.ONLINE:
+      case 'online':
         return "bg-green-500";
-      case AvailabilityStatus.AWAY:
+      case 'away':
         return "bg-yellow-500";
-      case AvailabilityStatus.BUSY:
+      case 'busy':
         return "bg-red-500";
-      case AvailabilityStatus.INVISIBLE:
+      case 'invisible':
         return "bg-gray-500";
       default:
         return "bg-gray-500";

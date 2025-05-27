@@ -6,10 +6,20 @@ export enum MediaType {
   DOCUMENT = 'document'
 }
 
+export enum MediaAccessLevel {
+  PUBLIC = 'public',
+  SUBSCRIBERS = 'subscribers',
+  PPV = 'ppv',
+  FOLLOWERS = 'followers',
+  PRIVATE = 'private'
+}
+
 export interface MediaItem {
+  id?: string;
   url: string;
   type: MediaType;
   alt?: string;
+  access_level?: MediaAccessLevel;
 }
 
 export interface MediaRendererProps {
@@ -19,4 +29,14 @@ export interface MediaRendererProps {
   autoPlay?: boolean;
   muted?: boolean;
   loop?: boolean;
+  showWatermark?: boolean;
+  onAccessRequired?: (type: string) => void;
 }
+
+export interface UploadResult {
+  success: boolean;
+  url?: string;
+  error?: string;
+}
+
+export type AvailabilityStatus = 'online' | 'offline' | 'away' | 'busy' | 'invisible';
