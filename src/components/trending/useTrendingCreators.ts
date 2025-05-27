@@ -36,15 +36,13 @@ export const useTrendingCreators = () => {
       const creatorMap = new Map();
       
       data?.forEach((item, index) => {
-        // Handle posts as an array and take the first item
-        const posts = Array.isArray(item.posts) ? item.posts : [item.posts];
-        const post = posts[0];
+        // Since we use !inner, posts should be a single object
+        const post = item.posts;
         
         if (!post) return;
         
-        // Handle profiles as an array and take the first item
-        const profiles = Array.isArray(post.profiles) ? post.profiles : [post.profiles];
-        const creator = profiles[0];
+        // Handle profiles - should be a single object due to foreign key
+        const creator = post.profiles;
         const creatorId = post.creator_id;
         
         if (!creatorMap.has(creatorId)) {
