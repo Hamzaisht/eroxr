@@ -1,5 +1,5 @@
 
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { UserAvatar as BaseUserAvatar } from "@/components/avatar/UserAvatar";
 import { 
   DropdownMenu,
   DropdownMenuContent,
@@ -9,9 +9,9 @@ import {
 import { AvailabilityIndicator, AvailabilityStatus } from "@/components/ui/availability-indicator";
 
 interface UserAvatarProps {
-  avatarUrl?: string | null;
-  email?: string | null;
+  userId?: string | null;
   username?: string | null;
+  email?: string | null;
   status?: AvailabilityStatus;
   onStatusChange?: (status: AvailabilityStatus) => void;
   size?: 'sm' | 'md' | 'lg';
@@ -19,37 +19,25 @@ interface UserAvatarProps {
 }
 
 export const UserAvatar = ({ 
-  avatarUrl, 
-  email, 
+  userId,
   username,
+  email,
   status = AvailabilityStatus.OFFLINE,
   onStatusChange,
   size = 'md',
   showStatus = true
 }: UserAvatarProps) => {
-  const getInitials = () => {
-    if (username) return username.charAt(0).toUpperCase();
-    if (email) return email.charAt(0).toUpperCase();
-    return '?';
-  };
-
-  const getSizeClass = () => {
-    switch (size) {
-      case 'sm': return 'h-8 w-8';
-      case 'lg': return 'h-14 w-14';
-      default: return 'h-10 w-10';
-    }
-  };
 
   if (!onStatusChange || !showStatus) {
     return (
       <div className="relative">
-        <Avatar className={`${getSizeClass()} border-2 border-luxury-primary/30`}>
-          <AvatarImage src={avatarUrl || undefined} alt="User avatar" />
-          <AvatarFallback className="bg-luxury-darker text-luxury-neutral">
-            {getInitials()}
-          </AvatarFallback>
-        </Avatar>
+        <BaseUserAvatar 
+          userId={userId}
+          username={username}
+          email={email}
+          size={size}
+          className="border-2 border-luxury-primary/30"
+        />
         {showStatus && status && (
           <AvailabilityIndicator
             status={status}
@@ -64,12 +52,13 @@ export const UserAvatar = ({
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <div className="relative cursor-pointer">
-          <Avatar className={`${getSizeClass()} border-2 border-luxury-primary/30`}>
-            <AvatarImage src={avatarUrl || undefined} alt="User avatar" />
-            <AvatarFallback className="bg-luxury-darker text-luxury-neutral">
-              {getInitials()}
-            </AvatarFallback>
-          </Avatar>
+          <BaseUserAvatar 
+            userId={userId}
+            username={username}
+            email={email}
+            size={size}
+            className="border-2 border-luxury-primary/30"
+          />
           {showStatus && status && (
             <AvailabilityIndicator
               status={status}
