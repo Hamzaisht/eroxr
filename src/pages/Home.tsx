@@ -27,7 +27,7 @@ const Home = () => {
     queryFn: async () => {
       console.log("Home - Fetching posts with media and profiles...");
       
-      // Fetch posts with creator profiles
+      // Fetch posts with creator profiles (removed avatar_url)
       const { data: postsData, error: postsError } = await supabase
         .from('posts')
         .select(`
@@ -39,7 +39,7 @@ const Home = () => {
           likes_count,
           comments_count,
           visibility,
-          creator:profiles!posts_creator_id_fkey(id, username, avatar_url)
+          creator:profiles!posts_creator_id_fkey(id, username)
         `)
         .eq('visibility', 'public')
         .order('created_at', { ascending: false })
@@ -52,7 +52,7 @@ const Home = () => {
 
       console.log("Home - Posts fetched:", postsData?.length || 0);
       
-      // For each post, fetch associated media assets
+      // For each post, fetch associated media assets and creator avatars
       const postsWithMedia = await Promise.all(
         (postsData || []).map(async (post) => {
           try {
@@ -66,6 +66,27 @@ const Home = () => {
 
             if (mediaError) {
               console.error("Error fetching media for post:", post.id, mediaError);
+            }
+
+            // Fetch creator avatar from media_assets
+            let creatorAvatarUrl = null;
+            if (post.creator_id) {
+              const { data: avatarData } = await supabase
+                .from('media_assets')
+                .select('storage_path')
+                .eq('user_id', post.creator_id)
+                .eq('media_type', 'image')
+                .contains('metadata', { usage: 'avatar' })
+                .order('created_at', { ascending: false })
+                .limit(1)
+                .maybeSingle();
+
+              if (avatarData) {
+                const { data: { publicUrl } } = supabase.storage
+                  .from('media')
+                  .getPublicUrl(avatarData.storage_path);
+                creatorAvatarUrl = publicUrl;
+              }
             }
 
             // Transform media assets to include full URL
@@ -87,7 +108,8 @@ const Home = () => {
               ...post,
               creator: {
                 id: creator?.id || post.creator_id || '',
-                username: creator?.username || 'Anonymous'
+                username: creator?.username || 'Anonymous',
+                avatar_url: creatorAvatarUrl
               },
               media_assets: transformedMedia
             };
@@ -97,7 +119,8 @@ const Home = () => {
               ...post,
               creator: {
                 id: post.creator_id || '',
-                username: 'Anonymous'
+                username: 'Anonymous',
+                avatar_url: null
               },
               media_assets: []
             };

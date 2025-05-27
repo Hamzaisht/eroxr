@@ -2,6 +2,9 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Image, Video, Mic, Camera } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useSession } from "@supabase/auth-helpers-react";
+import { useUserAvatar } from "@/hooks/useUserAvatar";
 
 interface CreatePostAreaProps {
   onCreatePost: () => void;
@@ -9,13 +12,20 @@ interface CreatePostAreaProps {
 }
 
 export const CreatePostArea = ({ onCreatePost, onGoLive }: CreatePostAreaProps) => {
+  const session = useSession();
+  const { avatar } = useUserAvatar(session?.user?.id);
+  const username = session?.user?.user_metadata?.username || session?.user?.email?.split('@')[0] || 'User';
+
   return (
     <Card className="bg-luxury-darker border-luxury-neutral/10">
       <CardContent className="p-4">
         <div className="flex items-center gap-3 mb-4">
-          <div className="w-10 h-10 bg-luxury-primary rounded-full flex items-center justify-center">
-            <span className="text-white font-semibold">?</span>
-          </div>
+          <Avatar className="h-10 w-10">
+            <AvatarImage src={avatar?.url || ""} alt={username} />
+            <AvatarFallback className="bg-luxury-darker text-luxury-neutral">
+              {username[0]?.toUpperCase() || "U"}
+            </AvatarFallback>
+          </Avatar>
           <Button
             variant="ghost"
             className="flex-1 justify-start text-luxury-neutral/60 hover:text-luxury-neutral"

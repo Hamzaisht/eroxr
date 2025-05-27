@@ -20,6 +20,7 @@ interface PostData {
   creator: {
     id: string;
     username: string;
+    avatar_url?: string | null;
   };
   created_at: string;
   likes_count: number;
@@ -61,7 +62,8 @@ export const EnhancedPostCard = ({ post, onLike, onDelete, currentUserId }: Enha
         <div className="flex items-center justify-between p-4">
           <div className="flex items-center gap-3">
             <Avatar className="h-10 w-10">
-              <AvatarFallback>
+              <AvatarImage src={post.creator.avatar_url || ""} alt={post.creator.username} />
+              <AvatarFallback className="bg-luxury-darker text-luxury-neutral">
                 {post.creator.username[0]?.toUpperCase() || "U"}
               </AvatarFallback>
             </Avatar>

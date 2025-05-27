@@ -23,7 +23,9 @@ export const PostHeader = ({
     <div className="flex items-center gap-3">
       <Avatar className="h-10 w-10 ring-2 ring-luxury-primary/20">
         <AvatarImage src={creator.avatar_url || ""} alt={username} />
-        <AvatarFallback>{username[0]?.toUpperCase()}</AvatarFallback>
+        <AvatarFallback className="bg-luxury-darker text-luxury-neutral">
+          {username[0]?.toUpperCase() || "?"}
+        </AvatarFallback>
       </Avatar>
       <div>
         <h3 className="font-semibold text-luxury-neutral">
