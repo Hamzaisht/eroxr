@@ -40,17 +40,23 @@ export const NewPostCreator = ({ onPostCreated }: NewPostCreatorProps) => {
     setIsSubmitting(true);
 
     try {
+      // Only insert into posts table - triggers will handle trending_content
       const { error } = await supabase
         .from('posts')
         .insert({
           creator_id: session.user.id,
           content: content.trim(),
-          visibility: 'public'
+          visibility: 'public',
+          likes_count: 0,
+          comments_count: 0,
+          view_count: 0,
+          share_count: 0,
+          engagement_score: 0.0,
+          is_ppv: false,
+          is_featured: false
         });
 
       if (error) throw error;
-
-      // No need to manually insert into trending_content - triggers handle it automatically
 
       toast({
         title: "Post created",

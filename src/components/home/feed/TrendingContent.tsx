@@ -11,7 +11,7 @@ export const TrendingContent = () => {
   const { data: trendingPosts, isLoading } = useQuery({
     queryKey: ['trending-posts'],
     queryFn: async () => {
-      // Get posts from trending_content table joined with posts and profiles
+      // Get trending posts by joining trending_content with posts and profiles
       const { data, error } = await supabase
         .from('trending_content')
         .select(`
@@ -20,23 +20,36 @@ export const TrendingContent = () => {
           comments,
           bookmarks,
           screenshots,
-          post:posts (
+          posts!inner (
             id,
             content,
             created_at,
             likes_count,
             comments_count,
-            creator:profiles!posts_creator_id_fkey(id, username)
+            creator_id,
+            profiles!posts_creator_id_fkey (
+              id, 
+              username
+            )
           )
         `)
         .order('score', { ascending: false })
         .limit(5);
       
-      if (error) throw error;
+      if (error) {
+        console.error("Error fetching trending posts:", error);
+        throw error;
+      }
       
       // Transform the data to match the expected structure
       return data?.map(item => ({
-        ...item.post,
+        id: item.posts.id,
+        content: item.posts.content,
+        created_at: item.posts.created_at,
+        likes_count: item.posts.likes_count,
+        comments_count: item.posts.comments_count,
+        creator_id: item.posts.creator_id,
+        creator: item.posts.profiles,
         trending_score: item.score,
         trending_metrics: {
           likes: item.likes,
