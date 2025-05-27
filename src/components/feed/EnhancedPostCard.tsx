@@ -3,14 +3,13 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Heart, MessageCircle, Share, Bookmark, MoreVertical } from "lucide-react";
-import { UniversalMediaRenderer } from "@/components/media/UniversalMediaRenderer";
-import { MediaType } from "@/utils/media/types";
+import { MediaRenderer } from "@/components/media/MediaRenderer";
 import { useState } from "react";
 
 interface MediaAsset {
   id: string;
   url: string;
-  type: 'image' | 'video' | 'audio' | 'document';
+  type: 'image' | 'video' | 'audio';
   alt_text?: string;
 }
 
@@ -92,24 +91,17 @@ export const EnhancedPostCard = ({ post, onLike, onDelete, currentUserId }: Enha
         {post.media_assets && post.media_assets.length > 0 && (
           <div className="relative">
             {post.media_assets.length === 1 ? (
-              <UniversalMediaRenderer
-                media={{
-                  url: post.media_assets[0].url,
-                  type: post.media_assets[0].type as MediaType,
-                  alt: post.media_assets[0].alt_text
-                }}
+              <MediaRenderer
+                media={post.media_assets[0]}
                 className="w-full aspect-square object-cover"
+                autoPlay={post.media_assets[0].type === 'video'}
               />
             ) : (
               <div className="grid grid-cols-2 gap-1">
                 {post.media_assets.slice(0, 4).map((asset, index) => (
                   <div key={asset.id} className="relative">
-                    <UniversalMediaRenderer
-                      media={{
-                        url: asset.url,
-                        type: asset.type as MediaType,
-                        alt: asset.alt_text
-                      }}
+                    <MediaRenderer
+                      media={asset}
                       className="w-full aspect-square object-cover"
                     />
                     {index === 3 && post.media_assets!.length > 4 && (

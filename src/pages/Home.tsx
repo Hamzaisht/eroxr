@@ -27,7 +27,7 @@ const Home = () => {
     queryFn: async () => {
       console.log("Home - Fetching posts with profiles...");
       
-      // Fetch posts with creator profiles (NO avatar_url)
+      // Fetch posts with creator profiles
       const { data: postsData, error: postsError } = await supabase
         .from('posts')
         .select(`
