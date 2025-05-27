@@ -1,18 +1,18 @@
 
-import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@supabase/auth-helpers-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "./use-toast";
 
 export const usePostActions = () => {
-  const { toast } = useToast();
   const session = useSession();
+  const { toast } = useToast();
 
   const handleLike = async (postId: string) => {
     if (!session?.user?.id) {
       toast({
         title: "Authentication required",
         description: "Please log in to like posts",
-        variant: "destructive"
+        variant: "destructive",
       });
       return;
     }
@@ -27,70 +27,71 @@ export const usePostActions = () => {
         .single();
 
       if (existingLike) {
-        // Unlike
-        const { error } = await supabase
+        // Remove like
+        await supabase
           .from('post_likes')
           .delete()
           .eq('post_id', postId)
           .eq('user_id', session.user.id);
-
-        if (error) throw error;
+        
+        // Decrement count
+        await supabase.rpc('increment_counter', {
+          row_id: postId,
+          counter_name: 'likes_count',
+          table_name: 'posts'
+        });
       } else {
-        // Like
-        const { error } = await supabase
+        // Add like
+        await supabase
           .from('post_likes')
           .insert({
             post_id: postId,
             user_id: session.user.id
           });
-
-        if (error) throw error;
+        
+        // Increment count
+        await supabase.rpc('increment_counter', {
+          row_id: postId,
+          counter_name: 'likes_count',
+          table_name: 'posts'
+        });
       }
-    } catch (error: any) {
+    } catch (error) {
+      console.error('Error handling like:', error);
       toast({
         title: "Error",
-        description: error.message || "Failed to update like",
-        variant: "destructive"
+        description: "Failed to update like",
+        variant: "destructive",
       });
     }
   };
 
   const handleDelete = async (postId: string, creatorId: string) => {
-    if (!session?.user?.id) {
+    if (!session?.user?.id || session.user.id !== creatorId) {
       toast({
-        title: "Authentication required",
-        description: "Please log in to delete posts",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    if (session.user.id !== creatorId) {
-      toast({
-        title: "Permission denied",
+        title: "Unauthorized",
         description: "You can only delete your own posts",
-        variant: "destructive"
+        variant: "destructive",
       });
       return;
     }
 
     try {
-      const { error } = await supabase
+      await supabase
         .from('posts')
         .delete()
         .eq('id', postId);
-
-      if (error) throw error;
-
+      
       toast({
-        title: "Post deleted",
-        description: "Your post has been deleted successfully"
+        title: "Success",
+        description: "Post deleted successfully",
       });
-    } catch (error: any) {
+    } catch (error) {
+      console.error('Error deleting post:', error);
       toast({
         title: "Error",
-        description: error.message || "Failed to delete post",
-        variant: "destructive"
+        description: "Failed to delete post",
+        variant: "destructive",
       });
     }
   };

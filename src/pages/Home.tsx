@@ -1,81 +1,111 @@
 
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@supabase/auth-helpers-react";
-import { PostCard } from "@/components/feed/PostCard";
-import { SuggestedCreators } from "@/components/home/SuggestedCreators";
-import { Loader2 } from "lucide-react";
-import type { Post } from "@/components/feed/types";
+import { CreatePostArea } from "@/components/home/CreatePostArea";
+import { RightSidebar } from "@/components/home/RightSidebar";
+import { StoryReel } from "@/components/StoryReel";
+import { LiveStreams } from "@/components/home/LiveStreams";
+import { EnhancedPostCard } from "@/components/feed/EnhancedPostCard";
+import { Loader2, RefreshCw } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { usePostActions } from "@/hooks/usePostActions";
+import { useCreatePostDialog } from "@/hooks/useCreatePostDialog";
+import { useGoLiveDialog } from "@/hooks/useGoLiveDialog";
 
 const Home = () => {
   const session = useSession();
+  const { handleLike, handleDelete } = usePostActions();
+  const { openDialog: openCreatePost } = useCreatePostDialog();
+  const { openDialog: openGoLive } = useGoLiveDialog();
 
-  const { data: posts, isLoading, error } = useQuery({
-    queryKey: ['posts'],
+  const { data: posts, isLoading, error, refetch } = useQuery({
+    queryKey: ['home-posts'],
     queryFn: async () => {
-      console.log("Home - Fetching posts...");
+      console.log("Home - Fetching posts with media...");
       
-      const { data, error } = await supabase
+      // First fetch posts
+      const { data: postsData, error: postsError } = await supabase
         .from('posts')
         .select(`
           id,
           content,
-          media_url,
-          video_urls,
           creator_id,
           created_at,
           updated_at,
           likes_count,
           comments_count,
           visibility,
-          tags,
-          ppv_amount,
-          is_ppv,
-          screenshots_count,
-          downloads_count,
           creator:profiles(id, username)
         `)
+        .eq('visibility', 'public')
         .order('created_at', { ascending: false })
         .limit(20);
 
-      if (error) {
-        console.error("Home - Error fetching posts:", error);
-        throw new Error(error.message || "Failed to fetch posts");
+      if (postsError) {
+        console.error("Home - Error fetching posts:", postsError);
+        throw new Error(postsError.message || "Failed to fetch posts");
       }
 
-      console.log("Home - Posts fetched:", data?.length || 0);
+      console.log("Home - Posts fetched:", postsData?.length || 0);
       
-      const postsWithLikes: Post[] = (data || []).map(post => ({
-        id: post.id,
-        content: post.content || '',
-        media_url: post.media_url,
-        video_urls: post.video_urls,
-        creator_id: post.creator_id,
-        created_at: post.created_at,
-        updated_at: post.updated_at,
-        likes_count: post.likes_count || 0,
-        comments_count: post.comments_count || 0,
-        visibility: post.visibility || 'public',
-        tags: post.tags,
-        ppv_amount: post.ppv_amount,
-        is_ppv: post.is_ppv || false,
-        screenshots_count: post.screenshots_count || 0,
-        downloads_count: post.downloads_count || 0,
-        has_liked: false,
-        creator: Array.isArray(post.creator) && post.creator.length > 0 
-          ? {
-              id: post.creator[0].id || '',
-              username: post.creator[0].username || 'Unknown',
-              avatar_url: null // Remove avatar_url since we're using the new media system
-            }
-          : {
-              id: '',
-              username: 'Unknown',
-              avatar_url: null // Remove avatar_url since we're using the new media system
-            }
-      }));
+      // For each post, fetch associated media assets
+      const postsWithMedia = await Promise.all(
+        (postsData || []).map(async (post) => {
+          try {
+            const { data: mediaAssets, error: mediaError } = await supabase
+              .from('media_assets')
+              .select('id, storage_path, original_name, media_type, alt_text')
+              .eq('user_id', post.creator_id)
+              .order('created_at', { ascending: false })
+              .limit(4); // Limit to 4 media items per post
 
-      return postsWithLikes;
+            if (mediaError) {
+              console.error("Error fetching media for post:", post.id, mediaError);
+            }
+
+            // Transform media assets to include full URL
+            const transformedMedia = (mediaAssets || []).map(asset => ({
+              id: asset.id,
+              url: `https://ysqbdaeohlupucdmivkt.supabase.co/storage/v1/object/public/media/${asset.storage_path}`,
+              type: asset.media_type,
+              alt_text: asset.alt_text
+            }));
+
+            return {
+              ...post,
+              creator: Array.isArray(post.creator) && post.creator.length > 0 
+                ? {
+                    id: post.creator[0].id || '',
+                    username: post.creator[0].username || 'Unknown'
+                  }
+                : {
+                    id: '',
+                    username: 'Unknown'
+                  },
+              media_assets: transformedMedia
+            };
+          } catch (error) {
+            console.error("Error processing post:", post.id, error);
+            return {
+              ...post,
+              creator: Array.isArray(post.creator) && post.creator.length > 0 
+                ? {
+                    id: post.creator[0].id || '',
+                    username: post.creator[0].username || 'Unknown'
+                  }
+                : {
+                    id: '',
+                    username: 'Unknown'
+                  },
+              media_assets: []
+            };
+          }
+        })
+      );
+
+      return postsWithMedia;
     },
     enabled: !!session
   });
@@ -94,43 +124,63 @@ const Home = () => {
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
           <p className="text-red-400 mb-4">Error loading posts</p>
-          <p className="text-gray-400 text-sm">{errorMessage}</p>
+          <p className="text-gray-400 text-sm mb-4">{errorMessage}</p>
+          <Button onClick={() => refetch()} variant="outline">
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Try Again
+          </Button>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-4xl">
-      <div className="space-y-8">
-        <div className="text-center">
-          <h1 className="text-3xl font-bold text-white mb-2">Welcome to Eroxr</h1>
-          <p className="text-gray-400">Discover amazing content from creators around the world</p>
+    <div className="container mx-auto px-4 py-8 max-w-7xl">
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        {/* Main Content */}
+        <div className="lg:col-span-2 lg:col-start-2 space-y-6">
+          {/* Welcome Section */}
+          <div className="text-center mb-6">
+            <h1 className="text-3xl font-bold text-white mb-2">Welcome to Eroxr</h1>
+            <p className="text-gray-400">Discover amazing content from creators around the world</p>
+          </div>
+
+          {/* Stories */}
+          <StoryReel />
+
+          {/* Live Streams */}
+          <LiveStreams />
+          
+          {/* Create Post Area */}
+          <CreatePostArea 
+            onCreatePost={openCreatePost}
+            onGoLive={openGoLive}
+          />
+          
+          {/* Posts Feed */}
+          <div className="space-y-6">
+            {posts && posts.length > 0 ? (
+              posts.map((post) => (
+                <EnhancedPostCard
+                  key={post.id}
+                  post={post}
+                  currentUserId={session?.user?.id}
+                  onLike={handleLike}
+                  onDelete={handleDelete}
+                />
+              ))
+            ) : (
+              <div className="text-center py-12">
+                <p className="text-gray-400">No posts found</p>
+                <p className="text-gray-500 text-sm mt-2">Be the first to create a post!</p>
+              </div>
+            )}
+          </div>
         </div>
         
-        <SuggestedCreators />
-        
-        <div className="space-y-6">
-          {posts && posts.length > 0 ? (
-            posts.map((post) => (
-              <PostCard
-                key={post.id}
-                post={post}
-                currentUserId={session?.user?.id}
-                onLike={async (postId) => {
-                  console.log("Home - Like post:", postId);
-                }}
-                onDelete={async (postId, creatorId) => {
-                  console.log("Home - Delete post:", postId);
-                }}
-              />
-            ))
-          ) : (
-            <div className="text-center py-12">
-              <p className="text-gray-400">No posts found</p>
-              <p className="text-gray-500 text-sm mt-2">Be the first to create a post!</p>
-            </div>
-          )}
+        {/* Right Sidebar */}
+        <div className="lg:col-span-1 lg:col-start-4">
+          <RightSidebar />
         </div>
       </div>
     </div>
