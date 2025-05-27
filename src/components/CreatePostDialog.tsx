@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Dialog, DialogContent, DialogTitle, DialogDescription, DialogHeader } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -78,15 +77,25 @@ export const CreatePostDialog = ({
       try {
         // Generate unique file path
         const fileExt = file.name.split('.').pop();
-        const fileName = `${Math.random().toString(36).substr(2, 9)}.${fileExt}`;
-        const filePath = `media/${fileName}`;
+        const fileName = `${Date.now()}_${Math.random().toString(36).substr(2, 9)}.${fileExt}`;
+        const filePath = `posts/${fileName}`;
 
-        // Upload to Supabase Storage
+        console.log(`Uploading file to bucket 'media' with path: ${filePath}`);
+
+        // Upload to Supabase Storage using the 'media' bucket
         const { data: storageData, error: storageError } = await supabase.storage
           .from('media')
-          .upload(filePath, file);
+          .upload(filePath, file, {
+            cacheControl: '3600',
+            upsert: false
+          });
 
-        if (storageError) throw storageError;
+        if (storageError) {
+          console.error('Storage upload error:', storageError);
+          throw storageError;
+        }
+
+        console.log('Storage upload successful:', storageData);
 
         // Determine media type
         let mediaType = 'image';
@@ -100,15 +109,22 @@ export const CreatePostDialog = ({
             user_id: session?.user?.id,
             storage_path: storageData.path,
             original_name: file.name,
+            file_size: file.size,
+            mime_type: file.type,
             media_type: mediaType,
+            access_level: 'public',
             alt_text: file.name,
             metadata: { usage: 'post' }
           })
           .select()
           .single();
 
-        if (assetError) throw assetError;
+        if (assetError) {
+          console.error('Asset creation error:', assetError);
+          throw assetError;
+        }
 
+        console.log('Media asset created:', assetData);
         mediaAssetIds.push(assetData.id);
       } catch (error) {
         console.error('Error uploading media:', error);
@@ -147,10 +163,15 @@ export const CreatePostDialog = ({
       // Upload media assets first
       let mediaAssetIds: string[] = [];
       if (mediaPreviews.length > 0) {
+        console.log('Starting media upload for', mediaPreviews.length, 'files');
         mediaAssetIds = await uploadMediaAssets(mediaPreviews.map(p => p.file));
+        console.log('Media upload completed. Asset IDs:', mediaAssetIds);
       }
 
+      setIsUploading(false);
+
       // Create the post
+      console.log('Creating post...');
       const { data: postData, error: postError } = await supabase
         .from("posts")
         .insert({
@@ -161,10 +182,16 @@ export const CreatePostDialog = ({
         .select()
         .single();
         
-      if (postError) throw postError;
+      if (postError) {
+        console.error('Post creation error:', postError);
+        throw postError;
+      }
+
+      console.log('Post created:', postData);
 
       // Update media assets to reference this post
       if (mediaAssetIds.length > 0) {
+        console.log('Linking media assets to post:', postData.id);
         const { error: updateError } = await supabase
           .from('media_assets')
           .update({
@@ -174,6 +201,8 @@ export const CreatePostDialog = ({
 
         if (updateError) {
           console.error('Error linking media to post:', updateError);
+        } else {
+          console.log('Media assets linked to post successfully');
         }
       }
       
