@@ -16,6 +16,7 @@ interface UploadState {
   isUploading: boolean;
   progress: number;
   isComplete: boolean;
+  error?: string; // ✅ Add this property
 }
 
 export const useMediaUpload = () => {
@@ -38,7 +39,7 @@ export const useMediaUpload = () => {
       altText
     } = options;
 
-    setUploadState({ isUploading: true, progress: 0, isComplete: false });
+    setUploadState({ isUploading: true, progress: 0, isComplete: false, error: undefined });
 
     try {
       // Check file size
@@ -112,7 +113,7 @@ export const useMediaUpload = () => {
         .from('media')
         .getPublicUrl(uploadData.path);
 
-      setUploadState({ isUploading: false, progress: 100, isComplete: true });
+      setUploadState({ isUploading: false, progress: 100, isComplete: true, error: undefined });
 
       return {
         success: true,
@@ -120,17 +121,18 @@ export const useMediaUpload = () => {
         assetId: assetData.id
       };
     } catch (error: any) {
-      setUploadState({ isUploading: false, progress: 0, isComplete: false });
+      const errorMessage = error.message || "Upload failed";
+      setUploadState({ isUploading: false, progress: 0, isComplete: false, error: errorMessage });
       
       toast({
         title: "Upload failed",
-        description: error.message || "Failed to upload file",
+        description: errorMessage,
         variant: "destructive"
       });
 
       return {
         success: false,
-        error: error.message || "Upload failed"
+        error: errorMessage
       };
     }
   };
