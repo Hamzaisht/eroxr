@@ -11,19 +11,40 @@ export const TrendingContent = () => {
   const { data: trendingPosts, isLoading } = useQuery({
     queryKey: ['trending-posts'],
     queryFn: async () => {
-      // Get posts with high engagement scores for trending
+      // Get posts from trending_content table joined with posts and profiles
       const { data, error } = await supabase
-        .from('posts')
+        .from('trending_content')
         .select(`
-          *,
-          creator:profiles!posts_creator_id_fkey(id, username)
+          score,
+          likes,
+          comments,
+          bookmarks,
+          screenshots,
+          post:posts (
+            id,
+            content,
+            created_at,
+            likes_count,
+            comments_count,
+            creator:profiles!posts_creator_id_fkey(id, username)
+          )
         `)
-        .eq('visibility', 'public')
-        .order('engagement_score', { ascending: false })
+        .order('score', { ascending: false })
         .limit(5);
       
       if (error) throw error;
-      return data;
+      
+      // Transform the data to match the expected structure
+      return data?.map(item => ({
+        ...item.post,
+        trending_score: item.score,
+        trending_metrics: {
+          likes: item.likes,
+          comments: item.comments,
+          bookmarks: item.bookmarks,
+          screenshots: item.screenshots
+        }
+      })) || [];
     }
   });
 
@@ -82,7 +103,7 @@ export const TrendingContent = () => {
                     {creator.username}
                   </span>
                   <Badge variant="outline" className="text-xs px-1 py-0">
-                    Trending
+                    Score: {Math.round(post.trending_score || 0)}
                   </Badge>
                 </div>
                 

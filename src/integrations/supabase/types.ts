@@ -2132,6 +2132,10 @@ export type Database = {
         Args: { row_id: string; counter_name: string; table_name?: string }
         Returns: undefined
       }
+      update_trending_score: {
+        Args: { p_post_id: string }
+        Returns: undefined
+      }
     }
     Enums: {
       app_role: "admin" | "moderator" | "user" | "super_admin"

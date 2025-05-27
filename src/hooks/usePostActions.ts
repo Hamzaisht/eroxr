@@ -1,100 +1,117 @@
 
-import { useSession } from "@supabase/auth-helpers-react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "./use-toast";
+import { updateTrendingMetrics } from "@/utils/supabase/trending-helpers";
 
 export const usePostActions = () => {
-  const session = useSession();
+  const queryClient = useQueryClient();
   const { toast } = useToast();
 
-  const handleLike = async (postId: string) => {
-    if (!session?.user?.id) {
-      toast({
-        title: "Authentication required",
-        description: "Please log in to like posts",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    try {
-      // Check if already liked
-      const { data: existingLike } = await supabase
-        .from('post_likes')
-        .select('id')
-        .eq('post_id', postId)
-        .eq('user_id', session.user.id)
-        .single();
-
-      if (existingLike) {
-        // Remove like
-        await supabase
+  const handleLike = useMutation({
+    mutationFn: async ({ postId, isLiked }: { postId: string; isLiked: boolean }) => {
+      if (isLiked) {
+        // Unlike
+        const { error } = await supabase
           .from('post_likes')
           .delete()
           .eq('post_id', postId)
-          .eq('user_id', session.user.id);
+          .eq('user_id', (await supabase.auth.getUser()).data.user?.id);
         
-        // Decrement count
-        await supabase.rpc('increment_counter', {
-          row_id: postId,
-          counter_name: 'likes_count',
-          table_name: 'posts'
-        });
+        if (error) throw error;
+
+        // Update post likes count
+        const { error: updateError } = await supabase
+          .from('posts')
+          .update({ likes_count: supabase.sql`likes_count - 1` })
+          .eq('id', postId);
+        
+        if (updateError) throw updateError;
+
+        // Update trending metrics
+        const { data: post } = await supabase
+          .from('posts')
+          .select('likes_count')
+          .eq('id', postId)
+          .single();
+        
+        if (post) {
+          await updateTrendingMetrics(postId, { likes: post.likes_count });
+        }
       } else {
-        // Add like
-        await supabase
+        // Like
+        const { error } = await supabase
           .from('post_likes')
           .insert({
             post_id: postId,
-            user_id: session.user.id
+            user_id: (await supabase.auth.getUser()).data.user?.id
           });
         
-        // Increment count
-        await supabase.rpc('increment_counter', {
-          row_id: postId,
-          counter_name: 'likes_count',
-          table_name: 'posts'
-        });
+        if (error) throw error;
+
+        // Update post likes count
+        const { error: updateError } = await supabase
+          .from('posts')
+          .update({ likes_count: supabase.sql`likes_count + 1` })
+          .eq('id', postId);
+        
+        if (updateError) throw updateError;
+
+        // Update trending metrics
+        const { data: post } = await supabase
+          .from('posts')
+          .select('likes_count')
+          .eq('id', postId)
+          .single();
+        
+        if (post) {
+          await updateTrendingMetrics(postId, { likes: post.likes_count });
+        }
       }
-    } catch (error) {
-      console.error('Error handling like:', error);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['home-posts'] });
+      queryClient.invalidateQueries({ queryKey: ['trending-posts'] });
+    },
+    onError: (error) => {
       toast({
         title: "Error",
-        description: "Failed to update like",
+        description: "Failed to update like status",
         variant: "destructive",
       });
-    }
-  };
+    },
+  });
 
-  const handleDelete = async (postId: string, creatorId: string) => {
-    if (!session?.user?.id || session.user.id !== creatorId) {
-      toast({
-        title: "Unauthorized",
-        description: "You can only delete your own posts",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    try {
-      await supabase
+  const handleDelete = useMutation({
+    mutationFn: async (postId: string) => {
+      const { error } = await supabase
         .from('posts')
         .delete()
         .eq('id', postId);
       
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['home-posts'] });
+      queryClient.invalidateQueries({ queryKey: ['trending-posts'] });
       toast({
         title: "Success",
         description: "Post deleted successfully",
       });
-    } catch (error) {
-      console.error('Error deleting post:', error);
+    },
+    onError: (error) => {
       toast({
         title: "Error",
         description: "Failed to delete post",
         variant: "destructive",
       });
-    }
-  };
+    },
+  });
 
-  return { handleLike, handleDelete };
+  return {
+    handleLike: handleLike.mutate,
+    handleDelete: handleDelete.mutate,
+    isLiking: handleLike.isPending,
+    isDeleting: handleDelete.isPending,
+  };
 };
