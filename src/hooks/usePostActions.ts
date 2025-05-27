@@ -94,7 +94,7 @@ export const usePostActions = () => {
   return {
     handleLike: likePost,
     handleDelete: deletePost,
-    isLiking: handleLike.isPending,
-    isDeleting: handleDelete.isPending,
+    isLiking: handleLike.isLoading,
+    isDeleting: handleDelete.isLoading,
   };
 };
