@@ -3,6 +3,7 @@ import { ErosItem } from "@/components/eros/ErosItem";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2 } from "lucide-react";
+import { ErosVideo } from "@/types/eros";
 
 const Shorts = () => {
   const { data: shorts, isLoading } = useQuery({
@@ -38,6 +39,33 @@ const Shorts = () => {
     );
   }
 
+  // Transform shorts data to ErosVideo format
+  const transformedShorts: ErosVideo[] = shorts?.map((short) => ({
+    id: short.id,
+    url: short.video_url || '',
+    thumbnailUrl: short.thumbnail_url || '',
+    description: short.description || '',
+    creator: {
+      id: short.creator_id,
+      name: Array.isArray(short.creator) && short.creator.length > 0 
+        ? short.creator[0].username || 'Unknown'
+        : 'Unknown',
+      username: Array.isArray(short.creator) && short.creator.length > 0 
+        ? short.creator[0].username || 'Unknown'
+        : 'Unknown',
+      avatarUrl: ''
+    },
+    stats: {
+      likes: short.likes_count || 0,
+      comments: 0,
+      shares: 0,
+      views: short.views_count || 0
+    },
+    hasLiked: false,
+    hasSaved: false,
+    createdAt: short.created_at
+  })) || [];
+
   return (
     <div className="container mx-auto px-4 py-8 max-w-md">
       <div className="mb-8">
@@ -46,30 +74,11 @@ const Shorts = () => {
       </div>
       
       <div className="space-y-6">
-        {shorts && shorts.length > 0 ? (
-          shorts.map((short) => (
+        {transformedShorts && transformedShorts.length > 0 ? (
+          transformedShorts.map((video) => (
             <ErosItem
-              key={short.id}
-              short={{
-                id: short.id,
-                title: short.title || '',
-                description: short.description || '',
-                videoUrl: short.video_url || '',
-                thumbnailUrl: short.thumbnail_url || '',
-                creatorId: short.creator_id,
-                likesCount: short.likes_count || 0,
-                viewsCount: short.views_count || 0,
-                createdAt: short.created_at,
-                creator: Array.isArray(short.creator) && short.creator.length > 0 
-                  ? {
-                      id: short.creator[0].id || '',
-                      username: short.creator[0].username || 'Unknown'
-                    }
-                  : {
-                      id: '',
-                      username: 'Unknown'
-                    }
-              }}
+              key={video.id}
+              video={video}
             />
           ))
         ) : (
