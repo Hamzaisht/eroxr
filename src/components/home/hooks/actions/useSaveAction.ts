@@ -37,7 +37,7 @@ export const useSaveAction = () => {
       }
 
       if (existingSave) {
-        // Unsave
+        // Unsave - database triggers will handle trending_content updates
         const { error: unsaveError } = await supabase
           .from("post_saves")
           .delete()
@@ -50,7 +50,7 @@ export const useSaveAction = () => {
           description: "Video removed from saved items",
         });
       } else {
-        // Save
+        // Save - database triggers will handle trending_content updates
         const { error: saveError } = await supabase
           .from("post_saves")
           .insert([{ post_id: shortId, user_id: session.user.id }]);
@@ -63,8 +63,13 @@ export const useSaveAction = () => {
         });
       }
 
+      // Database triggers automatically:
+      // - Update trending_content.bookmarks and score
+      // - Maintain data consistency
+
       // Invalidate query to refresh data
       queryClient.invalidateQueries({ queryKey: ["posts"] });
+      queryClient.invalidateQueries({ queryKey: ["trending-posts"] });
     } catch (error) {
       console.error("Error handling save:", error);
       toast({

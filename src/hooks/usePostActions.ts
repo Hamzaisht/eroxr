@@ -13,7 +13,7 @@ export const usePostActions = () => {
       if (!user) throw new Error("User not authenticated");
 
       if (isLiked) {
-        // Unlike - remove from post_likes
+        // Unlike - remove from post_likes (trigger will handle everything else)
         const { error } = await supabase
           .from('post_likes')
           .delete()
@@ -21,35 +21,8 @@ export const usePostActions = () => {
           .eq('user_id', user.id);
         
         if (error) throw error;
-
-        // Update post likes count by decrementing
-        const { error: updateError } = await supabase
-          .rpc('increment_counter', { 
-            row_id: postId, 
-            counter_name: 'likes_count',
-            table_name: 'posts'
-          });
-        
-        if (updateError) {
-          // Fallback: manual decrement
-          const { data: currentPost } = await supabase
-            .from('posts')
-            .select('likes_count')
-            .eq('id', postId)
-            .single();
-          
-          if (currentPost) {
-            await supabase
-              .from('posts')
-              .update({ likes_count: Math.max(0, (currentPost.likes_count || 0) - 1) })
-              .eq('id', postId);
-          }
-        }
-
-        // NO MANUAL TRENDING_CONTENT UPDATES - Database triggers handle this!
-
       } else {
-        // Like - add to post_likes
+        // Like - add to post_likes (trigger will handle everything else)
         const { error } = await supabase
           .from('post_likes')
           .insert({
@@ -58,37 +31,17 @@ export const usePostActions = () => {
           });
         
         if (error) throw error;
-
-        // Update post likes count by incrementing
-        const { error: updateError } = await supabase
-          .rpc('increment_counter', { 
-            row_id: postId, 
-            counter_name: 'likes_count',
-            table_name: 'posts'
-          });
-        
-        if (updateError) {
-          // Fallback: manual increment
-          const { data: currentPost } = await supabase
-            .from('posts')
-            .select('likes_count')
-            .eq('id', postId)
-            .single();
-          
-          if (currentPost) {
-            await supabase
-              .from('posts')
-              .update({ likes_count: (currentPost.likes_count || 0) + 1 })
-              .eq('id', postId);
-          }
-        }
-
-        // NO MANUAL TRENDING_CONTENT UPDATES - Database triggers handle this!
       }
+
+      // Database triggers automatically:
+      // - Update posts.likes_count
+      // - Update trending_content table
+      // - Calculate new trending scores
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['home-posts'] });
       queryClient.invalidateQueries({ queryKey: ['trending-posts'] });
+      queryClient.invalidateQueries({ queryKey: ['trending-creators'] });
     },
     onError: (error) => {
       console.error('Like error:', error);
@@ -102,7 +55,7 @@ export const usePostActions = () => {
 
   const handleDelete = useMutation({
     mutationFn: async (postId: string) => {
-      // Just delete the post - triggers will handle trending_content cleanup
+      // Delete the post - triggers will handle trending_content cleanup
       const { error } = await supabase
         .from('posts')
         .delete()
@@ -113,6 +66,7 @@ export const usePostActions = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['home-posts'] });
       queryClient.invalidateQueries({ queryKey: ['trending-posts'] });
+      queryClient.invalidateQueries({ queryKey: ['trending-creators'] });
       toast({
         title: "Success",
         description: "Post deleted successfully",
@@ -140,7 +94,7 @@ export const usePostActions = () => {
   return {
     handleLike: likePost,
     handleDelete: deletePost,
-    isLiking: handleLike.isLoading,
-    isDeleting: handleDelete.isLoading,
+    isLiking: handleLike.isPending,
+    isDeleting: handleDelete.isPending,
   };
 };

@@ -39,43 +39,33 @@ export const useLikeAction = () => {
       }
 
       if (existingLike) {
-        // Unlike
+        // Unlike - database triggers will handle everything automatically
         const { error: unlikeError } = await supabase
           .from("post_likes")
           .delete()
           .eq("id", existingLike.id);
 
         if (unlikeError) throw unlikeError;
-
-        // Decrement likes count
-        const { error: updateError } = await supabase
-          .from("posts")
-          .update({ likes_count: supabase.rpc('decrement', { count: 1 }) })
-          .eq("id", shortId);
-
-        if (updateError) throw updateError;
       } else {
-        // Like
+        // Like - database triggers will handle everything automatically
         const { error: likeError } = await supabase
           .from("post_likes")
           .insert([{ post_id: shortId, user_id: session.user.id }]);
 
         if (likeError) throw likeError;
 
-        // Increment likes count
-        const { error: updateError } = await supabase
-          .from("posts")
-          .update({ likes_count: supabase.rpc('increment', { count: 1 }) })
-          .eq("id", shortId);
-
-        if (updateError) throw updateError;
-
         // Play sound effect
         playLikeSound();
       }
 
+      // Database triggers automatically:
+      // - Update posts.likes_count
+      // - Update trending_content.likes and score
+      // - Maintain data consistency
+
       // Invalidate query to refresh data
       queryClient.invalidateQueries({ queryKey: ["posts"] });
+      queryClient.invalidateQueries({ queryKey: ["trending-posts"] });
     } catch (error) {
       console.error("Error handling like:", error);
       toast({

@@ -1,3 +1,4 @@
+
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -54,7 +55,7 @@ export const usePostLikes = () => {
       }
 
       if (existingLike) {
-        // Unlike the post
+        // Unlike the post - database triggers will handle everything
         const { error: deleteError } = await supabase
           .from("post_likes")
           .delete()
@@ -66,7 +67,7 @@ export const usePostLikes = () => {
           throw deleteError;
         }
       } else {
-        // Like the post
+        // Like the post - database triggers will handle everything
         const { error: insertError } = await supabase
           .from("post_likes")
           .insert([{ post_id: postId, user_id: session.user.id }]);
@@ -77,8 +78,14 @@ export const usePostLikes = () => {
         }
       }
 
+      // Database triggers automatically:
+      // - Update posts.likes_count
+      // - Update trending_content.likes and score
+      // - Maintain data consistency
+
       // Invalidate posts query to refresh the UI
       queryClient.invalidateQueries({ queryKey: ["posts"] });
+      queryClient.invalidateQueries({ queryKey: ["trending-posts"] });
       
     } catch (error) {
       console.error("Like action error:", error);
