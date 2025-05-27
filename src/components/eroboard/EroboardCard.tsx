@@ -1,134 +1,86 @@
 
-import { useState } from "react";
-import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Heart, MessageCircle, Share2, PlayCircle } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Heart, Eye, Share, MessageCircle } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
-interface EroboardCardProps {
-  videoUrl?: string;
-  title: string;
-  creator: {
-    username: string;
-    avatarUrl?: string;
+export interface EroboardCardProps {
+  post: {
+    id: string;
+    title: string;
+    description: string;
+    creator: string;
+    views: number;
+    likes: number;
+    createdAt: Date;
+    thumbnail: string;
   };
-  isLiked?: boolean;
-  likesCount: number;
-  commentsCount: number;
-  isPremium?: boolean;
-  isVerified?: boolean;
-  tags?: string[];
-  onLike?: () => void;
-  onComment?: () => void;
-  onShare?: () => void;
-  className?: string;
 }
 
-export const EroboardCard = ({
-  videoUrl,
-  title,
-  creator,
-  isLiked = false,
-  likesCount = 0,
-  commentsCount = 0,
-  isPremium = false,
-  isVerified = false,
-  tags = [],
-  onLike,
-  onComment,
-  onShare,
-  className
-}: EroboardCardProps) => {
+export const EroboardCard = ({ post }: EroboardCardProps) => {
   return (
-    <Card className={cn("overflow-hidden bg-luxury-darker border-luxury-neutral/20", className)}>
-      <div className="relative aspect-video bg-black">
-        <div className="absolute inset-0 flex items-center justify-center">
-          <PlayCircle className="w-16 h-16 text-white/60" />
-        </div>
-        <div className="absolute bottom-2 right-2">
-          {isPremium && (
-            <Badge variant="secondary" className="bg-luxury-primary/80">
-              Premium
-            </Badge>
-          )}
-        </div>
-      </div>
-      
-      <div className="p-4 space-y-3">
-        <div className="flex items-start gap-3">
-          <div className="w-10 h-10 rounded-full bg-luxury-neutral/20 overflow-hidden">
-            {creator.avatarUrl ? (
-              <img 
-                src={creator.avatarUrl} 
-                alt={creator.username}
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center">
-                <span className="text-luxury-neutral text-sm">
-                  {creator.username.charAt(0).toUpperCase()}
-                </span>
-              </div>
-            )}
-          </div>
-          
-          <div className="flex-1 min-w-0">
-            <h3 className="font-semibold text-luxury-text truncate">{title}</h3>
-            <div className="flex items-center gap-1">
-              <span className="text-sm text-luxury-neutral">{creator.username}</span>
-              {isVerified && (
-                <span className="text-luxury-primary">✓</span>
-              )}
-            </div>
-          </div>
-        </div>
-        
-        {tags.length > 0 && (
-          <div className="flex flex-wrap gap-1">
-            {tags.slice(0, 3).map((tag, index) => (
-              <Badge key={index} variant="outline" className="text-xs">
-                {tag}
-              </Badge>
-            ))}
+    <Card className="bg-luxury-darker border-luxury-neutral/10 overflow-hidden hover:border-luxury-primary/20 transition-colors">
+      <div className="aspect-video bg-luxury-dark relative">
+        {post.thumbnail ? (
+          <img 
+            src={post.thumbnail} 
+            alt={post.title}
+            className="w-full h-full object-cover"
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center">
+            <span className="text-gray-500">No thumbnail</span>
           </div>
         )}
-        
-        <div className="flex items-center justify-between pt-2">
-          <div className="flex items-center gap-4">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={onLike}
-              className={cn(
-                "flex items-center gap-1 px-2",
-                isLiked && "text-red-500"
-              )}
-            >
-              <Heart className={cn("w-4 h-4", isLiked && "fill-current")} />
-              <span className="text-sm">{likesCount}</span>
-            </Button>
-            
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={onComment}
-              className="flex items-center gap-1 px-2"
-            >
-              <MessageCircle className="w-4 h-4" />
-              <span className="text-sm">{commentsCount}</span>
-            </Button>
+        <Badge className="absolute top-2 right-2 bg-luxury-primary">
+          Premium
+        </Badge>
+      </div>
+      
+      <CardContent className="p-4">
+        <div className="flex items-start gap-3 mb-3">
+          <Avatar className="h-8 w-8">
+            <AvatarFallback>
+              {post.creator[0]?.toUpperCase() || "U"}
+            </AvatarFallback>
+          </Avatar>
+          <div className="flex-1 min-w-0">
+            <h3 className="font-semibold text-white truncate">{post.title}</h3>
+            <p className="text-sm text-gray-400">by {post.creator}</p>
           </div>
-          
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onShare}
-          >
-            <Share2 className="w-4 h-4" />
+        </div>
+        
+        <p className="text-sm text-gray-300 mb-4 line-clamp-2">
+          {post.description}
+        </p>
+        
+        <div className="flex items-center justify-between text-sm text-gray-400 mb-4">
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-1">
+              <Eye className="h-4 w-4" />
+              {post.views.toLocaleString()}
+            </div>
+            <div className="flex items-center gap-1">
+              <Heart className="h-4 w-4" />
+              {post.likes.toLocaleString()}
+            </div>
+          </div>
+          <span>{post.createdAt.toLocaleDateString()}</span>
+        </div>
+        
+        <div className="flex gap-2">
+          <Button size="sm" className="flex-1 bg-luxury-primary hover:bg-luxury-primary/90">
+            View
+          </Button>
+          <Button size="sm" variant="outline">
+            <Heart className="h-4 w-4" />
+          </Button>
+          <Button size="sm" variant="outline">
+            <Share className="h-4 w-4" />
           </Button>
         </div>
-      </div>
+      </CardContent>
     </Card>
   );
 };

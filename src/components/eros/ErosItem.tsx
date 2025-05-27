@@ -1,206 +1,145 @@
 
-import { useState } from "react";
-import { motion } from "framer-motion";
-import { useSession } from "@supabase/auth-helpers-react";
-import { useToast } from "@/hooks/use-toast";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ErosVideoPlayer } from "./ErosVideoPlayer";
-import { Heart, MessageSquare, Share2, Bookmark, MoreHorizontal } from "lucide-react";
-import { ErosVideo } from "@/types/eros";
-import { formatDistanceToNow } from "date-fns";
+import { Heart, MessageCircle, Share, Play } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useState } from "react";
 
-interface ErosItemProps {
-  video: ErosVideo;
-  isActive: boolean;
-  onLike: (id: string) => void;
-  onComment: (id: string) => void;
-  onShare: (id: string) => void;
-  onSave: (id: string) => void;
-  onMore?: (id: string) => void;
-  className?: string;
-  autoPlay?: boolean;
+export interface ErosItemProps {
+  short: {
+    id: string;
+    title: string;
+    description: string;
+    videoUrl: string;
+    thumbnailUrl: string;
+    creatorId: string;
+    likesCount: number;
+    viewsCount: number;
+    createdAt: string;
+    creator: {
+      id: string;
+      username: string;
+    };
+  };
 }
 
-export function ErosItem({
-  video,
-  isActive,
-  onLike,
-  onComment,
-  onShare,
-  onSave,
-  onMore,
-  className,
-  autoPlay = true
-}: ErosItemProps) {
-  const [hasLiked, setHasLiked] = useState(video.hasLiked || false);
-  const [hasSaved, setHasSaved] = useState(video.hasSaved || false);
-  const [videoError, setVideoError] = useState(false);
-  
-  const session = useSession();
-  const { toast } = useToast();
-  
-  // Format date
-  const dateFormatted = video.createdAt ? 
-    formatDistanceToNow(new Date(video.createdAt), { addSuffix: true }) : "";
-  
-  // Handle video error
-  const handleVideoError = () => {
-    setVideoError(true);
-  };
-  
-  // Handle like action
+export const ErosItem = ({ short }: ErosItemProps) => {
+  const [isLiked, setIsLiked] = useState(false);
+
   const handleLike = () => {
-    if (!session) {
-      toast({
-        title: "Sign in required",
-        description: "Please sign in to like videos",
-      });
-      return;
-    }
-    
-    setHasLiked(prev => !prev);
-    onLike(video.id);
+    setIsLiked(!isLiked);
   };
-  
-  // Handle save action
-  const handleSave = () => {
-    if (!session) {
-      toast({
-        title: "Sign in required",
-        description: "Please sign in to save videos",
-      });
-      return;
-    }
-    
-    setHasSaved(prev => !prev);
-    onSave(video.id);
+
+  const handleShare = () => {
+    // Implement share functionality
+    console.log("Share short:", short.id);
   };
-  
+
+  const handleComment = () => {
+    // Implement comment functionality
+    console.log("Comment on short:", short.id);
+  };
+
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      transition={{ duration: 0.3 }}
-      className={`relative h-[100dvh] w-full snap-start snap-always ${className || ''}`}
-    >
-      {/* Video */}
-      <div className="absolute inset-0 bg-black">
-        <ErosVideoPlayer
-          videoUrl={video.url}
-          thumbnailUrl={video.thumbnailUrl}
-          isActive={isActive}
-          autoPlay={autoPlay}
-          onError={handleVideoError}
-        />
+    <Card className="bg-luxury-darker border-luxury-neutral/10 overflow-hidden">
+      <div className="aspect-[9/16] bg-luxury-dark relative group cursor-pointer">
+        {short.videoUrl ? (
+          <video 
+            className="w-full h-full object-cover"
+            poster={short.thumbnailUrl}
+            controls={false}
+            muted
+            loop
+          >
+            <source src={short.videoUrl} type="video/mp4" />
+          </video>
+        ) : short.thumbnailUrl ? (
+          <img 
+            src={short.thumbnailUrl} 
+            alt={short.title}
+            className="w-full h-full object-cover"
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center">
+            <Play className="h-12 w-12 text-gray-500" />
+          </div>
+        )}
         
-        {/* Gradient overlay for better text readability */}
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/70 pointer-events-none" />
-      </div>
-      
-      {/* Content Overlay */}
-      <div className="absolute inset-x-0 bottom-0 p-4 z-10">
-        <div className="flex items-end justify-between">
-          {/* Creator info and description */}
-          <div className="flex-1 mr-4">
-            <div className="flex items-center gap-2 mb-2">
-              <Avatar className="h-8 w-8 border border-white/20">
-                <AvatarImage src={video.creator.avatarUrl} />
-                <AvatarFallback>
-                  {video.creator.username.charAt(0).toUpperCase()}
-                </AvatarFallback>
-              </Avatar>
-              
-              <div>
-                <p className="font-semibold text-sm text-white">
-                  @{video.creator.username}
-                </p>
-                <p className="text-xs text-white/70">{dateFormatted}</p>
-              </div>
-              
-              <Button variant="secondary" size="sm" className="ml-2 h-7 px-3 text-xs">
-                Follow
-              </Button>
-            </div>
-            
-            {video.description && (
-              <p className="text-sm text-white max-w-[80%] mb-4 line-clamp-2">
-                {video.description}
-              </p>
-            )}
-            
-            {video.tags && video.tags.length > 0 && (
-              <div className="flex flex-wrap gap-1 mt-1">
-                {video.tags.map((tag, idx) => (
-                  <span key={idx} className="text-xs text-luxury-primary">
-                    #{tag}
-                  </span>
-                ))}
-              </div>
-            )}
+        {/* Play button overlay */}
+        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/20">
+          <Button size="lg" className="rounded-full bg-luxury-primary hover:bg-luxury-primary/90">
+            <Play className="h-6 w-6" />
+          </Button>
+        </div>
+
+        {/* Creator info overlay */}
+        <div className="absolute bottom-4 left-4 right-4">
+          <div className="flex items-center gap-3 mb-2">
+            <Avatar className="h-8 w-8 border-2 border-white">
+              <AvatarFallback className="bg-luxury-primary text-white">
+                {short.creator.username[0]?.toUpperCase() || "U"}
+              </AvatarFallback>
+            </Avatar>
+            <span className="text-white font-medium text-sm">
+              @{short.creator.username}
+            </span>
           </div>
           
-          {/* Action buttons */}
-          <div className="flex flex-col items-center gap-4">
-            <button
-              onClick={handleLike}
-              className="flex flex-col items-center"
-              aria-label={hasLiked ? "Unlike" : "Like"}
-            >
-              <div className={`p-2 rounded-full ${hasLiked ? 'text-red-500' : 'text-white'} bg-black/30`}>
-                <Heart className={`w-6 h-6 ${hasLiked ? 'fill-current' : ''}`} />
-              </div>
-              <span className="text-xs text-white mt-1">{video.stats.likes + (hasLiked && !video.hasLiked ? 1 : 0)}</span>
-            </button>
-            
-            <button
-              onClick={() => onComment(video.id)}
-              className="flex flex-col items-center"
-              aria-label="Comment"
-            >
-              <div className="p-2 rounded-full bg-black/30 text-white">
-                <MessageSquare className="w-6 h-6" />
-              </div>
-              <span className="text-xs text-white mt-1">{video.stats.comments}</span>
-            </button>
-            
-            <button
-              onClick={handleSave}
-              className="flex flex-col items-center"
-              aria-label={hasSaved ? "Unsave" : "Save"}
-            >
-              <div className={`p-2 rounded-full ${hasSaved ? 'text-luxury-primary' : 'text-white'} bg-black/30`}>
-                <Bookmark className={`w-6 h-6 ${hasSaved ? 'fill-current' : ''}`} />
-              </div>
-              <span className="text-xs text-white mt-1">Save</span>
-            </button>
-            
-            <button
-              onClick={() => onShare(video.id)}
-              className="flex flex-col items-center"
-              aria-label="Share"
-            >
-              <div className="p-2 rounded-full bg-black/30 text-white">
-                <Share2 className="w-6 h-6" />
-              </div>
-              <span className="text-xs text-white mt-1">Share</span>
-            </button>
-            
-            {onMore && (
-              <button
-                onClick={() => onMore(video.id)}
-                className="flex flex-col items-center"
-                aria-label="More options"
-              >
-                <div className="p-2 rounded-full bg-black/30 text-white">
-                  <MoreHorizontal className="w-6 h-6" />
-                </div>
-              </button>
-            )}
-          </div>
+          {short.title && (
+            <h3 className="text-white font-semibold text-sm mb-1 line-clamp-2">
+              {short.title}
+            </h3>
+          )}
+          
+          {short.description && (
+            <p className="text-white/80 text-xs line-clamp-2">
+              {short.description}
+            </p>
+          )}
+        </div>
+
+        {/* Action buttons */}
+        <div className="absolute bottom-4 right-4 flex flex-col gap-3">
+          <Button
+            size="sm"
+            variant="ghost"
+            className={`rounded-full bg-black/50 hover:bg-black/70 ${
+              isLiked ? 'text-red-500' : 'text-white'
+            }`}
+            onClick={handleLike}
+          >
+            <Heart className={`h-5 w-5 ${isLiked ? 'fill-current' : ''}`} />
+          </Button>
+          
+          <Button
+            size="sm"
+            variant="ghost"
+            className="rounded-full bg-black/50 hover:bg-black/70 text-white"
+            onClick={handleComment}
+          >
+            <MessageCircle className="h-5 w-5" />
+          </Button>
+          
+          <Button
+            size="sm"
+            variant="ghost"
+            className="rounded-full bg-black/50 hover:bg-black/70 text-white"
+            onClick={handleShare}
+          >
+            <Share className="h-5 w-5" />
+          </Button>
         </div>
       </div>
-    </motion.div>
+      
+      <CardContent className="p-4">
+        <div className="flex items-center justify-between text-sm text-gray-400">
+          <div className="flex items-center gap-4">
+            <span>{short.likesCount.toLocaleString()} likes</span>
+            <span>{short.viewsCount.toLocaleString()} views</span>
+          </div>
+          <span>{new Date(short.createdAt).toLocaleDateString()}</span>
+        </div>
+      </CardContent>
+    </Card>
   );
-}
+};

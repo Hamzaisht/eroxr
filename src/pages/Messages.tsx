@@ -1,10 +1,19 @@
 
-import { ConversationsList } from "@/components/messages/ConversationsList";
+import ConversationsList from "@/components/messages/ConversationsList";
 import { ChatWindow } from "@/components/messages/ChatWindow";
 import { useState } from "react";
 
 const Messages = () => {
-  const [selectedConversation, setSelectedConversation] = useState<string | null>(null);
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+
+  const handleSelectUser = (userId: string) => {
+    setSelectedUserId(userId);
+  };
+
+  const handleNewMessage = () => {
+    // Handle new message creation
+    console.log("New message clicked");
+  };
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-7xl">
@@ -16,13 +25,14 @@ const Messages = () => {
       <div className="grid md:grid-cols-3 gap-6 h-[calc(100vh-200px)]">
         <div className="md:col-span-1">
           <ConversationsList 
-            onSelectConversation={setSelectedConversation}
-            selectedConversation={selectedConversation}
+            onSelectUser={handleSelectUser}
+            onNewMessage={handleNewMessage}
+            selectedConversation={selectedUserId}
           />
         </div>
         <div className="md:col-span-2">
-          {selectedConversation ? (
-            <ChatWindow conversationId={selectedConversation} />
+          {selectedUserId ? (
+            <ChatWindow userId={selectedUserId} />
           ) : (
             <div className="flex items-center justify-center h-full bg-luxury-darker rounded-lg">
               <p className="text-gray-400">Select a conversation to start chatting</p>
