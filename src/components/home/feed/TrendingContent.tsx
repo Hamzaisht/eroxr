@@ -1,4 +1,5 @@
 
+
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -43,22 +44,22 @@ export const TrendingContent = () => {
       
       // Transform the data to match the expected structure
       return data?.map(item => {
-        // Since we use !inner, posts should be a single object, not an array
-        const post = item.posts;
+        // Access the posts data - it should be a single object due to !inner
+        const postData = Array.isArray(item.posts) ? item.posts[0] : item.posts;
         
-        if (!post) return null;
+        if (!postData) return null;
         
-        // Handle profiles - should be a single object due to foreign key
-        const creator = post.profiles;
+        // Access the profiles data - it should be a single object due to foreign key
+        const creatorData = Array.isArray(postData.profiles) ? postData.profiles[0] : postData.profiles;
         
         return {
-          id: post.id,
-          content: post.content,
-          created_at: post.created_at,
-          likes_count: post.likes_count,
-          comments_count: post.comments_count,
-          creator_id: post.creator_id,
-          creator: creator,
+          id: postData.id,
+          content: postData.content,
+          created_at: postData.created_at,
+          likes_count: postData.likes_count,
+          comments_count: postData.comments_count,
+          creator_id: postData.creator_id,
+          creator: creatorData,
           trending_score: item.score,
           trending_metrics: {
             likes: item.likes,
@@ -160,3 +161,4 @@ export const TrendingContent = () => {
     </Card>
   );
 };
+

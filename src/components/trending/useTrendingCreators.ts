@@ -1,4 +1,5 @@
 
+
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { TrendingCreator } from "./types";
@@ -36,19 +37,19 @@ export const useTrendingCreators = () => {
       const creatorMap = new Map();
       
       data?.forEach((item, index) => {
-        // Since we use !inner, posts should be a single object
-        const post = item.posts;
+        // Access the posts data - it should be a single object due to !inner
+        const postData = Array.isArray(item.posts) ? item.posts[0] : item.posts;
         
-        if (!post) return;
+        if (!postData) return;
         
-        // Handle profiles - should be a single object due to foreign key
-        const creator = post.profiles;
-        const creatorId = post.creator_id;
+        // Access the profiles data - it should be a single object due to foreign key
+        const creatorData = Array.isArray(postData.profiles) ? postData.profiles[0] : postData.profiles;
+        const creatorId = postData.creator_id;
         
         if (!creatorMap.has(creatorId)) {
           creatorMap.set(creatorId, {
             creator_id: creatorId,
-            creator_username: creator?.username || 'Unknown',
+            creator_username: creatorData?.username || 'Unknown',
             creator_avatar: null, // We'll need to get this from media_assets if needed
             likes: 0,
             comments: 0,
@@ -81,3 +82,4 @@ export const useTrendingCreators = () => {
     refetchInterval: 60000, // Refetch every minute
   });
 };
+
