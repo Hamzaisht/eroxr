@@ -1694,22 +1694,34 @@ export type Database = {
       }
       trending_content: {
         Row: {
+          bookmarks: number | null
+          comments: number | null
           id: string
           last_updated: string | null
+          likes: number | null
           post_id: string
           score: number | null
+          screenshots: number | null
         }
         Insert: {
+          bookmarks?: number | null
+          comments?: number | null
           id?: string
           last_updated?: string | null
+          likes?: number | null
           post_id: string
           score?: number | null
+          screenshots?: number | null
         }
         Update: {
+          bookmarks?: number | null
+          comments?: number | null
           id?: string
           last_updated?: string | null
+          likes?: number | null
           post_id?: string
           score?: number | null
+          screenshots?: number | null
         }
         Relationships: [
           {

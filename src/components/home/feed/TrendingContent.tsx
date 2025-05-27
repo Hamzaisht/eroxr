@@ -11,14 +11,15 @@ export const TrendingContent = () => {
   const { data: trendingPosts, isLoading } = useQuery({
     queryKey: ['trending-posts'],
     queryFn: async () => {
+      // Get posts with high engagement scores for trending
       const { data, error } = await supabase
         .from('posts')
         .select(`
           *,
-          creator:profiles(id, username)
+          creator:profiles!posts_creator_id_fkey(id, username)
         `)
         .eq('visibility', 'public')
-        .order('likes_count', { ascending: false })
+        .order('engagement_score', { ascending: false })
         .limit(5);
       
       if (error) throw error;
@@ -108,6 +109,7 @@ export const TrendingContent = () => {
           <div className="text-center py-6 text-gray-500">
             <TrendingUp className="h-8 w-8 mx-auto mb-2 opacity-50" />
             <p className="text-sm">No trending posts yet</p>
+            <p className="text-xs mt-1">Start creating content to see trends!</p>
           </div>
         )}
       </CardContent>
