@@ -36,8 +36,15 @@ export const useTrendingCreators = () => {
       const creatorMap = new Map();
       
       data?.forEach((item, index) => {
-        const post = item.posts;
-        const creator = Array.isArray(post.profiles) ? post.profiles[0] : post.profiles;
+        // Handle posts as an array and take the first item
+        const posts = Array.isArray(item.posts) ? item.posts : [item.posts];
+        const post = posts[0];
+        
+        if (!post) return;
+        
+        // Handle profiles as an array and take the first item
+        const profiles = Array.isArray(post.profiles) ? post.profiles : [post.profiles];
+        const creator = profiles[0];
         const creatorId = post.creator_id;
         
         if (!creatorMap.has(creatorId)) {
