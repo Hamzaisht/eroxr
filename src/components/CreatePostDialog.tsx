@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -160,7 +159,7 @@ export const CreatePostDialog = ({ open, onOpenChange, selectedFiles, onFileSele
         }
       }
 
-      // NO TRENDING_CONTENT OPERATIONS - Database triggers handle this automatically!
+      // Database triggers handle trending_content automatically!
 
       toast({
         title: "Success",

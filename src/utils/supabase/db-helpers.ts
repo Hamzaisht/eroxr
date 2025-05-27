@@ -17,7 +17,7 @@ export async function createPost(
       
     if (error) throw error;
     
-    // DO NOT manually insert into trending_content - triggers handle this automatically
+    // Database triggers handle trending_content automatically - no manual operations needed
     
     return { data, error: null };
   } catch (error) {
