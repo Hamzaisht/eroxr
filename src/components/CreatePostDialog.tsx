@@ -11,6 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { MediaUploadSection } from "@/components/post/MediaUploadSection";
 import { Progress } from "@/components/ui/progress";
 import { X, Image, Video, Upload } from "lucide-react";
+import { MediaAccessLevel } from "@/utils/media/types";
 
 interface CreatePostDialogProps {
   open: boolean;
@@ -284,7 +285,7 @@ export const CreatePostDialog = ({ open, onOpenChange, selectedFiles, onFileSele
             {selectedFiles && selectedFiles.length > 0 && (
               <MediaUploadSection
                 onUploadComplete={handleMediaUploadComplete}
-                defaultAccessLevel="public"
+                defaultAccessLevel={MediaAccessLevel.PUBLIC}
               />
             )}
 
