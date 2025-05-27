@@ -2,31 +2,8 @@
 import { supabase } from "@/integrations/supabase/client";
 
 /**
- * Insert a post into trending content table
- */
-export async function insertTrendingContent(postId: string) {
-  try {
-    const { error } = await supabase
-      .from('trending_content')
-      .insert({
-        post_id: postId,
-        score: 0,
-        likes: 0,
-        comments: 0,
-        bookmarks: 0,
-        screenshots: 0
-      });
-    
-    if (error) {
-      console.error('Error inserting trending content:', error);
-    }
-  } catch (err) {
-    console.error('Failed to insert trending content:', err);
-  }
-}
-
-/**
  * Update trending metrics for a post
+ * Note: trending_content is now a regular table with triggers that auto-update scores
  */
 export async function updateTrendingMetrics(
   postId: string,

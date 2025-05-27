@@ -8,7 +8,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useSession } from "@supabase/auth-helpers-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { insertTrendingContent } from "@/utils/supabase/trending-helpers";
 
 interface CreatePostDialogProps {
   open: boolean;
@@ -62,8 +61,7 @@ export const CreatePostDialog = ({ open, onOpenChange, selectedFiles, onFileSele
 
       if (error) throw error;
 
-      // Insert into trending content table
-      await insertTrendingContent(post.id);
+      // No need to manually insert into trending_content - triggers handle it automatically
 
       toast({
         title: "Success",

@@ -50,6 +50,8 @@ export const NewPostCreator = ({ onPostCreated }: NewPostCreatorProps) => {
 
       if (error) throw error;
 
+      // No need to manually insert into trending_content - triggers handle it automatically
+
       toast({
         title: "Post created",
         description: "Your post has been published successfully"
