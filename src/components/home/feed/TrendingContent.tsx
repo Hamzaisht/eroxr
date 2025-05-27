@@ -42,22 +42,27 @@ export const TrendingContent = () => {
       }
       
       // Transform the data to match the expected structure
-      return data?.map(item => ({
-        id: item.posts.id,
-        content: item.posts.content,
-        created_at: item.posts.created_at,
-        likes_count: item.posts.likes_count,
-        comments_count: item.posts.comments_count,
-        creator_id: item.posts.creator_id,
-        creator: item.posts.profiles,
-        trending_score: item.score,
-        trending_metrics: {
-          likes: item.likes,
-          comments: item.comments,
-          bookmarks: item.bookmarks,
-          screenshots: item.screenshots
-        }
-      })) || [];
+      return data?.map(item => {
+        const post = item.posts;
+        const creator = Array.isArray(post.profiles) ? post.profiles[0] : post.profiles;
+        
+        return {
+          id: post.id,
+          content: post.content,
+          created_at: post.created_at,
+          likes_count: post.likes_count,
+          comments_count: post.comments_count,
+          creator_id: post.creator_id,
+          creator: creator,
+          trending_score: item.score,
+          trending_metrics: {
+            likes: item.likes,
+            comments: item.comments,
+            bookmarks: item.bookmarks,
+            screenshots: item.screenshots
+          }
+        };
+      }) || [];
     }
   });
 
