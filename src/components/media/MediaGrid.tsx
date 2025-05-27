@@ -6,7 +6,7 @@ interface MediaGridProps {
   items: MediaItem[];
   className?: string;
   showWatermark?: boolean;
-  onAccessRequired?: (type: 'subscription' | 'purchase' | 'login', mediaId: string) => void;
+  onAccessRequired?: (type: 'subscription' | 'purchase' | 'login', mediaId?: string) => void;
 }
 
 export const MediaGrid = ({ 

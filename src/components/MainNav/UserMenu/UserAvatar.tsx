@@ -10,7 +10,7 @@ interface UserAvatarProps {
 }
 
 export const UserAvatar = ({ 
-  status = AvailabilityStatus.OFFLINE, 
+  status = 'offline', 
   onStatusChange 
 }: UserAvatarProps) => {
   const session = useSession();
@@ -18,7 +18,7 @@ export const UserAvatar = ({
   const handleStatusClick = (e: React.MouseEvent) => {
     if (onStatusChange) {
       e.stopPropagation();
-      onStatusChange(status === AvailabilityStatus.ONLINE ? AvailabilityStatus.OFFLINE : AvailabilityStatus.ONLINE);
+      onStatusChange(status === 'online' ? 'offline' : 'online');
     }
   };
 

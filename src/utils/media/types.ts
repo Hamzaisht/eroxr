@@ -30,13 +30,14 @@ export interface MediaRendererProps {
   muted?: boolean;
   loop?: boolean;
   showWatermark?: boolean;
-  onAccessRequired?: (type: string) => void;
+  onAccessRequired?: (type: 'subscription' | 'purchase' | 'login') => void;
 }
 
 export interface UploadResult {
   success: boolean;
   url?: string;
   error?: string;
+  assetId?: string;
 }
 
 export type AvailabilityStatus = 'online' | 'offline' | 'away' | 'busy' | 'invisible';

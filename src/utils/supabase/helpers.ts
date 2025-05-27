@@ -17,20 +17,20 @@ export function safeCast<T>(data: any): T {
  * @returns AvailabilityStatus enum value
  */
 export function convertToStatus(status: string | null): AvailabilityStatus {
-  if (!status) return AvailabilityStatus.OFFLINE;
+  if (!status) return 'offline';
   
   switch (status.toLowerCase()) {
     case 'online':
-      return AvailabilityStatus.ONLINE;
+      return 'online';
     case 'away':
-      return AvailabilityStatus.AWAY;
+      return 'away';
     case 'busy':
-      return AvailabilityStatus.BUSY;
+      return 'busy';
     case 'invisible':
-      return AvailabilityStatus.INVISIBLE;
+      return 'invisible';
     case 'offline':
     default:
-      return AvailabilityStatus.OFFLINE;
+      return 'offline';
   }
 }
 
