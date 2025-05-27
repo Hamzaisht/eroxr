@@ -4,59 +4,55 @@ import { Button } from "@/components/ui/button";
 import { Heart, MessageCircle, Share, Play } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useState } from "react";
+import { ErosVideo } from "@/types/eros";
 
 export interface ErosItemProps {
-  short: {
-    id: string;
-    title: string;
-    description: string;
-    videoUrl: string;
-    thumbnailUrl: string;
-    creatorId: string;
-    likesCount: number;
-    viewsCount: number;
-    createdAt: string;
-    creator: {
-      id: string;
-      username: string;
-    };
-  };
+  video: ErosVideo;
+  isActive?: boolean;
+  onLike?: () => void;
+  onComment?: () => void;
+  onShare?: () => void;
+  onSave?: () => void;
 }
 
-export const ErosItem = ({ short }: ErosItemProps) => {
-  const [isLiked, setIsLiked] = useState(false);
+export const ErosItem = ({ video, isActive, onLike, onComment, onShare, onSave }: ErosItemProps) => {
+  const [isLiked, setIsLiked] = useState(video.hasLiked || false);
 
   const handleLike = () => {
     setIsLiked(!isLiked);
+    onLike?.();
   };
 
   const handleShare = () => {
-    // Implement share functionality
-    console.log("Share short:", short.id);
+    onShare?.();
   };
 
   const handleComment = () => {
-    // Implement comment functionality
-    console.log("Comment on short:", short.id);
+    onComment?.();
+  };
+
+  const handleSave = () => {
+    onSave?.();
   };
 
   return (
     <Card className="bg-luxury-darker border-luxury-neutral/10 overflow-hidden">
       <div className="aspect-[9/16] bg-luxury-dark relative group cursor-pointer">
-        {short.videoUrl ? (
+        {video.url ? (
           <video 
             className="w-full h-full object-cover"
-            poster={short.thumbnailUrl}
+            poster={video.thumbnailUrl}
             controls={false}
             muted
             loop
+            autoPlay={isActive}
           >
-            <source src={short.videoUrl} type="video/mp4" />
+            <source src={video.url} type="video/mp4" />
           </video>
-        ) : short.thumbnailUrl ? (
+        ) : video.thumbnailUrl ? (
           <img 
-            src={short.thumbnailUrl} 
-            alt={short.title}
+            src={video.thumbnailUrl} 
+            alt={video.description || 'Video'}
             className="w-full h-full object-cover"
           />
         ) : (
@@ -76,24 +72,19 @@ export const ErosItem = ({ short }: ErosItemProps) => {
         <div className="absolute bottom-4 left-4 right-4">
           <div className="flex items-center gap-3 mb-2">
             <Avatar className="h-8 w-8 border-2 border-white">
+              <AvatarImage src={video.creator.avatarUrl} />
               <AvatarFallback className="bg-luxury-primary text-white">
-                {short.creator.username[0]?.toUpperCase() || "U"}
+                {video.creator.username[0]?.toUpperCase() || "U"}
               </AvatarFallback>
             </Avatar>
             <span className="text-white font-medium text-sm">
-              @{short.creator.username}
+              @{video.creator.username}
             </span>
           </div>
           
-          {short.title && (
-            <h3 className="text-white font-semibold text-sm mb-1 line-clamp-2">
-              {short.title}
-            </h3>
-          )}
-          
-          {short.description && (
+          {video.description && (
             <p className="text-white/80 text-xs line-clamp-2">
-              {short.description}
+              {video.description}
             </p>
           )}
         </div>
@@ -134,10 +125,10 @@ export const ErosItem = ({ short }: ErosItemProps) => {
       <CardContent className="p-4">
         <div className="flex items-center justify-between text-sm text-gray-400">
           <div className="flex items-center gap-4">
-            <span>{short.likesCount.toLocaleString()} likes</span>
-            <span>{short.viewsCount.toLocaleString()} views</span>
+            <span>{video.stats.likes.toLocaleString()} likes</span>
+            <span>{video.stats.views.toLocaleString()} views</span>
           </div>
-          <span>{new Date(short.createdAt).toLocaleDateString()}</span>
+          <span>{new Date(video.createdAt).toLocaleDateString()}</span>
         </div>
       </CardContent>
     </Card>

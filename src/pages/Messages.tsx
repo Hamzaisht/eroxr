@@ -27,7 +27,6 @@ const Messages = () => {
           <ConversationsList 
             onSelectUser={handleSelectUser}
             onNewMessage={handleNewMessage}
-            selectedConversation={selectedUserId}
           />
         </div>
         <div className="md:col-span-2">
