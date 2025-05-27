@@ -33,7 +33,7 @@ const Home = () => {
           is_ppv,
           screenshots_count,
           downloads_count,
-          creator:profiles(id, username, avatar_url)
+          creator:profiles(id, username)
         `)
         .order('created_at', { ascending: false })
         .limit(20);
@@ -66,12 +66,12 @@ const Home = () => {
           ? {
               id: post.creator[0].id || '',
               username: post.creator[0].username || 'Unknown',
-              avatar_url: post.creator[0].avatar_url || ''
+              avatar_url: null // Remove avatar_url since we're using the new media system
             }
           : {
               id: '',
               username: 'Unknown',
-              avatar_url: ''
+              avatar_url: null // Remove avatar_url since we're using the new media system
             }
       }));
 
