@@ -17,14 +17,21 @@ export const MediaRenderer = ({ media, className = "", autoPlay = false }: Media
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(true);
 
-  const handleVideoClick = (e: React.MouseEvent<HTMLVideoElement>) => {
-    const video = e.currentTarget;
-    if (video.paused) {
-      video.play();
-      setIsPlaying(true);
-    } else {
-      video.pause();
-      setIsPlaying(false);
+  const handleVideoClick = (e: React.MouseEvent) => {
+    // Find the video element, either the clicked element or within the container
+    const target = e.currentTarget;
+    const video = target.tagName === 'VIDEO' 
+      ? target as HTMLVideoElement 
+      : target.closest('.relative')?.querySelector('video') as HTMLVideoElement;
+    
+    if (video) {
+      if (video.paused) {
+        video.play();
+        setIsPlaying(true);
+      } else {
+        video.pause();
+        setIsPlaying(false);
+      }
     }
   };
 
