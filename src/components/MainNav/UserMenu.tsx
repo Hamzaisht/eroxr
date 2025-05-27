@@ -12,7 +12,7 @@ import { useSession, useSupabaseClient } from "@supabase/auth-helpers-react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { User, Settings, CreditCard, ArrowRightFromLine, CircleUserRound } from "lucide-react";
-import { UserAvatar } from "./UserMenu/UserAvatar";
+import { UserAvatar } from "@/components/avatar/UserAvatar";
 
 export function UserMenu() {
   const [isSigningOut, setIsSigningOut] = useState(false);
@@ -40,8 +40,14 @@ export function UserMenu() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <div>
-          <UserAvatar />
+        <div className="cursor-pointer">
+          <UserAvatar 
+            userId={session?.user?.id}
+            username={session?.user?.user_metadata?.username}
+            email={session?.user?.email}
+            size="md"
+            className="ring-2 ring-luxury-primary/10 transition-all duration-200 hover:ring-luxury-primary/20"
+          />
         </div>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-80" align="end">

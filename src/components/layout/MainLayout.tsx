@@ -5,6 +5,7 @@ import { BackgroundEffects } from "./BackgroundEffects";
 import { InteractiveNav } from "./InteractiveNav";
 import { MainContent } from "./components/MainContent";
 import { FloatingActionMenu } from "./FloatingActionMenu";
+import { MainNav } from "@/components/MainNav";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { LoadingScreen } from "./LoadingScreen";
 import { useEffect, useState } from "react";
@@ -49,9 +50,14 @@ export const MainLayout = () => {
           <BackgroundEffects />
         </div>
         
+        {/* Main Navigation Header */}
+        <MainNav />
+        
         {/* Main content wrapper */}
         <MainContent isErosRoute={isErosRoute}>
-          <Outlet />
+          <div className="pt-16"> {/* Add padding for fixed header */}
+            <Outlet />
+          </div>
         </MainContent>
 
         {/* Floating action menu */}

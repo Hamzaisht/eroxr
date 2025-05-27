@@ -12,8 +12,16 @@ import Index from '@/pages/Index';
 import Home from '@/pages/Home';
 import Login from '@/pages/Login';
 import Register from '@/pages/Register';
+import Profile from '@/pages/Profile';
+import Dating from '@/pages/Dating';
+import Messages from '@/pages/Messages';
+import Eroboard from '@/pages/Eroboard';
+import Shorts from '@/pages/Shorts';
+import Settings from '@/pages/Settings';
+import NotFound from '@/pages/NotFound';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { AuthLayout } from '@/components/layout/AuthLayout';
+import { AdminRoutes } from '@/components/admin/routes/AdminRoutes';
 
 function App() {
   const [session, setSession] = useState<Session | null>(null);
@@ -55,7 +63,19 @@ function App() {
                 {/* Protected routes */}
                 <Route element={<MainLayout />}>
                   <Route path="/home" element={<Home />} />
+                  <Route path="/profile/:id" element={<Profile />} />
+                  <Route path="/dating" element={<Dating />} />
+                  <Route path="/messages" element={<Messages />} />
+                  <Route path="/eroboard" element={<Eroboard />} />
+                  <Route path="/shorts" element={<Shorts />} />
+                  <Route path="/settings" element={<Settings />} />
                 </Route>
+
+                {/* Admin routes */}
+                <Route path="/admin/*" element={<AdminRoutes />} />
+                
+                {/* 404 page */}
+                <Route path="*" element={<NotFound />} />
               </Routes>
               <Toaster />
             </ErrorBoundary>
