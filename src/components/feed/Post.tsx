@@ -33,9 +33,15 @@ interface PostProps {
 export const Post = ({ post, currentUser }: PostProps) => {
   const [showComments, setShowComments] = useState(false);
   const [comments, setComments] = useState<any[]>([]);
+  const [isLiked, setIsLiked] = useState(post.isLiked || false);
   const { handleLike, handleDelete } = usePostActions();
 
-  const onLike = () => handleLike(post.id);
+  const onLike = () => {
+    const newLikedState = !isLiked;
+    setIsLiked(newLikedState);
+    handleLike(post.id, isLiked);
+  };
+  
   const onComment = () => setShowComments(!showComments);
   const onShare = () => {
     // Share functionality
@@ -89,7 +95,7 @@ export const Post = ({ post, currentUser }: PostProps) => {
         <PostStats
           likesCount={post.likesCount}
           commentsCount={post.commentsCount}
-          isLiked={post.isLiked || false}
+          isLiked={isLiked}
           isSaved={post.isSaved || false}
           onLike={onLike}
           onComment={onComment}

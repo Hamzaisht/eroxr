@@ -10,23 +10,42 @@ export const usePostActions = () => {
 
   const handleLike = useMutation({
     mutationFn: async ({ postId, isLiked }: { postId: string; isLiked: boolean }) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("User not authenticated");
+
       if (isLiked) {
         // Unlike
         const { error } = await supabase
           .from('post_likes')
           .delete()
           .eq('post_id', postId)
-          .eq('user_id', (await supabase.auth.getUser()).data.user?.id);
+          .eq('user_id', user.id);
         
         if (error) throw error;
 
-        // Update post likes count
+        // Update post likes count by decrementing
         const { error: updateError } = await supabase
-          .from('posts')
-          .update({ likes_count: supabase.sql`likes_count - 1` })
-          .eq('id', postId);
+          .rpc('increment_counter', { 
+            row_id: postId, 
+            counter_name: 'likes_count',
+            table_name: 'posts'
+          });
         
-        if (updateError) throw updateError;
+        if (updateError) {
+          // Fallback: manual decrement
+          const { data: currentPost } = await supabase
+            .from('posts')
+            .select('likes_count')
+            .eq('id', postId)
+            .single();
+          
+          if (currentPost) {
+            await supabase
+              .from('posts')
+              .update({ likes_count: Math.max(0, (currentPost.likes_count || 0) - 1) })
+              .eq('id', postId);
+          }
+        }
 
         // Update trending metrics
         const { data: post } = await supabase
@@ -36,7 +55,7 @@ export const usePostActions = () => {
           .single();
         
         if (post) {
-          await updateTrendingMetrics(postId, { likes: post.likes_count });
+          await updateTrendingMetrics(postId, { likes: post.likes_count || 0 });
         }
       } else {
         // Like
@@ -44,18 +63,34 @@ export const usePostActions = () => {
           .from('post_likes')
           .insert({
             post_id: postId,
-            user_id: (await supabase.auth.getUser()).data.user?.id
+            user_id: user.id
           });
         
         if (error) throw error;
 
-        // Update post likes count
+        // Update post likes count by incrementing
         const { error: updateError } = await supabase
-          .from('posts')
-          .update({ likes_count: supabase.sql`likes_count + 1` })
-          .eq('id', postId);
+          .rpc('increment_counter', { 
+            row_id: postId, 
+            counter_name: 'likes_count',
+            table_name: 'posts'
+          });
         
-        if (updateError) throw updateError;
+        if (updateError) {
+          // Fallback: manual increment
+          const { data: currentPost } = await supabase
+            .from('posts')
+            .select('likes_count')
+            .eq('id', postId)
+            .single();
+          
+          if (currentPost) {
+            await supabase
+              .from('posts')
+              .update({ likes_count: (currentPost.likes_count || 0) + 1 })
+              .eq('id', postId);
+          }
+        }
 
         // Update trending metrics
         const { data: post } = await supabase
@@ -65,7 +100,7 @@ export const usePostActions = () => {
           .single();
         
         if (post) {
-          await updateTrendingMetrics(postId, { likes: post.likes_count });
+          await updateTrendingMetrics(postId, { likes: post.likes_count || 0 });
         }
       }
     },
@@ -74,6 +109,7 @@ export const usePostActions = () => {
       queryClient.invalidateQueries({ queryKey: ['trending-posts'] });
     },
     onError: (error) => {
+      console.error('Like error:', error);
       toast({
         title: "Error",
         description: "Failed to update like status",
@@ -100,6 +136,7 @@ export const usePostActions = () => {
       });
     },
     onError: (error) => {
+      console.error('Delete error:', error);
       toast({
         title: "Error",
         description: "Failed to delete post",
@@ -108,10 +145,19 @@ export const usePostActions = () => {
     },
   });
 
+  // Create wrapper functions that match the expected signatures
+  const likePost = (postId: string, isLiked?: boolean) => {
+    handleLike.mutate({ postId, isLiked: isLiked || false });
+  };
+
+  const deletePost = (postId: string) => {
+    handleDelete.mutate(postId);
+  };
+
   return {
-    handleLike: handleLike.mutate,
-    handleDelete: handleDelete.mutate,
-    isLiking: handleLike.isPending,
-    isDeleting: handleDelete.isPending,
+    handleLike: likePost,
+    handleDelete: deletePost,
+    isLiking: handleLike.isLoading,
+    isDeleting: handleDelete.isLoading,
   };
 };

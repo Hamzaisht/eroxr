@@ -162,6 +162,15 @@ const Home = () => {
     );
   }
 
+  // Create wrapper functions that match EnhancedPostCard expectations
+  const onLike = (postId: string) => {
+    handleLike(postId, false); // Assume not liked by default, component should track state
+  };
+
+  const onDelete = (postId: string, creatorId: string) => {
+    handleDelete(postId);
+  };
+
   return (
     <div className="container mx-auto px-4 py-8 max-w-7xl">
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
@@ -193,8 +202,8 @@ const Home = () => {
                   key={post.id}
                   post={post}
                   currentUserId={session?.user?.id}
-                  onLike={handleLike}
-                  onDelete={handleDelete}
+                  onLike={onLike}
+                  onDelete={onDelete}
                 />
               ))
             ) : (
