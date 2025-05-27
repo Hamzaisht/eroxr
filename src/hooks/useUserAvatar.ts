@@ -25,13 +25,13 @@ export const useUserAvatar = (userId?: string | null) => {
       setError(null);
 
       try {
-        // Query for the most recent avatar
+        // Query for the most recent avatar using metadata filter
         const { data, error: queryError } = await supabase
           .from('media_assets')
           .select('id, storage_path, created_at')
           .eq('user_id', userId)
-          .eq('metadata->usage', 'avatar')
           .eq('media_type', 'image')
+          .contains('metadata', { usage: 'avatar' })
           .order('created_at', { ascending: false })
           .limit(1)
           .maybeSingle();
@@ -74,8 +74,8 @@ export const useUserAvatar = (userId?: string | null) => {
             .from('media_assets')
             .select('id, storage_path, created_at')
             .eq('user_id', userId)
-            .eq('metadata->usage', 'avatar')
             .eq('media_type', 'image')
+            .contains('metadata', { usage: 'avatar' })
             .order('created_at', { ascending: false })
             .limit(1)
             .maybeSingle();

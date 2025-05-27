@@ -54,18 +54,32 @@ export const CreatePostDialog = ({
     setIsSubmitting(true);
     
     try {
-      const { error } = await supabase
+      // Create the post
+      const { data: postData, error: postError } = await supabase
         .from("posts")
         .insert({
           creator_id: session.user.id,
           content: content.trim(),
-          media_url: mediaUrls.length > 0 ? mediaUrls : null,
-          metadata: {
-            media_asset_ids: mediaAssetIds
-          }
-        });
+          visibility: 'public'
+        })
+        .select()
+        .single();
         
-      if (error) throw error;
+      if (postError) throw postError;
+
+      // Update media assets to reference this post
+      if (mediaAssetIds.length > 0) {
+        const { error: updateError } = await supabase
+          .from('media_assets')
+          .update({
+            metadata: { post_id: postData.id, usage: 'post_media' }
+          })
+          .in('id', mediaAssetIds);
+
+        if (updateError) {
+          console.error('Error linking media to post:', updateError);
+        }
+      }
       
       toast({
         title: "Post created",

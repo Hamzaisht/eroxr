@@ -1,77 +1,136 @@
 
 import { useState } from 'react';
-import { uploadFile } from '@/utils/upload/universalUpload';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from './use-toast';
 import { MediaAccessLevel, UploadResult } from '@/utils/media/types';
+
+interface UploadOptions {
+  contentCategory?: string;
+  maxSizeInMB?: number;
+  accessLevel?: MediaAccessLevel;
+  metadata?: Record<string, any>;
+  altText?: string;
+}
 
 interface UploadState {
   isUploading: boolean;
-  isComplete: boolean;
   progress: number;
-  error?: string;
-}
-
-interface UploadMediaOptions {
-  contentCategory?: string;
-  maxSizeInMB?: number;
+  isComplete: boolean;
 }
 
 export const useMediaUpload = () => {
   const [uploadState, setUploadState] = useState<UploadState>({
     isUploading: false,
-    isComplete: false,
-    progress: 0
+    progress: 0,
+    isComplete: false
   });
+  const { toast } = useToast();
 
   const uploadMedia = async (
     file: File,
-    options: UploadMediaOptions = {}
+    options: UploadOptions = {}
   ): Promise<UploadResult> => {
-    setUploadState({
-      isUploading: true,
-      isComplete: false,
-      progress: 0
-    });
+    const {
+      contentCategory = 'general',
+      maxSizeInMB = 50,
+      accessLevel = MediaAccessLevel.PUBLIC,
+      metadata = {},
+      altText
+    } = options;
+
+    setUploadState({ isUploading: true, progress: 0, isComplete: false });
 
     try {
-      const { contentCategory = 'media', maxSizeInMB = 100 } = options;
-
       // Check file size
-      if (file.size > maxSizeInMB * 1024 * 1024) {
+      const maxSize = maxSizeInMB * 1024 * 1024;
+      if (file.size > maxSize) {
         throw new Error(`File size exceeds ${maxSizeInMB}MB limit`);
       }
 
-      // Simulate progress
-      setUploadState(prev => ({ ...prev, progress: 25 }));
-
-      const result = await uploadFile(file, {
-        accessLevel: MediaAccessLevel.PUBLIC,
-        category: contentCategory
-      });
-
-      setUploadState(prev => ({ ...prev, progress: 100 }));
-
-      if (result.success) {
-        setUploadState(prev => ({ ...prev, isComplete: true, isUploading: false }));
-      } else {
-        setUploadState(prev => ({ 
-          ...prev, 
-          isUploading: false, 
-          error: result.error || 'Upload failed' 
-        }));
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        throw new Error('User not authenticated');
       }
 
-      return result;
+      // Generate file path
+      const fileExtension = file.name.split('.').pop()?.toLowerCase() || 'bin';
+      const fileName = `${contentCategory}/${user.id}/${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExtension}`;
+
+      setUploadState(prev => ({ ...prev, progress: 25 }));
+
+      // Upload to storage
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('media')
+        .upload(fileName, file, {
+          cacheControl: '3600',
+          contentType: file.type
+        });
+
+      if (uploadError) {
+        throw uploadError;
+      }
+
+      setUploadState(prev => ({ ...prev, progress: 75 }));
+
+      // Determine media type
+      const getMediaType = (mimeType: string) => {
+        if (mimeType.startsWith('image/')) return 'image';
+        if (mimeType.startsWith('video/')) return 'video';
+        if (mimeType.startsWith('audio/')) return 'audio';
+        return 'document';
+      };
+
+      // Create media asset record
+      const { data: assetData, error: assetError } = await supabase
+        .from('media_assets')
+        .insert({
+          user_id: user.id,
+          storage_path: uploadData.path,
+          original_name: file.name,
+          file_size: file.size,
+          mime_type: file.type,
+          media_type: getMediaType(file.type),
+          access_level: accessLevel,
+          alt_text: altText,
+          metadata: {
+            ...metadata,
+            category: contentCategory
+          }
+        })
+        .select()
+        .single();
+
+      if (assetError) {
+        // Clean up uploaded file if asset creation fails
+        await supabase.storage.from('media').remove([uploadData.path]);
+        throw assetError;
+      }
+
+      // Get public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('media')
+        .getPublicUrl(uploadData.path);
+
+      setUploadState({ isUploading: false, progress: 100, isComplete: true });
+
+      return {
+        success: true,
+        url: publicUrl,
+        assetId: assetData.id
+      };
     } catch (error: any) {
-      setUploadState({
-        isUploading: false,
-        isComplete: false,
-        progress: 0,
-        error: error.message
+      setUploadState({ isUploading: false, progress: 0, isComplete: false });
+      
+      toast({
+        title: "Upload failed",
+        description: error.message || "Failed to upload file",
+        variant: "destructive"
       });
 
       return {
         success: false,
-        error: error.message
+        error: error.message || "Upload failed"
       };
     }
   };

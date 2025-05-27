@@ -13,19 +13,21 @@ import { Button } from "@/components/ui/button";
 import { usePostActions } from "@/hooks/usePostActions";
 import { useCreatePostDialog } from "@/hooks/useCreatePostDialog";
 import { useGoLiveDialog } from "@/hooks/useGoLiveDialog";
+import { CreatePostDialog } from "@/components/CreatePostDialog";
 
 const Home = () => {
   const session = useSession();
   const { handleLike, handleDelete } = usePostActions();
-  const { openDialog: openCreatePost } = useCreatePostDialog();
+  const { isOpen: isCreatePostOpen, openDialog: openCreatePost, closeDialog: closeCreatePost } = useCreatePostDialog();
   const { openDialog: openGoLive } = useGoLiveDialog();
+  const [selectedFiles, setSelectedFiles] = useState<FileList | null>(null);
 
   const { data: posts, isLoading, error, refetch } = useQuery({
     queryKey: ['home-posts'],
     queryFn: async () => {
-      console.log("Home - Fetching posts with media...");
+      console.log("Home - Fetching posts with media and profiles...");
       
-      // First fetch posts
+      // Fetch posts with creator profiles
       const { data: postsData, error: postsError } = await supabase
         .from('posts')
         .select(`
@@ -37,7 +39,7 @@ const Home = () => {
           likes_count,
           comments_count,
           visibility,
-          creator:profiles(id, username)
+          creator:profiles!posts_creator_id_fkey(id, username, avatar_url)
         `)
         .eq('visibility', 'public')
         .order('created_at', { ascending: false })
@@ -54,12 +56,13 @@ const Home = () => {
       const postsWithMedia = await Promise.all(
         (postsData || []).map(async (post) => {
           try {
+            // Query media assets for this post
             const { data: mediaAssets, error: mediaError } = await supabase
               .from('media_assets')
-              .select('id, storage_path, original_name, media_type, alt_text')
-              .eq('user_id', post.creator_id)
+              .select('id, storage_path, original_name, media_type, alt_text, metadata')
+              .or(`metadata->post_id.eq.${post.id},metadata->reference_id.eq.${post.id}`)
               .order('created_at', { ascending: false })
-              .limit(4); // Limit to 4 media items per post
+              .limit(4);
 
             if (mediaError) {
               console.error("Error fetching media for post:", post.id, mediaError);
@@ -73,32 +76,29 @@ const Home = () => {
               alt_text: asset.alt_text
             }));
 
+            // Ensure creator is properly formatted
+            const creator = post.creator && !Array.isArray(post.creator) 
+              ? post.creator 
+              : Array.isArray(post.creator) && post.creator.length > 0
+              ? post.creator[0]
+              : null;
+
             return {
               ...post,
-              creator: Array.isArray(post.creator) && post.creator.length > 0 
-                ? {
-                    id: post.creator[0].id || '',
-                    username: post.creator[0].username || 'Unknown'
-                  }
-                : {
-                    id: '',
-                    username: 'Unknown'
-                  },
+              creator: {
+                id: creator?.id || post.creator_id || '',
+                username: creator?.username || 'Anonymous'
+              },
               media_assets: transformedMedia
             };
           } catch (error) {
             console.error("Error processing post:", post.id, error);
             return {
               ...post,
-              creator: Array.isArray(post.creator) && post.creator.length > 0 
-                ? {
-                    id: post.creator[0].id || '',
-                    username: post.creator[0].username || 'Unknown'
-                  }
-                : {
-                    id: '',
-                    username: 'Unknown'
-                  },
+              creator: {
+                id: post.creator_id || '',
+                username: 'Anonymous'
+              },
               media_assets: []
             };
           }
@@ -183,6 +183,14 @@ const Home = () => {
           <RightSidebar />
         </div>
       </div>
+
+      {/* Create Post Dialog */}
+      <CreatePostDialog
+        open={isCreatePostOpen}
+        onOpenChange={closeCreatePost}
+        selectedFiles={selectedFiles}
+        onFileSelect={setSelectedFiles}
+      />
     </div>
   );
 };
