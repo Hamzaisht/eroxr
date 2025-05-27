@@ -25,7 +25,7 @@ export const useUserAvatar = (userId?: string | null) => {
       setError(null);
 
       try {
-        // Query for the most recent avatar using metadata filter
+        // Query for the most recent avatar using the correct fields
         const { data, error: queryError } = await supabase
           .from('media_assets')
           .select('id, storage_path, created_at')

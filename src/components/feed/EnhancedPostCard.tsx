@@ -55,6 +55,10 @@ export const EnhancedPostCard = ({ post, onLike, onDelete, currentUserId }: Enha
     return `${Math.floor(diffInMinutes / 1440)}d ago`;
   };
 
+  const getInitials = (username: string) => {
+    return username.charAt(0).toUpperCase();
+  };
+
   return (
     <Card className="bg-luxury-darker border-luxury-neutral/10 overflow-hidden">
       <CardContent className="p-0">
@@ -64,7 +68,7 @@ export const EnhancedPostCard = ({ post, onLike, onDelete, currentUserId }: Enha
             <Avatar className="h-10 w-10">
               <AvatarImage src={post.creator.avatar_url || ""} alt={post.creator.username} />
               <AvatarFallback className="bg-luxury-darker text-luxury-neutral">
-                {post.creator.username[0]?.toUpperCase() || "U"}
+                {getInitials(post.creator.username)}
               </AvatarFallback>
             </Avatar>
             <div>
