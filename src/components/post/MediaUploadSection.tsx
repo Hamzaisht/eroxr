@@ -32,20 +32,24 @@ export const MediaUploadSection = ({
   const handleUpload = async () => {
     if (selectedFiles.length === 0) return;
 
-    const results = await Promise.all(
-      selectedFiles.map(file => uploadMedia(file, {
-        contentCategory: 'post',
-        accessLevel: defaultAccessLevel,
-        metadata: { usage: 'post_media' }
-      }))
-    );
+    try {
+      const results = await Promise.all(
+        selectedFiles.map(file => uploadMedia(file, {
+          contentCategory: 'post',
+          accessLevel: defaultAccessLevel,
+          metadata: { usage: 'post' } // This will be updated with post_id later
+        }))
+      );
 
-    const successfulUploads = results.filter(r => r.success);
-    if (successfulUploads.length > 0) {
-      const urls = successfulUploads.map(r => r.url!);
-      const assetIds = successfulUploads.map(r => r.assetId!);
-      onUploadComplete(urls, assetIds);
-      setSelectedFiles([]);
+      const successfulUploads = results.filter(r => r.success);
+      if (successfulUploads.length > 0) {
+        const urls = successfulUploads.map(r => r.url!);
+        const assetIds = successfulUploads.map(r => r.assetId!);
+        onUploadComplete(urls, assetIds);
+        setSelectedFiles([]);
+      }
+    } catch (error) {
+      console.error('Upload error:', error);
     }
   };
 

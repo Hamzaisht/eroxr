@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -26,7 +27,7 @@ const Home = () => {
     queryFn: async () => {
       console.log("Home - Fetching posts with profiles...");
       
-      // Fetch posts with creator profiles (removed avatar_url)
+      // Fetch posts with creator profiles (NO avatar_url)
       const { data: postsData, error: postsError } = await supabase
         .from('posts')
         .select(`
@@ -59,7 +60,7 @@ const Home = () => {
             const { data: mediaAssets, error: mediaError } = await supabase
               .from('media_assets')
               .select('id, storage_path, original_name, media_type, alt_text, metadata')
-              .or(`metadata->post_id.eq.${post.id},metadata->reference_id.eq.${post.id}`)
+              .eq('metadata->post_id', post.id)
               .order('created_at', { ascending: false })
               .limit(4);
 
@@ -75,7 +76,7 @@ const Home = () => {
                 .select('storage_path')
                 .eq('user_id', post.creator_id)
                 .eq('media_type', 'image')
-                .contains('metadata', { usage: 'avatar' })
+                .eq('metadata->usage', 'avatar')
                 .order('created_at', { ascending: false })
                 .limit(1)
                 .maybeSingle();

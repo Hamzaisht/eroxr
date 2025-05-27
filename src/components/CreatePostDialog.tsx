@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Loader2, X } from "lucide-react";
 import { MediaUploadSection } from "./post/MediaUploadSection";
 import { MediaAccessLevel } from "@/utils/media/types";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface CreatePostDialogProps {
   open: boolean;
@@ -29,6 +30,7 @@ export const CreatePostDialog = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const session = useSession();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -72,12 +74,13 @@ export const CreatePostDialog = ({
         const { error: updateError } = await supabase
           .from('media_assets')
           .update({
-            metadata: { post_id: postData.id, usage: 'post_media' }
+            metadata: { post_id: postData.id, usage: 'post' }
           })
           .in('id', mediaAssetIds);
 
         if (updateError) {
           console.error('Error linking media to post:', updateError);
+          // Don't fail the entire post creation for this
         }
       }
       
@@ -85,6 +88,10 @@ export const CreatePostDialog = ({
         title: "Post created",
         description: "Your post has been published successfully",
       });
+      
+      // Invalidate queries to refresh the feed
+      queryClient.invalidateQueries({ queryKey: ['home-posts'] });
+      queryClient.invalidateQueries({ queryKey: ['feed-posts'] });
       
       // Reset form and close dialog
       setContent("");
@@ -160,14 +167,14 @@ export const CreatePostDialog = ({
           <div className="flex justify-end">
             <Button 
               type="submit" 
-              disabled={isSubmitting}
+              disabled={isSubmitting || (!content.trim() && mediaUrls.length === 0)}
             >
               {isSubmitting ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   Posting...
                 </>
-              ) : "Create Post"}
+              ) : "Post"}
             </Button>
           </div>
         </form>
