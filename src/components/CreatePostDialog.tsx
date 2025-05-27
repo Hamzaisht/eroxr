@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Dialog, DialogContent, DialogTitle, DialogDescription, DialogHeader } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -160,6 +161,11 @@ export const CreatePostDialog = ({
     setIsUploading(true);
     
     try {
+      console.log('Starting post creation process...');
+      console.log('User ID:', session.user.id);
+      console.log('Content:', content);
+      console.log('Media files:', mediaPreviews.length);
+
       // Upload media assets first
       let mediaAssetIds: string[] = [];
       if (mediaPreviews.length > 0) {
@@ -172,30 +178,38 @@ export const CreatePostDialog = ({
 
       // Create the post
       console.log('Creating post...');
-      const { data: postData, error: postError } = await supabase
+      const postData = {
+        creator_id: session.user.id,
+        content: content.trim(),
+        visibility: 'public'
+      };
+      console.log('Post data to insert:', postData);
+
+      const { data: postResult, error: postError } = await supabase
         .from("posts")
-        .insert({
-          creator_id: session.user.id,
-          content: content.trim(),
-          visibility: 'public'
-        })
+        .insert(postData)
         .select()
         .single();
         
       if (postError) {
-        console.error('Post creation error:', postError);
-        throw postError;
+        console.error('Post creation error details:', {
+          message: postError.message,
+          details: postError.details,
+          hint: postError.hint,
+          code: postError.code
+        });
+        throw new Error(`Post creation failed: ${postError.message}`);
       }
 
-      console.log('Post created:', postData);
+      console.log('Post created successfully:', postResult);
 
       // Update media assets to reference this post
       if (mediaAssetIds.length > 0) {
-        console.log('Linking media assets to post:', postData.id);
+        console.log('Linking media assets to post:', postResult.id);
         const { error: updateError } = await supabase
           .from('media_assets')
           .update({
-            metadata: { post_id: postData.id, usage: 'post' }
+            metadata: { post_id: postResult.id, usage: 'post' }
           })
           .in('id', mediaAssetIds);
 
@@ -222,7 +236,7 @@ export const CreatePostDialog = ({
       mediaPreviews.forEach(preview => URL.revokeObjectURL(preview.url));
       onOpenChange(false);
     } catch (error: any) {
-      console.error("Error submitting post:", error);
+      console.error("Detailed error in post submission:", error);
       toast({
         title: "Error",
         description: error.message || "Failed to create post",

@@ -975,6 +975,51 @@ export type Database = {
           },
         ]
       }
+      media_assets: {
+        Row: {
+          access_level: string
+          alt_text: string | null
+          created_at: string
+          file_size: number
+          id: string
+          media_type: string
+          metadata: Json | null
+          mime_type: string
+          original_name: string
+          storage_path: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          access_level?: string
+          alt_text?: string | null
+          created_at?: string
+          file_size: number
+          id?: string
+          media_type: string
+          metadata?: Json | null
+          mime_type: string
+          original_name: string
+          storage_path: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          access_level?: string
+          alt_text?: string | null
+          created_at?: string
+          file_size?: number
+          id?: string
+          media_type?: string
+          metadata?: Json | null
+          mime_type?: string
+          original_name?: string
+          storage_path?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       nordic_cities: {
         Row: {
           city_name: string
