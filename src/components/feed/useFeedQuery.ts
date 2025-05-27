@@ -20,7 +20,7 @@ export const useFeedQuery = (userId?: string, feedType: FeedType = 'feed') => {
         .from("posts")
         .select(`
           *,
-          creator:profiles(id, username, avatar_url),
+          creator:profiles(id, username),
           post_likes(user_id),
           post_saves(user_id)
         `)

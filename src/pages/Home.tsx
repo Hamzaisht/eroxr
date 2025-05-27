@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -25,7 +24,7 @@ const Home = () => {
   const { data: posts, isLoading, error, refetch } = useQuery({
     queryKey: ['home-posts'],
     queryFn: async () => {
-      console.log("Home - Fetching posts with media and profiles...");
+      console.log("Home - Fetching posts with profiles...");
       
       // Fetch posts with creator profiles (removed avatar_url)
       const { data: postsData, error: postsError } = await supabase
