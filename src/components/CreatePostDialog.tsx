@@ -160,7 +160,7 @@ export const CreatePostDialog = ({ open, onOpenChange, selectedFiles, onFileSele
         }
       }
 
-      // NO TRENDING_CONTENT INSERTS - Database triggers handle this automatically!
+      // NO TRENDING_CONTENT OPERATIONS - Database triggers handle this automatically!
 
       toast({
         title: "Success",

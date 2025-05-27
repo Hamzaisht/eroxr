@@ -8,6 +8,7 @@ export async function createPost(
   errorCallback?: (error: any) => void
 ) {
   try {
+    // Only insert into posts table - database triggers handle trending_content automatically
     const { data, error } = await supabase
       .from('posts')
       .insert(post)
@@ -15,6 +16,8 @@ export async function createPost(
       .single();
       
     if (error) throw error;
+    
+    // DO NOT manually insert into trending_content - triggers handle this automatically
     
     return { data, error: null };
   } catch (error) {

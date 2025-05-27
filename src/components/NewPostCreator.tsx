@@ -40,7 +40,7 @@ export const NewPostCreator = ({ onPostCreated }: NewPostCreatorProps) => {
     setIsSubmitting(true);
 
     try {
-      // Only insert into posts table - triggers will handle trending_content
+      // Only insert into posts table - triggers will handle trending_content automatically
       const { error } = await supabase
         .from('posts')
         .insert({

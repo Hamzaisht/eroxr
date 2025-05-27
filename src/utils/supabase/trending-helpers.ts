@@ -19,8 +19,8 @@ export async function updateTrendingMetrics(
     // Database triggers handle this automatically when posts are liked/commented/etc.
     console.log('Trending metrics will be updated by database triggers for post:', postId);
     
-    // If you need to manually trigger a score update, use the RPC function
-    await supabase.rpc('update_trending_score', { p_post_id: postId });
+    // Note: Manual RPC calls are not needed as database triggers handle trending_content automatically
+    // The trending_content table is managed entirely by Supabase database triggers
   } catch (err) {
     console.error('Failed to update trending score:', err);
   }

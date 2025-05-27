@@ -37,11 +37,12 @@ export const NewPostCreator: React.FC = () => {
     setIsSubmitting(true);
     
     try {
+      // Only insert into posts table - database triggers handle trending_content automatically
       const { error } = await supabase
         .from("posts")
         .insert({
           creator_id: session.user.id,
-          content
+          content: content.trim()
         });
       
       if (error) throw error;
