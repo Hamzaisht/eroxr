@@ -27,108 +27,113 @@ const Home = () => {
     queryFn: async () => {
       console.log("Home - Fetching posts with profiles...");
       
-      // Fetch posts with creator profiles
-      const { data: postsData, error: postsError } = await supabase
-        .from('posts')
-        .select(`
-          id,
-          content,
-          creator_id,
-          created_at,
-          updated_at,
-          likes_count,
-          comments_count,
-          visibility,
-          creator:profiles!posts_creator_id_fkey(id, username)
-        `)
-        .eq('visibility', 'public')
-        .order('created_at', { ascending: false })
-        .limit(20);
+      try {
+        // Fetch posts with creator profiles
+        const { data: postsData, error: postsError } = await supabase
+          .from('posts')
+          .select(`
+            id,
+            content,
+            creator_id,
+            created_at,
+            updated_at,
+            likes_count,
+            comments_count,
+            visibility,
+            creator:profiles!posts_creator_id_fkey(id, username)
+          `)
+          .eq('visibility', 'public')
+          .order('created_at', { ascending: false })
+          .limit(20);
 
-      if (postsError) {
-        console.error("Home - Error fetching posts:", postsError);
-        throw new Error(postsError.message || "Failed to fetch posts");
-      }
+        if (postsError) {
+          console.error("Home - Error fetching posts:", postsError);
+          throw new Error(postsError.message || "Failed to fetch posts");
+        }
 
-      console.log("Home - Posts fetched:", postsData?.length || 0);
-      
-      // For each post, fetch associated media assets and creator avatars
-      const postsWithMedia = await Promise.all(
-        (postsData || []).map(async (post) => {
-          try {
-            // Query media assets for this post
-            const { data: mediaAssets, error: mediaError } = await supabase
-              .from('media_assets')
-              .select('id, storage_path, original_name, media_type, alt_text, metadata')
-              .eq('metadata->post_id', post.id)
-              .order('created_at', { ascending: false })
-              .limit(4);
-
-            if (mediaError) {
-              console.error("Error fetching media for post:", post.id, mediaError);
-            }
-
-            // Fetch creator avatar from media_assets
-            let creatorAvatarUrl = null;
-            if (post.creator_id) {
-              const { data: avatarData } = await supabase
+        console.log("Home - Posts fetched:", postsData?.length || 0);
+        
+        // For each post, fetch associated media assets and creator avatars
+        const postsWithMedia = await Promise.all(
+          (postsData || []).map(async (post) => {
+            try {
+              // Query media assets for this post
+              const { data: mediaAssets, error: mediaError } = await supabase
                 .from('media_assets')
-                .select('storage_path')
-                .eq('user_id', post.creator_id)
-                .eq('media_type', 'image')
-                .eq('metadata->usage', 'avatar')
+                .select('id, storage_path, original_name, media_type, alt_text, metadata')
+                .eq('metadata->post_id', post.id)
                 .order('created_at', { ascending: false })
-                .limit(1)
-                .maybeSingle();
+                .limit(4);
 
-              if (avatarData) {
-                const { data: { publicUrl } } = supabase.storage
-                  .from('media')
-                  .getPublicUrl(avatarData.storage_path);
-                creatorAvatarUrl = publicUrl;
+              if (mediaError) {
+                console.error("Error fetching media for post:", post.id, mediaError);
               }
+
+              // Fetch creator avatar from media_assets
+              let creatorAvatarUrl = null;
+              if (post.creator_id) {
+                const { data: avatarData } = await supabase
+                  .from('media_assets')
+                  .select('storage_path')
+                  .eq('user_id', post.creator_id)
+                  .eq('media_type', 'image')
+                  .eq('metadata->usage', 'avatar')
+                  .order('created_at', { ascending: false })
+                  .limit(1)
+                  .maybeSingle();
+
+                if (avatarData) {
+                  const { data: { publicUrl } } = supabase.storage
+                    .from('media')
+                    .getPublicUrl(avatarData.storage_path);
+                  creatorAvatarUrl = publicUrl;
+                }
+              }
+
+              // Transform media assets to include full URL
+              const transformedMedia = (mediaAssets || []).map(asset => ({
+                id: asset.id,
+                url: `https://ysqbdaeohlupucdmivkt.supabase.co/storage/v1/object/public/media/${asset.storage_path}`,
+                type: asset.media_type,
+                alt_text: asset.alt_text
+              }));
+
+              // Ensure creator is properly formatted
+              const creator = post.creator && !Array.isArray(post.creator) 
+                ? post.creator 
+                : Array.isArray(post.creator) && post.creator.length > 0
+                ? post.creator[0]
+                : null;
+
+              return {
+                ...post,
+                creator: {
+                  id: creator?.id || post.creator_id || '',
+                  username: creator?.username || 'Anonymous',
+                  avatar_url: creatorAvatarUrl
+                },
+                media_assets: transformedMedia
+              };
+            } catch (error) {
+              console.error("Error processing post:", post.id, error);
+              return {
+                ...post,
+                creator: {
+                  id: post.creator_id || '',
+                  username: 'Anonymous',
+                  avatar_url: null
+                },
+                media_assets: []
+              };
             }
+          })
+        );
 
-            // Transform media assets to include full URL
-            const transformedMedia = (mediaAssets || []).map(asset => ({
-              id: asset.id,
-              url: `https://ysqbdaeohlupucdmivkt.supabase.co/storage/v1/object/public/media/${asset.storage_path}`,
-              type: asset.media_type,
-              alt_text: asset.alt_text
-            }));
-
-            // Ensure creator is properly formatted
-            const creator = post.creator && !Array.isArray(post.creator) 
-              ? post.creator 
-              : Array.isArray(post.creator) && post.creator.length > 0
-              ? post.creator[0]
-              : null;
-
-            return {
-              ...post,
-              creator: {
-                id: creator?.id || post.creator_id || '',
-                username: creator?.username || 'Anonymous',
-                avatar_url: creatorAvatarUrl
-              },
-              media_assets: transformedMedia
-            };
-          } catch (error) {
-            console.error("Error processing post:", post.id, error);
-            return {
-              ...post,
-              creator: {
-                id: post.creator_id || '',
-                username: 'Anonymous',
-                avatar_url: null
-              },
-              media_assets: []
-            };
-          }
-        })
-      );
-
-      return postsWithMedia;
+        return postsWithMedia;
+      } catch (error) {
+        console.error("Home - Failed to fetch posts:", error);
+        throw error;
+      }
     },
     enabled: !!session
   });

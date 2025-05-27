@@ -1692,6 +1692,35 @@ export type Database = {
         }
         Relationships: []
       }
+      trending_content: {
+        Row: {
+          id: string
+          last_updated: string | null
+          post_id: string
+          score: number | null
+        }
+        Insert: {
+          id?: string
+          last_updated?: string | null
+          post_id: string
+          score?: number | null
+        }
+        Update: {
+          id?: string
+          last_updated?: string | null
+          post_id?: string
+          score?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trending_content_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string
