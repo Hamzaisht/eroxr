@@ -45,6 +45,7 @@ const Home = () => {
             engagement_score,
             is_ppv,
             ppv_amount,
+            metadata,
             creator:profiles!posts_creator_id_fkey(
               id, 
               username,
@@ -68,13 +69,13 @@ const Home = () => {
           return [];
         }
         
-        // For each post, fetch associated media assets using improved strategies
+        // For each post, fetch associated media assets using STRICTLY controlled strategies
         const postsWithMedia = await Promise.all(
           postsData.map(async (post) => {
             try {
               console.log(`Home - Fetching media for post ${post.id}...`);
               
-              // Strategy 1: Primary query - fetch media by post_id in metadata (most reliable)
+              // Strategy 1: PRIMARY - fetch media by post_id in metadata (most reliable)
               const { data: primaryAssets, error: primaryError } = await supabase
                 .from('media_assets')
                 .select('*')
@@ -88,53 +89,62 @@ const Home = () => {
 
               let mediaAssets = primaryAssets || [];
 
-              // Strategy 2: RESTRICTED fallback - only for very recent orphaned media (within 2 minutes of post creation)
+              // Strategy 2: HEAVILY RESTRICTED fallback - only for VERY recent orphaned media
+              // This strategy is now much more strict to prevent cross-contamination
               if (mediaAssets.length === 0) {
-                console.log(`Home - No primary media found for post ${post.id}, trying restricted orphaned media fallback...`);
+                console.log(`Home - No primary media found for post ${post.id}, checking if fallback is safe...`);
                 
                 const postTime = new Date(post.created_at);
-                const fallbackStartTime = new Date(postTime.getTime() - 2 * 60 * 1000); // 2 minutes before
-                const fallbackEndTime = new Date(postTime.getTime() + 2 * 60 * 1000); // 2 minutes after
-
-                const { data: recentOrphanedAssets, error: orphanedError } = await supabase
-                  .from('media_assets')
-                  .select('*')
-                  .eq('user_id', post.creator_id)
-                  .filter('metadata->>usage', 'eq', 'post')
-                  .is('metadata->>post_id', null)
-                  .gte('created_at', fallbackStartTime.toISOString())
-                  .lte('created_at', fallbackEndTime.toISOString())
-                  .limit(5); // Max 5 media items to prevent excessive associations
-
-                if (orphanedError) {
-                  console.error("Home - Error in orphaned media fetch:", orphanedError);
-                } else {
-                  console.log(`Home - Recent orphaned media assets for post ${post.id}:`, recentOrphanedAssets?.length || 0);
+                const currentTime = new Date();
+                const postAgeMinutes = (currentTime.getTime() - postTime.getTime()) / (1000 * 60);
+                
+                // Only use fallback for posts created within the last 30 seconds to prevent old media contamination
+                if (postAgeMinutes <= 0.5) { // 30 seconds
+                  console.log(`Home - Post ${post.id} is recent (${postAgeMinutes.toFixed(1)} minutes old), attempting safe fallback...`);
                   
-                  if (recentOrphanedAssets && recentOrphanedAssets.length > 0) {
-                    mediaAssets = recentOrphanedAssets;
+                  const fallbackStartTime = new Date(postTime.getTime() - 30 * 1000); // 30 seconds before
+                  const fallbackEndTime = new Date(postTime.getTime() + 30 * 1000); // 30 seconds after
+
+                  const { data: recentOrphanedAssets, error: orphanedError } = await supabase
+                    .from('media_assets')
+                    .select('*')
+                    .eq('user_id', post.creator_id) // Must be same user
+                    .filter('metadata->>usage', 'eq', 'post')
+                    .is('metadata->>post_id', null) // Must be orphaned
+                    .eq('access_level', 'public') // Must be public
+                    .gte('created_at', fallbackStartTime.toISOString())
+                    .lte('created_at', fallbackEndTime.toISOString())
+                    .limit(3); // MAX 3 media items to prevent excessive associations
+
+                  if (orphanedError) {
+                    console.error("Home - Error in orphaned media fetch:", orphanedError);
+                  } else {
+                    console.log(`Home - Recent orphaned media assets for post ${post.id}:`, recentOrphanedAssets?.length || 0);
                     
-                    // Auto-link these assets to the post for future queries, but be very careful
-                    console.log(`Home - Auto-linking ${mediaAssets.length} recent orphaned media to post ${post.id}...`);
-                    for (const asset of mediaAssets) {
-                      const updatedMetadata = {
-                        ...(asset.metadata || {}),
-                        post_id: post.id,
-                        usage: 'post',
-                        auto_linked_at: new Date().toISOString(),
-                        auto_link_reason: 'timing_fallback'
-                      };
+                    if (recentOrphanedAssets && recentOrphanedAssets.length > 0) {
+                      // Additional safety check: verify these assets are really recent
+                      const safeAssets = recentOrphanedAssets.filter(asset => {
+                        const assetTime = new Date(asset.created_at);
+                        const timeDiff = Math.abs(assetTime.getTime() - postTime.getTime()) / 1000; // seconds
+                        return timeDiff <= 30; // Must be within 30 seconds of post creation
+                      });
                       
-                      await supabase
-                        .from('media_assets')
-                        .update({ metadata: updatedMetadata })
-                        .eq('id', asset.id);
+                      if (safeAssets.length > 0) {
+                        mediaAssets = safeAssets;
+                        console.log(`Home - Using ${safeAssets.length} safe orphaned assets for post ${post.id}`);
+                        
+                        // DO NOT auto-link - this causes the cross-contamination issue
+                        // Let the assets remain orphaned for now to prevent incorrect associations
+                        console.log(`Home - NOT auto-linking assets to prevent cross-contamination`);
+                      }
                     }
                   }
+                } else {
+                  console.log(`Home - Post ${post.id} is too old (${postAgeMinutes.toFixed(1)} minutes) for fallback, skipping`);
                 }
               }
 
-              // NO Strategy 3 - Remove the broad timing fallback to prevent incorrect associations
+              // Strategy 3: REMOVED - No broad timing fallback to prevent incorrect associations
 
               // Fetch creator avatar from media_assets
               let creatorAvatarUrl = null;
@@ -178,7 +188,12 @@ const Home = () => {
 
               console.log(`Home - Final post ${post.id} media count:`, finalPost.media_assets.length);
               if (finalPost.media_assets.length > 0) {
-                console.log(`Home - Final post ${post.id} media details:`, finalPost.media_assets.map(m => ({ id: m.id, created_at: m.created_at })));
+                console.log(`Home - Final post ${post.id} media details:`, finalPost.media_assets.map(m => ({ 
+                  id: m.id, 
+                  created_at: m.created_at,
+                  has_post_id: !!m.metadata?.post_id,
+                  post_id: m.metadata?.post_id
+                })));
               }
               
               return finalPost;

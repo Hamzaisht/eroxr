@@ -10,7 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { MediaUploadSection } from "@/components/post/MediaUploadSection";
 import { Progress } from "@/components/ui/progress";
-import { X, Image, Video, Upload } from "lucide-react";
+import { X, Image, Video, Upload, AlertCircle } from "lucide-react";
 import { MediaAccessLevel } from "@/utils/media/types";
 
 interface CreatePostDialogProps {
@@ -24,9 +24,9 @@ export const CreatePostDialog = ({ open, onOpenChange, selectedFiles, onFileSele
   const [content, setContent] = useState("");
   const [visibility, setVisibility] = useState<"public" | "subscribers_only">("public");
   const [isLoading, setIsLoading] = useState(false);
-  const [uploadedMediaUrls, setUploadedMediaUrls] = useState<string[]>([]);
   const [uploadedAssetIds, setUploadedAssetIds] = useState<string[]>([]);
-  const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploadInProgress, setUploadInProgress] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
   const [previewUrls, setPreviewUrls] = useState<string[]>([]);
   const session = useSession();
   const { toast } = useToast();
@@ -49,6 +49,10 @@ export const CreatePostDialog = ({ open, onOpenChange, selectedFiles, onFileSele
         }
       });
       setPreviewUrls(previews);
+      
+      // Reset upload state when new files are selected
+      setUploadedAssetIds([]);
+      setUploadError(null);
     }
   };
 
@@ -78,16 +82,35 @@ export const CreatePostDialog = ({ open, onOpenChange, selectedFiles, onFileSele
     // Validate that we have matching URLs and asset IDs
     if (urls.length !== assetIds.length) {
       console.error("CreatePostDialog - Mismatch between URLs and asset IDs:", { urls, assetIds });
-      toast({
-        title: "Upload Warning",
-        description: "Some media files may not have been processed correctly",
-        variant: "destructive"
-      });
+      setUploadError("Some media files may not have been processed correctly");
+      return;
     }
     
-    setUploadedMediaUrls(urls);
-    setUploadedAssetIds(assetIds);
-    setUploadProgress(100);
+    // Validate asset IDs are valid UUIDs
+    const validAssetIds = assetIds.filter(id => {
+      const isValid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+      if (!isValid) {
+        console.error("CreatePostDialog - Invalid asset ID:", id);
+      }
+      return isValid;
+    });
+    
+    if (validAssetIds.length !== assetIds.length) {
+      setUploadError("Some media assets have invalid IDs");
+      return;
+    }
+    
+    setUploadedAssetIds(validAssetIds);
+    setUploadInProgress(false);
+    setUploadError(null);
+    
+    console.log("CreatePostDialog - Asset IDs successfully captured:", validAssetIds);
+  };
+
+  const handleMediaUploadStart = () => {
+    console.log("CreatePostDialog - Media upload started");
+    setUploadInProgress(true);
+    setUploadError(null);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -120,6 +143,26 @@ export const CreatePostDialog = ({ open, onOpenChange, selectedFiles, onFileSele
       return;
     }
 
+    // Check if media upload is still in progress
+    if (uploadInProgress) {
+      toast({
+        title: "Error",
+        description: "Please wait for media upload to complete",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Check for upload errors
+    if (uploadError) {
+      toast({
+        title: "Error",
+        description: `Media upload failed: ${uploadError}`,
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsLoading(true);
 
     try {
@@ -131,7 +174,7 @@ export const CreatePostDialog = ({ open, onOpenChange, selectedFiles, onFileSele
         actualAssetIds: uploadedAssetIds
       });
 
-      // Create post - database triggers handle trending_content automatically
+      // Create post with enhanced metadata
       const postData = {
         content: content.trim(),
         creator_id: session.user.id,
@@ -142,7 +185,13 @@ export const CreatePostDialog = ({ open, onOpenChange, selectedFiles, onFileSele
         share_count: 0,
         engagement_score: 0.0,
         is_ppv: false,
-        is_featured: false
+        is_featured: false,
+        metadata: {
+          has_media: uploadedAssetIds.length > 0,
+          media_count: uploadedAssetIds.length,
+          upload_session: Date.now(),
+          created_via: 'dialog'
+        }
       };
 
       console.log("CreatePostDialog - Inserting post data:", postData);
@@ -160,46 +209,53 @@ export const CreatePostDialog = ({ open, onOpenChange, selectedFiles, onFileSele
 
       console.log("CreatePostDialog - Post created successfully:", post);
 
-      // CRITICAL: Link media assets to the post immediately and accurately
+      // CRITICAL: Link media assets to the post with enhanced validation
       if (uploadedAssetIds.length > 0 && post.id) {
-        console.log("CreatePostDialog - Linking media assets to post:", { 
+        console.log("CreatePostDialog - Starting media asset linking process:", { 
           postId: post.id, 
           assetIds: uploadedAssetIds.length,
           actualAssetIds: uploadedAssetIds 
         });
         
         let linkedCount = 0;
+        const linkingErrors: string[] = [];
+        
         for (const assetId of uploadedAssetIds) {
           console.log(`CreatePostDialog - Processing asset ${assetId}...`);
           
           try {
-            // First, verify the asset exists and get current metadata
+            // Verify the asset exists and belongs to the current user
             const { data: currentAsset, error: fetchError } = await supabase
               .from('media_assets')
-              .select('metadata, user_id')
+              .select('id, metadata, user_id, created_at')
               .eq('id', assetId)
+              .eq('user_id', session.user.id) // Security: only link user's own assets
               .single();
 
             if (fetchError) {
               console.error(`CreatePostDialog - Error fetching asset ${assetId}:`, fetchError);
+              linkingErrors.push(`Asset ${assetId}: ${fetchError.message}`);
               continue;
             }
 
-            // Verify this asset belongs to the current user
-            if (currentAsset.user_id !== session.user.id) {
-              console.error(`CreatePostDialog - Asset ${assetId} does not belong to user ${session.user.id}`);
+            if (!currentAsset) {
+              console.error(`CreatePostDialog - Asset ${assetId} not found or not owned by user`);
+              linkingErrors.push(`Asset ${assetId}: not found or access denied`);
               continue;
             }
 
             console.log(`CreatePostDialog - Current metadata for asset ${assetId}:`, currentAsset.metadata);
 
-            // Merge existing metadata with post_id - be very specific
+            // Enhanced metadata with ownership and timing validation
             const updatedMetadata = {
               ...(currentAsset.metadata || {}),
               post_id: post.id,
               usage: 'post',
               linked_at: new Date().toISOString(),
-              linked_by_user: session.user.id
+              linked_by_user: session.user.id,
+              post_created_at: post.created_at,
+              linking_method: 'dialog_upload',
+              asset_age_at_link: Math.floor((Date.now() - new Date(currentAsset.created_at).getTime()) / 1000) // seconds
             };
 
             console.log(`CreatePostDialog - Updating asset ${assetId} with metadata:`, updatedMetadata);
@@ -207,33 +263,40 @@ export const CreatePostDialog = ({ open, onOpenChange, selectedFiles, onFileSele
             const { error: updateError } = await supabase
               .from('media_assets')
               .update({ metadata: updatedMetadata })
-              .eq('id', assetId);
+              .eq('id', assetId)
+              .eq('user_id', session.user.id); // Double security check
 
             if (updateError) {
               console.error(`CreatePostDialog - Error updating media asset ${assetId}:`, updateError);
+              linkingErrors.push(`Asset ${assetId}: ${updateError.message}`);
             } else {
               linkedCount++;
               console.log(`CreatePostDialog - Successfully linked media asset ${assetId} to post ${post.id}`);
             }
           } catch (assetError) {
             console.error(`CreatePostDialog - Exception processing asset ${assetId}:`, assetError);
+            linkingErrors.push(`Asset ${assetId}: ${assetError instanceof Error ? assetError.message : 'Unknown error'}`);
           }
         }
         
         console.log(`CreatePostDialog - Media linking complete. Linked ${linkedCount}/${uploadedAssetIds.length} assets`);
         
+        if (linkingErrors.length > 0) {
+          console.error("CreatePostDialog - Linking errors:", linkingErrors);
+        }
+        
         if (linkedCount === 0 && uploadedAssetIds.length > 0) {
           toast({
             title: "Warning",
-            description: "Post created but media may not be linked properly",
+            description: "Post created but media linking failed. Some media may not appear.",
             variant: "destructive"
           });
+        } else if (linkedCount < uploadedAssetIds.length) {
+          toast({
+            title: "Partial Success",
+            description: `Post created with ${linkedCount}/${uploadedAssetIds.length} media files linked successfully`,
+          });
         }
-      } else {
-        console.log("CreatePostDialog - No media assets to link or missing post ID:", { 
-          uploadedAssetIds: uploadedAssetIds.length, 
-          postId: post?.id 
-        });
       }
 
       toast({
@@ -244,9 +307,9 @@ export const CreatePostDialog = ({ open, onOpenChange, selectedFiles, onFileSele
       // Reset form completely
       setContent("");
       setVisibility("public");
-      setUploadedMediaUrls([]);
       setUploadedAssetIds([]);
-      setUploadProgress(0);
+      setUploadInProgress(false);
+      setUploadError(null);
       setPreviewUrls([]);
       onFileSelect(null);
       
@@ -264,6 +327,13 @@ export const CreatePostDialog = ({ open, onOpenChange, selectedFiles, onFileSele
       setIsLoading(false);
     }
   };
+
+  // Determine if we can submit the post
+  const canSubmit = !isLoading && 
+                   !uploadInProgress && 
+                   !uploadError &&
+                   (content.trim().length > 0 || uploadedAssetIds.length > 0) &&
+                   charactersUsed <= characterLimit;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -316,6 +386,14 @@ export const CreatePostDialog = ({ open, onOpenChange, selectedFiles, onFileSele
               </label>
             </div>
 
+            {/* Upload Error Display */}
+            {uploadError && (
+              <div className="bg-red-50 border border-red-200 rounded-lg p-3 flex items-center gap-2">
+                <AlertCircle className="h-4 w-4 text-red-500" />
+                <p className="text-sm text-red-700">{uploadError}</p>
+              </div>
+            )}
+
             {/* Media Previews */}
             {previewUrls.length > 0 && (
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
@@ -358,26 +436,23 @@ export const CreatePostDialog = ({ open, onOpenChange, selectedFiles, onFileSele
               </div>
             )}
 
-            {/* Advanced Media Upload Component */}
+            {/* MediaUploadSection - Enhanced with callbacks */}
             {selectedFiles && selectedFiles.length > 0 && (
               <MediaUploadSection
                 onUploadComplete={handleMediaUploadComplete}
+                onUploadStart={handleMediaUploadStart}
                 defaultAccessLevel={MediaAccessLevel.PUBLIC}
               />
             )}
 
-            {/* Upload Progress */}
-            {uploadProgress > 0 && uploadProgress < 100 && (
-              <div className="space-y-2">
-                <Progress value={uploadProgress} className="w-full" />
-                <p className="text-sm text-gray-500 text-center">
-                  Uploading media... {uploadProgress}%
-                </p>
+            {/* Upload Status Display */}
+            {uploadInProgress && (
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                <p className="text-sm text-blue-700">📤 Uploading media files...</p>
               </div>
             )}
 
-            {/* Upload Status Display */}
-            {uploadedAssetIds.length > 0 && (
+            {uploadedAssetIds.length > 0 && !uploadInProgress && (
               <div className="bg-green-50 border border-green-200 rounded-lg p-3">
                 <p className="text-sm text-green-700">
                   ✓ {uploadedAssetIds.length} media file(s) uploaded and ready
@@ -406,16 +481,16 @@ export const CreatePostDialog = ({ open, onOpenChange, selectedFiles, onFileSele
               type="button"
               variant="outline"
               onClick={() => onOpenChange(false)}
-              disabled={isLoading}
+              disabled={isLoading || uploadInProgress}
             >
               Cancel
             </Button>
             <Button 
               type="submit" 
-              disabled={isLoading || (charactersUsed === 0 && uploadedAssetIds.length === 0)}
+              disabled={!canSubmit}
               className="min-w-[100px]"
             >
-              {isLoading ? "Creating..." : "Create Post"}
+              {isLoading ? "Creating..." : uploadInProgress ? "Uploading..." : "Create Post"}
             </Button>
           </div>
         </form>

@@ -2,23 +2,27 @@
 import { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Image, Video, Mic, Upload, X } from 'lucide-react';
+import { Image, Video, Mic, Upload, X, AlertCircle, CheckCircle } from 'lucide-react';
 import { useMediaUpload } from '@/hooks/useMediaUpload';
 import { MediaAccessLevel } from '@/utils/media/types';
 import { Progress } from '@/components/ui/progress';
 
 interface MediaUploadSectionProps {
   onUploadComplete: (urls: string[], assetIds: string[]) => void;
+  onUploadStart?: () => void;
   defaultAccessLevel?: MediaAccessLevel;
 }
 
 export const MediaUploadSection = ({
   onUploadComplete,
+  onUploadStart,
   defaultAccessLevel = MediaAccessLevel.PUBLIC
 }: MediaUploadSectionProps) => {
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const [uploadSuccess, setUploadSuccess] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { uploadMedia, uploadState } = useMediaUpload();
 
@@ -26,42 +30,74 @@ export const MediaUploadSection = ({
     const files = Array.from(e.target.files || []);
     console.log("MediaUploadSection - Files selected:", files.length, files);
     setSelectedFiles(prev => [...prev, ...files]);
+    setUploadError(null);
+    setUploadSuccess(false);
   };
 
   const removeFile = (index: number) => {
     setSelectedFiles(files => files.filter((_, i) => i !== index));
+    setUploadError(null);
+    setUploadSuccess(false);
   };
 
   const handleUpload = async () => {
     if (selectedFiles.length === 0) {
       console.log("MediaUploadSection - No files to upload");
+      setUploadError("Please select files to upload");
       return;
     }
 
     console.log("MediaUploadSection - Starting upload for", selectedFiles.length, "files");
     setIsUploading(true);
     setUploadProgress(0);
+    setUploadError(null);
+    setUploadSuccess(false);
+    
+    // Notify parent that upload has started
+    onUploadStart?.();
 
     try {
       const uploadPromises = selectedFiles.map(async (file, index) => {
         console.log(`MediaUploadSection - Uploading file ${index + 1}/${selectedFiles.length}:`, file.name);
         setUploadProgress(((index + 1) / selectedFiles.length) * 100);
         
+        // Validate file before upload
+        if (!file || file.size === 0) {
+          throw new Error(`Invalid file: ${file?.name || 'Unknown'}`);
+        }
+
+        if (file.size > 100 * 1024 * 1024) { // 100MB limit
+          throw new Error(`File too large: ${file.name} (${Math.round(file.size / 1024 / 1024)}MB)`);
+        }
+        
         const result = await uploadMedia(file, {
           contentCategory: 'post',
           accessLevel: defaultAccessLevel,
           metadata: { 
             usage: 'post',
-            upload_timestamp: new Date().toISOString()
+            upload_timestamp: new Date().toISOString(),
+            upload_session: Date.now(),
+            original_filename: file.name,
+            file_size: file.size,
+            mime_type: file.type
           }
         });
         
         console.log(`MediaUploadSection - Upload result for ${file.name}:`, result);
+        
+        if (!result.success) {
+          throw new Error(`Upload failed for ${file.name}: ${result.error || 'Unknown error'}`);
+        }
+
+        if (!result.assetId) {
+          throw new Error(`No asset ID returned for ${file.name}`);
+        }
+        
         return result;
       });
 
       const results = await Promise.all(uploadPromises);
-      const successfulUploads = results.filter(r => r.success);
+      const successfulUploads = results.filter(r => r.success && r.assetId);
       
       console.log("MediaUploadSection - Upload results:", {
         total: results.length,
@@ -69,26 +105,48 @@ export const MediaUploadSection = ({
         failed: results.length - successfulUploads.length
       });
       
-      if (successfulUploads.length > 0) {
-        const urls = successfulUploads.map(r => r.url!);
-        const assetIds = successfulUploads.map(r => r.assetId!);
-        
-        console.log("MediaUploadSection - Calling onUploadComplete with:", {
-          urls: urls.length,
-          assetIds: assetIds.length,
-          actualAssetIds: assetIds
-        });
-        
-        onUploadComplete(urls, assetIds);
-        setSelectedFiles([]);
-      } else {
-        console.error("MediaUploadSection - No successful uploads");
+      if (successfulUploads.length === 0) {
+        throw new Error("All uploads failed");
       }
+
+      if (successfulUploads.length < results.length) {
+        console.warn(`MediaUploadSection - Some uploads failed: ${successfulUploads.length}/${results.length} successful`);
+      }
+      
+      const urls = successfulUploads.map(r => r.url!);
+      const assetIds = successfulUploads.map(r => r.assetId!);
+      
+      // Validate asset IDs are proper UUIDs
+      const validAssetIds = assetIds.filter(id => {
+        const isValid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+        if (!isValid) {
+          console.error("MediaUploadSection - Invalid asset ID:", id);
+        }
+        return isValid;
+      });
+
+      if (validAssetIds.length !== assetIds.length) {
+        throw new Error("Some uploads returned invalid asset IDs");
+      }
+      
+      console.log("MediaUploadSection - Calling onUploadComplete with:", {
+        urls: urls.length,
+        assetIds: validAssetIds.length,
+        actualAssetIds: validAssetIds
+      });
+      
+      onUploadComplete(urls, validAssetIds);
+      setSelectedFiles([]);
+      setUploadSuccess(true);
+      setUploadProgress(100);
+      
     } catch (error) {
       console.error('MediaUploadSection - Upload error:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Upload failed';
+      setUploadError(errorMessage);
+      setUploadProgress(0);
     } finally {
       setIsUploading(false);
-      setUploadProgress(0);
     }
   };
 
@@ -122,6 +180,22 @@ export const MediaUploadSection = ({
           onChange={handleFileSelect}
         />
       </div>
+
+      {/* Error Display */}
+      {uploadError && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-3 flex items-center gap-2">
+          <AlertCircle className="h-4 w-4 text-red-500 flex-shrink-0" />
+          <p className="text-sm text-red-700">{uploadError}</p>
+        </div>
+      )}
+
+      {/* Success Display */}
+      {uploadSuccess && !isUploading && (
+        <div className="bg-green-50 border border-green-200 rounded-lg p-3 flex items-center gap-2">
+          <CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0" />
+          <p className="text-sm text-green-700">All files uploaded successfully!</p>
+        </div>
+      )}
 
       {selectedFiles.length > 0 && (
         <div className="space-y-2">
@@ -159,11 +233,11 @@ export const MediaUploadSection = ({
           <Button 
             type="button"
             onClick={handleUpload}
-            disabled={isUploading}
+            disabled={isUploading || uploadSuccess}
             className="w-full"
             size="sm"
           >
-            {isUploading ? 'Uploading...' : `Upload ${selectedFiles.length} file(s)`}
+            {isUploading ? 'Uploading...' : uploadSuccess ? 'Uploaded ✓' : `Upload ${selectedFiles.length} file(s)`}
           </Button>
         </div>
       )}
