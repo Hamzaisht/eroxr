@@ -38,13 +38,16 @@ export const MediaRenderer = ({
   const [isMuted, setIsMuted] = useState(true);
   const [failedAssets, setFailedAssets] = useState<Set<string>>(new Set());
 
-  // Handle both single media and array of media
   const mediaArray = Array.isArray(media) ? media : [media];
   
   console.log("MediaRenderer - Received media:", mediaArray);
 
-  const handleError = (assetId?: string) => {
-    console.error('MediaRenderer - Media failed to load:', assetId);
+  const handleError = (assetId?: string, storagePath?: string) => {
+    console.error('MediaRenderer - Media failed to load:', { 
+      assetId, 
+      storagePath,
+      fullAsset: mediaArray.find(m => m.id === assetId)
+    });
     setHasError(true);
     setIsLoading(false);
     
@@ -68,23 +71,19 @@ export const MediaRenderer = ({
       return '';
     }
     
-    // Clean the storage path - remove any leading slashes
     const cleanPath = storagePath.replace(/^\/+/, '');
     const url = `https://ysqbdaeohlupucdmivkt.supabase.co/storage/v1/object/public/media/${cleanPath}`;
     console.log("MediaRenderer - Built media URL:", { storagePath, cleanPath, url });
     return url;
   };
 
-  // Determine media type from media_type field correctly
   const getMediaType = (mediaType: string): 'image' | 'video' | 'audio' => {
     console.log("MediaRenderer - Determining media type for:", mediaType);
     
-    // Check the media_type field first
     if (mediaType === 'video' || mediaType.startsWith('video/')) return 'video';
     if (mediaType === 'image' || mediaType.startsWith('image/')) return 'image';
     if (mediaType === 'audio' || mediaType.startsWith('audio/')) return 'audio';
     
-    // Fallback to 'image' for unknown types
     console.warn("MediaRenderer - Unknown media type, defaulting to image:", mediaType);
     return 'image';
   };
@@ -98,6 +97,8 @@ export const MediaRenderer = ({
           {error && <p className="text-xs text-gray-500 mb-1">{error}</p>}
           <p className="text-xs text-gray-500 font-mono">{mediaItem.storage_path}</p>
           {mediaItem.id && <p className="text-xs text-gray-600 mt-1">ID: {mediaItem.id}</p>}
+          {mediaItem.user_id && <p className="text-xs text-gray-600">User: {mediaItem.user_id}</p>}
+          {mediaItem.metadata?.post_id && <p className="text-xs text-gray-600">Post: {mediaItem.metadata.post_id}</p>}
         </div>
       </div>
     );
@@ -128,7 +129,8 @@ export const MediaRenderer = ({
       storage_path: mediaItem.storage_path,
       media_type: mediaItem.media_type,
       asset_id: mediaItem.id,
-      post_id: mediaItem.metadata?.post_id
+      post_id: mediaItem.metadata?.post_id,
+      user_id: mediaItem.user_id
     });
 
     switch (mediaType) {
@@ -151,7 +153,7 @@ export const MediaRenderer = ({
               alt={mediaItem.alt_text || mediaItem.original_name || 'Post image'}
               className={`w-full h-full object-cover rounded-lg ${isLoading ? 'opacity-0' : 'opacity-100'} transition-opacity duration-300`}
               onLoad={handleLoad}
-              onError={() => handleError(mediaItem.id)}
+              onError={() => handleError(mediaItem.id, mediaItem.storage_path)}
             />
             {showWatermark && (
               <div className="absolute bottom-2 right-2 bg-black/50 text-white px-2 py-1 rounded text-xs">
@@ -174,10 +176,9 @@ export const MediaRenderer = ({
               playsInline
               preload="metadata"
               onLoadedData={handleLoad}
-              onError={() => handleError(mediaItem.id)}
+              onError={() => handleError(mediaItem.id, mediaItem.storage_path)}
             />
             
-            {/* Custom video controls overlay */}
             <div className="absolute bottom-4 left-4 flex items-center gap-2">
               <button
                 onClick={() => setIsMuted(!isMuted)}
@@ -193,7 +194,6 @@ export const MediaRenderer = ({
               </div>
             )}
             
-            {/* Play button overlay for non-autoplay videos */}
             {!autoPlay && (
               <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                 <div className="bg-black/50 rounded-full p-3">
@@ -202,7 +202,6 @@ export const MediaRenderer = ({
               </div>
             )}
 
-            {/* Loading placeholder for videos */}
             {isLoading && (
               <div className="absolute inset-0 bg-gray-800 animate-pulse rounded-lg flex items-center justify-center">
                 <VideoIcon className="w-8 h-8 text-gray-400" />
@@ -225,7 +224,7 @@ export const MediaRenderer = ({
                   className="w-full"
                   preload="metadata"
                   onLoadedData={handleLoad}
-                  onError={() => handleError(mediaItem.id)}
+                  onError={() => handleError(mediaItem.id, mediaItem.storage_path)}
                 />
                 {mediaItem.alt_text && (
                   <p className="text-white text-sm mt-2">{mediaItem.alt_text}</p>

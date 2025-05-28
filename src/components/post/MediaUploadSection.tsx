@@ -24,14 +24,19 @@ export const MediaUploadSection = ({
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [uploadSuccess, setUploadSuccess] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const { uploadMedia, uploadState } = useMediaUpload();
+  const { uploadMedia } = useMediaUpload();
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
-    console.log("MediaUploadSection - Files selected:", files.length, files);
+    console.log("MediaUploadSection - Files selected:", files.length, files.map(f => f.name));
     setSelectedFiles(prev => [...prev, ...files]);
     setUploadError(null);
     setUploadSuccess(false);
+    
+    // Auto-start upload when files are selected
+    if (files.length > 0) {
+      setTimeout(() => handleUpload([...selectedFiles, ...files]), 100);
+    }
   };
 
   const removeFile = (index: number) => {
@@ -40,14 +45,16 @@ export const MediaUploadSection = ({
     setUploadSuccess(false);
   };
 
-  const handleUpload = async () => {
-    if (selectedFiles.length === 0) {
+  const handleUpload = async (filesToUpload?: File[]) => {
+    const files = filesToUpload || selectedFiles;
+    
+    if (files.length === 0) {
       console.log("MediaUploadSection - No files to upload");
       setUploadError("Please select files to upload");
       return;
     }
 
-    console.log("MediaUploadSection - Starting upload for", selectedFiles.length, "files");
+    console.log("MediaUploadSection - Starting upload for", files.length, "files");
     setIsUploading(true);
     setUploadProgress(0);
     setUploadError(null);
@@ -57,9 +64,12 @@ export const MediaUploadSection = ({
     onUploadStart?.();
 
     try {
-      const uploadPromises = selectedFiles.map(async (file, index) => {
-        console.log(`MediaUploadSection - Uploading file ${index + 1}/${selectedFiles.length}:`, file.name);
-        setUploadProgress(((index + 1) / selectedFiles.length) * 100);
+      const uploadResults: Array<{ success: boolean; url?: string; assetId?: string; error?: string }> = [];
+      
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        console.log(`MediaUploadSection - Uploading file ${i + 1}/${files.length}:`, file.name);
+        setUploadProgress(((i + 1) / files.length) * 100);
         
         // Validate file before upload
         if (!file || file.size === 0) {
@@ -84,6 +94,7 @@ export const MediaUploadSection = ({
         });
         
         console.log(`MediaUploadSection - Upload result for ${file.name}:`, result);
+        uploadResults.push(result);
         
         if (!result.success) {
           throw new Error(`Upload failed for ${file.name}: ${result.error || 'Unknown error'}`);
@@ -92,25 +103,22 @@ export const MediaUploadSection = ({
         if (!result.assetId) {
           throw new Error(`No asset ID returned for ${file.name}`);
         }
-        
-        return result;
-      });
+      }
 
-      const results = await Promise.all(uploadPromises);
-      const successfulUploads = results.filter(r => r.success && r.assetId);
+      const successfulUploads = uploadResults.filter(r => r.success && r.assetId);
       
       console.log("MediaUploadSection - Upload results:", {
-        total: results.length,
+        total: uploadResults.length,
         successful: successfulUploads.length,
-        failed: results.length - successfulUploads.length
+        failed: uploadResults.length - successfulUploads.length
       });
       
       if (successfulUploads.length === 0) {
         throw new Error("All uploads failed");
       }
 
-      if (successfulUploads.length < results.length) {
-        console.warn(`MediaUploadSection - Some uploads failed: ${successfulUploads.length}/${results.length} successful`);
+      if (successfulUploads.length < uploadResults.length) {
+        console.warn(`MediaUploadSection - Some uploads failed: ${successfulUploads.length}/${uploadResults.length} successful`);
       }
       
       const urls = successfulUploads.map(r => r.url!);
@@ -168,7 +176,7 @@ export const MediaUploadSection = ({
           disabled={isUploading}
         >
           <Upload className="h-4 w-4 mr-2" />
-          Add More Media
+          Add Media Files
         </Button>
         
         <Input
@@ -230,15 +238,16 @@ export const MediaUploadSection = ({
             </div>
           )}
           
-          <Button 
-            type="button"
-            onClick={handleUpload}
-            disabled={isUploading || uploadSuccess}
-            className="w-full"
-            size="sm"
-          >
-            {isUploading ? 'Uploading...' : uploadSuccess ? 'Uploaded ✓' : `Upload ${selectedFiles.length} file(s)`}
-          </Button>
+          {!isUploading && !uploadSuccess && selectedFiles.length > 0 && (
+            <Button 
+              type="button"
+              onClick={() => handleUpload()}
+              className="w-full"
+              size="sm"
+            >
+              Upload {selectedFiles.length} file(s)
+            </Button>
+          )}
         </div>
       )}
     </div>
