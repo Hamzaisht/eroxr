@@ -72,7 +72,7 @@ const Home = () => {
         const postsWithMedia = await Promise.all(
           postsData.map(async (post) => {
             try {
-              // Query media assets for this post - fixed to use proper JSON query
+              // Query media assets for this post - using correct JSONB filtering
               const { data: mediaAssets, error: mediaError } = await supabase
                 .from('media_assets')
                 .select('id, storage_path, original_name, media_type, alt_text, metadata')
