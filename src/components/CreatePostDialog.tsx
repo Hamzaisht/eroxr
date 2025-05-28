@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -110,6 +111,7 @@ export const CreatePostDialog = ({ open, onOpenChange, selectedFiles, onFileSele
         content: content.trim(),
         creator_id: session.user.id,
         visibility,
+        uploadedAssetIds,
       });
 
       // Create post - database triggers handle trending_content automatically
@@ -141,22 +143,40 @@ export const CreatePostDialog = ({ open, onOpenChange, selectedFiles, onFileSele
 
       console.log("Post created successfully:", post);
 
-      // Update media assets with post_id if we have any
+      // Update media assets with post_id if we have any - FIXED TO PROPERLY LINK MEDIA
       if (uploadedAssetIds.length > 0 && post.id) {
-        console.log("Updating media assets with post_id:", post.id);
+        console.log("Linking media assets to post:", { postId: post.id, assetIds: uploadedAssetIds });
         
-        const { error: mediaError } = await supabase
-          .from('media_assets')
-          .update({ 
-            metadata: { post_id: post.id, usage: 'post' }
-          })
-          .in('id', uploadedAssetIds);
+        // Update each media asset with the post_id in metadata
+        for (const assetId of uploadedAssetIds) {
+          const { data: currentAsset, error: fetchError } = await supabase
+            .from('media_assets')
+            .select('metadata')
+            .eq('id', assetId)
+            .single();
 
-        if (mediaError) {
-          console.error('Media assets update error:', mediaError);
-          // Don't fail the post creation for this
-        } else {
-          console.log("Media assets updated successfully for post:", post.id);
+          if (fetchError) {
+            console.error('Error fetching current asset metadata:', fetchError);
+            continue;
+          }
+
+          // Merge existing metadata with post_id
+          const updatedMetadata = {
+            ...(currentAsset.metadata || {}),
+            post_id: post.id,
+            usage: 'post'
+          };
+
+          const { error: updateError } = await supabase
+            .from('media_assets')
+            .update({ metadata: updatedMetadata })
+            .eq('id', assetId);
+
+          if (updateError) {
+            console.error('Error updating media asset with post_id:', updateError);
+          } else {
+            console.log(`Successfully linked media asset ${assetId} to post ${post.id}`);
+          }
         }
       }
 

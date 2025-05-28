@@ -59,6 +59,8 @@ export const EnhancedPostCard = ({ post, onLike, onDelete, currentUserId }: Enha
     return username.charAt(0).toUpperCase();
   };
 
+  console.log(`EnhancedPostCard rendering post ${post.id} with media:`, post.media_assets);
+
   return (
     <Card className="bg-luxury-darker border-luxury-neutral/10 overflow-hidden">
       <CardContent className="p-0">
@@ -88,36 +90,16 @@ export const EnhancedPostCard = ({ post, onLike, onDelete, currentUserId }: Enha
           </div>
         )}
 
-        {/* Media - Use raw media assets directly */}
+        {/* Media - Render if media_assets exist and have items */}
         {post.media_assets && post.media_assets.length > 0 && (
           <div className="relative">
-            {post.media_assets.length === 1 ? (
-              <MediaRenderer
-                media={post.media_assets[0]}
-                className="w-full aspect-square object-cover"
-                autoPlay={post.media_assets[0].media_type.startsWith('video/')}
-                controls={true}
-              />
-            ) : (
-              <div className="grid grid-cols-2 gap-1">
-                {post.media_assets.slice(0, 4).map((asset, index) => (
-                  <div key={asset.id} className="relative">
-                    <MediaRenderer
-                      media={asset}
-                      className="w-full aspect-square object-cover"
-                      controls={!asset.media_type.startsWith('image/')}
-                    />
-                    {index === 3 && post.media_assets && post.media_assets.length > 4 && (
-                      <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-                        <span className="text-white text-lg font-semibold">
-                          +{post.media_assets.length - 4}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
+            <MediaRenderer
+              media={post.media_assets}
+              className="w-full"
+              autoPlay={false}
+              controls={true}
+              showWatermark={false}
+            />
           </div>
         )}
 

@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -72,17 +73,45 @@ const Home = () => {
         const postsWithMedia = await Promise.all(
           postsData.map(async (post) => {
             try {
-              // Query media assets for this post using correct JSONB filtering
-              const { data: rawAssets, error: mediaError } = await supabase
+              console.log(`Fetching media for post ${post.id}...`);
+              
+              // Primary query: fetch media by post_id in metadata
+              const { data: primaryAssets, error: primaryError } = await supabase
                 .from('media_assets')
                 .select('*')
                 .filter('metadata->>post_id', 'eq', post.id);
 
-              if (mediaError) {
-                console.error("Error fetching media for post:", post.id, mediaError);
+              if (primaryError) {
+                console.error("Error in primary media fetch:", primaryError);
               }
 
-              console.log(`Media assets for post ${post.id}:`, rawAssets);
+              console.log(`Primary media assets for post ${post.id}:`, primaryAssets?.length || 0);
+
+              let mediaAssets = primaryAssets || [];
+
+              // Fallback: If no media found and post was created recently, try fetching by user and timing
+              if (mediaAssets.length === 0) {
+                console.log(`No primary media found for post ${post.id}, trying fallback...`);
+                
+                const postTime = new Date(post.created_at);
+                const startTime = new Date(postTime.getTime() - 5 * 60 * 1000); // 5 minutes before
+                const endTime = new Date(postTime.getTime() + 5 * 60 * 1000); // 5 minutes after
+
+                const { data: fallbackAssets, error: fallbackError } = await supabase
+                  .from('media_assets')
+                  .select('*')
+                  .eq('user_id', post.creator_id)
+                  .gte('created_at', startTime.toISOString())
+                  .lte('created_at', endTime.toISOString())
+                  .is('metadata->>post_id', null);
+
+                if (fallbackError) {
+                  console.error("Error in fallback media fetch:", fallbackError);
+                } else {
+                  console.log(`Fallback media assets for post ${post.id}:`, fallbackAssets?.length || 0);
+                  mediaAssets = fallbackAssets || [];
+                }
+              }
 
               // Fetch creator avatar from media_assets
               let creatorAvatarUrl = null;
@@ -112,7 +141,7 @@ const Home = () => {
                 ? post.creator[0]
                 : null;
 
-              return {
+              const finalPost = {
                 ...post,
                 creator: {
                   id: creator?.id || post.creator_id || '',
@@ -121,9 +150,13 @@ const Home = () => {
                   bio: creator?.bio || '',
                   location: creator?.location || ''
                 },
-                // Use raw assets directly from Supabase without reshaping
-                media_assets: rawAssets || []
+                // Pass raw media assets directly - NO RESHAPING
+                media_assets: mediaAssets
               };
+
+              console.log(`Final post ${post.id} media count:`, finalPost.media_assets.length);
+              
+              return finalPost;
             } catch (error) {
               console.error("Error processing post:", post.id, error);
               return {
@@ -142,6 +175,14 @@ const Home = () => {
         );
 
         console.log("Home - Posts with media processed:", postsWithMedia.length);
+        
+        // Log posts with media for debugging
+        postsWithMedia.forEach(post => {
+          if (post.media_assets.length > 0) {
+            console.log(`Post ${post.id} has ${post.media_assets.length} media assets:`, post.media_assets);
+          }
+        });
+        
         return postsWithMedia;
       } catch (error) {
         console.error("Home - Failed to fetch posts:", error);

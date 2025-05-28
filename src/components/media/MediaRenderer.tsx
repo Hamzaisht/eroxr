@@ -6,14 +6,13 @@ import { motion, AnimatePresence } from 'framer-motion';
 interface MediaAsset {
   id: string;
   storage_path: string;
-  type?: 'image' | 'video' | 'audio';
   media_type: string;
   alt_text?: string;
   original_name?: string;
 }
 
 interface MediaRendererProps {
-  media: MediaAsset;
+  media: MediaAsset | MediaAsset[];
   className?: string;
   autoPlay?: boolean;
   controls?: boolean;
@@ -33,8 +32,13 @@ export const MediaRenderer = ({
   const [hasError, setHasError] = useState(false);
   const [isMuted, setIsMuted] = useState(true);
 
+  // Handle both single media and array of media
+  const mediaArray = Array.isArray(media) ? media : [media];
+  
+  console.log("MediaRenderer received media:", mediaArray);
+
   const handleError = () => {
-    console.error('Media failed to load:', media.storage_path);
+    console.error('Media failed to load');
     setHasError(true);
     setIsLoading(false);
     onError?.();
@@ -47,10 +51,10 @@ export const MediaRenderer = ({
 
   // Build correct Supabase storage URL from storage_path
   const getMediaUrl = (storagePath: string) => {
-    return `https://ysqbdaeohlupucdmivkt.supabase.co/storage/v1/object/public/media/${storagePath}`;
+    const url = `https://ysqbdaeohlupucdmivkt.supabase.co/storage/v1/object/public/media/${storagePath}`;
+    console.log("Built media URL:", url);
+    return url;
   };
-
-  const mediaUrl = getMediaUrl(media.storage_path);
 
   // Determine media type from media_type field
   const getMediaType = (mediaType: string): 'image' | 'video' | 'audio' => {
@@ -60,125 +64,163 @@ export const MediaRenderer = ({
     return 'image'; // fallback
   };
 
-  const mediaType = getMediaType(media.media_type);
+  const renderSingleMedia = (mediaItem: MediaAsset, index: number = 0) => {
+    const mediaUrl = getMediaUrl(mediaItem.storage_path);
+    const mediaType = getMediaType(mediaItem.media_type);
 
-  if (hasError) {
-    return (
-      <div className={`flex items-center justify-center bg-gray-900 text-white p-8 ${className}`}>
-        <div className="text-center">
-          <AlertCircle className="w-8 h-8 mx-auto mb-2 text-red-400" />
-          <p className="text-sm text-gray-400">Failed to load media</p>
+    console.log(`Rendering media ${index}:`, { mediaType, mediaUrl, storage_path: mediaItem.storage_path });
+
+    if (hasError) {
+      return (
+        <div className="flex items-center justify-center bg-gray-900 text-white p-8">
+          <div className="text-center">
+            <AlertCircle className="w-8 h-8 mx-auto mb-2 text-red-400" />
+            <p className="text-sm text-gray-400">Failed to load media</p>
+          </div>
         </div>
+      );
+    }
+
+    switch (mediaType) {
+      case 'image':
+        return (
+          <div className="relative">
+            <AnimatePresence>
+              {isLoading && (
+                <motion.div 
+                  initial={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="absolute inset-0 bg-gray-800 animate-pulse rounded-lg"
+                />
+              )}
+            </AnimatePresence>
+            <img
+              src={mediaUrl}
+              alt={mediaItem.alt_text || mediaItem.original_name || 'Post image'}
+              className={`w-full h-full object-cover rounded-lg ${isLoading ? 'opacity-0' : 'opacity-100'} transition-opacity duration-300`}
+              onLoad={handleLoad}
+              onError={handleError}
+            />
+            {showWatermark && (
+              <div className="absolute bottom-2 right-2 bg-black/50 text-white px-2 py-1 rounded text-xs">
+                Eroxr
+              </div>
+            )}
+          </div>
+        );
+
+      case 'video':
+        return (
+          <div className="relative">
+            <video
+              src={mediaUrl}
+              className="w-full h-full object-cover rounded-lg"
+              controls={controls}
+              autoPlay={autoPlay}
+              muted={isMuted}
+              loop={autoPlay}
+              playsInline
+              preload="metadata"
+              poster={`${mediaUrl}#t=1`}
+              onLoadedData={handleLoad}
+              onError={handleError}
+            />
+            
+            {/* Custom video controls overlay */}
+            <div className="absolute bottom-4 left-4 flex items-center gap-2">
+              <button
+                onClick={() => setIsMuted(!isMuted)}
+                className="bg-black/50 hover:bg-black/70 text-white p-2 rounded-full transition-colors"
+              >
+                {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+              </button>
+            </div>
+
+            {showWatermark && (
+              <div className="absolute bottom-2 right-2 bg-black/50 text-white px-2 py-1 rounded text-xs">
+                Eroxr
+              </div>
+            )}
+            
+            {/* Play button overlay for non-autoplay videos */}
+            {!autoPlay && (
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                <div className="bg-black/50 rounded-full p-3">
+                  <Play className="w-8 h-8 text-white" />
+                </div>
+              </div>
+            )}
+          </div>
+        );
+
+      case 'audio':
+        return (
+          <div className="bg-gradient-to-r from-purple-500 to-pink-500 p-6 rounded-lg">
+            <div className="flex items-center space-x-4">
+              <div className="bg-white/20 p-3 rounded-full">
+                <Volume2 className="w-6 h-6 text-white" />
+              </div>
+              <div className="flex-1">
+                <audio
+                  src={mediaUrl}
+                  controls={controls}
+                  className="w-full"
+                  preload="metadata"
+                  onLoadedData={handleLoad}
+                  onError={handleError}
+                />
+                {mediaItem.alt_text && (
+                  <p className="text-white text-sm mt-2">{mediaItem.alt_text}</p>
+                )}
+              </div>
+            </div>
+            {showWatermark && (
+              <div className="absolute bottom-2 right-2 bg-black/50 text-white px-2 py-1 rounded text-xs">
+                Eroxr
+              </div>
+            )}
+          </div>
+        );
+
+      default:
+        return (
+          <div className="flex items-center justify-center bg-gray-900 text-white p-8">
+            <p className="text-gray-400">Unsupported media type: {mediaItem.media_type}</p>
+          </div>
+        );
+    }
+  };
+
+  // If no media, return null
+  if (mediaArray.length === 0) {
+    console.log("MediaRenderer: No media to render");
+    return null;
+  }
+
+  // Single media item
+  if (mediaArray.length === 1) {
+    return (
+      <div className={className}>
+        {renderSingleMedia(mediaArray[0])}
       </div>
     );
   }
 
-  switch (mediaType) {
-    case 'image':
-      return (
-        <div className={`relative ${className}`}>
-          <AnimatePresence>
-            {isLoading && (
-              <motion.div 
-                initial={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="absolute inset-0 bg-gray-800 animate-pulse rounded-lg"
-              />
-            )}
-          </AnimatePresence>
-          <img
-            src={mediaUrl}
-            alt={media.alt_text || media.original_name || 'Post image'}
-            className={`w-full h-full object-cover rounded-lg ${isLoading ? 'opacity-0' : 'opacity-100'} transition-opacity duration-300`}
-            onLoad={handleLoad}
-            onError={handleError}
-          />
-          {showWatermark && (
-            <div className="absolute bottom-2 right-2 bg-black/50 text-white px-2 py-1 rounded text-xs">
-              Eroxr
+  // Multiple media items - grid layout
+  return (
+    <div className={`grid grid-cols-2 gap-1 ${className}`}>
+      {mediaArray.slice(0, 4).map((mediaItem, index) => (
+        <div key={mediaItem.id || index} className="relative aspect-square">
+          {renderSingleMedia(mediaItem, index)}
+          {index === 3 && mediaArray.length > 4 && (
+            <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+              <span className="text-white text-lg font-semibold">
+                +{mediaArray.length - 4}
+              </span>
             </div>
           )}
         </div>
-      );
-
-    case 'video':
-      return (
-        <div className={`relative ${className}`}>
-          <video
-            src={mediaUrl}
-            className="w-full h-full object-cover rounded-lg"
-            controls={controls}
-            autoPlay={autoPlay}
-            muted={isMuted}
-            loop={autoPlay}
-            playsInline
-            preload="metadata"
-            poster={`${mediaUrl}#t=1`}
-            onLoadedData={handleLoad}
-            onError={handleError}
-          />
-          
-          {/* Custom video controls overlay */}
-          <div className="absolute bottom-4 left-4 flex items-center gap-2">
-            <button
-              onClick={() => setIsMuted(!isMuted)}
-              className="bg-black/50 hover:bg-black/70 text-white p-2 rounded-full transition-colors"
-            >
-              {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
-            </button>
-          </div>
-
-          {showWatermark && (
-            <div className="absolute bottom-2 right-2 bg-black/50 text-white px-2 py-1 rounded text-xs">
-              Eroxr
-            </div>
-          )}
-          
-          {/* Play button overlay for non-autoplay videos */}
-          {!autoPlay && (
-            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-              <div className="bg-black/50 rounded-full p-3">
-                <Play className="w-8 h-8 text-white" />
-              </div>
-            </div>
-          )}
-        </div>
-      );
-
-    case 'audio':
-      return (
-        <div className={`bg-gradient-to-r from-purple-500 to-pink-500 p-6 rounded-lg ${className}`}>
-          <div className="flex items-center space-x-4">
-            <div className="bg-white/20 p-3 rounded-full">
-              <Volume2 className="w-6 h-6 text-white" />
-            </div>
-            <div className="flex-1">
-              <audio
-                src={mediaUrl}
-                controls={controls}
-                className="w-full"
-                preload="metadata"
-                onLoadedData={handleLoad}
-                onError={handleError}
-              />
-              {media.alt_text && (
-                <p className="text-white text-sm mt-2">{media.alt_text}</p>
-              )}
-            </div>
-          </div>
-          {showWatermark && (
-            <div className="absolute bottom-2 right-2 bg-black/50 text-white px-2 py-1 rounded text-xs">
-              Eroxr
-            </div>
-          )}
-        </div>
-      );
-
-    default:
-      return (
-        <div className={`flex items-center justify-center bg-gray-900 text-white p-8 ${className}`}>
-          <p className="text-gray-400">Unsupported media type: {media.media_type}</p>
-        </div>
-      );
-  }
+      ))}
+    </div>
+  );
 };
