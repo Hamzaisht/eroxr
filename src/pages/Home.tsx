@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -29,7 +28,7 @@ const Home = () => {
       console.log("Home - Fetching posts with profiles and media...");
       
       try {
-        // Fetch posts with creator profiles - using proper field mapping
+        // Fetch posts with creator profiles
         const { data: postsData, error: postsError } = await supabase
           .from('posts')
           .select(`
@@ -73,11 +72,11 @@ const Home = () => {
         const postsWithMedia = await Promise.all(
           postsData.map(async (post) => {
             try {
-              // Query media assets for this post - fixed the query
+              // Query media assets for this post - fixed to use proper JSON query
               const { data: mediaAssets, error: mediaError } = await supabase
                 .from('media_assets')
                 .select('id, storage_path, original_name, media_type, alt_text, metadata')
-                .contains('metadata', { post_id: post.id })
+                .eq('metadata->>post_id', post.id)
                 .order('created_at', { ascending: false });
 
               if (mediaError) {
@@ -94,7 +93,7 @@ const Home = () => {
                   .select('storage_path')
                   .eq('user_id', post.creator_id)
                   .eq('media_type', 'image')
-                  .contains('metadata', { usage: 'avatar' })
+                  .eq('metadata->>usage', 'avatar')
                   .order('created_at', { ascending: false })
                   .limit(1)
                   .maybeSingle();
@@ -107,12 +106,12 @@ const Home = () => {
                 }
               }
 
-              // Transform media assets to include full URL
+              // Transform media assets to include full URL with proper Supabase URL
               const transformedMedia = (mediaAssets || []).map(asset => ({
                 id: asset.id,
-                url: `https://ysqbdaeohlupucdmivkt.supabase.co/storage/v1/object/public/media/${asset.storage_path}`,
+                url: supabase.storage.from('media').getPublicUrl(asset.storage_path).data.publicUrl,
                 type: asset.media_type as 'image' | 'video' | 'audio',
-                alt_text: asset.alt_text
+                alt_text: asset.alt_text || `Media for ${post.content?.substring(0, 50) || 'post'}`
               }));
 
               // Ensure creator is properly formatted
@@ -160,11 +159,14 @@ const Home = () => {
     enabled: !!session,
     retry: 3,
     staleTime: 0, // Always fetch fresh data
-    refetchInterval: 2000 // Refetch every 2 seconds for real-time feel
+    refetchInterval: false // Disable auto-refetch, rely on real-time updates
   });
 
-  // Add real-time updates for posts
+  // Add real-time updates for posts - this will trigger immediate refetch
   useRealtimeUpdates('posts', [], { column: 'visibility', value: 'public' });
+
+  // Real-time updates for media_assets
+  useRealtimeUpdates('media_assets');
 
   // Show loading state
   if (isLoading) {
@@ -201,18 +203,18 @@ const Home = () => {
   // Create wrapper functions that match EnhancedPostCard expectations
   const onLike = (postId: string) => {
     handleLike(postId, false);
-    // Immediately refetch to show updated like count
-    refetch();
+    // Trigger immediate refetch for real-time feel
+    setTimeout(() => refetch(), 100);
   };
 
   const onDelete = (postId: string, creatorId: string) => {
     handleDelete(postId);
-    // Immediately refetch to remove deleted post
-    refetch();
+    // Trigger immediate refetch
+    setTimeout(() => refetch(), 100);
   };
 
   const handlePostCreated = () => {
-    // Immediately refetch posts when a new post is created
+    // Immediate refetch for real-time experience
     refetch();
     closeCreatePost();
   };

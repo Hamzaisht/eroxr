@@ -28,8 +28,9 @@ export function useRealtimeUpdates<T>(
         { event: 'INSERT', schema: 'public', table }, 
         (payload) => {
           console.log(`New ${table} inserted:`, payload.new);
-          // Invalidate and refetch queries immediately
+          // Invalidate and refetch queries immediately for real-time feel
           queryClient.invalidateQueries({ queryKey: ['home-posts'] });
+          queryClient.invalidateQueries({ queryKey: ['feed-posts'] });
         })
       .on('postgres_changes', 
         { event: 'UPDATE', schema: 'public', table }, 
@@ -37,6 +38,7 @@ export function useRealtimeUpdates<T>(
           console.log(`${table} updated:`, payload.new);
           // Invalidate and refetch queries immediately
           queryClient.invalidateQueries({ queryKey: ['home-posts'] });
+          queryClient.invalidateQueries({ queryKey: ['feed-posts'] });
         })
       .on('postgres_changes', 
         { event: 'DELETE', schema: 'public', table }, 
@@ -44,9 +46,13 @@ export function useRealtimeUpdates<T>(
           console.log(`${table} deleted:`, payload.old);
           // Invalidate and refetch queries immediately
           queryClient.invalidateQueries({ queryKey: ['home-posts'] });
+          queryClient.invalidateQueries({ queryKey: ['feed-posts'] });
         })
       .subscribe((status) => {
         console.log(`Realtime subscription status for ${table}:`, status);
+        if (status === 'SUBSCRIBED') {
+          setIsLoading(false);
+        }
       });
 
     // Cleanup subscription
