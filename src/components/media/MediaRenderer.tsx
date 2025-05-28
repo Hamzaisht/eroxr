@@ -59,13 +59,18 @@ export const MediaRenderer = ({
     return url;
   };
 
-  // Determine media type from media_type field
+  // FIXED: Determine media type from media_type field correctly
   const getMediaType = (mediaType: string): 'image' | 'video' | 'audio' => {
     console.log("MediaRenderer - Determining media type for:", mediaType);
-    if (mediaType.startsWith('image/')) return 'image';
-    if (mediaType.startsWith('video/')) return 'video';
-    if (mediaType.startsWith('audio/')) return 'audio';
-    return 'image'; // fallback
+    
+    // Check the media_type field first
+    if (mediaType === 'video' || mediaType.startsWith('video/')) return 'video';
+    if (mediaType === 'image' || mediaType.startsWith('image/')) return 'image';
+    if (mediaType === 'audio' || mediaType.startsWith('audio/')) return 'audio';
+    
+    // Fallback to 'image' for unknown types
+    console.warn("MediaRenderer - Unknown media type, defaulting to image:", mediaType);
+    return 'image';
   };
 
   const renderSingleMedia = (mediaItem: MediaAsset, index: number = 0) => {
@@ -131,7 +136,6 @@ export const MediaRenderer = ({
               loop={autoPlay}
               playsInline
               preload="metadata"
-              poster={`${mediaUrl}#t=1`}
               onLoadedData={handleLoad}
               onError={handleError}
             />
