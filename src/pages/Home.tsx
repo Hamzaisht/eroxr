@@ -75,9 +75,8 @@ const Home = () => {
               // Query media assets for this post - using correct JSONB filtering
               const { data: mediaAssets, error: mediaError } = await supabase
                 .from('media_assets')
-                .select('id, storage_path, original_name, media_type, alt_text, metadata')
-                .eq('metadata->>post_id', post.id)
-                .order('created_at', { ascending: false });
+                .select('*')
+                .filter('metadata->>post_id', 'eq', post.id);
 
               if (mediaError) {
                 console.error("Error fetching media for post:", post.id, mediaError);
