@@ -14,6 +14,7 @@ import { usePostActions } from "@/hooks/usePostActions";
 import { useCreatePostDialog } from "@/hooks/useCreatePostDialog";
 import { useGoLiveDialog } from "@/hooks/useGoLiveDialog";
 import { CreatePostDialog } from "@/components/CreatePostDialog";
+import { useRealtimeUpdates } from "@/hooks/useRealtimeUpdates";
 
 const Home = () => {
   const session = useSession();
@@ -25,7 +26,7 @@ const Home = () => {
   const { data: posts, isLoading, error, refetch } = useQuery({
     queryKey: ['home-posts'],
     queryFn: async () => {
-      console.log("Home - Fetching posts with profiles...");
+      console.log("Home - Fetching posts with profiles and media...");
       
       try {
         // Fetch posts with creator profiles - using proper field mapping
@@ -72,17 +73,18 @@ const Home = () => {
         const postsWithMedia = await Promise.all(
           postsData.map(async (post) => {
             try {
-              // Query media assets for this post
+              // Query media assets for this post - fixed the query
               const { data: mediaAssets, error: mediaError } = await supabase
                 .from('media_assets')
                 .select('id, storage_path, original_name, media_type, alt_text, metadata')
-                .eq('metadata->>post_id', post.id)
-                .order('created_at', { ascending: false })
-                .limit(4);
+                .contains('metadata', { post_id: post.id })
+                .order('created_at', { ascending: false });
 
               if (mediaError) {
                 console.error("Error fetching media for post:", post.id, mediaError);
               }
+
+              console.log(`Media assets for post ${post.id}:`, mediaAssets);
 
               // Fetch creator avatar from media_assets
               let creatorAvatarUrl = null;
@@ -92,7 +94,7 @@ const Home = () => {
                   .select('storage_path')
                   .eq('user_id', post.creator_id)
                   .eq('media_type', 'image')
-                  .eq('metadata->>usage', 'avatar')
+                  .contains('metadata', { usage: 'avatar' })
                   .order('created_at', { ascending: false })
                   .limit(1)
                   .maybeSingle();
@@ -109,7 +111,7 @@ const Home = () => {
               const transformedMedia = (mediaAssets || []).map(asset => ({
                 id: asset.id,
                 url: `https://ysqbdaeohlupucdmivkt.supabase.co/storage/v1/object/public/media/${asset.storage_path}`,
-                type: asset.media_type,
+                type: asset.media_type as 'image' | 'video' | 'audio',
                 alt_text: asset.alt_text
               }));
 
@@ -157,8 +159,12 @@ const Home = () => {
     },
     enabled: !!session,
     retry: 3,
-    staleTime: 30000 // 30 seconds
+    staleTime: 0, // Always fetch fresh data
+    refetchInterval: 2000 // Refetch every 2 seconds for real-time feel
   });
+
+  // Add real-time updates for posts
+  useRealtimeUpdates('posts', [], { column: 'visibility', value: 'public' });
 
   // Show loading state
   if (isLoading) {
@@ -194,11 +200,21 @@ const Home = () => {
 
   // Create wrapper functions that match EnhancedPostCard expectations
   const onLike = (postId: string) => {
-    handleLike(postId, false); // Assume not liked by default, component should track state
+    handleLike(postId, false);
+    // Immediately refetch to show updated like count
+    refetch();
   };
 
   const onDelete = (postId: string, creatorId: string) => {
     handleDelete(postId);
+    // Immediately refetch to remove deleted post
+    refetch();
+  };
+
+  const handlePostCreated = () => {
+    // Immediately refetch posts when a new post is created
+    refetch();
+    closeCreatePost();
   };
 
   return (
@@ -257,7 +273,10 @@ const Home = () => {
       {/* Create Post Dialog */}
       <CreatePostDialog
         open={isCreatePostOpen}
-        onOpenChange={closeCreatePost}
+        onOpenChange={(open) => {
+          if (!open) handlePostCreated();
+          else openCreatePost();
+        }}
         selectedFiles={selectedFiles}
         onFileSelect={setSelectedFiles}
       />

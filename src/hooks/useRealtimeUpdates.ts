@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { useSession } from '@supabase/auth-helpers-react';
 import { supabase } from '@/integrations/supabase/client';
+import { useQueryClient } from '@tanstack/react-query';
 
 export function useRealtimeUpdates<T>(
   table: string,
@@ -12,6 +13,7 @@ export function useRealtimeUpdates<T>(
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
   const session = useSession();
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     if (!session) {
@@ -19,57 +21,39 @@ export function useRealtimeUpdates<T>(
       return;
     }
 
-    // Initial data fetch
-    const fetchData = async () => {
-      setIsLoading(true);
-      try {
-        let query = supabase.from(table).select('*');
-        
-        if (condition) {
-          query = query.eq(condition.column, condition.value);
-        }
-        
-        const { data: fetchedData, error } = await query;
-        
-        if (error) throw error;
-        setData(fetchedData as T[]);
-      } catch (err: any) {
-        console.error(`Error fetching data from ${table}:`, err);
-        setError(err);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchData();
-
-    // Set up realtime subscription
+    // Set up realtime subscription for immediate updates
     const subscription = supabase
       .channel(`${table}_changes`)
       .on('postgres_changes', 
-        { event: '*', schema: 'public', table }, 
+        { event: 'INSERT', schema: 'public', table }, 
         (payload) => {
-          if (payload.eventType === 'INSERT') {
-            setData((current) => [...current, payload.new as T]);
-          } else if (payload.eventType === 'UPDATE') {
-            setData((current) => 
-              current.map((item: any) => 
-                item.id === (payload.new as any).id ? payload.new as T : item
-              )
-            );
-          } else if (payload.eventType === 'DELETE') {
-            setData((current) => 
-              current.filter((item: any) => item.id !== (payload.old as any).id)
-            );
-          }
+          console.log(`New ${table} inserted:`, payload.new);
+          // Invalidate and refetch queries immediately
+          queryClient.invalidateQueries({ queryKey: ['home-posts'] });
         })
-      .subscribe();
+      .on('postgres_changes', 
+        { event: 'UPDATE', schema: 'public', table }, 
+        (payload) => {
+          console.log(`${table} updated:`, payload.new);
+          // Invalidate and refetch queries immediately
+          queryClient.invalidateQueries({ queryKey: ['home-posts'] });
+        })
+      .on('postgres_changes', 
+        { event: 'DELETE', schema: 'public', table }, 
+        (payload) => {
+          console.log(`${table} deleted:`, payload.old);
+          // Invalidate and refetch queries immediately
+          queryClient.invalidateQueries({ queryKey: ['home-posts'] });
+        })
+      .subscribe((status) => {
+        console.log(`Realtime subscription status for ${table}:`, status);
+      });
 
     // Cleanup subscription
     return () => {
-      subscription.unsubscribe();
+      supabase.removeChannel(subscription);
     };
-  }, [table, condition, session]);
+  }, [table, condition, session, queryClient]);
 
   return { data, isLoading, error };
 }

@@ -155,6 +155,8 @@ export const CreatePostDialog = ({ open, onOpenChange, selectedFiles, onFileSele
         if (mediaError) {
           console.error('Media assets update error:', mediaError);
           // Don't fail the post creation for this
+        } else {
+          console.log("Media assets updated successfully for post:", post.id);
         }
       }
 
@@ -171,6 +173,8 @@ export const CreatePostDialog = ({ open, onOpenChange, selectedFiles, onFileSele
       setUploadProgress(0);
       setPreviewUrls([]);
       onFileSelect(null);
+      
+      // Close dialog immediately to provide instant feedback
       onOpenChange(false);
 
     } catch (error: any) {
