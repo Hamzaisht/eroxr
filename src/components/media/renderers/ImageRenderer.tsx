@@ -1,12 +1,14 @@
 
-import { MediaRendererProps } from "@/utils/media/types";
+import { RendererProps } from "./types";
 
-export const ImageRenderer = ({ media, className }: MediaRendererProps) => {
+export const ImageRenderer = ({ mediaItem, mediaUrl, onLoad, onError }: RendererProps) => {
   return (
     <img
-      src={media.url}
-      alt={media.alt || 'Image'}
-      className={className}
+      src={mediaUrl}
+      alt={mediaItem.alt_text || mediaItem.original_name || 'Image'}
+      className="w-full h-full object-cover"
+      onLoad={onLoad}
+      onError={onError}
       loading="lazy"
     />
   );

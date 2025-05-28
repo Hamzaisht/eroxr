@@ -1,16 +1,27 @@
 
-import { MediaRendererProps } from "@/utils/media/types";
+import { VideoRendererProps } from "./types";
 
-export const VideoRenderer = ({ media, className, controls = true, autoPlay = false, muted = true, loop = false }: MediaRendererProps) => {
+export const VideoRenderer = ({ 
+  mediaItem, 
+  mediaUrl, 
+  controls, 
+  autoPlay, 
+  isMuted, 
+  onMuteToggle, 
+  onLoad, 
+  onError 
+}: VideoRendererProps) => {
   return (
     <video
-      src={media.url}
-      className={className}
+      src={mediaUrl}
+      className="w-full h-full object-cover"
       controls={controls}
       autoPlay={autoPlay}
-      muted={muted}
-      loop={loop}
+      muted={isMuted}
+      onLoadedData={onLoad}
+      onError={onError}
       preload="metadata"
+      playsInline
     >
       Your browser does not support the video tag.
     </video>

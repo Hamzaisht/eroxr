@@ -1,13 +1,15 @@
 
-import { MediaRendererProps } from "@/utils/media/types";
+import { AudioRendererProps } from "./types";
 
-export const AudioRenderer = ({ media, className, controls = true }: MediaRendererProps) => {
+export const AudioRenderer = ({ mediaItem, mediaUrl, controls, onLoad, onError }: AudioRendererProps) => {
   return (
-    <div className={`flex items-center justify-center bg-gray-900 p-4 ${className}`}>
+    <div className="flex items-center justify-center bg-gray-900 p-4 w-full h-full">
       <audio
-        src={media.url}
+        src={mediaUrl}
         controls={controls}
         className="w-full max-w-md"
+        onLoadedData={onLoad}
+        onError={onError}
         preload="metadata"
       >
         Your browser does not support the audio tag.
