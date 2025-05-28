@@ -35,29 +35,33 @@ export const MediaRenderer = ({
   // Handle both single media and array of media
   const mediaArray = Array.isArray(media) ? media : [media];
   
-  console.log("MediaRenderer received media:", mediaArray);
+  console.log("MediaRenderer - Received media:", mediaArray);
 
   const handleError = () => {
-    console.error('Media failed to load');
+    console.error('MediaRenderer - Media failed to load');
     setHasError(true);
     setIsLoading(false);
     onError?.();
   };
 
   const handleLoad = () => {
+    console.log('MediaRenderer - Media loaded successfully');
     setIsLoading(false);
     setHasError(false);
   };
 
   // Build correct Supabase storage URL from storage_path
   const getMediaUrl = (storagePath: string) => {
-    const url = `https://ysqbdaeohlupucdmivkt.supabase.co/storage/v1/object/public/media/${storagePath}`;
-    console.log("Built media URL:", url);
+    // Clean the storage path - remove any leading slashes
+    const cleanPath = storagePath.replace(/^\/+/, '');
+    const url = `https://ysqbdaeohlupucdmivkt.supabase.co/storage/v1/object/public/media/${cleanPath}`;
+    console.log("MediaRenderer - Built media URL:", { storagePath, cleanPath, url });
     return url;
   };
 
   // Determine media type from media_type field
   const getMediaType = (mediaType: string): 'image' | 'video' | 'audio' => {
+    console.log("MediaRenderer - Determining media type for:", mediaType);
     if (mediaType.startsWith('image/')) return 'image';
     if (mediaType.startsWith('video/')) return 'video';
     if (mediaType.startsWith('audio/')) return 'audio';
@@ -68,7 +72,12 @@ export const MediaRenderer = ({
     const mediaUrl = getMediaUrl(mediaItem.storage_path);
     const mediaType = getMediaType(mediaItem.media_type);
 
-    console.log(`Rendering media ${index}:`, { mediaType, mediaUrl, storage_path: mediaItem.storage_path });
+    console.log(`MediaRenderer - Rendering media ${index}:`, { 
+      mediaType, 
+      mediaUrl, 
+      storage_path: mediaItem.storage_path,
+      media_type: mediaItem.media_type
+    });
 
     if (hasError) {
       return (
@@ -76,6 +85,7 @@ export const MediaRenderer = ({
           <div className="text-center">
             <AlertCircle className="w-8 h-8 mx-auto mb-2 text-red-400" />
             <p className="text-sm text-gray-400">Failed to load media</p>
+            <p className="text-xs text-gray-500 mt-1">{mediaItem.storage_path}</p>
           </div>
         </div>
       );
@@ -193,7 +203,7 @@ export const MediaRenderer = ({
 
   // If no media, return null
   if (mediaArray.length === 0) {
-    console.log("MediaRenderer: No media to render");
+    console.log("MediaRenderer - No media to render");
     return null;
   }
 

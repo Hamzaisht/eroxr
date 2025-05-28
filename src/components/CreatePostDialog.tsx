@@ -68,7 +68,7 @@ export const CreatePostDialog = ({ open, onOpenChange, selectedFiles, onFileSele
   };
 
   const handleMediaUploadComplete = (urls: string[], assetIds: string[]) => {
-    console.log("Media upload complete:", { urls, assetIds });
+    console.log("CreatePostDialog - Media upload complete:", { urls, assetIds });
     setUploadedMediaUrls(urls);
     setUploadedAssetIds(assetIds);
     setUploadProgress(100);
@@ -107,11 +107,12 @@ export const CreatePostDialog = ({ open, onOpenChange, selectedFiles, onFileSele
     setIsLoading(true);
 
     try {
-      console.log("Creating post with data:", {
+      console.log("CreatePostDialog - Creating post with data:", {
         content: content.trim(),
         creator_id: session.user.id,
         visibility,
         uploadedAssetIds,
+        uploadedMediaUrls
       });
 
       // Create post - database triggers handle trending_content automatically
@@ -128,7 +129,7 @@ export const CreatePostDialog = ({ open, onOpenChange, selectedFiles, onFileSele
         is_featured: false
       };
 
-      console.log("Inserting post data:", postData);
+      console.log("CreatePostDialog - Inserting post data:", postData);
 
       const { data: post, error: postError } = await supabase
         .from('posts')
@@ -137,18 +138,20 @@ export const CreatePostDialog = ({ open, onOpenChange, selectedFiles, onFileSele
         .single();
 
       if (postError) {
-        console.error('Post creation error:', postError);
+        console.error('CreatePostDialog - Post creation error:', postError);
         throw new Error(`Failed to create post: ${postError.message}`);
       }
 
-      console.log("Post created successfully:", post);
+      console.log("CreatePostDialog - Post created successfully:", post);
 
-      // Update media assets with post_id if we have any - FIXED TO PROPERLY LINK MEDIA
+      // CRITICAL FIX: Update media assets with post_id if we have any
       if (uploadedAssetIds.length > 0 && post.id) {
-        console.log("Linking media assets to post:", { postId: post.id, assetIds: uploadedAssetIds });
+        console.log("CreatePostDialog - Linking media assets to post:", { postId: post.id, assetIds: uploadedAssetIds });
         
         // Update each media asset with the post_id in metadata
         for (const assetId of uploadedAssetIds) {
+          console.log(`CreatePostDialog - Processing asset ${assetId}...`);
+          
           const { data: currentAsset, error: fetchError } = await supabase
             .from('media_assets')
             .select('metadata')
@@ -156,9 +159,11 @@ export const CreatePostDialog = ({ open, onOpenChange, selectedFiles, onFileSele
             .single();
 
           if (fetchError) {
-            console.error('Error fetching current asset metadata:', fetchError);
+            console.error('CreatePostDialog - Error fetching current asset metadata:', fetchError);
             continue;
           }
+
+          console.log(`CreatePostDialog - Current metadata for asset ${assetId}:`, currentAsset.metadata);
 
           // Merge existing metadata with post_id
           const updatedMetadata = {
@@ -167,17 +172,26 @@ export const CreatePostDialog = ({ open, onOpenChange, selectedFiles, onFileSele
             usage: 'post'
           };
 
+          console.log(`CreatePostDialog - Updating asset ${assetId} with metadata:`, updatedMetadata);
+
           const { error: updateError } = await supabase
             .from('media_assets')
             .update({ metadata: updatedMetadata })
             .eq('id', assetId);
 
           if (updateError) {
-            console.error('Error updating media asset with post_id:', updateError);
+            console.error(`CreatePostDialog - Error updating media asset ${assetId} with post_id:`, updateError);
           } else {
-            console.log(`Successfully linked media asset ${assetId} to post ${post.id}`);
+            console.log(`CreatePostDialog - Successfully linked media asset ${assetId} to post ${post.id}`);
           }
         }
+        
+        console.log("CreatePostDialog - Finished linking all media assets");
+      } else {
+        console.log("CreatePostDialog - No media assets to link or missing post ID:", { 
+          uploadedAssetIds: uploadedAssetIds.length, 
+          postId: post?.id 
+        });
       }
 
       toast({
@@ -198,7 +212,7 @@ export const CreatePostDialog = ({ open, onOpenChange, selectedFiles, onFileSele
       onOpenChange(false);
 
     } catch (error: any) {
-      console.error('Error creating post:', error);
+      console.error('CreatePostDialog - Error creating post:', error);
       toast({
         title: "Error",
         description: error.message || "Failed to create post. Please try again.",

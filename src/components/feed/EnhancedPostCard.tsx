@@ -59,7 +59,8 @@ export const EnhancedPostCard = ({ post, onLike, onDelete, currentUserId }: Enha
     return username.charAt(0).toUpperCase();
   };
 
-  console.log(`EnhancedPostCard rendering post ${post.id} with media:`, post.media_assets);
+  console.log(`EnhancedPostCard - Rendering post ${post.id} with media:`, post.media_assets);
+  console.log(`EnhancedPostCard - Media count for post ${post.id}:`, post.media_assets?.length || 0);
 
   return (
     <Card className="bg-luxury-darker border-luxury-neutral/10 overflow-hidden">
@@ -93,6 +94,9 @@ export const EnhancedPostCard = ({ post, onLike, onDelete, currentUserId }: Enha
         {/* Media - Render if media_assets exist and have items */}
         {post.media_assets && post.media_assets.length > 0 && (
           <div className="relative">
+            <div className="bg-red-500 text-white p-2 text-xs">
+              DEBUG: Found {post.media_assets.length} media assets for post {post.id}
+            </div>
             <MediaRenderer
               media={post.media_assets}
               className="w-full"
@@ -100,6 +104,13 @@ export const EnhancedPostCard = ({ post, onLike, onDelete, currentUserId }: Enha
               controls={true}
               showWatermark={false}
             />
+          </div>
+        )}
+
+        {/* Debug info for posts without media */}
+        {(!post.media_assets || post.media_assets.length === 0) && (
+          <div className="px-4 py-2 bg-gray-800 text-gray-400 text-xs">
+            DEBUG: No media assets found for post {post.id}
           </div>
         )}
 
