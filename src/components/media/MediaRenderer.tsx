@@ -43,6 +43,17 @@ export const MediaRenderer = ({
     setHasError(false);
   };
 
+  // Ensure we have a proper Supabase storage URL
+  const getMediaUrl = (url: string) => {
+    if (url.startsWith('http')) {
+      return url;
+    }
+    // If it's just a path, construct the full Supabase URL
+    return `https://ysqbdaeohlupucdmivkt.supabase.co/storage/v1/object/public/media/${url}`;
+  };
+
+  const mediaUrl = getMediaUrl(media.url);
+
   if (hasError) {
     return (
       <div className={`flex items-center justify-center bg-gray-900 text-white p-8 ${className}`}>
@@ -68,7 +79,7 @@ export const MediaRenderer = ({
             )}
           </AnimatePresence>
           <img
-            src={media.url}
+            src={mediaUrl}
             alt={media.alt_text || 'Post image'}
             className={`w-full h-full object-cover rounded-lg ${isLoading ? 'opacity-0' : 'opacity-100'} transition-opacity duration-300`}
             onLoad={handleLoad}
@@ -86,13 +97,15 @@ export const MediaRenderer = ({
       return (
         <div className={`relative ${className}`}>
           <video
-            src={media.url}
+            src={mediaUrl}
             className="w-full h-full object-cover rounded-lg"
             controls={controls}
             autoPlay={autoPlay}
             muted={isMuted}
             loop={autoPlay}
             playsInline
+            preload="metadata"
+            poster={`${mediaUrl}?t=1`} // Generate thumbnail from first frame
             onLoadedData={handleLoad}
             onError={handleError}
           />
@@ -133,12 +146,16 @@ export const MediaRenderer = ({
             </div>
             <div className="flex-1">
               <audio
-                src={media.url}
+                src={mediaUrl}
                 controls={controls}
                 className="w-full"
+                preload="metadata"
                 onLoadedData={handleLoad}
                 onError={handleError}
               />
+              {media.alt_text && (
+                <p className="text-white text-sm mt-2">{media.alt_text}</p>
+              )}
             </div>
           </div>
           {showWatermark && (
@@ -152,7 +169,7 @@ export const MediaRenderer = ({
     default:
       return (
         <div className={`flex items-center justify-center bg-gray-900 text-white p-8 ${className}`}>
-          <p className="text-gray-400">Unsupported media type</p>
+          <p className="text-gray-400">Unsupported media type: {media.type}</p>
         </div>
       );
   }
