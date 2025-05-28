@@ -72,8 +72,8 @@ const Home = () => {
         const postsWithMedia = await Promise.all(
           postsData.map(async (post) => {
             try {
-              // Query media assets for this post - using correct JSONB filtering
-              const { data: mediaAssets, error: mediaError } = await supabase
+              // Query media assets for this post using correct JSONB filtering
+              const { data: rawAssets, error: mediaError } = await supabase
                 .from('media_assets')
                 .select('*')
                 .filter('metadata->>post_id', 'eq', post.id);
@@ -82,7 +82,7 @@ const Home = () => {
                 console.error("Error fetching media for post:", post.id, mediaError);
               }
 
-              console.log(`Media assets for post ${post.id}:`, mediaAssets);
+              console.log(`Media assets for post ${post.id}:`, rawAssets);
 
               // Fetch creator avatar from media_assets
               let creatorAvatarUrl = null;
@@ -105,14 +105,6 @@ const Home = () => {
                 }
               }
 
-              // Transform media assets to include full URL with proper Supabase URL
-              const transformedMedia = (mediaAssets || []).map(asset => ({
-                id: asset.id,
-                url: supabase.storage.from('media').getPublicUrl(asset.storage_path).data.publicUrl,
-                type: asset.media_type as 'image' | 'video' | 'audio',
-                alt_text: asset.alt_text || `Media for ${post.content?.substring(0, 50) || 'post'}`
-              }));
-
               // Ensure creator is properly formatted
               const creator = post.creator && !Array.isArray(post.creator) 
                 ? post.creator 
@@ -129,7 +121,8 @@ const Home = () => {
                   bio: creator?.bio || '',
                   location: creator?.location || ''
                 },
-                media_assets: transformedMedia
+                // Use raw assets directly from Supabase without reshaping
+                media_assets: rawAssets || []
               };
             } catch (error) {
               console.error("Error processing post:", post.id, error);

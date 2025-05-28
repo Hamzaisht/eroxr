@@ -5,9 +5,11 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 interface MediaAsset {
   id: string;
-  url: string;
-  type: 'image' | 'video' | 'audio';
+  storage_path: string;
+  type?: 'image' | 'video' | 'audio';
+  media_type: string;
   alt_text?: string;
+  original_name?: string;
 }
 
 interface MediaRendererProps {
@@ -32,7 +34,7 @@ export const MediaRenderer = ({
   const [isMuted, setIsMuted] = useState(true);
 
   const handleError = () => {
-    console.error('Media failed to load:', media.url);
+    console.error('Media failed to load:', media.storage_path);
     setHasError(true);
     setIsLoading(false);
     onError?.();
@@ -43,16 +45,22 @@ export const MediaRenderer = ({
     setHasError(false);
   };
 
-  // Ensure we have a proper Supabase storage URL
-  const getMediaUrl = (url: string) => {
-    if (url.startsWith('http')) {
-      return url;
-    }
-    // If it's just a path, construct the full Supabase URL
-    return `https://ysqbdaeohlupucdmivkt.supabase.co/storage/v1/object/public/media/${url}`;
+  // Build correct Supabase storage URL from storage_path
+  const getMediaUrl = (storagePath: string) => {
+    return `https://ysqbdaeohlupucdmivkt.supabase.co/storage/v1/object/public/media/${storagePath}`;
   };
 
-  const mediaUrl = getMediaUrl(media.url);
+  const mediaUrl = getMediaUrl(media.storage_path);
+
+  // Determine media type from media_type field
+  const getMediaType = (mediaType: string): 'image' | 'video' | 'audio' => {
+    if (mediaType.startsWith('image/')) return 'image';
+    if (mediaType.startsWith('video/')) return 'video';
+    if (mediaType.startsWith('audio/')) return 'audio';
+    return 'image'; // fallback
+  };
+
+  const mediaType = getMediaType(media.media_type);
 
   if (hasError) {
     return (
@@ -65,7 +73,7 @@ export const MediaRenderer = ({
     );
   }
 
-  switch (media.type) {
+  switch (mediaType) {
     case 'image':
       return (
         <div className={`relative ${className}`}>
@@ -80,7 +88,7 @@ export const MediaRenderer = ({
           </AnimatePresence>
           <img
             src={mediaUrl}
-            alt={media.alt_text || 'Post image'}
+            alt={media.alt_text || media.original_name || 'Post image'}
             className={`w-full h-full object-cover rounded-lg ${isLoading ? 'opacity-0' : 'opacity-100'} transition-opacity duration-300`}
             onLoad={handleLoad}
             onError={handleError}
@@ -105,7 +113,7 @@ export const MediaRenderer = ({
             loop={autoPlay}
             playsInline
             preload="metadata"
-            poster={`${mediaUrl}?t=1`} // Generate thumbnail from first frame
+            poster={`${mediaUrl}#t=1`}
             onLoadedData={handleLoad}
             onError={handleError}
           />
@@ -169,7 +177,7 @@ export const MediaRenderer = ({
     default:
       return (
         <div className={`flex items-center justify-center bg-gray-900 text-white p-8 ${className}`}>
-          <p className="text-gray-400">Unsupported media type: {media.type}</p>
+          <p className="text-gray-400">Unsupported media type: {media.media_type}</p>
         </div>
       );
   }

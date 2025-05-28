@@ -9,9 +9,8 @@ import { useState } from "react";
 interface MediaAsset {
   id: string;
   storage_path: string;
-  type: 'image' | 'video' | 'audio';
-  alt_text?: string;
   media_type: string;
+  alt_text?: string;
   original_name: string;
 }
 
@@ -60,14 +59,6 @@ export const EnhancedPostCard = ({ post, onLike, onDelete, currentUserId }: Enha
     return username.charAt(0).toUpperCase();
   };
 
-  // Transform media assets to the correct format for MediaRenderer
-  const transformedMedia = post.media_assets?.map(asset => ({
-    id: asset.id,
-    url: `https://ysqbdaeohlupucdmivkt.supabase.co/storage/v1/object/public/media/${asset.storage_path}`,
-    type: asset.media_type as 'image' | 'video' | 'audio',
-    alt_text: asset.alt_text || asset.original_name || 'Media content'
-  })) || [];
-
   return (
     <Card className="bg-luxury-darker border-luxury-neutral/10 overflow-hidden">
       <CardContent className="p-0">
@@ -97,29 +88,29 @@ export const EnhancedPostCard = ({ post, onLike, onDelete, currentUserId }: Enha
           </div>
         )}
 
-        {/* Media */}
-        {transformedMedia.length > 0 && (
+        {/* Media - Use raw media assets directly */}
+        {post.media_assets && post.media_assets.length > 0 && (
           <div className="relative">
-            {transformedMedia.length === 1 ? (
+            {post.media_assets.length === 1 ? (
               <MediaRenderer
-                media={transformedMedia[0]}
+                media={post.media_assets[0]}
                 className="w-full aspect-square object-cover"
-                autoPlay={transformedMedia[0].type === 'video'}
+                autoPlay={post.media_assets[0].media_type.startsWith('video/')}
                 controls={true}
               />
             ) : (
               <div className="grid grid-cols-2 gap-1">
-                {transformedMedia.slice(0, 4).map((asset, index) => (
+                {post.media_assets.slice(0, 4).map((asset, index) => (
                   <div key={asset.id} className="relative">
                     <MediaRenderer
                       media={asset}
                       className="w-full aspect-square object-cover"
-                      controls={asset.type !== 'image'}
+                      controls={!asset.media_type.startsWith('image/')}
                     />
-                    {index === 3 && transformedMedia.length > 4 && (
+                    {index === 3 && post.media_assets && post.media_assets.length > 4 && (
                       <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
                         <span className="text-white text-lg font-semibold">
-                          +{transformedMedia.length - 4}
+                          +{post.media_assets.length - 4}
                         </span>
                       </div>
                     )}
