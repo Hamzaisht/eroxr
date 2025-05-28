@@ -1,144 +1,141 @@
 
 import { useState } from 'react';
-import { supabase } from '@/integrations/supabase/client';
-import { useToast } from './use-toast';
-import { MediaAccessLevel, UploadResult } from '@/utils/media/types';
+import { useToast } from '@/hooks/use-toast';
+import { uploadMediaToSupabase, uploadMultipleMedia, UploadResult } from '@/utils/upload/supabaseUpload';
 
-interface UploadOptions {
+export interface MediaUploadOptions {
   contentCategory?: string;
-  maxSizeInMB?: number;
-  accessLevel?: MediaAccessLevel;
+  accessLevel?: 'private' | 'public' | 'subscribers_only';
   metadata?: Record<string, any>;
-  altText?: string;
-}
-
-interface UploadState {
-  isUploading: boolean;
-  progress: number;
-  isComplete: boolean;
-  error?: string; // ✅ Add this property
 }
 
 export const useMediaUpload = () => {
-  const [uploadState, setUploadState] = useState<UploadState>({
-    isUploading: false,
-    progress: 0,
-    isComplete: false
-  });
+  const [isUploading, setIsUploading] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
 
   const uploadMedia = async (
     file: File,
-    options: UploadOptions = {}
+    options: MediaUploadOptions = {}
   ): Promise<UploadResult> => {
-    const {
-      contentCategory = 'general',
-      maxSizeInMB = 50,
-      accessLevel = MediaAccessLevel.PUBLIC,
-      metadata = {},
-      altText
-    } = options;
-
-    setUploadState({ isUploading: true, progress: 0, isComplete: false, error: undefined });
+    console.log("🎯 useMediaUpload - Starting single file upload");
+    
+    setIsUploading(true);
+    setProgress(0);
+    setError(null);
 
     try {
-      // Check file size
-      const maxSize = maxSizeInMB * 1024 * 1024;
-      if (file.size > maxSize) {
-        throw new Error(`File size exceeds ${maxSizeInMB}MB limit`);
-      }
+      // Simulate progress
+      const progressInterval = setInterval(() => {
+        setProgress(prev => Math.min(prev + 10, 90));
+      }, 200);
 
-      // Get current user
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        throw new Error('User not authenticated');
-      }
-
-      // Generate file path
-      const fileExtension = file.name.split('.').pop()?.toLowerCase() || 'bin';
-      const fileName = `${contentCategory}/${user.id}/${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExtension}`;
-
-      setUploadState(prev => ({ ...prev, progress: 25 }));
-
-      // Upload to storage
-      const { data: uploadData, error: uploadError } = await supabase.storage
-        .from('media')
-        .upload(fileName, file, {
-          cacheControl: '3600',
-          contentType: file.type
-        });
-
-      if (uploadError) {
-        throw uploadError;
-      }
-
-      setUploadState(prev => ({ ...prev, progress: 75 }));
-
-      // Determine media type
-      const getMediaType = (mimeType: string) => {
-        if (mimeType.startsWith('image/')) return 'image';
-        if (mimeType.startsWith('video/')) return 'video';
-        if (mimeType.startsWith('audio/')) return 'audio';
-        return 'document';
-      };
-
-      // Create media asset record
-      const { data: assetData, error: assetError } = await supabase
-        .from('media_assets')
-        .insert({
-          user_id: user.id,
-          storage_path: uploadData.path,
-          original_name: file.name,
-          file_size: file.size,
-          mime_type: file.type,
-          media_type: getMediaType(file.type),
-          access_level: accessLevel,
-          alt_text: altText,
-          metadata: {
-            ...metadata,
-            category: contentCategory
-          }
-        })
-        .select()
-        .single();
-
-      if (assetError) {
-        // Clean up uploaded file if asset creation fails
-        await supabase.storage.from('media').remove([uploadData.path]);
-        throw assetError;
-      }
-
-      // Get public URL
-      const { data: { publicUrl } } = supabase.storage
-        .from('media')
-        .getPublicUrl(uploadData.path);
-
-      setUploadState({ isUploading: false, progress: 100, isComplete: true, error: undefined });
-
-      return {
-        success: true,
-        url: publicUrl,
-        assetId: assetData.id
-      };
-    } catch (error: any) {
-      const errorMessage = error.message || "Upload failed";
-      setUploadState({ isUploading: false, progress: 0, isComplete: false, error: errorMessage });
-      
-      toast({
-        title: "Upload failed",
-        description: errorMessage,
-        variant: "destructive"
+      const result = await uploadMediaToSupabase(file, {
+        category: options.contentCategory,
+        accessLevel: options.accessLevel,
+        metadata: options.metadata
       });
 
-      return {
-        success: false,
-        error: errorMessage
-      };
+      clearInterval(progressInterval);
+      setProgress(100);
+
+      if (!result.success) {
+        setError(result.error || 'Upload failed');
+        toast({
+          title: "Upload Failed",
+          description: result.error || 'Failed to upload file',
+          variant: "destructive"
+        });
+      } else {
+        toast({
+          title: "Upload Complete",
+          description: "File uploaded successfully"
+        });
+      }
+
+      return result;
+
+    } catch (error: any) {
+      console.error("💥 useMediaUpload error:", error);
+      setError(error.message);
+      toast({
+        title: "Upload Error",
+        description: error.message || 'An unexpected error occurred',
+        variant: "destructive"
+      });
+      
+      return { success: false, error: error.message };
+    } finally {
+      setIsUploading(false);
     }
+  };
+
+  const uploadMultiple = async (
+    files: File[],
+    options: MediaUploadOptions = {}
+  ): Promise<UploadResult[]> => {
+    console.log("🎯 useMediaUpload - Starting multiple file upload");
+    
+    setIsUploading(true);
+    setProgress(0);
+    setError(null);
+
+    try {
+      const results = await uploadMultipleMedia(files, {
+        category: options.contentCategory,
+        accessLevel: options.accessLevel,
+        metadata: options.metadata
+      });
+
+      setProgress(100);
+
+      const successCount = results.filter(r => r.success).length;
+      const failCount = results.length - successCount;
+
+      if (failCount > 0) {
+        setError(`${failCount} of ${results.length} uploads failed`);
+        toast({
+          title: "Partial Upload Success",
+          description: `${successCount} files uploaded, ${failCount} failed`,
+          variant: failCount === results.length ? "destructive" : "default"
+        });
+      } else {
+        toast({
+          title: "All Uploads Complete",
+          description: `Successfully uploaded ${successCount} files`
+        });
+      }
+
+      return results;
+
+    } catch (error: any) {
+      console.error("💥 useMediaUpload batch error:", error);
+      setError(error.message);
+      toast({
+        title: "Batch Upload Error",
+        description: error.message || 'An unexpected error occurred',
+        variant: "destructive"
+      });
+      
+      return files.map(() => ({ success: false, error: error.message }));
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const reset = () => {
+    setIsUploading(false);
+    setProgress(0);
+    setError(null);
   };
 
   return {
     uploadMedia,
-    uploadState
+    uploadMultiple,
+    isUploading,
+    progress,
+    error,
+    reset
   };
 };
