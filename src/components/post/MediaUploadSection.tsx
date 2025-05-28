@@ -24,6 +24,7 @@ export const MediaUploadSection = ({
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
+    console.log("MediaUploadSection - Files selected:", files.length, files);
     setSelectedFiles(prev => [...prev, ...files]);
   };
 
@@ -32,33 +33,59 @@ export const MediaUploadSection = ({
   };
 
   const handleUpload = async () => {
-    if (selectedFiles.length === 0) return;
+    if (selectedFiles.length === 0) {
+      console.log("MediaUploadSection - No files to upload");
+      return;
+    }
 
+    console.log("MediaUploadSection - Starting upload for", selectedFiles.length, "files");
     setIsUploading(true);
     setUploadProgress(0);
 
     try {
       const uploadPromises = selectedFiles.map(async (file, index) => {
+        console.log(`MediaUploadSection - Uploading file ${index + 1}/${selectedFiles.length}:`, file.name);
         setUploadProgress(((index + 1) / selectedFiles.length) * 100);
         
-        return uploadMedia(file, {
+        const result = await uploadMedia(file, {
           contentCategory: 'post',
           accessLevel: defaultAccessLevel,
-          metadata: { usage: 'post' }
+          metadata: { 
+            usage: 'post',
+            upload_timestamp: new Date().toISOString()
+          }
         });
+        
+        console.log(`MediaUploadSection - Upload result for ${file.name}:`, result);
+        return result;
       });
 
       const results = await Promise.all(uploadPromises);
       const successfulUploads = results.filter(r => r.success);
       
+      console.log("MediaUploadSection - Upload results:", {
+        total: results.length,
+        successful: successfulUploads.length,
+        failed: results.length - successfulUploads.length
+      });
+      
       if (successfulUploads.length > 0) {
         const urls = successfulUploads.map(r => r.url!);
         const assetIds = successfulUploads.map(r => r.assetId!);
+        
+        console.log("MediaUploadSection - Calling onUploadComplete with:", {
+          urls: urls.length,
+          assetIds: assetIds.length,
+          actualAssetIds: assetIds
+        });
+        
         onUploadComplete(urls, assetIds);
         setSelectedFiles([]);
+      } else {
+        console.error("MediaUploadSection - No successful uploads");
       }
     } catch (error) {
-      console.error('Upload error:', error);
+      console.error('MediaUploadSection - Upload error:', error);
     } finally {
       setIsUploading(false);
       setUploadProgress(0);

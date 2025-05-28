@@ -68,13 +68,13 @@ const Home = () => {
           return [];
         }
         
-        // For each post, fetch associated media assets using multiple strategies
+        // For each post, fetch associated media assets using improved strategies
         const postsWithMedia = await Promise.all(
           postsData.map(async (post) => {
             try {
               console.log(`Home - Fetching media for post ${post.id}...`);
               
-              // Strategy 1: Primary query - fetch media by post_id in metadata
+              // Strategy 1: Primary query - fetch media by post_id in metadata (most reliable)
               const { data: primaryAssets, error: primaryError } = await supabase
                 .from('media_assets')
                 .select('*')
@@ -84,59 +84,45 @@ const Home = () => {
                 console.error("Home - Error in primary media fetch:", primaryError);
               }
 
-              console.log(`Home - Primary media assets for post ${post.id}:`, primaryAssets?.length || 0, primaryAssets);
+              console.log(`Home - Primary media assets for post ${post.id}:`, primaryAssets?.length || 0);
 
               let mediaAssets = primaryAssets || [];
 
-              // Strategy 2: Fallback - fetch media by user and usage=post but no post_id (orphaned media)
+              // Strategy 2: RESTRICTED fallback - only for very recent orphaned media (within 2 minutes of post creation)
               if (mediaAssets.length === 0) {
-                console.log(`Home - No primary media found for post ${post.id}, trying orphaned media fallback...`);
+                console.log(`Home - No primary media found for post ${post.id}, trying restricted orphaned media fallback...`);
                 
-                const { data: orphanedAssets, error: orphanedError } = await supabase
+                const postTime = new Date(post.created_at);
+                const fallbackStartTime = new Date(postTime.getTime() - 2 * 60 * 1000); // 2 minutes before
+                const fallbackEndTime = new Date(postTime.getTime() + 2 * 60 * 1000); // 2 minutes after
+
+                const { data: recentOrphanedAssets, error: orphanedError } = await supabase
                   .from('media_assets')
                   .select('*')
                   .eq('user_id', post.creator_id)
                   .filter('metadata->>usage', 'eq', 'post')
-                  .is('metadata->>post_id', null);
+                  .is('metadata->>post_id', null)
+                  .gte('created_at', fallbackStartTime.toISOString())
+                  .lte('created_at', fallbackEndTime.toISOString())
+                  .limit(5); // Max 5 media items to prevent excessive associations
 
                 if (orphanedError) {
                   console.error("Home - Error in orphaned media fetch:", orphanedError);
                 } else {
-                  console.log(`Home - Orphaned media assets for post ${post.id}:`, orphanedAssets?.length || 0, orphanedAssets);
-                  mediaAssets = orphanedAssets || [];
-                }
-              }
-
-              // Strategy 3: Final fallback - fetch by timing (media created around the same time as post)
-              if (mediaAssets.length === 0) {
-                console.log(`Home - No orphaned media found for post ${post.id}, trying timing fallback...`);
-                
-                const postTime = new Date(post.created_at);
-                const startTime = new Date(postTime.getTime() - 5 * 60 * 1000); // 5 minutes before
-                const endTime = new Date(postTime.getTime() + 5 * 60 * 1000); // 5 minutes after
-
-                const { data: timingAssets, error: timingError } = await supabase
-                  .from('media_assets')
-                  .select('*')
-                  .eq('user_id', post.creator_id)
-                  .gte('created_at', startTime.toISOString())
-                  .lte('created_at', endTime.toISOString())
-                  .is('metadata->>post_id', null);
-
-                if (timingError) {
-                  console.error("Home - Error in timing media fetch:", timingError);
-                } else {
-                  console.log(`Home - Timing-based media assets for post ${post.id}:`, timingAssets?.length || 0, timingAssets);
-                  mediaAssets = timingAssets || [];
+                  console.log(`Home - Recent orphaned media assets for post ${post.id}:`, recentOrphanedAssets?.length || 0);
                   
-                  // If we found media via timing, link it to the post for future queries
-                  if (mediaAssets.length > 0) {
-                    console.log(`Home - Auto-linking timing-based media to post ${post.id}...`);
+                  if (recentOrphanedAssets && recentOrphanedAssets.length > 0) {
+                    mediaAssets = recentOrphanedAssets;
+                    
+                    // Auto-link these assets to the post for future queries, but be very careful
+                    console.log(`Home - Auto-linking ${mediaAssets.length} recent orphaned media to post ${post.id}...`);
                     for (const asset of mediaAssets) {
                       const updatedMetadata = {
                         ...(asset.metadata || {}),
                         post_id: post.id,
-                        usage: 'post'
+                        usage: 'post',
+                        auto_linked_at: new Date().toISOString(),
+                        auto_link_reason: 'timing_fallback'
                       };
                       
                       await supabase
@@ -147,6 +133,8 @@ const Home = () => {
                   }
                 }
               }
+
+              // NO Strategy 3 - Remove the broad timing fallback to prevent incorrect associations
 
               // Fetch creator avatar from media_assets
               let creatorAvatarUrl = null;
@@ -189,7 +177,9 @@ const Home = () => {
               };
 
               console.log(`Home - Final post ${post.id} media count:`, finalPost.media_assets.length);
-              console.log(`Home - Final post ${post.id} media details:`, finalPost.media_assets);
+              if (finalPost.media_assets.length > 0) {
+                console.log(`Home - Final post ${post.id} media details:`, finalPost.media_assets.map(m => ({ id: m.id, created_at: m.created_at })));
+              }
               
               return finalPost;
             } catch (error) {
@@ -214,7 +204,7 @@ const Home = () => {
         // Log posts with media for debugging
         postsWithMedia.forEach(post => {
           if (post.media_assets.length > 0) {
-            console.log(`Home - Post ${post.id} has ${post.media_assets.length} media assets:`, post.media_assets);
+            console.log(`Home - Post ${post.id} has ${post.media_assets.length} media assets`);
           }
         });
         

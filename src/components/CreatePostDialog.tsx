@@ -37,6 +37,7 @@ export const CreatePostDialog = ({ open, onOpenChange, selectedFiles, onFileSele
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (files && files.length > 0) {
+      console.log("CreatePostDialog - Files selected:", files.length);
       onFileSelect(files);
       
       // Create preview URLs for selected files
@@ -68,7 +69,22 @@ export const CreatePostDialog = ({ open, onOpenChange, selectedFiles, onFileSele
   };
 
   const handleMediaUploadComplete = (urls: string[], assetIds: string[]) => {
-    console.log("CreatePostDialog - Media upload complete:", { urls, assetIds });
+    console.log("CreatePostDialog - Media upload complete:", { 
+      urls: urls.length, 
+      assetIds: assetIds.length,
+      actualAssetIds: assetIds 
+    });
+    
+    // Validate that we have matching URLs and asset IDs
+    if (urls.length !== assetIds.length) {
+      console.error("CreatePostDialog - Mismatch between URLs and asset IDs:", { urls, assetIds });
+      toast({
+        title: "Upload Warning",
+        description: "Some media files may not have been processed correctly",
+        variant: "destructive"
+      });
+    }
+    
     setUploadedMediaUrls(urls);
     setUploadedAssetIds(assetIds);
     setUploadProgress(100);
@@ -86,7 +102,7 @@ export const CreatePostDialog = ({ open, onOpenChange, selectedFiles, onFileSele
       return;
     }
 
-    if (!content.trim() && uploadedMediaUrls.length === 0) {
+    if (!content.trim() && uploadedAssetIds.length === 0) {
       toast({
         title: "Error",
         description: "Post must have content or media",
@@ -111,8 +127,8 @@ export const CreatePostDialog = ({ open, onOpenChange, selectedFiles, onFileSele
         content: content.trim(),
         creator_id: session.user.id,
         visibility,
-        uploadedAssetIds,
-        uploadedMediaUrls
+        uploadedAssetIds: uploadedAssetIds.length,
+        actualAssetIds: uploadedAssetIds
       });
 
       // Create post - database triggers handle trending_content automatically
@@ -144,49 +160,75 @@ export const CreatePostDialog = ({ open, onOpenChange, selectedFiles, onFileSele
 
       console.log("CreatePostDialog - Post created successfully:", post);
 
-      // CRITICAL FIX: Update media assets with post_id if we have any
+      // CRITICAL: Link media assets to the post immediately and accurately
       if (uploadedAssetIds.length > 0 && post.id) {
-        console.log("CreatePostDialog - Linking media assets to post:", { postId: post.id, assetIds: uploadedAssetIds });
+        console.log("CreatePostDialog - Linking media assets to post:", { 
+          postId: post.id, 
+          assetIds: uploadedAssetIds.length,
+          actualAssetIds: uploadedAssetIds 
+        });
         
-        // Update each media asset with the post_id in metadata
+        let linkedCount = 0;
         for (const assetId of uploadedAssetIds) {
           console.log(`CreatePostDialog - Processing asset ${assetId}...`);
           
-          const { data: currentAsset, error: fetchError } = await supabase
-            .from('media_assets')
-            .select('metadata')
-            .eq('id', assetId)
-            .single();
+          try {
+            // First, verify the asset exists and get current metadata
+            const { data: currentAsset, error: fetchError } = await supabase
+              .from('media_assets')
+              .select('metadata, user_id')
+              .eq('id', assetId)
+              .single();
 
-          if (fetchError) {
-            console.error('CreatePostDialog - Error fetching current asset metadata:', fetchError);
-            continue;
-          }
+            if (fetchError) {
+              console.error(`CreatePostDialog - Error fetching asset ${assetId}:`, fetchError);
+              continue;
+            }
 
-          console.log(`CreatePostDialog - Current metadata for asset ${assetId}:`, currentAsset.metadata);
+            // Verify this asset belongs to the current user
+            if (currentAsset.user_id !== session.user.id) {
+              console.error(`CreatePostDialog - Asset ${assetId} does not belong to user ${session.user.id}`);
+              continue;
+            }
 
-          // Merge existing metadata with post_id
-          const updatedMetadata = {
-            ...(currentAsset.metadata || {}),
-            post_id: post.id,
-            usage: 'post'
-          };
+            console.log(`CreatePostDialog - Current metadata for asset ${assetId}:`, currentAsset.metadata);
 
-          console.log(`CreatePostDialog - Updating asset ${assetId} with metadata:`, updatedMetadata);
+            // Merge existing metadata with post_id - be very specific
+            const updatedMetadata = {
+              ...(currentAsset.metadata || {}),
+              post_id: post.id,
+              usage: 'post',
+              linked_at: new Date().toISOString(),
+              linked_by_user: session.user.id
+            };
 
-          const { error: updateError } = await supabase
-            .from('media_assets')
-            .update({ metadata: updatedMetadata })
-            .eq('id', assetId);
+            console.log(`CreatePostDialog - Updating asset ${assetId} with metadata:`, updatedMetadata);
 
-          if (updateError) {
-            console.error(`CreatePostDialog - Error updating media asset ${assetId} with post_id:`, updateError);
-          } else {
-            console.log(`CreatePostDialog - Successfully linked media asset ${assetId} to post ${post.id}`);
+            const { error: updateError } = await supabase
+              .from('media_assets')
+              .update({ metadata: updatedMetadata })
+              .eq('id', assetId);
+
+            if (updateError) {
+              console.error(`CreatePostDialog - Error updating media asset ${assetId}:`, updateError);
+            } else {
+              linkedCount++;
+              console.log(`CreatePostDialog - Successfully linked media asset ${assetId} to post ${post.id}`);
+            }
+          } catch (assetError) {
+            console.error(`CreatePostDialog - Exception processing asset ${assetId}:`, assetError);
           }
         }
         
-        console.log("CreatePostDialog - Finished linking all media assets");
+        console.log(`CreatePostDialog - Media linking complete. Linked ${linkedCount}/${uploadedAssetIds.length} assets`);
+        
+        if (linkedCount === 0 && uploadedAssetIds.length > 0) {
+          toast({
+            title: "Warning",
+            description: "Post created but media may not be linked properly",
+            variant: "destructive"
+          });
+        }
       } else {
         console.log("CreatePostDialog - No media assets to link or missing post ID:", { 
           uploadedAssetIds: uploadedAssetIds.length, 
@@ -199,7 +241,7 @@ export const CreatePostDialog = ({ open, onOpenChange, selectedFiles, onFileSele
         description: "Post created successfully!",
       });
 
-      // Reset form
+      // Reset form completely
       setContent("");
       setVisibility("public");
       setUploadedMediaUrls([]);
@@ -333,6 +375,15 @@ export const CreatePostDialog = ({ open, onOpenChange, selectedFiles, onFileSele
                 </p>
               </div>
             )}
+
+            {/* Upload Status Display */}
+            {uploadedAssetIds.length > 0 && (
+              <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+                <p className="text-sm text-green-700">
+                  ✓ {uploadedAssetIds.length} media file(s) uploaded and ready
+                </p>
+              </div>
+            )}
           </div>
 
           {/* Visibility Settings */}
@@ -361,7 +412,7 @@ export const CreatePostDialog = ({ open, onOpenChange, selectedFiles, onFileSele
             </Button>
             <Button 
               type="submit" 
-              disabled={isLoading || (charactersUsed === 0 && uploadedMediaUrls.length === 0)}
+              disabled={isLoading || (charactersUsed === 0 && uploadedAssetIds.length === 0)}
               className="min-w-[100px]"
             >
               {isLoading ? "Creating..." : "Create Post"}
