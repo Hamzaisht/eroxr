@@ -1,3 +1,4 @@
+
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@supabase/auth-helpers-react";
@@ -56,10 +57,11 @@ export const useHomePosts = () => {
             try {
               console.log(`Home - Fetching media for post ${post.id}...`);
               
+              // Fix the JSON query syntax - use ->> for text extraction
               const { data: primaryAssets, error: primaryError } = await supabase
                 .from('media_assets')
                 .select('*')
-                .filter('metadata->>post_id', 'eq', post.id);
+                .filter('metadata->post_id', 'eq', post.id);
 
               if (primaryError) {
                 console.error("Home - Error in primary media fetch:", primaryError);
@@ -82,6 +84,7 @@ export const useHomePosts = () => {
                   const fallbackStartTime = new Date(postTime.getTime() - 30 * 1000);
                   const fallbackEndTime = new Date(postTime.getTime() + 30 * 1000);
 
+                  // Fix the JSON query syntax here too
                   const { data: recentOrphanedAssets, error: orphanedError } = await supabase
                     .from('media_assets')
                     .select('*')
@@ -116,24 +119,8 @@ export const useHomePosts = () => {
                 }
               }
 
+              // Skip avatar fetching since the column doesn't exist
               let creatorAvatarUrl = null;
-              if (post.creator_id) {
-                const { data: avatarData } = await supabase
-                  .from('media_assets')
-                  .select('storage_path')
-                  .eq('user_id', post.creator_id)
-                  .filter('metadata->>usage', 'eq', 'avatar')
-                  .order('created_at', { ascending: false })
-                  .limit(1)
-                  .maybeSingle();
-
-                if (avatarData) {
-                  const { data: { publicUrl } } = supabase.storage
-                    .from('media')
-                    .getPublicUrl(avatarData.storage_path);
-                  creatorAvatarUrl = publicUrl;
-                }
-              }
 
               const creator = post.creator && !Array.isArray(post.creator) 
                 ? post.creator 

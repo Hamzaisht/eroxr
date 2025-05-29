@@ -26,10 +26,27 @@ export const uploadMediaToSupabase = async (
     name: file.name,
     type: file.type,
     size: file.size,
-    lastModified: file.lastModified
+    lastModified: file.lastModified,
+    isValidFile: file instanceof File
   });
 
   try {
+    // Validate file
+    if (!file || !(file instanceof File)) {
+      console.error("❌ Invalid file object");
+      return { success: false, error: 'Invalid file object' };
+    }
+
+    if (file.size === 0) {
+      console.error("❌ File is empty");
+      return { success: false, error: 'File is empty' };
+    }
+
+    if (file.size > 100 * 1024 * 1024) {
+      console.error("❌ File too large:", Math.round(file.size / 1024 / 1024), "MB");
+      return { success: false, error: 'File size exceeds 100MB limit' };
+    }
+
     // Get authenticated user
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) {
@@ -44,6 +61,26 @@ export const uploadMediaToSupabase = async (
     const fileName = `${options.category || 'posts'}/${uuidv4()}.${fileExtension}`;
     
     console.log("📁 Generated file path:", fileName);
+
+    // Test storage connection first
+    console.log("🔗 Testing storage connection...");
+    const { data: buckets, error: bucketsError } = await supabase.storage.listBuckets();
+    
+    if (bucketsError) {
+      console.error("❌ Storage connection failed:", bucketsError);
+      return { success: false, error: `Storage connection failed: ${bucketsError.message}` };
+    }
+    
+    console.log("✅ Storage connected. Available buckets:", buckets?.map(b => b.name));
+    
+    // Check if media bucket exists
+    const mediaBucket = buckets?.find(b => b.id === 'media');
+    if (!mediaBucket) {
+      console.error("❌ Media bucket not found");
+      return { success: false, error: 'Media storage bucket does not exist. Please run window.setupStorage() first.' };
+    }
+    
+    console.log("✅ Media bucket found:", mediaBucket.name);
 
     // Upload to Supabase Storage
     console.log("📤 Uploading to storage bucket 'media'...");
@@ -68,6 +105,20 @@ export const uploadMediaToSupabase = async (
       .getPublicUrl(uploadData.path);
 
     console.log("🔗 Generated public URL:", publicUrl);
+
+    // Verify the uploaded file exists
+    console.log("🔍 Verifying upload...");
+    const { data: fileInfo, error: infoError } = await supabase.storage
+      .from('media')
+      .list(options.category || 'posts', {
+        search: uploadData.path.split('/').pop()
+      });
+      
+    if (infoError) {
+      console.warn("⚠️ Could not verify upload:", infoError);
+    } else {
+      console.log("✅ Upload verified:", fileInfo);
+    }
 
     // Create media_assets record
     const mediaType = getMediaType(file.type);
@@ -98,6 +149,7 @@ export const uploadMediaToSupabase = async (
     if (assetError) {
       console.error("❌ Database insert error:", assetError);
       // Try to clean up uploaded file
+      console.log("🧹 Cleaning up uploaded file...");
       await supabase.storage.from('media').remove([uploadData.path]);
       return { success: false, error: `Database error: ${assetError.message}` };
     }
