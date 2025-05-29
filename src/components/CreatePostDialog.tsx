@@ -1,5 +1,7 @@
+
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { Upload } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { PostForm } from "./CreatePostDialog/PostForm";
 import { MediaUploadDisplay } from "./CreatePostDialog/MediaUploadDisplay";
@@ -32,6 +34,11 @@ export const CreatePostDialog = ({ open, onOpenChange, selectedFiles, onFileSele
     session,
     toast
   } = useCreatePost();
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    onFileSelect(files);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -209,17 +216,43 @@ export const CreatePostDialog = ({ open, onOpenChange, selectedFiles, onFileSele
             characterLimit={characterLimit}
           />
 
-          {selectedFiles && selectedFiles.length > 0 && (
-            <MediaUploadDisplay
-              selectedFiles={selectedFiles}
-              uploadError={uploadError}
-              uploadSuccess={uploadSuccess}
-              uploadInProgress={uploadInProgress}
-              uploadedAssetIds={uploadedAssetIds}
-              onUploadComplete={handleMediaUploadComplete}
-              onUploadStart={handleMediaUploadStart}
+          {/* Media Upload Section - Always visible */}
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h4 className="text-sm font-medium">Add Media</h4>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => document.getElementById('media-upload')?.click()}
+                disabled={isLoading || uploadInProgress}
+              >
+                <Upload className="h-4 w-4 mr-2" />
+                Choose Files
+              </Button>
+            </div>
+            
+            <input
+              id="media-upload"
+              type="file"
+              multiple
+              accept="image/*,video/*,audio/*"
+              className="hidden"
+              onChange={handleFileSelect}
             />
-          )}
+
+            {selectedFiles && selectedFiles.length > 0 && (
+              <MediaUploadDisplay
+                selectedFiles={selectedFiles}
+                uploadError={uploadError}
+                uploadSuccess={uploadSuccess}
+                uploadInProgress={uploadInProgress}
+                uploadedAssetIds={uploadedAssetIds}
+                onUploadComplete={handleMediaUploadComplete}
+                onUploadStart={handleMediaUploadStart}
+              />
+            )}
+          </div>
 
           <div className="flex justify-end gap-3 pt-4 border-t">
             <Button
