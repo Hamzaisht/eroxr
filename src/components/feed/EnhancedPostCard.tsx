@@ -59,7 +59,19 @@ export const EnhancedPostCard = ({ post, onLike, onDelete, currentUserId }: Enha
     return username.charAt(0).toUpperCase();
   };
 
-  console.log(`EnhancedPostCard - Rendering post ${post.id} with media:`, post.media_assets);
+  const hasValidMedia = post.media_assets && post.media_assets.length > 0 && 
+    post.media_assets.some(asset => asset.storage_path && asset.id);
+
+  console.log(`EnhancedPostCard - Rendering post ${post.id} with media:`, {
+    hasMediaAssets: !!post.media_assets,
+    mediaCount: post.media_assets?.length || 0,
+    hasValidMedia,
+    mediaAssets: post.media_assets?.map(asset => ({
+      id: asset.id,
+      storage_path: asset.storage_path,
+      media_type: asset.media_type
+    }))
+  });
 
   return (
     <Card className="bg-luxury-darker border-luxury-neutral/10 overflow-hidden">
@@ -68,7 +80,6 @@ export const EnhancedPostCard = ({ post, onLike, onDelete, currentUserId }: Enha
         <div className="flex items-center justify-between p-4">
           <div className="flex items-center gap-3">
             <Avatar className="h-10 w-10">
-              <AvatarImage src={post.creator.avatar_url || ""} alt={post.creator.username} />
               <AvatarFallback className="bg-luxury-darker text-luxury-neutral">
                 {getInitials(post.creator.username)}
               </AvatarFallback>
@@ -90,8 +101,8 @@ export const EnhancedPostCard = ({ post, onLike, onDelete, currentUserId }: Enha
           </div>
         )}
 
-        {/* Media - Render if media_assets exist and have items */}
-        {post.media_assets && post.media_assets.length > 0 && (
+        {/* Media - Only render if we have valid media */}
+        {hasValidMedia && (
           <div className="relative">
             <MediaRenderer
               media={post.media_assets}
@@ -99,7 +110,17 @@ export const EnhancedPostCard = ({ post, onLike, onDelete, currentUserId }: Enha
               autoPlay={false}
               controls={true}
               showWatermark={false}
+              onError={() => console.error(`EnhancedPostCard - Media render error for post ${post.id}`)}
             />
+          </div>
+        )}
+
+        {/* Debug info - remove this in production */}
+        {post.media_assets && post.media_assets.length > 0 && !hasValidMedia && (
+          <div className="px-4 py-2 bg-yellow-50 border border-yellow-200">
+            <p className="text-xs text-yellow-800">
+              Debug: Media assets found but invalid - {post.media_assets.length} assets
+            </p>
           </div>
         )}
 

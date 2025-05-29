@@ -91,6 +91,8 @@ export const CreatePostDialog = ({ open, onOpenChange, selectedFiles, onFileSele
     setIsLoading(true);
 
     try {
+      console.log("🚀 CreatePostDialog - Creating post with uploaded assets:", uploadedAssetIds);
+
       const postData = {
         content: content.trim(),
         creator_id: session.user.id,
@@ -121,12 +123,19 @@ export const CreatePostDialog = ({ open, onOpenChange, selectedFiles, onFileSele
         throw new Error(`Failed to create post: ${postError.message}`);
       }
 
+      console.log("✅ CreatePostDialog - Post created successfully:", post.id);
+
+      // Link media assets to the post
       if (uploadedAssetIds.length > 0 && post.id) {
+        console.log("🔗 CreatePostDialog - Linking", uploadedAssetIds.length, "media assets to post", post.id);
+        
         let successCount = 0;
         const linkingErrors: string[] = [];
         
         for (const assetId of uploadedAssetIds) {
           try {
+            console.log(`🔗 CreatePostDialog - Linking asset ${assetId} to post ${post.id}`);
+            
             const { data: currentAsset, error: fetchError } = await supabase
               .from('media_assets')
               .select('id, metadata, user_id, created_at')
@@ -136,6 +145,7 @@ export const CreatePostDialog = ({ open, onOpenChange, selectedFiles, onFileSele
 
             if (fetchError || !currentAsset) {
               linkingErrors.push(`Asset ${assetId}: not found or access denied`);
+              console.error(`❌ CreatePostDialog - Asset ${assetId} not found:`, fetchError);
               continue;
             }
 
@@ -157,13 +167,18 @@ export const CreatePostDialog = ({ open, onOpenChange, selectedFiles, onFileSele
 
             if (updateError) {
               linkingErrors.push(`Asset ${assetId}: ${updateError.message}`);
+              console.error(`❌ CreatePostDialog - Failed to link asset ${assetId}:`, updateError);
             } else {
               successCount++;
+              console.log(`✅ CreatePostDialog - Successfully linked asset ${assetId} to post ${post.id}`);
             }
           } catch (error) {
             linkingErrors.push(`Asset ${assetId}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+            console.error(`💥 CreatePostDialog - Error linking asset ${assetId}:`, error);
           }
         }
+        
+        console.log(`📊 CreatePostDialog - Media linking complete: ${successCount}/${uploadedAssetIds.length} successful`);
         
         if (successCount === 0 && uploadedAssetIds.length > 0) {
           toast({
@@ -176,6 +191,8 @@ export const CreatePostDialog = ({ open, onOpenChange, selectedFiles, onFileSele
             title: "Partial Success",
             description: `Post created with ${successCount}/${uploadedAssetIds.length} media files linked`,
           });
+        } else {
+          console.log("🎉 CreatePostDialog - All media assets linked successfully!");
         }
       }
 

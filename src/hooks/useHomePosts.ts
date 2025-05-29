@@ -57,11 +57,11 @@ export const useHomePosts = () => {
             try {
               console.log(`Home - Fetching media for post ${post.id}...`);
               
-              // Fix the JSON query syntax - use ->> for text extraction
+              // Primary query: Look for media assets with post_id in metadata
               const { data: primaryAssets, error: primaryError } = await supabase
                 .from('media_assets')
                 .select('*')
-                .filter('metadata->post_id', 'eq', post.id);
+                .eq('metadata->>post_id', post.id);
 
               if (primaryError) {
                 console.error("Home - Error in primary media fetch:", primaryError);
@@ -71,6 +71,7 @@ export const useHomePosts = () => {
 
               let mediaAssets = primaryAssets || [];
 
+              // Fallback query: Look for recent orphaned assets if no primary assets found
               if (mediaAssets.length === 0) {
                 console.log(`Home - No primary media found for post ${post.id}, checking fallback conditions...`);
                 
@@ -78,18 +79,18 @@ export const useHomePosts = () => {
                 const currentTime = new Date();
                 const postAgeSeconds = (currentTime.getTime() - postTime.getTime()) / 1000;
                 
+                // Only do fallback for very recent posts (within 30 seconds)
                 if (postAgeSeconds <= 30) {
                   console.log(`Home - Post ${post.id} is very recent (${postAgeSeconds.toFixed(1)} seconds old), attempting restricted fallback...`);
                   
                   const fallbackStartTime = new Date(postTime.getTime() - 30 * 1000);
                   const fallbackEndTime = new Date(postTime.getTime() + 30 * 1000);
 
-                  // Fix the JSON query syntax here too
                   const { data: recentOrphanedAssets, error: orphanedError } = await supabase
                     .from('media_assets')
                     .select('*')
                     .eq('user_id', post.creator_id)
-                    .filter('metadata->>usage', 'eq', 'post')
+                    .eq('metadata->>usage', 'post')
                     .is('metadata->>post_id', null)
                     .eq('access_level', 'public')
                     .gte('created_at', fallbackStartTime.toISOString())
@@ -119,9 +120,6 @@ export const useHomePosts = () => {
                 }
               }
 
-              // Skip avatar fetching since the column doesn't exist
-              let creatorAvatarUrl = null;
-
               const creator = post.creator && !Array.isArray(post.creator) 
                 ? post.creator 
                 : Array.isArray(post.creator) && post.creator.length > 0
@@ -133,7 +131,6 @@ export const useHomePosts = () => {
                 creator: {
                   id: creator?.id || post.creator_id || '',
                   username: creator?.username || 'Anonymous',
-                  avatar_url: creatorAvatarUrl,
                   bio: creator?.bio || '',
                   location: creator?.location || ''
                 },
@@ -150,7 +147,6 @@ export const useHomePosts = () => {
                 creator: {
                   id: post.creator_id || '',
                   username: 'Anonymous',
-                  avatar_url: null,
                   bio: '',
                   location: ''
                 },
