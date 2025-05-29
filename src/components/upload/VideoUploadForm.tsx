@@ -1,4 +1,3 @@
-
 import { useState, useRef, useEffect } from "react";
 import { useSession } from "@supabase/auth-helpers-react";
 import { useToast } from "@/hooks/use-toast";
@@ -71,11 +70,6 @@ export function VideoUploadForm({
       return;
     }
     
-    if (file.size > maxSizeInMB * 1024 * 1024) {
-      setValidationError(`File size must be less than ${maxSizeInMB}MB`);
-      return;
-    }
-    
     setVideoFile(file);
     setVideoPreview(URL.createObjectURL(file));
   };
@@ -124,8 +118,7 @@ export function VideoUploadForm({
       const result = await uploadMedia(
         videoFile,
         {
-          contentCategory: 'videos',
-          maxSizeInMB: maxSizeInMB
+          contentCategory: 'videos'
         }
       );
       

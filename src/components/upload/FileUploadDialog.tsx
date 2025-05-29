@@ -14,7 +14,6 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { UploadCloud, Loader2 } from "lucide-react";
 import { useMediaUpload } from "@/hooks/useMediaUpload";
-import { MediaAccessLevel, UploadResult } from "@/utils/media/types";
 
 interface FileUploadDialogProps {
   open: boolean;
@@ -59,12 +58,11 @@ export const FileUploadDialog = ({
 
     try {
       console.log("Starting upload process...");
-      // Using proper parameter structure
+      // Using proper parameter structure without maxSizeInMB
       const result = await uploadMedia(
         selectedFile,
         {
-          contentCategory: contentCategory,
-          maxSizeInMB: maxFileSizeMB
+          contentCategory: contentCategory
         }
       );
 
