@@ -3,10 +3,11 @@ import { useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Upload } from 'lucide-react';
-import { MediaAccessLevel } from '@/utils/media/types';
 import { FileList } from './MediaUploadSection/FileList';
 import { UploadStatus } from './MediaUploadSection/UploadStatus';
 import { useMediaUploadLogic } from './MediaUploadSection/hooks/useMediaUploadLogic';
+
+type MediaAccessLevel = 'private' | 'public' | 'subscribers_only';
 
 interface MediaUploadSectionProps {
   onUploadComplete: (urls: string[], assetIds: string[]) => void;
@@ -17,7 +18,7 @@ interface MediaUploadSectionProps {
 export const MediaUploadSection = ({
   onUploadComplete,
   onUploadStart,
-  defaultAccessLevel = MediaAccessLevel.PUBLIC
+  defaultAccessLevel = 'public'
 }: MediaUploadSectionProps) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   

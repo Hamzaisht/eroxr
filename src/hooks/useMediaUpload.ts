@@ -130,12 +130,21 @@ export const useMediaUpload = () => {
     setError(null);
   };
 
+  // Create uploadState object for backward compatibility
+  const uploadState = {
+    isUploading,
+    progress,
+    error,
+    isComplete: !isUploading && progress === 100 && !error
+  };
+
   return {
     uploadMedia,
     uploadMultiple,
     isUploading,
     progress,
     error,
+    uploadState,
     reset
   };
 };

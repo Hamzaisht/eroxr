@@ -1,8 +1,9 @@
 
 import { Label } from "@/components/ui/label";
 import { MediaUploadSection } from "@/components/post/MediaUploadSection";
-import { MediaAccessLevel } from "@/utils/media/types";
 import { AlertCircle, CheckCircle } from "lucide-react";
+
+type MediaAccessLevel = 'private' | 'public' | 'subscribers_only';
 
 interface MediaUploadDisplayProps {
   selectedFiles: FileList | null;
@@ -56,7 +57,7 @@ export const MediaUploadDisplay = ({
       <MediaUploadSection
         onUploadComplete={onUploadComplete}
         onUploadStart={onUploadStart}
-        defaultAccessLevel={MediaAccessLevel.PUBLIC}
+        defaultAccessLevel={'public' as MediaAccessLevel}
       />
     </div>
   );

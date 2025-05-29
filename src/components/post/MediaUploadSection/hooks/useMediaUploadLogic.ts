@@ -1,7 +1,8 @@
 
 import { useState } from 'react';
 import { useMediaUpload } from '@/hooks/useMediaUpload';
-import { MediaAccessLevel } from '@/utils/media/types';
+
+type MediaAccessLevel = 'private' | 'public' | 'subscribers_only';
 
 interface UseMediaUploadLogicProps {
   onUploadComplete: (urls: string[], assetIds: string[]) => void;
