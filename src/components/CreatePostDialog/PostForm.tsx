@@ -118,7 +118,7 @@ export const PostForm = ({
             <SelectValue placeholder="Select visibility" />
           </SelectTrigger>
           <SelectContent 
-            className="bg-gray-900/95 border-white/10 backdrop-blur-xl shadow-2xl"
+            className="bg-gray-900/95 border-white/10 backdrop-blur-xl shadow-2xl z-[99999]"
             position="popper"
             sideOffset={5}
           >
