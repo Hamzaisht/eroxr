@@ -83,7 +83,15 @@ export const ProfileContent = ({ profile, activeTab, isOwnProfile }: ProfileCont
               `)
               .eq('user_id', session.user.id);
             
-            const validPosts = likedPosts?.map(like => like.posts).filter(Boolean) as Post[] || [];
+            // Fix the type conversion issue by properly extracting the posts
+            const validPosts = likedPosts
+              ?.map(like => like.posts)
+              .filter((post): post is Post => post !== null && typeof post === 'object')
+              .map(post => ({
+                ...post,
+                media_assets: post.media_assets || []
+              })) || [];
+            
             setPosts(validPosts);
             setLoading(false);
             return;

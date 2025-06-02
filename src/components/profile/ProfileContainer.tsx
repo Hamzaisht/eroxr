@@ -22,6 +22,7 @@ export const ProfileContainer = ({ id, isEditing = false, setIsEditing = () => {
   const [loading, setLoading] = useState(true);
   const [isFollowing, setIsFollowing] = useState(false);
   const [followLoading, setFollowLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState("all");
   const navigate = useNavigate();
   const { toast } = useToast();
   const session = useSession();
@@ -132,7 +133,11 @@ export const ProfileContainer = ({ id, isEditing = false, setIsEditing = () => {
       {/* Profile header content */}
       
       <Tabs defaultValue="posts" className="pt-6">
-        <ProfileTabs profile={profile} />
+        <ProfileTabs 
+          activeTab={activeTab}
+          onTabChange={setActiveTab}
+          isCreator={profile?.is_creator || false}
+        />
         <TabsContent value="posts">
           {/* Posts content */}
         </TabsContent>
