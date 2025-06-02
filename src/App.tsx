@@ -7,6 +7,8 @@ import { ErrorBoundary } from "@/components/ui/ErrorBoundary";
 import ProfilePage from "@/pages/ProfilePage";
 import Home from "@/pages/Home";
 import Index from "@/pages/Index";
+import Login from "@/pages/Login";
+import Register from "@/pages/Register";
 import { SessionContextProvider } from '@supabase/auth-helpers-react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { supabase } from './integrations/supabase/client';
@@ -32,6 +34,8 @@ function App() {
               <ErrorBoundary>
                 <Routes>
                   <Route path="/" element={<Index />} />
+                  <Route path="/login" element={<Login />} />
+                  <Route path="/register" element={<Register />} />
                   <Route path="/home" element={<MainLayout />}>
                     <Route index element={<Home />} />
                   </Route>
