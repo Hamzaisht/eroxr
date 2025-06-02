@@ -239,12 +239,12 @@ export const CreatePostDialog = ({ open, onOpenChange, selectedFiles, onFileSele
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.9, y: 20 }}
             transition={{ duration: 0.4, type: "spring", stiffness: 300, damping: 30 }}
-            className="fixed top-[50vh] left-[50vw] -translate-x-1/2 -translate-y-1/2 z-[9999] w-full max-w-[600px] max-h-[85vh] overflow-hidden"
+            className="fixed inset-4 z-[9999] flex items-center justify-center p-4"
           >
             {/* Glowing Border Container */}
-            <div className="relative p-[1px] bg-gradient-to-r from-cyan-500/50 via-purple-500/50 to-pink-500/50 rounded-3xl">
+            <div className="relative w-full max-w-[600px] max-h-[90vh] p-[1px] bg-gradient-to-r from-cyan-500/50 via-purple-500/50 to-pink-500/50 rounded-3xl">
               {/* Inner Container with Glass Effect */}
-              <div className="relative bg-gradient-to-br from-gray-900/95 via-gray-800/95 to-gray-900/95 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/10">
+              <div className="relative bg-gradient-to-br from-gray-900/95 via-gray-800/95 to-gray-900/95 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/10 h-full flex flex-col">
                 
                 {/* Animated Background Glow */}
                 <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/5 via-purple-500/5 to-pink-500/5 rounded-3xl animate-pulse" />
@@ -253,7 +253,7 @@ export const CreatePostDialog = ({ open, onOpenChange, selectedFiles, onFileSele
                 <div className="relative flex flex-col h-full p-8">
                   
                   {/* Premium Header */}
-                  <div className="flex items-center justify-between mb-8">
+                  <div className="flex items-center justify-between mb-6 flex-shrink-0">
                     <div className="flex items-center gap-3">
                       <motion.div
                         animate={{ rotate: [0, 360] }}
@@ -281,7 +281,7 @@ export const CreatePostDialog = ({ open, onOpenChange, selectedFiles, onFileSele
                   </div>
                   
                   {/* Scrollable Content */}
-                  <div className="flex-1 overflow-y-auto custom-scrollbar pr-2">
+                  <div className="flex-1 overflow-y-auto custom-scrollbar pr-2 min-h-0">
                     <form onSubmit={handleSubmit} className="space-y-6">
                       
                       {/* Enhanced Post Form */}
@@ -349,7 +349,7 @@ export const CreatePostDialog = ({ open, onOpenChange, selectedFiles, onFileSele
                   </div>
 
                   {/* Premium Action Bar */}
-                  <div className="flex justify-end gap-4 pt-6 border-t border-white/10">
+                  <div className="flex justify-end gap-4 pt-6 border-t border-white/10 flex-shrink-0 mt-4">
                     <Button
                       type="button"
                       variant="outline"
