@@ -96,6 +96,10 @@ export const UniversalUploader = ({
     return <FileText className="w-5 h-5 text-pink-400" />;
   };
 
+  // Extract dropzone props to avoid conflicts with motion props
+  const dropzoneProps = getRootProps();
+  const { onClick, onKeyDown, onFocus, onBlur, ...restDropzoneProps } = dropzoneProps;
+
   return (
     <div className={`relative ${className}`}>
       {/* Dynamic background glow */}
@@ -161,15 +165,19 @@ export const UniversalUploader = ({
           </motion.div>
 
           {/* Drop zone */}
-          <motion.div
-            {...getRootProps()}
+          <div
+            onClick={onClick}
+            onKeyDown={onKeyDown}
+            onFocus={onFocus}
+            onBlur={onBlur}
+            tabIndex={0}
+            role="button"
+            aria-label="Upload files"
             className={`border-2 border-dashed rounded-xl p-6 text-center transition-all duration-300 cursor-pointer relative overflow-hidden ${
               isDragActive 
                 ? 'border-cyan-400 bg-cyan-400/5' 
                 : 'border-gray-600/50 hover:border-cyan-400/40 hover:bg-gray-800/30'
             }`}
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
           >
             <input {...getInputProps()} />
             
@@ -199,7 +207,7 @@ export const UniversalUploader = ({
                 Supported: {acceptedTypes.join(', ')} • Max {maxFiles} files
               </p>
             </div>
-          </motion.div>
+          </div>
 
           {selectedFiles.length > 0 && (
             <motion.div 
