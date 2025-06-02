@@ -115,12 +115,16 @@ export const PostForm = ({
         
         <Select value={visibility} onValueChange={setVisibility}>
           <SelectTrigger className="w-full bg-white/5 border-white/10 text-white hover:border-cyan-500/50 focus:border-cyan-500/50 focus:ring-cyan-500/20 rounded-xl backdrop-blur-sm transition-all duration-200">
-            <SelectValue />
+            <SelectValue placeholder="Select visibility" />
           </SelectTrigger>
-          <SelectContent className="bg-gray-900/95 border-white/10 backdrop-blur-xl z-[10000]">
+          <SelectContent 
+            className="bg-gray-900/95 border-white/10 backdrop-blur-xl shadow-2xl"
+            position="popper"
+            sideOffset={5}
+          >
             <SelectItem 
               value="public" 
-              className="text-white hover:bg-white/10 focus:bg-white/10 cursor-pointer"
+              className="text-white hover:bg-white/10 focus:bg-white/10 cursor-pointer py-3 px-4"
             >
               <div className="flex items-center gap-3">
                 <Globe className="h-4 w-4 text-green-400" />
@@ -132,7 +136,7 @@ export const PostForm = ({
             </SelectItem>
             <SelectItem 
               value="subscribers_only" 
-              className="text-white hover:bg-white/10 focus:bg-white/10 cursor-pointer"
+              className="text-white hover:bg-white/10 focus:bg-white/10 cursor-pointer py-3 px-4"
             >
               <div className="flex items-center gap-3">
                 <Users className="h-4 w-4 text-purple-400" />
@@ -144,7 +148,7 @@ export const PostForm = ({
             </SelectItem>
             <SelectItem 
               value="private" 
-              className="text-white hover:bg-white/10 focus:bg-white/10 cursor-pointer"
+              className="text-white hover:bg-white/10 focus:bg-white/10 cursor-pointer py-3 px-4"
             >
               <div className="flex items-center gap-3">
                 <Lock className="h-4 w-4 text-orange-400" />
@@ -156,7 +160,7 @@ export const PostForm = ({
             </SelectItem>
             <SelectItem 
               value="hidden" 
-              className="text-white hover:bg-white/10 focus:bg-white/10 cursor-pointer"
+              className="text-white hover:bg-white/10 focus:bg-white/10 cursor-pointer py-3 px-4"
             >
               <div className="flex items-center gap-3">
                 <EyeOff className="h-4 w-4 text-red-400" />
