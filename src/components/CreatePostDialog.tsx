@@ -1,8 +1,7 @@
 
-
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Upload } from "lucide-react";
+import { Upload, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { PostForm } from "./CreatePostDialog/PostForm";
 import { MediaUploadDisplay } from "./CreatePostDialog/MediaUploadDisplay";
@@ -218,15 +217,33 @@ export const CreatePostDialog = ({ open, onOpenChange, selectedFiles, onFileSele
     }
   };
 
+  if (!open) return null;
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent 
-        className="fixed top-[50%] left-[50%] translate-x-[-50%] translate-y-[-50%] z-[9999] bg-background p-4 rounded-2xl shadow-xl w-full max-w-[500px] max-h-[70vh] overflow-hidden flex flex-col"
-      >
-        <DialogHeader className="flex-shrink-0">
-          <DialogTitle>Create New Post</DialogTitle>
-        </DialogHeader>
+    <>
+      {/* Backdrop */}
+      <div 
+        className="fixed inset-0 bg-black/60 z-[9998]" 
+        onClick={() => onOpenChange(false)}
+      />
+      
+      {/* Modal */}
+      <div className="fixed top-[50%] left-[50%] translate-x-[-50%] translate-y-[-50%] z-[9999] bg-background p-6 rounded-2xl shadow-2xl w-full max-w-[500px] max-h-[80vh] overflow-hidden flex flex-col">
         
+        {/* Header */}
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-lg font-semibold">Create New Post</h2>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => onOpenChange(false)}
+            className="h-8 w-8 p-0"
+          >
+            <X className="h-4 w-4" />
+          </Button>
+        </div>
+        
+        {/* Content */}
         <div className="flex-1 overflow-y-auto">
           <form onSubmit={handleSubmit} className="space-y-4">
             <PostForm
@@ -279,7 +296,8 @@ export const CreatePostDialog = ({ open, onOpenChange, selectedFiles, onFileSele
           </form>
         </div>
 
-        <div className="flex justify-end gap-3 pt-4 border-t flex-shrink-0">
+        {/* Footer */}
+        <div className="flex justify-end gap-3 pt-6 border-t">
           <Button
             type="button"
             variant="outline"
@@ -296,8 +314,7 @@ export const CreatePostDialog = ({ open, onOpenChange, selectedFiles, onFileSele
             {isLoading ? "Creating..." : uploadInProgress ? "Uploading..." : "Create Post"}
           </Button>
         </div>
-      </DialogContent>
-    </Dialog>
+      </div>
+    </>
   );
 };
-
