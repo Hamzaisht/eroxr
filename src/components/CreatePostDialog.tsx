@@ -1,5 +1,3 @@
-
-import { Dialog, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Upload, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -221,13 +219,13 @@ export const CreatePostDialog = ({ open, onOpenChange, selectedFiles, onFileSele
 
   return (
     <>
-      {/* Backdrop */}
+      {/* BACKDROP */}
       <div 
         className="fixed inset-0 bg-black/60 z-[9998]" 
         onClick={() => onOpenChange(false)}
       />
       
-      {/* Modal */}
+      {/* MODAL */}
       <div className="fixed top-[50%] left-[50%] translate-x-[-50%] translate-y-[-50%] z-[9999] bg-background p-6 rounded-2xl shadow-2xl w-full max-w-[500px] max-h-[80vh] overflow-hidden flex flex-col">
         
         {/* Header */}
