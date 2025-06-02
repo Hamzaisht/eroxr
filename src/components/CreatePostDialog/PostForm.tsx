@@ -113,11 +113,11 @@ export const PostForm = ({
           Post Visibility
         </Label>
         
-        <Select value={visibility} onValueChange={(value: "public" | "subscribers_only" | "private" | "hidden") => setVisibility(value)}>
-          <SelectTrigger className="bg-white/5 border-white/10 text-white hover:border-cyan-500/50 focus:border-cyan-500/50 focus:ring-cyan-500/20 rounded-xl backdrop-blur-sm transition-all duration-200">
+        <Select value={visibility} onValueChange={setVisibility}>
+          <SelectTrigger className="w-full bg-white/5 border-white/10 text-white hover:border-cyan-500/50 focus:border-cyan-500/50 focus:ring-cyan-500/20 rounded-xl backdrop-blur-sm transition-all duration-200">
             <SelectValue />
           </SelectTrigger>
-          <SelectContent className="bg-gray-900/95 border-white/10 backdrop-blur-xl">
+          <SelectContent className="bg-gray-900/95 border-white/10 backdrop-blur-xl z-[10000]">
             <SelectItem 
               value="public" 
               className="text-white hover:bg-white/10 focus:bg-white/10 cursor-pointer"
