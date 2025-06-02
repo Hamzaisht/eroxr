@@ -1,11 +1,12 @@
 
 
 import { Button } from "@/components/ui/button";
-import { Upload, X } from "lucide-react";
+import { Upload, X, Sparkles, Image, Video, Mic } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { PostForm } from "./CreatePostDialog/PostForm";
 import { MediaUploadDisplay } from "./CreatePostDialog/MediaUploadDisplay";
 import { useCreatePost } from "./CreatePostDialog/hooks/useCreatePost";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface CreatePostDialogProps {
   open: boolean;
@@ -220,102 +221,201 @@ export const CreatePostDialog = ({ open, onOpenChange, selectedFiles, onFileSele
   if (!open) return null;
 
   return (
-    <>
-      {/* BACKDROP */}
-      <div 
-        className="fixed inset-0 bg-black/60 z-[9998]" 
-        onClick={() => onOpenChange(false)}
-      />
-      
-      {/* MODAL - Centered in current viewport using viewport units */}
-      <div className="fixed top-[50vh] left-[50vw] -translate-x-1/2 -translate-y-1/2 z-[9999] bg-background p-6 rounded-2xl shadow-2xl w-full max-w-[500px] max-h-[80vh] overflow-hidden flex flex-col">
-        
-        {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-lg font-semibold">Create New Post</h2>
-          <Button
-            variant="ghost"
-            size="sm"
+    <AnimatePresence mode="wait">
+      {open && (
+        <>
+          {/* ANIMATED BACKDROP */}
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.3 }}
+            className="fixed inset-0 bg-gradient-to-br from-black/80 via-purple-900/20 to-black/80 backdrop-blur-sm z-[9998]" 
             onClick={() => onOpenChange(false)}
-            className="h-8 w-8 p-0"
+          />
+          
+          {/* PREMIUM MODAL - Design Studio Aesthetic */}
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.9, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.9, y: 20 }}
+            transition={{ duration: 0.4, type: "spring", stiffness: 300, damping: 30 }}
+            className="fixed top-[50vh] left-[50vw] -translate-x-1/2 -translate-y-1/2 z-[9999] w-full max-w-[600px] max-h-[85vh] overflow-hidden"
           >
-            <X className="h-4 w-4" />
-          </Button>
-        </div>
-        
-        {/* Content */}
-        <div className="flex-1 overflow-y-auto">
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <PostForm
-              content={content}
-              setContent={setContent}
-              visibility={visibility}
-              setVisibility={setVisibility}
-              characterLimit={characterLimit}
-            />
+            {/* Glowing Border Container */}
+            <div className="relative p-[1px] bg-gradient-to-r from-cyan-500/50 via-purple-500/50 to-pink-500/50 rounded-3xl">
+              {/* Inner Container with Glass Effect */}
+              <div className="relative bg-gradient-to-br from-gray-900/95 via-gray-800/95 to-gray-900/95 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/10">
+                
+                {/* Animated Background Glow */}
+                <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/5 via-purple-500/5 to-pink-500/5 rounded-3xl animate-pulse" />
+                
+                {/* Content Container */}
+                <div className="relative flex flex-col h-full p-8">
+                  
+                  {/* Premium Header */}
+                  <div className="flex items-center justify-between mb-8">
+                    <div className="flex items-center gap-3">
+                      <motion.div
+                        animate={{ rotate: [0, 360] }}
+                        transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
+                        className="p-2 bg-gradient-to-r from-cyan-500 to-purple-500 rounded-xl"
+                      >
+                        <Sparkles className="h-5 w-5 text-white" />
+                      </motion.div>
+                      <div>
+                        <h2 className="text-2xl font-bold bg-gradient-to-r from-white via-cyan-200 to-purple-200 bg-clip-text text-transparent">
+                          Create New Post
+                        </h2>
+                        <p className="text-sm text-gray-400 mt-1">Share your creative vision with the world</p>
+                      </div>
+                    </div>
+                    
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => onOpenChange(false)}
+                      className="h-10 w-10 p-0 hover:bg-white/10 rounded-full transition-all duration-200"
+                    >
+                      <X className="h-5 w-5 text-gray-300" />
+                    </Button>
+                  </div>
+                  
+                  {/* Scrollable Content */}
+                  <div className="flex-1 overflow-y-auto custom-scrollbar pr-2">
+                    <form onSubmit={handleSubmit} className="space-y-6">
+                      
+                      {/* Enhanced Post Form */}
+                      <div className="space-y-6">
+                        <PostForm
+                          content={content}
+                          setContent={setContent}
+                          visibility={visibility}
+                          setVisibility={setVisibility}
+                          characterLimit={characterLimit}
+                        />
+                      </div>
 
-            {/* Media Upload Section - Compact Design */}
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <h4 className="text-sm font-medium">Add Media</h4>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => document.getElementById('media-upload')?.click()}
-                  disabled={isLoading || uploadInProgress}
-                >
-                  <Upload className="h-4 w-4 mr-2" />
-                  Choose Files
-                </Button>
-              </div>
-              
-              <input
-                id="media-upload"
-                type="file"
-                multiple
-                accept="image/*,video/*,audio/*"
-                className="hidden"
-                onChange={handleFileSelect}
-              />
+                      {/* Premium Media Upload Section */}
+                      <div className="space-y-4">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <div className="p-1.5 bg-gradient-to-r from-cyan-500/20 to-purple-500/20 rounded-lg">
+                              <Upload className="h-4 w-4 text-cyan-400" />
+                            </div>
+                            <h4 className="text-lg font-semibold text-white">Add Media</h4>
+                          </div>
+                          
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => document.getElementById('media-upload')?.click()}
+                            disabled={isLoading || uploadInProgress}
+                            className="bg-gradient-to-r from-cyan-500/10 to-purple-500/10 border-cyan-500/30 hover:border-cyan-400/50 text-cyan-300 hover:text-cyan-200 transition-all duration-200"
+                          >
+                            <div className="flex items-center gap-2">
+                              <Image className="h-4 w-4" />
+                              <Video className="h-4 w-4" />
+                              <Mic className="h-4 w-4" />
+                            </div>
+                            <span className="ml-2">Choose Files</span>
+                          </Button>
+                        </div>
+                        
+                        <input
+                          id="media-upload"
+                          type="file"
+                          multiple
+                          accept="image/*,video/*,audio/*"
+                          className="hidden"
+                          onChange={handleFileSelect}
+                        />
 
-              {selectedFiles && selectedFiles.length > 0 && (
-                <div className="max-h-[120px] overflow-y-auto">
-                  <MediaUploadDisplay
-                    selectedFiles={selectedFiles}
-                    uploadError={uploadError}
-                    uploadSuccess={uploadSuccess}
-                    uploadInProgress={uploadInProgress}
-                    uploadedAssetIds={uploadedAssetIds}
-                    onUploadComplete={handleMediaUploadComplete}
-                    onUploadStart={handleMediaUploadStart}
-                  />
+                        {selectedFiles && selectedFiles.length > 0 && (
+                          <div className="max-h-[200px] overflow-y-auto custom-scrollbar">
+                            <MediaUploadDisplay
+                              selectedFiles={selectedFiles}
+                              uploadError={uploadError}
+                              uploadSuccess={uploadSuccess}
+                              uploadInProgress={uploadInProgress}
+                              uploadedAssetIds={uploadedAssetIds}
+                              onUploadComplete={handleMediaUploadComplete}
+                              onUploadStart={handleMediaUploadStart}
+                            />
+                          </div>
+                        )}
+                      </div>
+                    </form>
+                  </div>
+
+                  {/* Premium Action Bar */}
+                  <div className="flex justify-end gap-4 pt-6 border-t border-white/10">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => onOpenChange(false)}
+                      disabled={isLoading || uploadInProgress}
+                      className="bg-transparent border-gray-600 text-gray-300 hover:bg-white/5 hover:text-white transition-all duration-200"
+                    >
+                      Cancel
+                    </Button>
+                    <Button 
+                      onClick={handleSubmit}
+                      disabled={!canSubmit}
+                      className="min-w-[120px] bg-gradient-to-r from-cyan-500 to-purple-500 hover:from-cyan-400 hover:to-purple-400 text-white font-semibold shadow-lg hover:shadow-cyan-500/25 transition-all duration-200"
+                    >
+                      {isLoading ? (
+                        <div className="flex items-center gap-2">
+                          <motion.div
+                            animate={{ rotate: 360 }}
+                            transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                            className="h-4 w-4 border-2 border-white/30 border-t-white rounded-full"
+                          />
+                          Creating...
+                        </div>
+                      ) : uploadInProgress ? (
+                        <div className="flex items-center gap-2">
+                          <motion.div
+                            animate={{ scale: [1, 1.2, 1] }}
+                            transition={{ duration: 1, repeat: Infinity }}
+                          >
+                            <Upload className="h-4 w-4" />
+                          </motion.div>
+                          Uploading...
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-2">
+                          <Sparkles className="h-4 w-4" />
+                          Create Post
+                        </div>
+                      )}
+                    </Button>
+                  </div>
                 </div>
-              )}
+              </div>
             </div>
-          </form>
-        </div>
-
-        {/* Footer */}
-        <div className="flex justify-end gap-3 pt-6 border-t">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => onOpenChange(false)}
-            disabled={isLoading || uploadInProgress}
-          >
-            Cancel
-          </Button>
-          <Button 
-            onClick={handleSubmit}
-            disabled={!canSubmit}
-            className="min-w-[100px]"
-          >
-            {isLoading ? "Creating..." : uploadInProgress ? "Uploading..." : "Create Post"}
-          </Button>
-        </div>
-      </div>
-    </>
+          </motion.div>
+        </>
+      )}
+    </AnimatePresence>
   );
 };
+
+<style jsx global>{`
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 3px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: linear-gradient(to bottom, #06b6d4, #8b5cf6);
+    border-radius: 3px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(to bottom, #0891b2, #7c3aed);
+  }
+`}</style>
 
