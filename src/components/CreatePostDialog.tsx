@@ -1,4 +1,5 @@
 
+
 import { Button } from "@/components/ui/button";
 import { Upload, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -226,8 +227,8 @@ export const CreatePostDialog = ({ open, onOpenChange, selectedFiles, onFileSele
         onClick={() => onOpenChange(false)}
       />
       
-      {/* MODAL - Centered in current viewport */}
-      <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[9999] bg-background p-6 rounded-2xl shadow-2xl w-full max-w-[500px] max-h-[80vh] overflow-hidden flex flex-col">
+      {/* MODAL - Centered in current viewport using viewport units */}
+      <div className="fixed top-[50vh] left-[50vw] -translate-x-1/2 -translate-y-1/2 z-[9999] bg-background p-6 rounded-2xl shadow-2xl w-full max-w-[500px] max-h-[80vh] overflow-hidden flex flex-col">
         
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
@@ -317,3 +318,4 @@ export const CreatePostDialog = ({ open, onOpenChange, selectedFiles, onFileSele
     </>
   );
 };
+
