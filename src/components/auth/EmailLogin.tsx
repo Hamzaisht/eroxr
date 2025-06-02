@@ -1,8 +1,8 @@
-
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { motion } from "framer-motion";
+import { useNavigate } from "react-router-dom";
 import { SocialLoginSection } from "./sections/SocialLoginSection";
 import { DividerWithText } from "./sections/DividerWithText";
 import { LoginForm } from "./sections/LoginForm";
@@ -12,9 +12,22 @@ import { AnimatedHeader } from "./login/AnimatedHeader";
 import { AuthFooter } from "./login/AuthFooter";
 import { FloatingParticles } from "./login/FloatingParticles";
 
-export const EmailLogin = ({ onToggleMode }: { onToggleMode: () => void }) => {
+interface EmailLoginProps {
+  onToggleMode?: () => void;
+}
+
+export const EmailLogin = ({ onToggleMode }: EmailLoginProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+  const navigate = useNavigate();
+
+  const handleToggleMode = () => {
+    if (onToggleMode) {
+      onToggleMode();
+    } else {
+      navigate('/register');
+    }
+  };
 
   const handleSubmit = async (values: { identifier: string; password: string; rememberMe: boolean }) => {
     try {
@@ -159,7 +172,7 @@ export const EmailLogin = ({ onToggleMode }: { onToggleMode: () => void }) => {
             <LoginForm onSubmit={handleSubmit} isLoading={isLoading} />
           </motion.div>
 
-          <AuthFooter onToggleMode={onToggleMode} isLoading={isLoading} />
+          <AuthFooter onToggleMode={handleToggleMode} isLoading={isLoading} />
 
           <motion.p 
             className="text-xs text-center text-gray-500"

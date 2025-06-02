@@ -10,7 +10,7 @@ import { Toaster } from '@/components/ui/toaster';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import Index from '@/pages/Index';
 import Home from '@/pages/Home';
-import Login from '@/pages/Login';
+import { EmailLogin } from '@/components/auth/EmailLogin';
 import Register from '@/pages/Register';
 import Profile from '@/pages/Profile';
 import Dating from '@/pages/Dating';
@@ -56,7 +56,7 @@ function App() {
                 
                 {/* Auth routes */}
                 <Route element={<AuthLayout />}>
-                  <Route path="/login" element={<Login />} />
+                  <Route path="/login" element={<EmailLogin onToggleMode={() => window.location.href = '/register'} />} />
                   <Route path="/register" element={<Register />} />
                 </Route>
                 
