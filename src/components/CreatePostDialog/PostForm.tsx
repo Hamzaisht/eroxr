@@ -1,16 +1,15 @@
 
-
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { motion } from "framer-motion";
-import { Globe, Lock, Users, Sparkles } from "lucide-react";
+import { Globe, Lock, Users, Sparkles, EyeOff } from "lucide-react";
 
 interface PostFormProps {
   content: string;
   setContent: (content: string) => void;
-  visibility: "public" | "subscribers_only";
-  setVisibility: (visibility: "public" | "subscribers_only") => void;
+  visibility: "public" | "subscribers_only" | "private" | "hidden";
+  setVisibility: (visibility: "public" | "subscribers_only" | "private" | "hidden") => void;
   characterLimit: number;
 }
 
@@ -23,6 +22,21 @@ export const PostForm = ({
 }: PostFormProps) => {
   const charactersUsed = content.length;
   const warningThreshold = characterLimit * 0.9;
+
+  const getVisibilityIcon = () => {
+    switch (visibility) {
+      case "public":
+        return <Globe className="h-4 w-4 text-green-400" />;
+      case "subscribers_only":
+        return <Users className="h-4 w-4 text-purple-400" />;
+      case "private":
+        return <Lock className="h-4 w-4 text-orange-400" />;
+      case "hidden":
+        return <EyeOff className="h-4 w-4 text-red-400" />;
+      default:
+        return <Globe className="h-4 w-4 text-green-400" />;
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -95,15 +109,11 @@ export const PostForm = ({
         className="space-y-3"
       >
         <Label htmlFor="visibility" className="text-sm font-medium text-gray-300 flex items-center gap-2">
-          {visibility === "public" ? (
-            <Globe className="h-4 w-4 text-green-400" />
-          ) : (
-            <Users className="h-4 w-4 text-purple-400" />
-          )}
+          {getVisibilityIcon()}
           Post Visibility
         </Label>
         
-        <Select value={visibility} onValueChange={(value: "public" | "subscribers_only") => setVisibility(value)}>
+        <Select value={visibility} onValueChange={(value: "public" | "subscribers_only" | "private" | "hidden") => setVisibility(value)}>
           <SelectTrigger className="bg-white/5 border-white/10 text-white hover:border-cyan-500/50 focus:border-cyan-500/50 focus:ring-cyan-500/20 rounded-xl backdrop-blur-sm transition-all duration-200">
             <SelectValue />
           </SelectTrigger>
@@ -132,10 +142,33 @@ export const PostForm = ({
                 </div>
               </div>
             </SelectItem>
+            <SelectItem 
+              value="private" 
+              className="text-white hover:bg-white/10 focus:bg-white/10 cursor-pointer"
+            >
+              <div className="flex items-center gap-3">
+                <Lock className="h-4 w-4 text-orange-400" />
+                <div>
+                  <div className="font-medium">Private</div>
+                  <div className="text-xs text-gray-400">Only subscribers can see this post</div>
+                </div>
+              </div>
+            </SelectItem>
+            <SelectItem 
+              value="hidden" 
+              className="text-white hover:bg-white/10 focus:bg-white/10 cursor-pointer"
+            >
+              <div className="flex items-center gap-3">
+                <EyeOff className="h-4 w-4 text-red-400" />
+                <div>
+                  <div className="font-medium">Hidden</div>
+                  <div className="text-xs text-gray-400">Only chosen followers can see this</div>
+                </div>
+              </div>
+            </SelectItem>
           </SelectContent>
         </Select>
       </motion.div>
     </div>
   );
 };
-

@@ -6,7 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 
 export const useCreatePost = () => {
   const [content, setContent] = useState("");
-  const [visibility, setVisibility] = useState<"public" | "subscribers_only">("public");
+  const [visibility, setVisibility] = useState<"public" | "subscribers_only" | "private" | "hidden">("public");
   const [isLoading, setIsLoading] = useState(false);
   const [uploadedAssetIds, setUploadedAssetIds] = useState<string[]>([]);
   const [uploadInProgress, setUploadInProgress] = useState(false);
