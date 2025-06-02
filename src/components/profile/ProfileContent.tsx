@@ -2,9 +2,7 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
-import { MediaRenderer } from "@/components/media/MediaRenderer";
 import { PostCard } from "@/components/profile/PostCard";
-import { Lock, Heart, Eye, MessageCircle } from "lucide-react";
 import { useSession } from "@supabase/auth-helpers-react";
 
 interface ProfileData {
@@ -49,7 +47,7 @@ export const ProfileContent = ({ profile, activeTab, isOwnProfile }: ProfileCont
         .from('posts')
         .select(`
           *,
-          media_assets:media_assets!inner(*)
+          media_assets(*)
         `)
         .eq('creator_id', profile.id)
         .order('created_at', { ascending: false });
@@ -63,13 +61,13 @@ export const ProfileContent = ({ profile, activeTab, isOwnProfile }: ProfileCont
           query = query.or('visibility.eq.subscribers_only,is_ppv.eq.true');
           break;
         case 'photos':
-          query = query.eq('media_assets.media_type', 'image');
+          // This would need a join with media_assets to filter by type
           break;
         case 'videos':
-          query = query.eq('media_assets.media_type', 'video');
+          // This would need a join with media_assets to filter by type
           break;
         case 'audio':
-          query = query.eq('media_assets.media_type', 'audio');
+          // This would need a join with media_assets to filter by type
           break;
         case 'liked':
           // This would require a different query structure
@@ -80,12 +78,13 @@ export const ProfileContent = ({ profile, activeTab, isOwnProfile }: ProfileCont
                 post_id,
                 posts:posts(
                   *,
-                  media_assets:media_assets(*)
+                  media_assets(*)
                 )
               `)
               .eq('user_id', session.user.id);
             
-            setPosts(likedPosts?.map(like => like.posts).filter(Boolean) || []);
+            const validPosts = likedPosts?.map(like => like.posts).filter(Boolean) as Post[] || [];
+            setPosts(validPosts);
             setLoading(false);
             return;
           }
@@ -111,21 +110,13 @@ export const ProfileContent = ({ profile, activeTab, isOwnProfile }: ProfileCont
 
       if (error) throw error;
 
-      // Process posts to group media assets by post_id
+      // Process posts to ensure proper media assets structure
       const processedPosts = data?.map(post => ({
         ...post,
-        media_assets: data.filter(p => p.id === post.id)
-          .map(p => p.media_assets)
-          .flat()
-          .filter(asset => asset.metadata?.post_id === post.id)
+        media_assets: post.media_assets || []
       })) || [];
 
-      // Remove duplicates
-      const uniquePosts = processedPosts.filter((post, index, self) => 
-        index === self.findIndex(p => p.id === post.id)
-      );
-
-      setPosts(uniquePosts);
+      setPosts(processedPosts as Post[]);
     } catch (error) {
       console.error('Error fetching content:', error);
       setPosts([]);
