@@ -102,8 +102,8 @@ export const UniversalUploader = ({
       <motion.div
         className="absolute -inset-6 bg-gradient-to-r from-cyan-500/10 via-purple-500/10 to-pink-500/10 rounded-3xl blur-2xl opacity-40"
         animate={{
-          x: (mousePosition.x - window.innerWidth / 2) * 0.01,
-          y: (mousePosition.y - window.innerHeight / 2) * 0.01,
+          x: (mousePosition.x - (typeof window !== 'undefined' ? window.innerWidth / 2 : 0)) * 0.01,
+          y: (mousePosition.y - (typeof window !== 'undefined' ? window.innerHeight / 2 : 0)) * 0.01,
           rotate: [0, 1, -1, 0],
         }}
         transition={{ 
