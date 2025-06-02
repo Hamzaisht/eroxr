@@ -1,15 +1,16 @@
 
 import { Upload } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { MouseEventHandler, KeyboardEventHandler, FocusEventHandler } from 'react';
 
 interface DropZoneProps {
   isDragActive: boolean;
   acceptedTypes: string[];
   maxFiles: number;
-  onClick: () => void;
-  onKeyDown: (e: React.KeyboardEvent) => void;
-  onFocus: () => void;
-  onBlur: () => void;
+  onClick: MouseEventHandler<HTMLElement>;
+  onKeyDown: KeyboardEventHandler<HTMLElement>;
+  onFocus: FocusEventHandler<HTMLElement>;
+  onBlur: FocusEventHandler<HTMLElement>;
   getInputProps: () => any;
 }
 
