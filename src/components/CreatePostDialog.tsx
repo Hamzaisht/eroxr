@@ -219,7 +219,7 @@ export const CreatePostDialog = ({ open, onOpenChange, selectedFiles, onFileSele
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[900px] max-w-[95vw] max-h-[85vh] overflow-hidden flex flex-col">
+      <DialogContent className="sm:max-w-[500px] max-w-[90vw] max-h-[75vh] overflow-hidden flex flex-col">
         <DialogHeader className="flex-shrink-0">
           <DialogTitle>Create New Post</DialogTitle>
         </DialogHeader>
@@ -260,7 +260,7 @@ export const CreatePostDialog = ({ open, onOpenChange, selectedFiles, onFileSele
               />
 
               {selectedFiles && selectedFiles.length > 0 && (
-                <div className="max-h-[300px] overflow-y-auto">
+                <div className="max-h-[200px] overflow-y-auto">
                   <MediaUploadDisplay
                     selectedFiles={selectedFiles}
                     uploadError={uploadError}
