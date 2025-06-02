@@ -219,76 +219,80 @@ export const CreatePostDialog = ({ open, onOpenChange, selectedFiles, onFileSele
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
+      <DialogContent className="sm:max-w-[900px] max-w-[95vw] max-h-[85vh] overflow-hidden flex flex-col">
+        <DialogHeader className="flex-shrink-0">
           <DialogTitle>Create New Post</DialogTitle>
         </DialogHeader>
         
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <PostForm
-            content={content}
-            setContent={setContent}
-            visibility={visibility}
-            setVisibility={setVisibility}
-            characterLimit={characterLimit}
-          />
-
-          {/* Media Upload Section - Always visible */}
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h4 className="text-sm font-medium">Add Media</h4>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => document.getElementById('media-upload')?.click()}
-                disabled={isLoading || uploadInProgress}
-              >
-                <Upload className="h-4 w-4 mr-2" />
-                Choose Files
-              </Button>
-            </div>
-            
-            <input
-              id="media-upload"
-              type="file"
-              multiple
-              accept="image/*,video/*,audio/*"
-              className="hidden"
-              onChange={handleFileSelect}
+        <div className="flex-1 overflow-y-auto">
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <PostForm
+              content={content}
+              setContent={setContent}
+              visibility={visibility}
+              setVisibility={setVisibility}
+              characterLimit={characterLimit}
             />
 
-            {selectedFiles && selectedFiles.length > 0 && (
-              <MediaUploadDisplay
-                selectedFiles={selectedFiles}
-                uploadError={uploadError}
-                uploadSuccess={uploadSuccess}
-                uploadInProgress={uploadInProgress}
-                uploadedAssetIds={uploadedAssetIds}
-                onUploadComplete={handleMediaUploadComplete}
-                onUploadStart={handleMediaUploadStart}
+            {/* Media Upload Section - Compact Design */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <h4 className="text-sm font-medium">Add Media</h4>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => document.getElementById('media-upload')?.click()}
+                  disabled={isLoading || uploadInProgress}
+                >
+                  <Upload className="h-4 w-4 mr-2" />
+                  Choose Files
+                </Button>
+              </div>
+              
+              <input
+                id="media-upload"
+                type="file"
+                multiple
+                accept="image/*,video/*,audio/*"
+                className="hidden"
+                onChange={handleFileSelect}
               />
-            )}
-          </div>
 
-          <div className="flex justify-end gap-3 pt-4 border-t">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => onOpenChange(false)}
-              disabled={isLoading || uploadInProgress}
-            >
-              Cancel
-            </Button>
-            <Button 
-              type="submit" 
-              disabled={!canSubmit}
-              className="min-w-[100px]"
-            >
-              {isLoading ? "Creating..." : uploadInProgress ? "Uploading..." : "Create Post"}
-            </Button>
-          </div>
-        </form>
+              {selectedFiles && selectedFiles.length > 0 && (
+                <div className="max-h-[300px] overflow-y-auto">
+                  <MediaUploadDisplay
+                    selectedFiles={selectedFiles}
+                    uploadError={uploadError}
+                    uploadSuccess={uploadSuccess}
+                    uploadInProgress={uploadInProgress}
+                    uploadedAssetIds={uploadedAssetIds}
+                    onUploadComplete={handleMediaUploadComplete}
+                    onUploadStart={handleMediaUploadStart}
+                  />
+                </div>
+              )}
+            </div>
+          </form>
+        </div>
+
+        <div className="flex justify-end gap-3 pt-4 border-t flex-shrink-0">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => onOpenChange(false)}
+            disabled={isLoading || uploadInProgress}
+          >
+            Cancel
+          </Button>
+          <Button 
+            onClick={handleSubmit}
+            disabled={!canSubmit}
+            className="min-w-[100px]"
+          >
+            {isLoading ? "Creating..." : uploadInProgress ? "Uploading..." : "Create Post"}
+          </Button>
+        </div>
       </DialogContent>
     </Dialog>
   );

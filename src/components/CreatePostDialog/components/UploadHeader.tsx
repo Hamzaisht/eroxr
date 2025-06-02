@@ -1,6 +1,6 @@
 
 import { motion } from "framer-motion";
-import { Zap } from "lucide-react";
+import { Upload } from "lucide-react";
 
 interface UploadHeaderProps {
   fileCount: number;
@@ -9,17 +9,16 @@ interface UploadHeaderProps {
 export const UploadHeader = ({ fileCount }: UploadHeaderProps) => {
   return (
     <motion.div 
-      initial={{ opacity: 0, y: -20 }}
+      initial={{ opacity: 0, y: -10 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.2, duration: 0.6 }}
-      className="text-center mb-8"
+      transition={{ delay: 0.1, duration: 0.4 }}
+      className="text-center mb-4"
     >
-      <div className="flex justify-center items-center gap-3 mb-4">
+      <div className="flex justify-center items-center gap-2 mb-2">
         <motion.div
-          className="flex items-center justify-center w-12 h-12 rounded-full bg-gradient-to-r from-cyan-500 to-purple-500"
+          className="flex items-center justify-center w-8 h-8 rounded-full bg-gradient-to-r from-blue-500 to-purple-500"
           animate={{
-            scale: [1, 1.1, 1],
-            rotate: [0, 5, -5, 0]
+            scale: [1, 1.05, 1],
           }}
           transition={{
             duration: 2,
@@ -27,27 +26,14 @@ export const UploadHeader = ({ fileCount }: UploadHeaderProps) => {
             ease: "easeInOut"
           }}
         >
-          <Zap className="w-6 h-6 text-white" />
+          <Upload className="w-4 h-4 text-white" />
         </motion.div>
         <div>
-          <motion.h2
-            className="text-2xl font-bold bg-gradient-to-r from-cyan-400 via-purple-400 to-pink-400 bg-clip-text text-transparent"
-            animate={{
-              backgroundPosition: ['0% 50%', '100% 50%', '0% 50%'],
-            }}
-            transition={{
-              duration: 3,
-              repeat: Infinity,
-              ease: "easeInOut"
-            }}
-            style={{
-              backgroundSize: '200% auto',
-            }}
-          >
-            Media Upload Portal
-          </motion.h2>
-          <p className="text-gray-300">
-            {fileCount} file{fileCount > 1 ? 's' : ''} ready for processing
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+            Media Upload
+          </h3>
+          <p className="text-sm text-gray-600 dark:text-gray-300">
+            {fileCount} file{fileCount > 1 ? 's' : ''} selected
           </p>
         </div>
       </div>
