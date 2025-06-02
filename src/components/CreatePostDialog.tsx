@@ -1,4 +1,3 @@
-
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Upload } from "lucide-react";
@@ -219,7 +218,7 @@ export const CreatePostDialog = ({ open, onOpenChange, selectedFiles, onFileSele
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px] max-w-[90vw] max-h-[75vh] overflow-hidden flex flex-col">
+      <DialogContent className="sm:max-w-[500px] max-w-[90vw] max-h-[60vh] overflow-hidden flex flex-col fixed top-[50%] left-[50%] translate-x-[-50%] translate-y-[-50%] z-50">
         <DialogHeader className="flex-shrink-0">
           <DialogTitle>Create New Post</DialogTitle>
         </DialogHeader>
@@ -260,7 +259,7 @@ export const CreatePostDialog = ({ open, onOpenChange, selectedFiles, onFileSele
               />
 
               {selectedFiles && selectedFiles.length > 0 && (
-                <div className="max-h-[200px] overflow-y-auto">
+                <div className="max-h-[150px] overflow-y-auto">
                   <MediaUploadDisplay
                     selectedFiles={selectedFiles}
                     uploadError={uploadError}
