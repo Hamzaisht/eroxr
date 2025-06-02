@@ -1,5 +1,4 @@
 
-
 import { Button } from "@/components/ui/button";
 import { Upload, X, Sparkles, Image, Video, Mic } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -401,21 +400,3 @@ export const CreatePostDialog = ({ open, onOpenChange, selectedFiles, onFileSele
     </AnimatePresence>
   );
 };
-
-<style jsx global>{`
-  .custom-scrollbar::-webkit-scrollbar {
-    width: 6px;
-  }
-  .custom-scrollbar::-webkit-scrollbar-track {
-    background: rgba(255, 255, 255, 0.05);
-    border-radius: 3px;
-  }
-  .custom-scrollbar::-webkit-scrollbar-thumb {
-    background: linear-gradient(to bottom, #06b6d4, #8b5cf6);
-    border-radius: 3px;
-  }
-  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-    background: linear-gradient(to bottom, #0891b2, #7c3aed);
-  }
-`}</style>
-
