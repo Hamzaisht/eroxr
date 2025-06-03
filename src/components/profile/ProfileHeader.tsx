@@ -107,15 +107,15 @@ export const ProfileHeader = ({ profile, isOwnProfile, isFollowing, onFollowTogg
 
   return (
     <div className="w-full relative">
-      {/* Enhanced Particle System */}
-      <ParticleSystem count={120} className="absolute inset-0 pointer-events-none z-0" />
+      {/* Subtle Particle System */}
+      <ParticleSystem count={30} className="absolute inset-0 pointer-events-none z-0" />
       
-      {/* Premium Banner Section */}
+      {/* Premium Banner Section - Compact */}
       <motion.div 
         initial={{ opacity: 0, scale: 1.02 }}
         animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 1.2 }}
-        className="relative h-96 md:h-[36rem] w-full overflow-hidden"
+        transition={{ duration: 0.8 }}
+        className="relative h-48 md:h-64 w-full overflow-hidden"
       >
         {/* Banner Content */}
         {isOwnProfile ? (
@@ -143,53 +143,26 @@ export const ProfileHeader = ({ profile, isOwnProfile, isFollowing, onFollowTogg
                 />
               )
             ) : (
-              <div className="w-full h-full bg-gradient-to-br from-cyan-500/30 via-purple-500/20 to-pink-500/30" />
+              <div className="w-full h-full bg-gradient-to-br from-cyan-500/20 via-purple-500/10 to-pink-500/20" />
             )}
           </div>
         )}
 
-        {/* Enhanced gradient overlays */}
-        <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/25 via-purple-500/15 to-pink-500/25" />
-        <div className="absolute inset-0 backdrop-blur-[2px] bg-black/30" />
-        <div className="absolute bottom-0 left-0 right-0 h-48 bg-gradient-to-t from-gray-900 via-gray-900/90 to-transparent" />
-        
-        {/* Premium floating elements */}
-        <div className="absolute inset-0">
-          {[...Array(30)].map((_, i) => (
-            <motion.div
-              key={i}
-              animate={{
-                y: [0, -150, 0],
-                x: [0, Math.random() * 80 - 40, 0],
-                opacity: [0, 1, 0],
-                scale: [0, 1.2, 0],
-                rotate: [0, 360, 0]
-              }}
-              transition={{
-                duration: Math.random() * 6 + 8,
-                repeat: Infinity,
-                delay: Math.random() * 4,
-              }}
-              className="absolute w-4 h-4 bg-gradient-to-r from-cyan-400 via-purple-400 to-pink-400 rounded-full blur-sm"
-              style={{
-                left: `${Math.random() * 100}%`,
-                top: `${Math.random() * 100}%`,
-              }}
-            />
-          ))}
-        </div>
+        {/* Elegant overlays */}
+        <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/10 via-purple-500/5 to-pink-500/10" />
+        <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-gray-900 via-gray-900/80 to-transparent" />
       </motion.div>
 
-      {/* Profile Content Container */}
-      <div className="relative -mt-40 px-4 md:px-8 w-full z-10">
-        <div className="w-full max-w-7xl mx-auto">
-          <div className="flex flex-col xl:flex-row items-start xl:items-end gap-8">
+      {/* Profile Content Container - Compact Layout */}
+      <div className="relative -mt-16 px-4 md:px-6 w-full z-10">
+        <div className="w-full max-w-6xl mx-auto">
+          <div className="flex flex-col lg:flex-row items-start lg:items-end gap-6">
             
-            {/* Premium Avatar Section */}
+            {/* Large Avatar Section */}
             <motion.div
-              initial={{ scale: 0.8, opacity: 0, y: 40 }}
+              initial={{ scale: 0.8, opacity: 0, y: 20 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
-              transition={{ duration: 1, type: "spring", bounce: 0.4 }}
+              transition={{ duration: 0.8, type: "spring", bounce: 0.3 }}
               className="relative flex-shrink-0"
             >
               {isOwnProfile ? (
@@ -197,20 +170,20 @@ export const ProfileHeader = ({ profile, isOwnProfile, isFollowing, onFollowTogg
                   currentAvatarUrl={currentProfile.avatar_url}
                   profileId={profile.id}
                   onSuccess={handleAvatarSuccess}
-                  size={280}
+                  size={160}
                 />
               ) : (
-                <div className="w-72 h-72 rounded-3xl bg-gradient-to-r from-cyan-500 via-purple-500 to-pink-500 p-2 shadow-2xl hover:shadow-cyan-500/30 transition-all duration-700">
-                  <div className="w-full h-full rounded-3xl overflow-hidden bg-gray-900 relative group">
+                <div className="w-40 h-40 rounded-2xl bg-gradient-to-r from-cyan-500 via-purple-500 to-pink-500 p-1 shadow-xl">
+                  <div className="w-full h-full rounded-2xl overflow-hidden bg-gray-900 relative group">
                     {currentProfile.avatar_url ? (
                       <img 
                         src={currentProfile.avatar_url} 
                         alt={profile.username}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                       />
                     ) : (
                       <div className="w-full h-full bg-gradient-to-br from-gray-700 to-gray-800 flex items-center justify-center">
-                        <span className="text-7xl font-bold text-white">
+                        <span className="text-4xl font-bold text-white">
                           {profile.username?.charAt(0).toUpperCase()}
                         </span>
                       </div>
@@ -219,134 +192,108 @@ export const ProfileHeader = ({ profile, isOwnProfile, isFollowing, onFollowTogg
                 </div>
               )}
               
-              {/* Premium Verified Badge */}
+              {/* Verified Badge */}
               {profile.is_verified && (
                 <motion.div
-                  initial={{ scale: 0, rotate: -180 }}
+                  initial={{ scale: 0, rotate: -90 }}
                   animate={{ scale: 1, rotate: 0 }}
-                  transition={{ delay: 0.6, type: "spring", bounce: 0.6 }}
-                  className="absolute -bottom-4 -right-4 w-20 h-20 bg-gradient-to-r from-cyan-500 to-purple-500 rounded-full flex items-center justify-center border-4 border-gray-900 shadow-2xl"
+                  transition={{ delay: 0.5, type: "spring", bounce: 0.5 }}
+                  className="absolute -bottom-2 -right-2 w-12 h-12 bg-gradient-to-r from-cyan-500 to-purple-500 rounded-full flex items-center justify-center border-3 border-gray-900 shadow-xl"
                 >
-                  <Check className="w-10 h-10 text-white" />
-                  <motion.div
-                    animate={{ scale: [1, 1.2, 1] }}
-                    transition={{ duration: 2, repeat: Infinity }}
-                    className="absolute inset-0 bg-gradient-to-r from-cyan-500 to-purple-500 rounded-full opacity-30"
-                  />
+                  <Check className="w-6 h-6 text-white" />
                 </motion.div>
               )}
             </motion.div>
 
-            {/* Premium Profile Info */}
-            <div className="flex-1 min-w-0 w-full xl:w-auto">
+            {/* Profile Info - Compact */}
+            <div className="flex-1 min-w-0 w-full lg:w-auto">
               <motion.div
-                initial={{ y: 40, opacity: 0 }}
+                initial={{ y: 20, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
-                transition={{ duration: 1, delay: 0.3 }}
-                className="space-y-10"
+                transition={{ duration: 0.8, delay: 0.2 }}
+                className="space-y-4"
               >
-                {/* Name, Status and Creator Badge */}
+                {/* Name and Status */}
                 <div>
-                  <div className="flex flex-wrap items-center gap-6 mb-6">
-                    <h1 className="text-6xl md:text-7xl font-bold text-white leading-tight bg-gradient-to-r from-white via-cyan-200 to-purple-200 bg-clip-text text-transparent">
+                  <div className="flex flex-wrap items-center gap-3 mb-3">
+                    <h1 className="text-3xl md:text-4xl font-bold text-white leading-tight bg-gradient-to-r from-white via-cyan-200 to-purple-200 bg-clip-text text-transparent">
                       @{profile.username}
                     </h1>
                     {profile.is_creator && (
                       <motion.div
-                        animate={{ rotate: [0, 5, -5, 0] }}
+                        animate={{ rotate: [0, 3, -3, 0] }}
                         transition={{ duration: 4, repeat: Infinity }}
-                        className="flex items-center gap-3 px-6 py-3 bg-gradient-to-r from-purple-500/40 to-pink-500/40 rounded-full border border-purple-500/60 backdrop-blur-xl shadow-2xl"
+                        className="flex items-center gap-2 px-3 py-1 bg-gradient-to-r from-purple-500/30 to-pink-500/30 rounded-full border border-purple-500/50 backdrop-blur-xl"
                       >
-                        <Crown className="w-6 h-6 text-purple-300" />
-                        <span className="text-lg font-bold text-purple-200">{profile.creator_status || 'Creator'}</span>
-                        <Sparkles className="w-5 h-5 text-pink-300" />
-                      </motion.div>
-                    )}
-                    {profile.verification_level === 'verified' && (
-                      <motion.div
-                        animate={{ scale: [1, 1.05, 1] }}
-                        transition={{ duration: 3, repeat: Infinity }}
-                        className="flex items-center gap-3 px-4 py-2 bg-gradient-to-r from-green-500/40 to-emerald-500/40 rounded-full border border-green-500/60 backdrop-blur-xl"
-                      >
-                        <Check className="w-5 h-5 text-green-300" />
-                        <span className="text-sm font-medium text-green-200">Verified</span>
+                        <Crown className="w-4 h-4 text-purple-300" />
+                        <span className="text-sm font-medium text-purple-200">{profile.creator_status || 'Creator'}</span>
                       </motion.div>
                     )}
                   </div>
                   {profile.bio && (
-                    <p className="text-gray-300 text-2xl max-w-4xl leading-relaxed">{profile.bio}</p>
+                    <p className="text-gray-300 text-lg max-w-2xl leading-relaxed">{profile.bio}</p>
                   )}
                 </div>
 
-                {/* Premium Meta Info */}
-                <div className="flex flex-wrap items-center gap-8 text-gray-400">
+                {/* Meta Info */}
+                <div className="flex flex-wrap items-center gap-4 text-gray-400">
                   {profile.location && (
-                    <GlassmorphismCard className="px-6 py-3 hover:scale-105 transition-transform duration-300" intensity="heavy">
-                      <div className="flex items-center gap-4">
-                        <MapPin className="w-6 h-6 text-cyan-400" />
-                        <span className="font-medium text-lg">{profile.location}</span>
-                      </div>
-                    </GlassmorphismCard>
-                  )}
-                  <GlassmorphismCard className="px-6 py-3 hover:scale-105 transition-transform duration-300" intensity="heavy">
-                    <div className="flex items-center gap-4">
-                      <Calendar className="w-6 h-6 text-purple-400" />
-                      <span className="font-medium text-lg">Joined {format(new Date(profile.created_at), 'MMMM yyyy')}</span>
+                    <div className="flex items-center gap-2">
+                      <MapPin className="w-4 h-4 text-cyan-400" />
+                      <span className="font-medium">{profile.location}</span>
                     </div>
-                  </GlassmorphismCard>
+                  )}
+                  <div className="flex items-center gap-2">
+                    <Calendar className="w-4 h-4 text-purple-400" />
+                    <span className="font-medium">Joined {format(new Date(profile.created_at), 'MMMM yyyy')}</span>
+                  </div>
                 </div>
 
-                {/* Premium Stats Grid */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+                {/* Compact Stats Grid */}
+                <div className="grid grid-cols-4 gap-4">
                   {[
-                    { label: "Posts", value: profile.posts_count, icon: Zap, color: "text-cyan-400", gradient: "from-cyan-500/30 to-blue-500/30" },
-                    { label: "Followers", value: profile.follower_count, icon: UserPlus, color: "text-purple-400", gradient: "from-purple-500/30 to-pink-500/30" },
-                    { label: "Following", value: profile.following_count, icon: UserMinus, color: "text-pink-400", gradient: "from-pink-500/30 to-rose-500/30" },
-                    { label: "Likes", value: profile.likes_count, icon: Check, color: "text-green-400", gradient: "from-green-500/30 to-emerald-500/30" }
+                    { label: "Posts", value: profile.posts_count, color: "text-cyan-400" },
+                    { label: "Followers", value: profile.follower_count, color: "text-purple-400" },
+                    { label: "Following", value: profile.following_count, color: "text-pink-400" },
+                    { label: "Likes", value: profile.likes_count, color: "text-green-400" }
                   ].map((stat, index) => (
                     <motion.div
                       key={stat.label}
-                      initial={{ opacity: 0, y: 40 }}
+                      initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.4 + (0.1 * index), duration: 0.8 }}
-                      whileHover={{ scale: 1.05, y: -6 }}
+                      transition={{ delay: 0.3 + (0.05 * index), duration: 0.6 }}
+                      className="text-center"
                     >
-                      <GlassmorphismCard 
-                        className={`text-center p-8 bg-gradient-to-br ${stat.gradient} hover:border-white/50 transition-all duration-500 hover:shadow-2xl hover:shadow-white/20 cursor-pointer group`}
-                        intensity="heavy"
-                      >
-                        <stat.icon className={`w-8 h-8 ${stat.color} mx-auto mb-4 group-hover:scale-110 transition-transform duration-300`} />
-                        <div className="text-4xl font-bold text-white mb-2">{stat.value.toLocaleString()}</div>
-                        <div className="text-sm text-gray-400 font-medium uppercase tracking-wider">{stat.label}</div>
-                      </GlassmorphismCard>
+                      <div className="text-xl font-bold text-white mb-1">{stat.value.toLocaleString()}</div>
+                      <div className={`text-xs ${stat.color} font-medium uppercase tracking-wider`}>{stat.label}</div>
                     </motion.div>
                   ))}
                 </div>
               </motion.div>
             </div>
 
-            {/* Premium Action Buttons */}
+            {/* Compact Action Buttons */}
             <motion.div
-              initial={{ x: 40, opacity: 0 }}
+              initial={{ x: 20, opacity: 0 }}
               animate={{ x: 0, opacity: 1 }}
-              transition={{ duration: 1, delay: 0.5 }}
-              className="flex flex-col gap-4 w-full xl:w-auto xl:min-w-[300px]"
+              transition={{ duration: 0.8, delay: 0.4 }}
+              className="flex flex-col gap-2 w-full lg:w-auto lg:min-w-[200px]"
             >
               {isOwnProfile ? (
                 <>
                   <Button 
                     onClick={() => setShowEditModal(true)}
-                    className="w-full bg-gradient-to-r from-cyan-500 to-purple-500 hover:from-cyan-400 hover:to-purple-400 text-white font-semibold rounded-2xl h-14 shadow-lg hover:shadow-cyan-500/50 transition-all duration-300 text-lg"
+                    className="w-full bg-gradient-to-r from-cyan-500 to-purple-500 hover:from-cyan-400 hover:to-purple-400 text-white font-medium rounded-xl h-10 shadow-lg hover:shadow-cyan-500/30 transition-all duration-300"
                   >
-                    <Edit className="w-5 h-5 mr-3" />
+                    <Edit className="w-4 h-4 mr-2" />
                     Edit Profile
                   </Button>
                   <Button 
                     onClick={handleShare}
                     variant="outline" 
-                    className="w-full border-white/40 text-white hover:bg-white/20 rounded-2xl h-14 backdrop-blur-xl hover:border-white/60 transition-all duration-300 font-semibold text-lg"
+                    className="w-full border-white/30 text-white hover:bg-white/10 rounded-xl h-10 backdrop-blur-xl hover:border-white/50 transition-all duration-300 font-medium"
                   >
-                    <Share className="w-5 h-5 mr-3" />
+                    <Share className="w-4 h-4 mr-2" />
                     Share Profile
                   </Button>
                 </>
@@ -354,46 +301,46 @@ export const ProfileHeader = ({ profile, isOwnProfile, isFollowing, onFollowTogg
                 <>
                   {profile.is_creator && profile.subscription_price && (
                     <Button 
-                      className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-400 hover:to-pink-400 text-white font-semibold rounded-2xl h-14 shadow-lg hover:shadow-pink-500/50 transition-all duration-300 text-lg"
+                      className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-400 hover:to-pink-400 text-white font-medium rounded-xl h-10 shadow-lg hover:shadow-pink-500/30 transition-all duration-300"
                     >
-                      <Crown className="w-5 h-5 mr-3" />
-                      Subscribe ${profile.subscription_price}/month
+                      <Crown className="w-4 h-4 mr-2" />
+                      Subscribe ${profile.subscription_price}/mo
                     </Button>
                   )}
                   <Button 
                     onClick={handleFollowToggle}
                     disabled={isFollowLoading}
-                    className={`w-full font-semibold rounded-2xl h-14 transition-all duration-300 text-lg ${
+                    className={`w-full font-medium rounded-xl h-10 transition-all duration-300 ${
                       isFollowing 
-                        ? 'bg-white/20 text-white hover:bg-white/30 border border-white/40 hover:border-white/60 backdrop-blur-xl' 
-                        : 'bg-gradient-to-r from-cyan-500 to-purple-500 hover:from-cyan-400 hover:to-purple-400 text-white shadow-lg hover:shadow-cyan-500/50'
+                        ? 'bg-white/10 text-white hover:bg-white/20 border border-white/30 hover:border-white/50 backdrop-blur-xl' 
+                        : 'bg-gradient-to-r from-cyan-500 to-purple-500 hover:from-cyan-400 hover:to-purple-400 text-white shadow-lg hover:shadow-cyan-500/30'
                     }`}
                   >
                     {isFollowing ? (
                       <>
-                        <UserMinus className="w-5 h-5 mr-3" />
+                        <UserMinus className="w-4 h-4 mr-2" />
                         Unfollow
                       </>
                     ) : (
                       <>
-                        <UserPlus className="w-5 h-5 mr-3" />
+                        <UserPlus className="w-4 h-4 mr-2" />
                         Follow
                       </>
                     )}
                   </Button>
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="grid grid-cols-2 gap-2">
                     <Button 
                       onClick={handleMessage}
                       variant="outline" 
-                      className="border-white/40 text-white hover:bg-white/20 rounded-2xl h-12 backdrop-blur-xl hover:border-white/60 transition-all duration-300 font-medium"
+                      className="border-white/30 text-white hover:bg-white/10 rounded-xl h-9 backdrop-blur-xl hover:border-white/50 transition-all duration-300 font-medium text-sm"
                     >
-                      <MessageCircle className="w-4 h-4 mr-2" />
+                      <MessageCircle className="w-3 h-3 mr-1" />
                       Message
                     </Button>
                     <Button 
-                      className="bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-400 hover:to-orange-400 text-white rounded-2xl h-12 font-medium shadow-lg hover:shadow-yellow-500/25 transition-all duration-300"
+                      className="bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-400 hover:to-orange-400 text-white rounded-xl h-9 font-medium shadow-lg hover:shadow-yellow-500/20 transition-all duration-300 text-sm"
                     >
-                      <DollarSign className="w-4 h-4 mr-2" />
+                      <DollarSign className="w-3 h-3 mr-1" />
                       Tip
                     </Button>
                   </div>

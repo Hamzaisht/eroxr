@@ -1347,6 +1347,8 @@ export type Database = {
       }
       profiles: {
         Row: {
+          avatar_url: string | null
+          banner_url: string | null
           bio: string | null
           created_at: string
           date_of_birth: string | null
@@ -1358,6 +1360,7 @@ export type Database = {
           is_paused: boolean | null
           is_paying_customer: boolean | null
           is_suspended: boolean | null
+          is_verified: boolean | null
           last_name: string | null
           last_username_change: string | null
           location: string | null
@@ -1371,6 +1374,8 @@ export type Database = {
           username: string | null
         }
         Insert: {
+          avatar_url?: string | null
+          banner_url?: string | null
           bio?: string | null
           created_at?: string
           date_of_birth?: string | null
@@ -1382,6 +1387,7 @@ export type Database = {
           is_paused?: boolean | null
           is_paying_customer?: boolean | null
           is_suspended?: boolean | null
+          is_verified?: boolean | null
           last_name?: string | null
           last_username_change?: string | null
           location?: string | null
@@ -1395,6 +1401,8 @@ export type Database = {
           username?: string | null
         }
         Update: {
+          avatar_url?: string | null
+          banner_url?: string | null
           bio?: string | null
           created_at?: string
           date_of_birth?: string | null
@@ -1406,6 +1414,7 @@ export type Database = {
           is_paused?: boolean | null
           is_paying_customer?: boolean | null
           is_suspended?: boolean | null
+          is_verified?: boolean | null
           last_name?: string | null
           last_username_change?: string | null
           location?: string | null

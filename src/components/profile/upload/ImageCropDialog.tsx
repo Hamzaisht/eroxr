@@ -1,8 +1,11 @@
 
 import { useState, useRef, useCallback } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { Crop, RotateCcw, ZoomIn, ZoomOut, Check, X } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { Slider } from "@/components/ui/slider";
+import { RotateCcw, Crop, X } from "lucide-react";
+import ReactCrop, { Crop, PixelCrop, centerCrop, makeAspectCrop } from 'react-image-crop';
+import 'react-image-crop/dist/ReactCrop.css';
 
 interface ImageCropDialogProps {
   isOpen: boolean;
@@ -13,234 +16,177 @@ interface ImageCropDialogProps {
   isCircular?: boolean;
 }
 
-export const ImageCropDialog = ({ 
-  isOpen, 
-  onClose, 
-  imageUrl, 
+export const ImageCropDialog = ({
+  isOpen,
+  onClose,
+  imageUrl,
   onCropComplete,
   aspectRatio = 1,
-  isCircular = true 
+  isCircular = false
 }: ImageCropDialogProps) => {
+  const [crop, setCrop] = useState<Crop>();
+  const [completedCrop, setCompletedCrop] = useState<PixelCrop>();
   const [scale, setScale] = useState(1);
-  const [rotation, setRotation] = useState(0);
-  const [position, setPosition] = useState({ x: 0, y: 0 });
+  const [rotate, setRotate] = useState(0);
+  const imgRef = useRef<HTMLImageElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const imageRef = useRef<HTMLImageElement>(null);
 
-  const handleCrop = useCallback(async () => {
-    if (!canvasRef.current || !imageRef.current) return;
+  const onImageLoad = useCallback((e: React.SyntheticEvent<HTMLImageElement>) => {
+    const { width, height } = e.currentTarget;
+    const crop = centerCrop(
+      makeAspectCrop(
+        {
+          unit: '%',
+          width: 90,
+        },
+        aspectRatio,
+        width,
+        height,
+      ),
+      width,
+      height,
+    );
+    setCrop(crop);
+  }, [aspectRatio]);
 
+  const handleCropComplete = useCallback(async () => {
+    if (!completedCrop || !imgRef.current || !canvasRef.current) return;
+
+    const image = imgRef.current;
     const canvas = canvasRef.current;
     const ctx = canvas.getContext('2d');
+
     if (!ctx) return;
 
-    const size = 400;
-    canvas.width = size;
-    canvas.height = size;
+    const scaleX = image.naturalWidth / image.width;
+    const scaleY = image.naturalHeight / image.height;
 
-    // Create circular clipping path if needed
-    if (isCircular) {
-      ctx.beginPath();
-      ctx.arc(size / 2, size / 2, size / 2, 0, Math.PI * 2);
-      ctx.clip();
-    }
+    const pixelRatio = window.devicePixelRatio;
+    canvas.width = Math.floor(completedCrop.width * scaleX * pixelRatio);
+    canvas.height = Math.floor(completedCrop.height * scaleY * pixelRatio);
 
-    // Apply transformations
+    ctx.scale(pixelRatio, pixelRatio);
+    ctx.imageSmoothingQuality = 'high';
+
+    const cropX = completedCrop.x * scaleX;
+    const cropY = completedCrop.y * scaleY;
+
+    const centerX = image.naturalWidth / 2;
+    const centerY = image.naturalHeight / 2;
+
     ctx.save();
-    ctx.translate(size / 2, size / 2);
-    ctx.rotate((rotation * Math.PI) / 180);
-    ctx.scale(scale, scale);
-    ctx.translate(-size / 2 + position.x, -size / 2 + position.y);
 
-    // Draw the image
-    ctx.drawImage(imageRef.current, 0, 0, size, size);
+    ctx.translate(-cropX, -cropY);
+    ctx.translate(centerX, centerY);
+    ctx.rotate((rotate * Math.PI) / 180);
+    ctx.scale(scale, scale);
+    ctx.translate(-centerX, -centerY);
+    ctx.drawImage(image, 0, 0);
+
     ctx.restore();
 
-    // Convert to blob
     canvas.toBlob((blob) => {
       if (blob) {
         onCropComplete(blob);
       }
-    }, 'image/jpeg', 0.9);
-  }, [scale, rotation, position, isCircular, onCropComplete]);
+    }, 'image/jpeg', 0.95);
+  }, [completedCrop, scale, rotate, onCropComplete]);
 
   return (
-    <AnimatePresence>
-      {isOpen && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          className="fixed inset-0 z-[100] flex items-center justify-center p-4"
-        >
-          {/* Backdrop */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="absolute inset-0 bg-black/90 backdrop-blur-xl"
-            onClick={onClose}
-          />
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-auto bg-gray-900/95 backdrop-blur-xl border border-white/20">
+        <DialogHeader>
+          <DialogTitle className="text-white flex items-center gap-2">
+            <Crop className="w-5 h-5" />
+            Crop Image
+          </DialogTitle>
+        </DialogHeader>
+        
+        <div className="space-y-6">
+          {/* Image Crop Area */}
+          <div className="flex justify-center">
+            <ReactCrop
+              crop={crop}
+              onChange={(_, percentCrop) => setCrop(percentCrop)}
+              onComplete={(c) => setCompletedCrop(c)}
+              aspect={aspectRatio}
+              circularCrop={isCircular}
+              className="max-w-full max-h-96"
+            >
+              <img
+                ref={imgRef}
+                alt="Crop preview"
+                src={imageUrl}
+                style={{ transform: `scale(${scale}) rotate(${rotate}deg)` }}
+                onLoad={onImageLoad}
+                className="max-w-full max-h-96"
+              />
+            </ReactCrop>
+          </div>
 
-          {/* Dialog */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9, y: 20 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.9, y: 20 }}
-            className="relative w-full max-w-2xl bg-gradient-to-br from-gray-900/95 to-gray-800/95 backdrop-blur-2xl border border-white/20 rounded-3xl shadow-2xl overflow-hidden"
-          >
-            {/* Header */}
-            <div className="flex items-center justify-between p-6 border-b border-white/10">
-              <h2 className="text-2xl font-bold text-white flex items-center gap-3">
-                <Crop className="w-6 h-6 text-cyan-400" />
-                Crop Image
-              </h2>
-              <Button
-                onClick={onClose}
-                variant="ghost"
-                size="icon"
-                className="text-white/70 hover:text-white hover:bg-white/10 rounded-full"
-              >
-                <X className="w-5 h-5" />
-              </Button>
+          {/* Controls */}
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <label className="text-white text-sm font-medium">Scale</label>
+              <Slider
+                value={[scale]}
+                onValueChange={(value) => setScale(value[0])}
+                min={0.5}
+                max={3}
+                step={0.1}
+                className="w-full"
+              />
             </div>
 
-            {/* Content */}
-            <div className="p-6 space-y-6">
-              {/* Image Preview */}
-              <div className="relative bg-gray-800 rounded-2xl overflow-hidden aspect-square max-w-md mx-auto">
-                <img
-                  ref={imageRef}
-                  src={imageUrl}
-                  alt="Crop preview"
-                  className="w-full h-full object-cover"
-                  style={{
-                    transform: `translate(${position.x}px, ${position.y}px) scale(${scale}) rotate(${rotation}deg)`,
-                    transition: 'transform 0.1s ease-out'
-                  }}
-                  draggable={false}
+            <div className="space-y-2">
+              <label className="text-white text-sm font-medium">Rotation</label>
+              <div className="flex items-center gap-2">
+                <Slider
+                  value={[rotate]}
+                  onValueChange={(value) => setRotate(value[0])}
+                  min={-180}
+                  max={180}
+                  step={1}
+                  className="flex-1"
                 />
-                
-                {/* Crop overlay */}
-                <div className="absolute inset-0 pointer-events-none">
-                  <div className={`absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 border-2 border-white/50 ${isCircular ? 'rounded-full' : 'rounded-lg'}`}
-                       style={{ 
-                         width: '80%', 
-                         height: '80%',
-                         aspectRatio: aspectRatio 
-                       }} 
-                  />
-                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setRotate(0)}
+                  className="border-white/20 text-white hover:bg-white/10"
+                >
+                  <RotateCcw className="w-4 h-4" />
+                </Button>
               </div>
-
-              {/* Controls */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-white/80">Scale</label>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      onClick={() => setScale(Math.max(0.5, scale - 0.1))}
-                      variant="outline"
-                      size="icon"
-                      className="w-8 h-8 border-white/20 text-white hover:bg-white/10"
-                    >
-                      <ZoomOut className="w-3 h-3" />
-                    </Button>
-                    <input
-                      type="range"
-                      min="0.5"
-                      max="3"
-                      step="0.1"
-                      value={scale}
-                      onChange={(e) => setScale(parseFloat(e.target.value))}
-                      className="flex-1 h-2 bg-white/20 rounded-lg appearance-none slider"
-                    />
-                    <Button
-                      onClick={() => setScale(Math.min(3, scale + 0.1))}
-                      variant="outline"
-                      size="icon"
-                      className="w-8 h-8 border-white/20 text-white hover:bg-white/10"
-                    >
-                      <ZoomIn className="w-3 h-3" />
-                    </Button>
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-white/80">Rotation</label>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      onClick={() => setRotation(rotation - 15)}
-                      variant="outline"
-                      size="icon"
-                      className="w-8 h-8 border-white/20 text-white hover:bg-white/10"
-                    >
-                      <RotateCcw className="w-3 h-3" />
-                    </Button>
-                    <input
-                      type="range"
-                      min="-180"
-                      max="180"
-                      step="15"
-                      value={rotation}
-                      onChange={(e) => setRotation(parseInt(e.target.value))}
-                      className="flex-1 h-2 bg-white/20 rounded-lg appearance-none slider"
-                    />
-                    <span className="text-xs text-white/60 w-8 text-center">{rotation}°</span>
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-white/80">Position X</label>
-                  <input
-                    type="range"
-                    min="-100"
-                    max="100"
-                    step="1"
-                    value={position.x}
-                    onChange={(e) => setPosition(prev => ({ ...prev, x: parseInt(e.target.value) }))}
-                    className="w-full h-2 bg-white/20 rounded-lg appearance-none slider"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-white/80">Position Y</label>
-                  <input
-                    type="range"
-                    min="-100"
-                    max="100"
-                    step="1"
-                    value={position.y}
-                    onChange={(e) => setPosition(prev => ({ ...prev, y: parseInt(e.target.value) }))}
-                    className="w-full h-2 bg-white/20 rounded-lg appearance-none slider"
-                  />
-                </div>
-              </div>
-
-              {/* Hidden canvas for cropping */}
-              <canvas ref={canvasRef} className="hidden" />
             </div>
+          </div>
 
-            {/* Actions */}
-            <div className="flex gap-4 p-6 border-t border-white/10">
-              <Button
-                onClick={onClose}
-                variant="outline"
-                className="flex-1 border-white/30 text-white hover:bg-white/10 rounded-xl h-12"
-              >
-                Cancel
-              </Button>
-              <Button
-                onClick={handleCrop}
-                className="flex-1 bg-gradient-to-r from-cyan-500 to-purple-500 hover:from-cyan-400 hover:to-purple-400 text-white rounded-xl h-12 font-semibold"
-              >
-                <Check className="w-4 h-4 mr-2" />
-                Apply Crop
-              </Button>
-            </div>
-          </motion.div>
-        </motion.div>
-      )}
-    </AnimatePresence>
+          {/* Action Buttons */}
+          <div className="flex justify-end gap-3">
+            <Button
+              variant="outline"
+              onClick={onClose}
+              className="border-white/20 text-white hover:bg-white/10"
+            >
+              <X className="w-4 h-4 mr-2" />
+              Cancel
+            </Button>
+            <Button
+              onClick={handleCropComplete}
+              className="bg-gradient-to-r from-cyan-500 to-purple-500 hover:from-cyan-400 hover:to-purple-400"
+            >
+              <Crop className="w-4 h-4 mr-2" />
+              Apply Crop
+            </Button>
+          </div>
+        </div>
+
+        {/* Hidden canvas for processing */}
+        <canvas
+          ref={canvasRef}
+          className="hidden"
+        />
+      </DialogContent>
+    </Dialog>
   );
 };
