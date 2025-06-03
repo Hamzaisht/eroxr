@@ -37,25 +37,25 @@ export function UserMenu() {
     }
   };
 
+  const handleProfileClick = () => {
+    if (session?.user) {
+      navigate(`/profile/${session.user.id}`);
+    }
+  };
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <div className="cursor-pointer">
-          <UserAvatar 
-            userId={session?.user?.id}
-            username={session?.user?.user_metadata?.username}
-            email={session?.user?.email}
-            size="md"
-            className="ring-2 ring-luxury-primary/10 transition-all duration-200 hover:ring-luxury-primary/20"
-          />
-        </div>
+        <button className="cursor-pointer flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-r from-cyan-500 to-purple-500 text-white font-bold hover:shadow-lg transition-all duration-200">
+          {session?.user?.email?.charAt(0).toUpperCase() || 'U'}
+        </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-80" align="end">
         <DropdownMenuLabel>My Account</DropdownMenuLabel>
         <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={() => navigate(`/profile/${session?.user?.id}`)}>
+        <DropdownMenuItem onClick={handleProfileClick}>
           <CircleUserRound className="mr-2 h-4 w-4" />
-          <span>Profile</span>
+          <span>My Profile</span>
         </DropdownMenuItem>
         <DropdownMenuItem onClick={() => navigate("/settings")}>
           <Settings className="mr-2 h-4 w-4" />
