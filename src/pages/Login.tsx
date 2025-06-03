@@ -2,7 +2,7 @@
 import { useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useSession } from "@supabase/auth-helpers-react";
-import { EmailLogin } from "@/components/auth/EmailLogin";
+import { SignupForm } from "@/components/auth/signup/SignupForm";
 import { motion, AnimatePresence } from "framer-motion";
 import { LoadingScreen } from "@/components/layout/LoadingScreen";
 import { BackgroundVideo } from "@/components/video/BackgroundVideo";
@@ -52,7 +52,7 @@ const Login = () => {
             transition={{ duration: 0.5 }}
             className="w-full max-w-md mx-auto"
           >
-            <EmailLogin onToggleMode={handleToggleMode} />
+            <SignupForm onToggleMode={handleToggleMode} isLoginMode={true} />
           </motion.div>
         </AnimatePresence>
       </div>

@@ -3,7 +3,6 @@ import { useSession } from "@supabase/auth-helpers-react";
 import { useNavigate } from "react-router-dom";
 import { useEffect, useRef } from "react";
 import { motion, useMotionValue, useTransform, useSpring, useScroll } from "framer-motion";
-import { AuthForm } from "./auth/AuthForm";
 import { useMouseParallax } from "@/hooks/use-mouse-parallax";
 import { useInView } from "react-intersection-observer";
 
@@ -157,7 +156,35 @@ export const Hero = () => {
               </motion.p>
             </div>
             
-            <AuthForm />
+            <div className="text-center space-y-4">
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.8, duration: 0.6 }}
+                className="space-y-4"
+              >
+                <motion.button
+                  onClick={() => navigate("/register")}
+                  className="w-full h-14 bg-gradient-to-r from-pink-500 via-purple-500 to-cyan-500 hover:from-pink-600 hover:via-purple-600 hover:to-cyan-600 text-white font-semibold text-lg rounded-xl transition-all duration-500 transform"
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  Get Started
+                </motion.button>
+                
+                <p className="text-sm text-gray-400">
+                  Already have an account?{" "}
+                  <motion.button
+                    onClick={() => navigate("/login")}
+                    className="relative text-transparent bg-gradient-to-r from-cyan-400 to-purple-400 bg-clip-text font-medium"
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    Sign in
+                  </motion.button>
+                </p>
+              </motion.div>
+            </div>
           </div>
         </div>
       </motion.div>
