@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate, useLocation, Link } from "react-router-dom";
 import { useSession } from "@supabase/auth-helpers-react";
@@ -9,11 +9,11 @@ import { UserProfileSection } from "./nav/UserProfileSection";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { useIsMobile } from "@/hooks/use-mobile";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
 import { useSuperAdminCheck } from "@/hooks/useSuperAdminCheck";
 import { useGhostMode } from "@/hooks/useGhostMode";
 import { CreateBodyContactDialog } from "@/components/ads/body-contact"; 
+import { useUser } from "@/hooks/useUser";
 
 const menuItems = [
   { icon: Home, label: "Home", path: "/home" },
@@ -30,6 +30,7 @@ export const InteractiveNav = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const session = useSession();
+  const { currentUser } = useUser();
   const isMobile = useMediaQuery("(max-width: 768px)");
   const { isSuperAdmin } = useSuperAdminCheck();
   const { isGhostMode } = useGhostMode();
@@ -104,7 +105,7 @@ export const InteractiveNav = () => {
             )}
           </div>
 
-          {session && <UserProfileSection isExpanded={true} />}
+          {session && <UserProfileSection isExpanded={true} currentUser={currentUser} />}
         </div>
       </SheetContent>
     </Sheet>
@@ -170,7 +171,7 @@ export const InteractiveNav = () => {
           )}
         </div>
 
-        {session && <UserProfileSection isExpanded={isExpanded} />}
+        {session && <UserProfileSection isExpanded={isExpanded} currentUser={currentUser} />}
       </motion.div>
     </motion.nav>
   );

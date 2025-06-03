@@ -1,179 +1,109 @@
 
-import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { useSession, useSupabaseClient } from "@supabase/auth-helpers-react";
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { LogOut, Settings, User as UserIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { LogOut } from "lucide-react";
-import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
-import { AvailabilityIndicator, AvailabilityStatus } from "@/components/ui/availability-indicator";
+import { useNavigate } from "react-router-dom";
+import { useToast } from "@/hooks/use-toast";
+import { useState } from "react";
 
 interface UserProfileSectionProps {
   isExpanded: boolean;
+  currentUser?: any;
 }
 
-export const UserProfileSection = ({ isExpanded }: UserProfileSectionProps) => {
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
-  const [availability, setAvailability] = useState<AvailabilityStatus>('online');
+export const UserProfileSection = ({ isExpanded, currentUser }: UserProfileSectionProps) => {
   const session = useSession();
-  const navigate = useNavigate();
   const supabase = useSupabaseClient();
-  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
-  const [username, setUsername] = useState<string | null>(null);
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
-  useEffect(() => {
-    if (session?.user) {
-      // Fetch user profile data
-      const fetchProfile = async () => {
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('username, status')
-          .eq('id', session.user.id)
-          .single();
-
-        if (data) {
-          setUsername(data.username);
-          setAvailability((data.status as AvailabilityStatus) || 'offline');
-        } else if (error) {
-          // If no profile exists, create one
-          const defaultUsername = session.user.email?.split('@')[0] || 'User';
-          
-          const { data: newProfile, error: insertError } = await supabase
-            .from('profiles')
-            .insert({
-              id: session.user.id,
-              username: defaultUsername,
-              status: 'online'
-            })
-            .select('username, status')
-            .single();
-
-          if (newProfile && !insertError) {
-            setUsername(newProfile.username);
-            setAvailability('online');
-          } else {
-            // Fallback to email username if insert fails
-            setUsername(defaultUsername);
-          }
-        }
-      };
-
-      fetchProfile();
-      setAvatarUrl(session.user.user_metadata.avatar_url || null);
-    }
-  }, [session, supabase]);
-
-  const handleLogout = async () => {
-    setIsLogoutModalOpen(false);
+  const handleSignOut = async () => {
     await supabase.auth.signOut();
-    navigate('/login');
+    navigate('/');
+    toast({
+      title: "Signed out",
+      description: "You have been signed out successfully",
+    });
+    setIsMenuOpen(false);
   };
 
-  const handleProfileClick = async () => {
-    if (!username && session?.user) {
-      // If username is not loaded yet, try to get it or create profile
-      const defaultUsername = session.user.email?.split('@')[0] || 'User';
-      navigate(`/profile/${defaultUsername}`);
-    } else if (username) {
-      navigate(`/profile/${username}`);
-    }
-    setIsDropdownOpen(false);
-  };
-
-  const handleAvailabilityChange = async (newStatus: AvailabilityStatus) => {
-    setAvailability(newStatus);
-    
-    // Update status in database
+  const handleProfileClick = () => {
     if (session?.user) {
-      await supabase
-        .from('profiles')
-        .update({ status: newStatus })
-        .eq('id', session.user.id);
+      const username = 
+        currentUser?.username || 
+        session.user.user_metadata?.username || 
+        session.user.email?.split('@')[0] || 
+        `user_${session.user.id.slice(0, 8)}`;
+        
+      navigate(`/profile/${username}`);
+      setIsMenuOpen(false);
     }
   };
+
+  const handleSettingsClick = () => {
+    navigate('/settings');
+    setIsMenuOpen(false);
+  };
+
+  if (!session) return null;
 
   return (
-    <div className="mt-auto px-4">
-      <DropdownMenu open={isDropdownOpen} onOpenChange={setIsDropdownOpen}>
-        <DropdownMenuTrigger asChild>
-          <Button 
-            variant="ghost" 
-            className="w-full justify-start px-2 py-3.5 font-normal hover:bg-white/5"
+    <div className="mt-auto px-3">
+      <div className="border-t border-luxury-primary/10 pt-4 mt-4">
+        <div className="relative">
+          <div 
+            className={`flex items-center gap-3 py-2 px-2 rounded-lg cursor-pointer hover:bg-white/5 transition-colors duration-300 ${isMenuOpen ? 'bg-white/5' : ''}`}
+            onClick={() => setIsMenuOpen(!isMenuOpen)}
           >
-            <div className="flex items-center gap-2 w-full">
-              <div className="relative">
-                <Avatar className="h-8 w-8">
-                  <AvatarImage src={avatarUrl || ""} alt={username || "User"} />
-                  <AvatarFallback>{username?.slice(0, 2).toUpperCase() || "U"}</AvatarFallback>
-                </Avatar>
-                <div className="absolute -bottom-1 -right-1">
-                  <AvailabilityIndicator 
-                    status={availability}
-                    size={12}
-                    className="ring-2 ring-gray-900"
-                  />
-                </div>
-              </div>
-              {isExpanded && (
-                <div className="flex flex-col items-start gap-0 leading-none min-w-0 flex-1">
-                  <p className="font-semibold text-sm text-white truncate">
-                    @{username || session?.user?.email?.split('@')[0] || 'User'}
-                  </p>
-                  <p className="text-xs text-muted-foreground capitalize">
-                    {availability}
-                  </p>
-                </div>
-              )}
+            <div className="flex-shrink-0 w-8 h-8 rounded-full bg-gradient-to-r from-cyan-500 to-purple-500 flex items-center justify-center">
+              <UserIcon className="h-4 w-4 text-white" />
             </div>
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent className="w-48" align="end" forceMount>
-          <DropdownMenuItem onClick={handleProfileClick}>
-            View Profile
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => handleAvailabilityChange('online')}>
-            <AvailabilityIndicator status="online" className="mr-2" size={8} />
-            Online
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => handleAvailabilityChange('away')}>
-            <AvailabilityIndicator status="away" className="mr-2" size={8} />
-            Away
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => handleAvailabilityChange('busy')}>
-            <AvailabilityIndicator status="busy" className="mr-2" size={8} />
-            Busy
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => handleAvailabilityChange('offline')}>
-            <AvailabilityIndicator status="offline" className="mr-2" size={8} />
-            Offline
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => setIsLogoutModalOpen(true)}>
-            <LogOut className="mr-2 h-4 w-4" />
-            Logout
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
+            
+            {isExpanded && (
+              <div className="flex-1 overflow-hidden">
+                <p className="text-white text-sm font-medium truncate">
+                  {currentUser?.username || 
+                   session.user.user_metadata?.username || 
+                   session.user.email?.split('@')[0] || 
+                   'Profile'}
+                </p>
+                <p className="text-white/50 text-xs truncate">
+                  {session.user.email}
+                </p>
+              </div>
+            )}
+          </div>
 
-      <Dialog open={isLogoutModalOpen} onOpenChange={setIsLogoutModalOpen}>
-        <DialogContent className="sm:max-w-[425px]">
-          <DialogHeader>
-            <DialogTitle>Logout</DialogTitle>
-            <DialogDescription>
-              Are you sure you want to logout?
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button type="button" variant="secondary" onClick={() => setIsLogoutModalOpen(false)}>
-              Cancel
-            </Button>
-            <Button type="submit" onClick={handleLogout}>
-              Logout
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          {isMenuOpen && (
+            <div className="absolute bottom-full mb-2 left-0 w-full bg-gray-900/95 backdrop-blur-xl border border-white/10 rounded-lg overflow-hidden shadow-2xl">
+              <button
+                onClick={handleProfileClick}
+                className="w-full text-left flex items-center gap-3 px-3 py-3 text-white hover:bg-white/10 transition-colors"
+              >
+                <UserIcon className="h-4 w-4" />
+                <span>My Profile</span>
+              </button>
+              <button
+                onClick={handleSettingsClick}
+                className="w-full text-left flex items-center gap-3 px-3 py-3 text-white hover:bg-white/10 transition-colors"
+              >
+                <Settings className="h-4 w-4" />
+                <span>Settings</span>
+              </button>
+              <div className="border-t border-white/10"></div>
+              <button
+                onClick={handleSignOut}
+                className="w-full text-left flex items-center gap-3 px-3 py-3 text-red-400 hover:bg-red-500/10 transition-colors"
+              >
+                <LogOut className="h-4 w-4" />
+                <span>Sign Out</span>
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 };
