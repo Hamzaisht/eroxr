@@ -13,6 +13,7 @@ interface ProfileData {
   username: string;
   bio?: string;
   avatar_url?: string;
+  banner_url?: string;
   location?: string;
 }
 
@@ -28,7 +29,8 @@ export const ProfileEditModal = ({ profile, isOpen, onClose, onSuccess }: Profil
     username: profile.username || '',
     bio: profile.bio || '',
     location: profile.location || '',
-    avatar_url: profile.avatar_url || ''
+    avatar_url: profile.avatar_url || '',
+    banner_url: profile.banner_url || ''
   });
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
@@ -45,6 +47,7 @@ export const ProfileEditModal = ({ profile, isOpen, onClose, onSuccess }: Profil
           bio: formData.bio || null,
           location: formData.location || null,
           avatar_url: formData.avatar_url || null,
+          banner_url: formData.banner_url || null,
           updated_at: new Date().toISOString()
         })
         .eq('id', profile.id);
@@ -95,7 +98,7 @@ export const ProfileEditModal = ({ profile, isOpen, onClose, onSuccess }: Profil
             initial={{ opacity: 0, scale: 0.9, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.9, y: 20 }}
-            className="relative w-full max-w-2xl bg-gradient-to-br from-gray-900/95 to-gray-800/95 backdrop-blur-xl border border-white/20 rounded-3xl shadow-2xl overflow-hidden"
+            className="relative w-full max-w-2xl bg-gradient-to-br from-gray-900/95 to-gray-800/95 backdrop-blur-xl border border-white/20 rounded-3xl shadow-2xl overflow-hidden max-h-[90vh] overflow-y-auto"
           >
             {/* Header */}
             <div className="flex items-center justify-between p-8 border-b border-white/10">
@@ -142,6 +145,24 @@ export const ProfileEditModal = ({ profile, isOpen, onClose, onSuccess }: Profil
                     className="bg-white/10 border-white/20 text-white placeholder:text-gray-400 focus:border-cyan-400"
                   />
                 </div>
+              </div>
+
+              {/* Banner Section */}
+              <div>
+                <label className="block text-sm font-medium text-white mb-2">
+                  <Camera className="w-4 h-4 inline mr-2" />
+                  Banner URL
+                </label>
+                <Input
+                  type="url"
+                  value={formData.banner_url}
+                  onChange={(e) => handleChange('banner_url', e.target.value)}
+                  placeholder="https://example.com/banner.jpg"
+                  className="bg-white/10 border-white/20 text-white placeholder:text-gray-400 focus:border-cyan-400"
+                />
+                <p className="text-xs text-gray-400 mt-1">
+                  Supports images and videos. Recommended size: 1500x500px
+                </p>
               </div>
 
               {/* Username */}
@@ -207,7 +228,7 @@ export const ProfileEditModal = ({ profile, isOpen, onClose, onSuccess }: Profil
                 <Button
                   type="submit"
                   disabled={isLoading}
-                  className="flex-1 bg-gradient-to-r from-cyan-500 to-purple-500 hover:from-cyan-400 hover:to-purple-400 text-white rounded-xl h-12 font-semibold shadow-lg hover:shadow-cyan-500/25"
+                  className="flex-1 bg-gradient-to-r from-cyan-500 to-purple-500 hover:from-cyan-400 hover:to-purple-400 text-white rounded-xl h-12 font-semibold shadow-lg hover:shadow-cyan-500/25 premium-button"
                 >
                   {isLoading ? "Saving..." : "Save Changes"}
                 </Button>

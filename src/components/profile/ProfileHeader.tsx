@@ -8,12 +8,17 @@ import { useToast } from "@/hooks/use-toast";
 import { useSession } from "@supabase/auth-helpers-react";
 import { format } from "date-fns";
 import { ProfileEditModal } from "@/components/profile/ProfileEditModal";
+import { AvatarUpload } from "@/components/profile/upload/AvatarUpload";
+import { BannerUpload } from "@/components/profile/upload/BannerUpload";
+import { ParticleSystem } from "@/components/profile/effects/ParticleSystem";
+import { GlassmorphismCard } from "@/components/profile/effects/GlassmorphismCard";
 
 interface ProfileData {
   id: string;
   username: string;
   bio?: string;
   avatar_url?: string;
+  banner_url?: string;
   location?: string;
   created_at: string;
   is_verified?: boolean;
@@ -37,6 +42,7 @@ interface ProfileHeaderProps {
 export const ProfileHeader = ({ profile, isOwnProfile, isFollowing, onFollowToggle }: ProfileHeaderProps) => {
   const [isFollowLoading, setIsFollowLoading] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [currentProfile, setCurrentProfile] = useState(profile);
   const { toast } = useToast();
   const session = useSession();
 
@@ -75,7 +81,6 @@ export const ProfileHeader = ({ profile, isOwnProfile, isFollowing, onFollowTogg
   };
 
   const handleMessage = () => {
-    // TODO: Implement messaging functionality
     toast({ description: "Messaging feature coming soon!" });
   };
 
@@ -87,36 +92,70 @@ export const ProfileHeader = ({ profile, isOwnProfile, isFollowing, onFollowTogg
         url: window.location.href
       });
     } catch (error) {
-      // Fallback to clipboard
       navigator.clipboard.writeText(window.location.href);
       toast({ description: "Profile link copied to clipboard!" });
     }
   };
 
+  const handleAvatarSuccess = (newAvatarUrl: string) => {
+    setCurrentProfile(prev => ({ ...prev, avatar_url: newAvatarUrl }));
+  };
+
+  const handleBannerSuccess = (newBannerUrl: string) => {
+    setCurrentProfile(prev => ({ ...prev, banner_url: newBannerUrl }));
+  };
+
   return (
     <div className="w-full relative">
-      {/* Glassmorphism Banner - Full Width */}
+      {/* Particle System */}
+      <ParticleSystem count={80} className="absolute inset-0 pointer-events-none z-0" />
+      
+      {/* Enhanced Banner Section */}
       <motion.div 
         initial={{ opacity: 0, scale: 1.02 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 1 }}
-        className="h-72 md:h-96 relative overflow-hidden w-full"
+        className="relative h-80 md:h-[32rem] w-full overflow-hidden"
       >
-        {/* Enhanced gradient background */}
-        <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/30 via-purple-500/20 to-pink-500/30" />
+        {/* Banner Content */}
+        {isOwnProfile ? (
+          <BannerUpload
+            currentBannerUrl={currentProfile.banner_url}
+            profileId={profile.id}
+            onSuccess={handleBannerSuccess}
+          />
+        ) : (
+          <div className="w-full h-full relative">
+            {currentProfile.banner_url ? (
+              currentProfile.banner_url.includes('.mp4') || currentProfile.banner_url.includes('.webm') ? (
+                <video
+                  src={currentProfile.banner_url}
+                  autoPlay
+                  muted
+                  loop
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <img
+                  src={currentProfile.banner_url}
+                  alt="Profile banner"
+                  className="w-full h-full object-cover"
+                />
+              )
+            ) : (
+              <div className="w-full h-full bg-gradient-to-br from-cyan-500/30 via-purple-500/20 to-pink-500/30" />
+            )}
+          </div>
+        )}
+
+        {/* Enhanced gradient overlays */}
+        <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/20 via-purple-500/10 to-pink-500/20" />
+        <div className="absolute inset-0 backdrop-blur-[1px] bg-black/20" />
+        <div className="absolute bottom-0 left-0 right-0 h-40 bg-gradient-to-t from-gray-900 via-gray-900/80 to-transparent" />
         
-        {/* Dynamic mesh gradient overlay */}
-        <div className="absolute inset-0 opacity-60">
-          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent animate-pulse" />
-          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-white/3 to-black/20" />
-        </div>
-        
-        {/* Glassmorphism overlay */}
-        <div className="absolute inset-0 backdrop-blur-2xl bg-black/30 border-b border-white/20" />
-        
-        {/* Enhanced animated particles */}
+        {/* Floating particles specific to header */}
         <div className="absolute inset-0">
-          {[...Array(30)].map((_, i) => (
+          {[...Array(20)].map((_, i) => (
             <motion.div
               key={i}
               animate={{
@@ -126,11 +165,11 @@ export const ProfileHeader = ({ profile, isOwnProfile, isFollowing, onFollowTogg
                 scale: [0, 1, 0]
               }}
               transition={{
-                duration: Math.random() * 4 + 3,
+                duration: Math.random() * 4 + 6,
                 repeat: Infinity,
                 delay: Math.random() * 3,
               }}
-              className="absolute w-2 h-2 bg-gradient-to-r from-cyan-400 to-purple-400 rounded-full"
+              className="absolute w-3 h-3 bg-gradient-to-r from-cyan-400 to-purple-400 rounded-full"
               style={{
                 left: `${Math.random() * 100}%`,
                 top: `${Math.random() * 100}%`,
@@ -138,13 +177,10 @@ export const ProfileHeader = ({ profile, isOwnProfile, isFollowing, onFollowTogg
             />
           ))}
         </div>
-        
-        {/* Bottom gradient fade */}
-        <div className="absolute bottom-0 left-0 right-0 h-40 bg-gradient-to-t from-gray-900 via-gray-900/80 to-transparent" />
       </motion.div>
 
-      {/* Profile Content Container - Full Width */}
-      <div className="relative -mt-24 px-4 md:px-8 w-full">
+      {/* Profile Content Container */}
+      <div className="relative -mt-32 px-4 md:px-8 w-full z-10">
         <div className="w-full max-w-7xl mx-auto">
           <div className="flex flex-col xl:flex-row items-start xl:items-end gap-8">
             
@@ -155,32 +191,32 @@ export const ProfileHeader = ({ profile, isOwnProfile, isFollowing, onFollowTogg
               transition={{ duration: 0.8, type: "spring", bounce: 0.4 }}
               className="relative flex-shrink-0"
             >
-              <div className="w-48 h-48 md:w-56 md:h-56 rounded-3xl bg-gradient-to-r from-cyan-500 via-purple-500 to-pink-500 p-1.5 shadow-2xl hover:shadow-cyan-500/25 transition-all duration-500">
-                <div className="w-full h-full rounded-3xl overflow-hidden bg-gray-900 relative group">
-                  {profile.avatar_url ? (
-                    <img 
-                      src={profile.avatar_url} 
-                      alt={profile.username}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                    />
-                  ) : (
-                    <div className="w-full h-full bg-gradient-to-br from-gray-700 to-gray-800 flex items-center justify-center">
-                      <span className="text-6xl font-bold text-white">
-                        {profile.username?.charAt(0).toUpperCase()}
-                      </span>
-                    </div>
-                  )}
-                  
-                  {/* Live indicator for creators */}
-                  {profile.is_creator && (
-                    <motion.div
-                      animate={{ scale: [1, 1.2, 1] }}
-                      transition={{ duration: 2, repeat: Infinity }}
-                      className="absolute top-4 right-4 w-5 h-5 bg-green-500 rounded-full border-3 border-white shadow-xl"
-                    />
-                  )}
+              {isOwnProfile ? (
+                <AvatarUpload
+                  currentAvatarUrl={currentProfile.avatar_url}
+                  profileId={profile.id}
+                  onSuccess={handleAvatarSuccess}
+                  size={240}
+                />
+              ) : (
+                <div className="w-60 h-60 rounded-3xl bg-gradient-to-r from-cyan-500 via-purple-500 to-pink-500 p-1.5 shadow-2xl hover:shadow-cyan-500/25 transition-all duration-500">
+                  <div className="w-full h-full rounded-3xl overflow-hidden bg-gray-900 relative group">
+                    {currentProfile.avatar_url ? (
+                      <img 
+                        src={currentProfile.avatar_url} 
+                        alt={profile.username}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-gradient-to-br from-gray-700 to-gray-800 flex items-center justify-center">
+                        <span className="text-6xl font-bold text-white">
+                          {profile.username?.charAt(0).toUpperCase()}
+                        </span>
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
+              )}
               
               {/* Enhanced Verified Badge */}
               {profile.is_verified && (
@@ -188,9 +224,9 @@ export const ProfileHeader = ({ profile, isOwnProfile, isFollowing, onFollowTogg
                   initial={{ scale: 0, rotate: -180 }}
                   animate={{ scale: 1, rotate: 0 }}
                   transition={{ delay: 0.5, type: "spring", bounce: 0.6 }}
-                  className="absolute -bottom-3 -right-3 w-14 h-14 bg-gradient-to-r from-cyan-500 to-purple-500 rounded-full flex items-center justify-center border-4 border-gray-900 shadow-2xl"
+                  className="absolute -bottom-3 -right-3 w-16 h-16 bg-gradient-to-r from-cyan-500 to-purple-500 rounded-full flex items-center justify-center border-4 border-gray-900 shadow-2xl"
                 >
-                  <Check className="w-7 h-7 text-white" />
+                  <Check className="w-8 h-8 text-white" />
                 </motion.div>
               )}
             </motion.div>
@@ -205,8 +241,8 @@ export const ProfileHeader = ({ profile, isOwnProfile, isFollowing, onFollowTogg
               >
                 {/* Name, Status and Creator Badge */}
                 <div>
-                  <div className="flex flex-wrap items-center gap-4 mb-3">
-                    <h1 className="text-5xl md:text-6xl font-bold text-white leading-tight">
+                  <div className="flex flex-wrap items-center gap-4 mb-4">
+                    <h1 className="text-5xl md:text-6xl font-bold text-white leading-tight bg-gradient-to-r from-white via-cyan-200 to-purple-200 bg-clip-text text-transparent">
                       @{profile.username}
                     </h1>
                     {profile.is_creator && (
@@ -238,21 +274,19 @@ export const ProfileHeader = ({ profile, isOwnProfile, isFollowing, onFollowTogg
                 {/* Enhanced Meta Info */}
                 <div className="flex flex-wrap items-center gap-6 text-gray-400">
                   {profile.location && (
-                    <motion.div 
-                      whileHover={{ scale: 1.05, y: -2 }}
-                      className="flex items-center gap-3 px-4 py-2 rounded-full bg-white/10 backdrop-blur-xl border border-white/20 hover:border-cyan-400/50 transition-all duration-300"
-                    >
-                      <MapPin className="w-5 h-5 text-cyan-400" />
-                      <span className="font-medium">{profile.location}</span>
-                    </motion.div>
+                    <GlassmorphismCard className="px-4 py-2 hover:scale-105 transition-transform duration-300">
+                      <div className="flex items-center gap-3">
+                        <MapPin className="w-5 h-5 text-cyan-400" />
+                        <span className="font-medium">{profile.location}</span>
+                      </div>
+                    </GlassmorphismCard>
                   )}
-                  <motion.div 
-                    whileHover={{ scale: 1.05, y: -2 }}
-                    className="flex items-center gap-3 px-4 py-2 rounded-full bg-white/10 backdrop-blur-xl border border-white/20 hover:border-purple-400/50 transition-all duration-300"
-                  >
-                    <Calendar className="w-5 h-5 text-purple-400" />
-                    <span className="font-medium">Joined {format(new Date(profile.created_at), 'MMMM yyyy')}</span>
-                  </motion.div>
+                  <GlassmorphismCard className="px-4 py-2 hover:scale-105 transition-transform duration-300">
+                    <div className="flex items-center gap-3">
+                      <Calendar className="w-5 h-5 text-purple-400" />
+                      <span className="font-medium">Joined {format(new Date(profile.created_at), 'MMMM yyyy')}</span>
+                    </div>
+                  </GlassmorphismCard>
                 </div>
 
                 {/* Enhanced Glassmorphism Stats Grid */}
@@ -269,11 +303,15 @@ export const ProfileHeader = ({ profile, isOwnProfile, isFollowing, onFollowTogg
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: 0.3 + (0.1 * index), duration: 0.6 }}
                       whileHover={{ scale: 1.05, y: -4 }}
-                      className={`text-center p-6 rounded-2xl bg-gradient-to-br ${stat.gradient} backdrop-blur-xl border border-white/20 hover:border-white/40 transition-all duration-300 hover:shadow-2xl hover:shadow-white/10 cursor-pointer group`}
                     >
-                      <stat.icon className={`w-6 h-6 ${stat.color} mx-auto mb-3 group-hover:scale-110 transition-transform duration-300`} />
-                      <div className="text-3xl font-bold text-white mb-1">{stat.value.toLocaleString()}</div>
-                      <div className="text-sm text-gray-400 font-medium">{stat.label}</div>
+                      <GlassmorphismCard 
+                        className={`text-center p-6 bg-gradient-to-br ${stat.gradient} hover:border-white/40 transition-all duration-300 hover:shadow-2xl hover:shadow-white/10 cursor-pointer group`}
+                        intensity="heavy"
+                      >
+                        <stat.icon className={`w-6 h-6 ${stat.color} mx-auto mb-3 group-hover:scale-110 transition-transform duration-300`} />
+                        <div className="text-3xl font-bold text-white mb-1">{stat.value.toLocaleString()}</div>
+                        <div className="text-sm text-gray-400 font-medium">{stat.label}</div>
+                      </GlassmorphismCard>
                     </motion.div>
                   ))}
                 </div>
@@ -285,13 +323,13 @@ export const ProfileHeader = ({ profile, isOwnProfile, isFollowing, onFollowTogg
               initial={{ x: 30, opacity: 0 }}
               animate={{ x: 0, opacity: 1 }}
               transition={{ duration: 0.8, delay: 0.4 }}
-              className="flex flex-col gap-4 w-full xl:w-auto xl:min-w-[280px]"
+              className="flex flex-col gap-4 w-full xl:w-auto xl:min-w-[300px]"
             >
               {isOwnProfile ? (
                 <>
                   <Button 
                     onClick={() => setShowEditModal(true)}
-                    className="w-full bg-gradient-to-r from-cyan-500 to-purple-500 hover:from-cyan-400 hover:to-purple-400 text-white font-bold rounded-2xl h-14 shadow-2xl hover:shadow-cyan-500/50 transition-all duration-300 text-lg"
+                    className="w-full bg-gradient-to-r from-cyan-500 to-purple-500 hover:from-cyan-400 hover:to-purple-400 text-white font-bold rounded-2xl h-16 shadow-2xl hover:shadow-cyan-500/50 transition-all duration-300 text-lg"
                   >
                     <Edit className="w-5 h-5 mr-3" />
                     Edit Profile
@@ -299,7 +337,7 @@ export const ProfileHeader = ({ profile, isOwnProfile, isFollowing, onFollowTogg
                   <Button 
                     onClick={handleShare}
                     variant="outline" 
-                    className="w-full border-white/30 text-white hover:bg-white/20 rounded-2xl h-14 backdrop-blur-xl hover:border-white/50 transition-all duration-300 text-lg font-semibold"
+                    className="w-full border-white/30 text-white hover:bg-white/20 rounded-2xl h-16 backdrop-blur-xl hover:border-white/50 transition-all duration-300 text-lg font-semibold"
                   >
                     <Share className="w-5 h-5 mr-3" />
                     Share Profile
@@ -309,7 +347,7 @@ export const ProfileHeader = ({ profile, isOwnProfile, isFollowing, onFollowTogg
                 <>
                   {profile.is_creator && profile.subscription_price && (
                     <Button 
-                      className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-400 hover:to-pink-400 text-white font-bold rounded-2xl h-14 shadow-2xl hover:shadow-pink-500/50 transition-all duration-300 text-lg"
+                      className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-400 hover:to-pink-400 text-white font-bold rounded-2xl h-16 shadow-2xl hover:shadow-pink-500/50 transition-all duration-300 text-lg"
                     >
                       <Crown className="w-5 h-5 mr-3" />
                       Subscribe ${profile.subscription_price}/month
@@ -318,7 +356,7 @@ export const ProfileHeader = ({ profile, isOwnProfile, isFollowing, onFollowTogg
                   <Button 
                     onClick={handleFollowToggle}
                     disabled={isFollowLoading}
-                    className={`w-full font-bold rounded-2xl h-14 transition-all duration-300 text-lg ${
+                    className={`w-full font-bold rounded-2xl h-16 transition-all duration-300 text-lg ${
                       isFollowing 
                         ? 'bg-white/20 text-white hover:bg-white/30 border border-white/30 hover:border-white/50 backdrop-blur-xl' 
                         : 'bg-gradient-to-r from-cyan-500 to-purple-500 hover:from-cyan-400 hover:to-purple-400 text-white shadow-2xl hover:shadow-cyan-500/50'
@@ -340,13 +378,13 @@ export const ProfileHeader = ({ profile, isOwnProfile, isFollowing, onFollowTogg
                     <Button 
                       onClick={handleMessage}
                       variant="outline" 
-                      className="border-white/30 text-white hover:bg-white/20 rounded-2xl h-12 backdrop-blur-xl hover:border-white/50 transition-all duration-300 font-semibold"
+                      className="border-white/30 text-white hover:bg-white/20 rounded-2xl h-14 backdrop-blur-xl hover:border-white/50 transition-all duration-300 font-semibold"
                     >
                       <MessageCircle className="w-4 h-4 mr-2" />
                       Message
                     </Button>
                     <Button 
-                      className="bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-400 hover:to-orange-400 text-white rounded-2xl h-12 font-semibold shadow-lg hover:shadow-yellow-500/25 transition-all duration-300"
+                      className="bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-400 hover:to-orange-400 text-white rounded-2xl h-14 font-semibold shadow-lg hover:shadow-yellow-500/25 transition-all duration-300"
                     >
                       <DollarSign className="w-4 h-4 mr-2" />
                       Tip
@@ -362,12 +400,11 @@ export const ProfileHeader = ({ profile, isOwnProfile, isFollowing, onFollowTogg
       {/* Profile Edit Modal */}
       {showEditModal && (
         <ProfileEditModal
-          profile={profile}
+          profile={currentProfile}
           isOpen={showEditModal}
           onClose={() => setShowEditModal(false)}
           onSuccess={() => {
             setShowEditModal(false);
-            // Refresh profile data
             window.location.reload();
           }}
         />
