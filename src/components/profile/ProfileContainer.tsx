@@ -4,8 +4,6 @@ import { useParams } from "react-router-dom";
 import { useSession } from "@supabase/auth-helpers-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { ProfileHeader } from "./ProfileHeader";
-import { ProfileContent } from "./ProfileContent";
 import { ProfileEditModal } from "./ProfileEditModal";
 import { AvatarUpload } from "./upload/AvatarUpload";
 import { BannerUpload } from "./upload/BannerUpload";
@@ -223,8 +221,15 @@ export const ProfileContainer = ({ id, isEditing, setIsEditing }: ProfileContain
           </div>
         </div>
 
-        {/* Profile Content */}
-        <ProfileContent profile={profile} isOwnProfile={isOwnProfile} />
+        {/* Profile Content - Simple placeholder for now */}
+        <div className="px-6">
+          <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-6 border border-white/10">
+            <h2 className="text-2xl font-bold text-white mb-4">About</h2>
+            <p className="text-gray-300">
+              {profile.bio || "No bio available."}
+            </p>
+          </div>
+        </div>
       </div>
 
       {/* Edit Modal */}
