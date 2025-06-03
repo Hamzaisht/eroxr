@@ -19,7 +19,7 @@ export const useBodyContactSubmit = ({ onSuccess, onComplete, isSuperAdmin }: Us
     setIsLoading(true);
     try {
       // Basic validation
-      if (!data.title || !data.description) {
+      if (!data.title?.trim() || !data.description?.trim()) {
         throw new Error('Title and description are required');
       }
 

@@ -3,7 +3,7 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate, useLocation, Link } from "react-router-dom";
 import { useSession } from "@supabase/auth-helpers-react";
-import { Home, Heart, MessageSquare, Play, Film, Menu, X, Shield, Ghost } from "lucide-react";
+import { Home, Heart, MessageSquare, Play, Film, Menu, Shield, Ghost } from "lucide-react";
 import { NavMenuItem } from "./nav/NavMenuItem";
 import { UserProfileSection } from "./nav/UserProfileSection";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -44,7 +44,7 @@ export const InteractiveNav = () => {
   
   // Modified to handle the BD creation
   const handleItemClick = (path: string, label: string) => {
-    if (label === "Create a BD" && location.pathname === "/dating") {
+    if (label === "Create a BD") {
       setShowBodyContactDialog(true);
     } else {
       navigate(path);

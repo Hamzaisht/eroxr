@@ -60,21 +60,7 @@ export const uploadMediaToSupabase = async (
     
     console.log("📁 Generated file path:", fileName);
 
-    // Check if media bucket exists, if not return error with setup instruction
-    const { data: buckets, error: bucketsError } = await supabase.storage.listBuckets();
-    
-    if (bucketsError) {
-      console.error("❌ Storage connection failed:", bucketsError);
-      return { success: false, error: `Storage connection failed: ${bucketsError.message}` };
-    }
-    
-    const mediaBucket = buckets?.find(b => b.id === 'media');
-    if (!mediaBucket) {
-      console.error("❌ Media bucket not found");
-      return { success: false, error: 'Media storage bucket does not exist. Please contact support.' };
-    }
-
-    // Upload to Supabase Storage
+    // Upload to Supabase Storage (removed bucket check to avoid recursion)
     console.log("📤 Uploading to storage bucket 'media'...");
     const { data: uploadData, error: uploadError } = await supabase.storage
       .from('media')
