@@ -1,7 +1,7 @@
 
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Heart, MessageCircle, Share, Bookmark, Eye, Lock, Play, Volume2, VolumeX, MoreHorizontal } from "lucide-react";
+import { Heart, MessageCircle, Share, Bookmark, Eye, Lock, Play, Volume2, VolumeX, MoreHorizontal, Download, Screenshot } from "lucide-react";
 import { UniversalMedia } from "@/components/media/UniversalMedia";
 import { MediaWatermark } from "@/components/media/MediaWatermark";
 import { format, formatDistanceToNow } from "date-fns";
@@ -11,6 +11,13 @@ interface Creator {
   id: string;
   username?: string;
   avatar_url?: string;
+}
+
+interface MediaAsset {
+  id: string;
+  url: string;
+  media_type: string;
+  thumbnail_url?: string;
 }
 
 interface Post {
@@ -23,7 +30,7 @@ interface Post {
   likes_count: number;
   comments_count: number;
   view_count: number;
-  media_assets: any[];
+  media_assets: MediaAsset[];
   creator?: Creator;
 }
 
@@ -38,6 +45,7 @@ export const PostCard = ({ post, isOwnProfile }: PostCardProps) => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(true);
   const [showFullContent, setShowFullContent] = useState(false);
+  const [imageLoaded, setImageLoaded] = useState(false);
 
   const isPremium = post.is_ppv || post.visibility === 'subscribers_only';
   const hasMedia = post.media_assets && post.media_assets.length > 0;
@@ -46,12 +54,22 @@ export const PostCard = ({ post, isOwnProfile }: PostCardProps) => {
   const isVideo = firstMedia?.media_type === 'video' || firstMedia?.url?.includes('.mp4');
   const isAudio = firstMedia?.media_type === 'audio' || firstMedia?.url?.includes('.mp3');
 
+  const handlePurchase = () => {
+    // TODO: Implement PPV purchase
+    console.log('Purchase PPV content');
+  };
+
+  const handleSubscribe = () => {
+    // TODO: Implement subscription
+    console.log('Subscribe to creator');
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      whileHover={{ y: -4, transition: { duration: 0.2 } }}
-      className="group relative rounded-2xl overflow-hidden bg-white/5 backdrop-blur-sm border border-white/10 hover:border-white/20 transition-all duration-300 hover:shadow-xl hover:shadow-white/10"
+      whileHover={{ y: -6, transition: { duration: 0.3 } }}
+      className="group relative rounded-3xl overflow-hidden bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-xl border border-white/20 hover:border-white/40 transition-all duration-500 hover:shadow-2xl hover:shadow-white/20"
     >
       {/* Media Container */}
       {hasMedia && (
@@ -61,23 +79,37 @@ export const PostCard = ({ post, isOwnProfile }: PostCardProps) => {
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              className="absolute inset-0 z-20 bg-black/80 backdrop-blur-sm flex items-center justify-center"
+              className="absolute inset-0 z-20 bg-black/90 backdrop-blur-md flex items-center justify-center"
             >
-              <div className="text-center">
+              <div className="text-center p-8">
                 <motion.div
-                  animate={{ scale: [1, 1.1, 1] }}
-                  transition={{ duration: 2, repeat: Infinity }}
-                  className="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 flex items-center justify-center"
+                  animate={{ scale: [1, 1.1, 1], rotate: [0, 5, -5, 0] }}
+                  transition={{ duration: 3, repeat: Infinity }}
+                  className="w-20 h-20 mx-auto mb-6 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 flex items-center justify-center shadow-2xl"
                 >
-                  <Lock className="w-8 h-8 text-white" />
+                  <Lock className="w-10 h-10 text-white" />
                 </motion.div>
-                <h3 className="text-white font-semibold mb-2">Premium Content</h3>
-                <p className="text-gray-300 text-sm mb-4">
+                <h3 className="text-white font-bold text-xl mb-3">Premium Content</h3>
+                <p className="text-gray-300 text-sm mb-6">
                   {post.is_ppv ? `$${post.ppv_amount} to unlock` : 'Subscribe to view'}
                 </p>
-                <Button className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-400 hover:to-pink-400">
-                  {post.is_ppv ? 'Purchase' : 'Subscribe'}
-                </Button>
+                <div className="space-y-3">
+                  <Button 
+                    onClick={post.is_ppv ? handlePurchase : handleSubscribe}
+                    className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-400 hover:to-pink-400 rounded-xl font-semibold shadow-lg"
+                  >
+                    {post.is_ppv ? `Purchase for $${post.ppv_amount}` : 'Subscribe Now'}
+                  </Button>
+                  {post.is_ppv && (
+                    <Button 
+                      onClick={handleSubscribe}
+                      variant="outline"
+                      className="w-full border-white/30 text-white hover:bg-white/10 rounded-xl"
+                    >
+                      Subscribe for All Content
+                    </Button>
+                  )}
+                </div>
               </div>
             </motion.div>
           )}
@@ -93,6 +125,7 @@ export const PostCard = ({ post, isOwnProfile }: PostCardProps) => {
                   loop
                   onPlay={() => setIsPlaying(true)}
                   onPause={() => setIsPlaying(false)}
+                  onLoadedData={() => setImageLoaded(true)}
                 />
                 
                 {/* Video Controls */}
@@ -100,54 +133,62 @@ export const PostCard = ({ post, isOwnProfile }: PostCardProps) => {
                   <motion.button
                     whileHover={{ scale: 1.1 }}
                     whileTap={{ scale: 0.9 }}
-                    className="w-16 h-16 rounded-full bg-black/50 backdrop-blur-sm flex items-center justify-center border border-white/20"
+                    className="w-20 h-20 rounded-full bg-black/60 backdrop-blur-sm flex items-center justify-center border-2 border-white/30 hover:border-white/60 transition-all duration-300"
                   >
-                    <Play className="w-8 h-8 text-white ml-1" />
+                    <Play className="w-10 h-10 text-white ml-1" />
                   </motion.button>
                 </div>
                 
                 {/* Mute Button */}
                 <button
                   onClick={() => setIsMuted(!isMuted)}
-                  className="absolute top-4 right-4 w-10 h-10 rounded-full bg-black/50 backdrop-blur-sm flex items-center justify-center border border-white/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                  className="absolute top-4 right-4 w-12 h-12 rounded-full bg-black/60 backdrop-blur-sm flex items-center justify-center border border-white/30 opacity-0 group-hover:opacity-100 transition-all duration-300"
                 >
-                  {isMuted ? <VolumeX className="w-5 h-5 text-white" /> : <Volume2 className="w-5 h-5 text-white" />}
+                  {isMuted ? <VolumeX className="w-6 h-6 text-white" /> : <Volume2 className="w-6 h-6 text-white" />}
                 </button>
               </div>
             ) : isAudio ? (
-              <div className="w-full h-full bg-gradient-to-br from-purple-900/50 to-pink-900/50 flex items-center justify-center">
+              <div className="w-full h-full bg-gradient-to-br from-purple-900/60 to-pink-900/60 flex items-center justify-center">
                 <div className="text-center">
                   <motion.div
                     animate={{ scale: [1, 1.1, 1] }}
                     transition={{ duration: 2, repeat: Infinity }}
-                    className="w-20 h-20 mx-auto mb-4 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 flex items-center justify-center"
+                    className="w-24 h-24 mx-auto mb-6 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 flex items-center justify-center shadow-2xl"
                   >
-                    <Volume2 className="w-10 h-10 text-white" />
+                    <Volume2 className="w-12 h-12 text-white" />
                   </motion.div>
-                  <p className="text-white font-medium">Audio Content</p>
+                  <p className="text-white font-bold text-lg">Audio Content</p>
                 </div>
               </div>
             ) : (
-              <UniversalMedia
-                src={firstMedia?.url}
-                type="image"
-                alt={post.content}
-                className="w-full h-full object-cover"
-              />
+              <div className="relative w-full h-full">
+                {!imageLoaded && (
+                  <div className="absolute inset-0 bg-gradient-to-br from-gray-800 to-gray-900 animate-pulse flex items-center justify-center">
+                    <div className="w-16 h-16 border-4 border-cyan-500 border-t-transparent rounded-full animate-spin" />
+                  </div>
+                )}
+                <img
+                  src={firstMedia?.url}
+                  alt={post.content}
+                  className={`w-full h-full object-cover transition-opacity duration-500 ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
+                  onLoad={() => setImageLoaded(true)}
+                  onError={() => setImageLoaded(true)}
+                />
+              </div>
             )}
             
             {/* Watermark */}
             {post.creator?.username && (
               <MediaWatermark 
                 creatorHandle={post.creator.username}
-                className="bottom-2 right-2"
+                className="bottom-3 right-3 bg-black/70 backdrop-blur-md px-3 py-1.5 rounded-lg border border-white/20"
               />
             )}
             
             {/* Media Count Indicator */}
             {post.media_assets.length > 1 && (
-              <div className="absolute top-4 right-4 px-2 py-1 rounded-full bg-black/50 backdrop-blur-sm border border-white/20">
-                <span className="text-white text-xs font-medium">
+              <div className="absolute top-4 right-4 px-3 py-1.5 rounded-full bg-black/70 backdrop-blur-md border border-white/30">
+                <span className="text-white text-sm font-bold">
                   1/{post.media_assets.length}
                 </span>
               </div>
@@ -157,7 +198,7 @@ export const PostCard = ({ post, isOwnProfile }: PostCardProps) => {
       )}
 
       {/* Content Section */}
-      <div className="p-4 space-y-3">
+      <div className="p-6 space-y-4">
         {/* Post Content */}
         {post.content && (
           <div>
@@ -167,7 +208,7 @@ export const PostCard = ({ post, isOwnProfile }: PostCardProps) => {
             {post.content.length > 150 && (
               <button
                 onClick={() => setShowFullContent(!showFullContent)}
-                className="text-cyan-400 text-sm mt-1 hover:text-cyan-300 transition-colors"
+                className="text-cyan-400 text-sm mt-2 hover:text-cyan-300 transition-colors font-medium"
               >
                 {showFullContent ? 'Show less' : 'Show more'}
               </button>
@@ -177,7 +218,7 @@ export const PostCard = ({ post, isOwnProfile }: PostCardProps) => {
 
         {/* Engagement Stats */}
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-6">
             <motion.button
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.9 }}
@@ -186,8 +227,8 @@ export const PostCard = ({ post, isOwnProfile }: PostCardProps) => {
                 isLiked ? 'text-red-500' : 'text-gray-400 hover:text-red-400'
               }`}
             >
-              <Heart className={`w-5 h-5 ${isLiked ? 'fill-current' : ''}`} />
-              <span className="text-sm font-medium">{post.likes_count.toLocaleString()}</span>
+              <Heart className={`w-6 h-6 ${isLiked ? 'fill-current' : ''}`} />
+              <span className="text-sm font-bold">{post.likes_count.toLocaleString()}</span>
             </motion.button>
 
             <motion.button
@@ -195,13 +236,13 @@ export const PostCard = ({ post, isOwnProfile }: PostCardProps) => {
               whileTap={{ scale: 0.9 }}
               className="flex items-center gap-2 text-gray-400 hover:text-cyan-400 transition-colors"
             >
-              <MessageCircle className="w-5 h-5" />
-              <span className="text-sm font-medium">{post.comments_count.toLocaleString()}</span>
+              <MessageCircle className="w-6 h-6" />
+              <span className="text-sm font-bold">{post.comments_count.toLocaleString()}</span>
             </motion.button>
 
             <div className="flex items-center gap-2 text-gray-400">
-              <Eye className="w-5 h-5" />
-              <span className="text-sm font-medium">{post.view_count.toLocaleString()}</span>
+              <Eye className="w-6 h-6" />
+              <span className="text-sm font-bold">{post.view_count.toLocaleString()}</span>
             </div>
           </div>
 
@@ -211,7 +252,7 @@ export const PostCard = ({ post, isOwnProfile }: PostCardProps) => {
               whileTap={{ scale: 0.9 }}
               onClick={() => setIsSaved(!isSaved)}
               className={`p-2 rounded-full transition-colors ${
-                isSaved ? 'text-yellow-500 bg-yellow-500/10' : 'text-gray-400 hover:text-yellow-400 hover:bg-yellow-400/10'
+                isSaved ? 'text-yellow-500 bg-yellow-500/20' : 'text-gray-400 hover:text-yellow-400 hover:bg-yellow-400/20'
               }`}
             >
               <Bookmark className={`w-5 h-5 ${isSaved ? 'fill-current' : ''}`} />
@@ -220,7 +261,7 @@ export const PostCard = ({ post, isOwnProfile }: PostCardProps) => {
             <motion.button
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.9 }}
-              className="p-2 rounded-full text-gray-400 hover:text-white hover:bg-white/10 transition-colors"
+              className="p-2 rounded-full text-gray-400 hover:text-white hover:bg-white/20 transition-colors"
             >
               <Share className="w-5 h-5" />
             </motion.button>
@@ -228,7 +269,7 @@ export const PostCard = ({ post, isOwnProfile }: PostCardProps) => {
             <motion.button
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.9 }}
-              className="p-2 rounded-full text-gray-400 hover:text-white hover:bg-white/10 transition-colors"
+              className="p-2 rounded-full text-gray-400 hover:text-white hover:bg-white/20 transition-colors"
             >
               <MoreHorizontal className="w-5 h-5" />
             </motion.button>
@@ -236,18 +277,18 @@ export const PostCard = ({ post, isOwnProfile }: PostCardProps) => {
         </div>
 
         {/* Timestamp */}
-        <div className="flex items-center justify-between text-xs text-gray-500">
-          <span>{formatDistanceToNow(new Date(post.created_at), { addSuffix: true })}</span>
-          <span>{format(new Date(post.created_at), 'MMM d, yyyy')}</span>
+        <div className="flex items-center justify-between text-xs text-gray-500 pt-2 border-t border-white/10">
+          <span className="font-medium">{formatDistanceToNow(new Date(post.created_at), { addSuffix: true })}</span>
+          <span className="font-medium">{format(new Date(post.created_at), 'MMM d, yyyy')}</span>
         </div>
       </div>
 
       {/* Premium Badge */}
       {isPremium && (
-        <div className="absolute top-4 left-4 px-2 py-1 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 border border-white/20">
-          <div className="flex items-center gap-1">
-            <Lock className="w-3 h-3 text-white" />
-            <span className="text-white text-xs font-medium">
+        <div className="absolute top-4 left-4 px-3 py-1.5 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 border border-white/30 shadow-lg">
+          <div className="flex items-center gap-2">
+            <Lock className="w-4 h-4 text-white" />
+            <span className="text-white text-xs font-bold">
               {post.is_ppv ? 'PPV' : 'Premium'}
             </span>
           </div>

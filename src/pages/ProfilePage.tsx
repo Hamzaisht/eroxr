@@ -24,6 +24,8 @@ interface ProfileData {
   posts_count: number;
   is_creator: boolean;
   subscription_price?: number;
+  creator_status?: string;
+  verification_level?: string;
 }
 
 export default function ProfilePage() {
@@ -65,7 +67,6 @@ export default function ProfilePage() {
         .single();
 
       if (profileError || !profileData) {
-        // Create profile if it doesn't exist
         const defaultUsername = session.user.email?.split('@')[0] || `user_${session.user.id.slice(0, 8)}`;
         
         const { data: newProfile, error: insertError } = await supabase
@@ -113,17 +114,19 @@ export default function ProfilePage() {
     try {
       setLoading(true);
       
-      // Get profile data
+      // Enhanced profile query with creator status and verification
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
-        .select('*')
+        .select(`
+          *,
+          user_roles(role)
+        `)
         .eq('username', username)
         .single();
 
       if (profileError) {
         console.error('Profile not found:', profileError);
         
-        // If this could be the current user trying to access their own profile
         if (session?.user?.id) {
           const { data: currentUserProfile } = await supabase
             .from('profiles')
@@ -132,11 +135,9 @@ export default function ProfilePage() {
             .single();
 
           if (!currentUserProfile) {
-            // User doesn't have a profile yet, create one
             await redirectToUserProfile();
             return;
           } else if (currentUserProfile.username !== username) {
-            // Profile exists but username doesn't match - show not found
             setProfile(null);
             setLoading(false);
             return;
@@ -175,21 +176,31 @@ export default function ProfilePage() {
       const totalLikes = likesData?.reduce((sum, post) => sum + (post.likes_count || 0), 0) || 0;
 
       // Check if user is a creator
-      const { data: roleData } = await supabase
-        .from('user_roles')
-        .select('role')
-        .eq('user_id', profileData.id)
-        .single();
+      const isCreator = profileData.user_roles?.some((role: any) => role.role === 'creator') || false;
 
       // Get subscription pricing if creator
       let subscriptionPrice = null;
-      if (roleData?.role === 'creator') {
+      let creatorStatus = null;
+      if (isCreator) {
         const { data: pricingData } = await supabase
           .from('creator_content_prices')
           .select('monthly_price')
           .eq('creator_id', profileData.id)
           .single();
         subscriptionPrice = pricingData?.monthly_price;
+
+        // Get creator metrics for status
+        const { data: metricsData } = await supabase
+          .from('creator_metrics')
+          .select('*')
+          .eq('user_id', profileData.id)
+          .single();
+
+        if (metricsData) {
+          if (metricsData.followers >= 10000) creatorStatus = "Top Creator";
+          else if (metricsData.followers >= 1000) creatorStatus = "Rising Star";
+          else creatorStatus = "Creator";
+        }
       }
 
       // Check if current user follows this profile
@@ -209,8 +220,10 @@ export default function ProfilePage() {
         following_count: followingCount || 0,
         likes_count: totalLikes,
         posts_count: postsCount || 0,
-        is_creator: roleData?.role === 'creator',
-        subscription_price: subscriptionPrice
+        is_creator: isCreator,
+        subscription_price: subscriptionPrice,
+        creator_status: creatorStatus,
+        verification_level: profileData.is_verified ? "verified" : "unverified"
       });
 
     } catch (error: any) {
@@ -227,11 +240,11 @@ export default function ProfilePage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen w-full bg-gradient-to-br from-gray-900 via-gray-800 to-black flex items-center justify-center">
+      <div className="min-h-screen w-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black flex items-center justify-center overflow-hidden">
         <motion.div
           animate={{ rotate: 360 }}
           transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-          className="w-12 h-12 border-2 border-cyan-500 border-t-transparent rounded-full"
+          className="w-16 h-16 border-4 border-cyan-500 border-t-transparent rounded-full"
         />
       </div>
     );
@@ -239,21 +252,21 @@ export default function ProfilePage() {
 
   if (!profile) {
     return (
-      <div className="min-h-screen w-full bg-gradient-to-br from-gray-900 via-gray-800 to-black flex items-center justify-center">
+      <div className="min-h-screen w-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black flex items-center justify-center overflow-hidden">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="text-center"
+          className="text-center px-8"
         >
-          <h1 className="text-3xl font-bold text-white mb-4">Profile Not Found</h1>
-          <p className="text-gray-400 text-lg mb-6">The user you're looking for doesn't exist.</p>
+          <h1 className="text-4xl font-bold text-white mb-4">Profile Not Found</h1>
+          <p className="text-gray-400 text-xl mb-8">The user you're looking for doesn't exist.</p>
           {session?.user && (
             <div className="space-y-4">
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={() => redirectToUserProfile()}
-                className="px-6 py-3 bg-gradient-to-r from-cyan-500 to-purple-500 text-white rounded-2xl font-semibold hover:shadow-lg transition-all duration-300 mr-4"
+                className="px-8 py-4 bg-gradient-to-r from-cyan-500 to-purple-500 text-white rounded-2xl font-semibold hover:shadow-xl transition-all duration-300 mr-4 text-lg"
               >
                 Go to My Profile
               </motion.button>
@@ -261,7 +274,7 @@ export default function ProfilePage() {
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={() => navigate('/home')}
-                className="px-6 py-3 bg-white/10 text-white rounded-2xl font-semibold hover:bg-white/20 transition-all duration-300"
+                className="px-8 py-4 bg-white/10 text-white rounded-2xl font-semibold hover:bg-white/20 transition-all duration-300 text-lg backdrop-blur-sm"
               >
                 Go to Home
               </motion.button>
@@ -273,43 +286,71 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="min-h-screen w-full bg-gradient-to-br from-gray-900 via-gray-800 to-black relative overflow-hidden">
-      {/* Enhanced Background Effects */}
+    <div className="min-h-screen w-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black relative overflow-hidden">
+      {/* Enhanced Background Effects - Full Screen */}
       <div className="fixed inset-0 pointer-events-none">
-        <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/3 via-purple-500/3 to-pink-500/3 animate-pulse" />
-        <motion.div 
-          animate={{ 
-            scale: [1, 1.1, 1],
-            opacity: [0.1, 0.2, 0.1]
-          }}
-          transition={{ duration: 8, repeat: Infinity }}
-          className="absolute top-1/4 left-1/4 w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl"
-        />
-        <motion.div 
-          animate={{ 
-            scale: [1.1, 1, 1.1],
-            opacity: [0.1, 0.15, 0.1]
-          }}
-          transition={{ duration: 10, repeat: Infinity, delay: 2 }}
-          className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl"
-        />
+        <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/5 via-purple-500/5 to-pink-500/5 animate-pulse" />
+        
+        {/* Floating Particles */}
+        {[...Array(50)].map((_, i) => (
+          <motion.div
+            key={i}
+            animate={{
+              y: [0, -100, 0],
+              x: [0, Math.random() * 100 - 50, 0],
+              opacity: [0, 1, 0],
+            }}
+            transition={{
+              duration: Math.random() * 10 + 5,
+              repeat: Infinity,
+              delay: Math.random() * 5,
+            }}
+            className="absolute w-1 h-1 bg-white/20 rounded-full"
+            style={{
+              left: `${Math.random() * 100}%`,
+              top: `${Math.random() * 100}%`,
+            }}
+          />
+        ))}
+        
+        {/* Enhanced Gradient Orbs */}
         <motion.div 
           animate={{ 
             scale: [1, 1.2, 1],
-            opacity: [0.05, 0.1, 0.05]
+            opacity: [0.1, 0.3, 0.1],
+            rotate: [0, 180, 360]
           }}
-          transition={{ duration: 12, repeat: Infinity, delay: 4 }}
-          className="absolute top-1/2 left-1/2 w-96 h-96 bg-pink-500/8 rounded-full blur-3xl transform -translate-x-1/2 -translate-y-1/2"
+          transition={{ duration: 12, repeat: Infinity }}
+          className="absolute top-1/4 left-1/4 w-96 h-96 bg-gradient-to-r from-cyan-500/20 to-blue-500/20 rounded-full blur-3xl"
+        />
+        <motion.div 
+          animate={{ 
+            scale: [1.2, 1, 1.2],
+            opacity: [0.1, 0.25, 0.1],
+            rotate: [360, 180, 0]
+          }}
+          transition={{ duration: 15, repeat: Infinity, delay: 2 }}
+          className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-gradient-to-r from-purple-500/20 to-pink-500/20 rounded-full blur-3xl"
+        />
+        <motion.div 
+          animate={{ 
+            scale: [1, 1.3, 1],
+            opacity: [0.05, 0.2, 0.05],
+            rotate: [0, -180, -360]
+          }}
+          transition={{ duration: 18, repeat: Infinity, delay: 4 }}
+          className="absolute top-1/2 left-1/2 w-96 h-96 bg-gradient-to-r from-pink-500/15 to-orange-500/15 rounded-full blur-3xl transform -translate-x-1/2 -translate-y-1/2"
         />
       </div>
 
       {/* Full-width immersive content */}
-      <div className="relative z-10 w-full">
-        {/* Glassmorphism Profile Header */}
+      <div className="relative z-10 w-screen">
+        {/* Enhanced Glassmorphism Profile Header */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
+          transition={{ duration: 0.8 }}
+          className="w-full"
         >
           <ProfileHeader 
             profile={profile}
@@ -324,7 +365,8 @@ export default function ProfilePage() {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.2 }}
+            transition={{ duration: 0.8, delay: 0.2 }}
+            className="w-full"
           >
             <CreatorDashboard profile={profile} />
           </motion.div>
@@ -334,7 +376,8 @@ export default function ProfilePage() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.3 }}
+          transition={{ duration: 0.8, delay: 0.3 }}
+          className="w-full"
         >
           <ProfileTabs 
             activeTab={activeTab}
@@ -347,7 +390,8 @@ export default function ProfilePage() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.4 }}
+          transition={{ duration: 0.8, delay: 0.4 }}
+          className="w-full"
         >
           <ProfileContent 
             profile={profile}

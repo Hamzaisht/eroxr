@@ -54,7 +54,6 @@ export const ProfileContent = ({ profile, activeTab, isOwnProfile }: ProfileCont
         .from('posts')
         .select(`
           *,
-          media_assets(*),
           profiles:creator_id(username, avatar_url)
         `)
         .eq('creator_id', profile.id)
@@ -69,18 +68,6 @@ export const ProfileContent = ({ profile, activeTab, isOwnProfile }: ProfileCont
         case 'premium':
           query = query.or('visibility.eq.subscribers_only,is_ppv.eq.true');
           break;
-        case 'photos':
-          // Filter for posts with image media
-          query = query.not('media_assets', 'is', null);
-          break;
-        case 'videos':
-          // Filter for posts with video media
-          query = query.not('media_assets', 'is', null);
-          break;
-        case 'audio':
-          // Filter for posts with audio media
-          query = query.not('media_assets', 'is', null);
-          break;
         case 'liked':
           if (session?.user?.id) {
             const { data: likedPosts } = await supabase
@@ -89,7 +76,6 @@ export const ProfileContent = ({ profile, activeTab, isOwnProfile }: ProfileCont
                 post_id,
                 posts:posts(
                   *,
-                  media_assets(*),
                   profiles:creator_id(username, avatar_url)
                 )
               `)
@@ -109,9 +95,24 @@ export const ProfileContent = ({ profile, activeTab, isOwnProfile }: ProfileCont
                 likes_count: post.likes_count || 0,
                 comments_count: post.comments_count || 0,
                 view_count: post.view_count || 0,
-                media_assets: post.media_assets || [],
+                media_assets: [],
                 creator: post.profiles
               })) || [];
+            
+            // Fetch media assets for liked posts
+            for (const post of validPosts) {
+              const { data: mediaAssets } = await supabase
+                .from('media_assets')
+                .select('*')
+                .eq('metadata->>post_id', post.id);
+              
+              if (mediaAssets) {
+                post.media_assets = mediaAssets.map(asset => ({
+                  ...asset,
+                  url: supabase.storage.from('media').getPublicUrl(asset.storage_path).data.publicUrl
+                }));
+              }
+            }
             
             if (pageNum === 1) {
               setPosts(validPosts);
@@ -124,12 +125,10 @@ export const ProfileContent = ({ profile, activeTab, isOwnProfile }: ProfileCont
           }
           break;
         case 'tagged':
-          // This would need a tagging system
           setPosts([]);
           setLoading(false);
           return;
         case 'livestreams':
-          // This would query live streams
           setPosts([]);
           setLoading(false);
           return;
@@ -144,12 +143,30 @@ export const ProfileContent = ({ profile, activeTab, isOwnProfile }: ProfileCont
 
       if (error) throw error;
 
-      // Process posts to ensure proper media assets structure
+      // Process posts and fetch their media assets
       let processedPosts = data?.map(post => ({
         ...post,
-        media_assets: post.media_assets || [],
+        media_assets: [],
         creator: post.profiles
       })) || [];
+
+      // Fetch media assets for each post using the correct relationship
+      for (const post of processedPosts) {
+        const { data: mediaAssets } = await supabase
+          .from('media_assets')
+          .select('*')
+          .eq('metadata->>post_id', post.id);
+        
+        if (mediaAssets && mediaAssets.length > 0) {
+          post.media_assets = mediaAssets.map(asset => ({
+            ...asset,
+            url: supabase.storage.from('media').getPublicUrl(asset.storage_path).data.publicUrl,
+            thumbnail_url: asset.metadata?.thumbnail_url ? 
+              supabase.storage.from('media').getPublicUrl(asset.metadata.thumbnail_url).data.publicUrl : 
+              null
+          }));
+        }
+      }
 
       // Additional filtering for media types
       if (activeTab === 'photos') {
@@ -189,30 +206,33 @@ export const ProfileContent = ({ profile, activeTab, isOwnProfile }: ProfileCont
     }
   };
 
-  // Memoized grid layout
+  // Memoized grid layout with enhanced styling
   const gridContent = useMemo(() => {
     if (posts.length === 0) return null;
 
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-        <AnimatePresence mode="popLayout">
-          {posts.map((post, index) => (
-            <motion.div
-              key={post.id}
-              layout
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              transition={{ 
-                duration: 0.5, 
-                delay: index * 0.05,
-                layout: { duration: 0.3 }
-              }}
-            >
-              <PostCard post={post} isOwnProfile={isOwnProfile} />
-            </motion.div>
-          ))}
-        </AnimatePresence>
+      <div className="w-full px-4 md:px-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6">
+          <AnimatePresence mode="popLayout">
+            {posts.map((post, index) => (
+              <motion.div
+                key={post.id}
+                layout
+                initial={{ opacity: 0, y: 20, scale: 0.9 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: -20, scale: 0.9 }}
+                transition={{ 
+                  duration: 0.6, 
+                  delay: index * 0.05,
+                  layout: { duration: 0.4 }
+                }}
+                whileHover={{ y: -8, transition: { duration: 0.2 } }}
+              >
+                <PostCard post={post} isOwnProfile={isOwnProfile} />
+              </motion.div>
+            ))}
+          </AnimatePresence>
+        </div>
       </div>
     );
   }, [posts, isOwnProfile]);
@@ -220,14 +240,14 @@ export const ProfileContent = ({ profile, activeTab, isOwnProfile }: ProfileCont
   if (loading && posts.length === 0) {
     return (
       <div className="w-full px-4 md:px-8 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {[...Array(8)].map((_, i) => (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6">
+          {[...Array(12)].map((_, i) => (
             <motion.div
               key={i}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.1 }}
-              className="aspect-square bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl animate-pulse"
+              className="aspect-square bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-sm border border-white/10 rounded-2xl animate-pulse shadow-xl"
             />
           ))}
         </div>
@@ -242,25 +262,29 @@ export const ProfileContent = ({ profile, activeTab, isOwnProfile }: ProfileCont
           return {
             icon: Image,
             title: 'No Photos Yet',
-            description: 'Photos will appear here when they are shared.'
+            description: 'Photos will appear here when they are shared.',
+            gradient: 'from-orange-500 to-red-500'
           };
         case 'videos':
           return {
             icon: Video,
             title: 'No Videos Yet',
-            description: 'Videos will appear here when they are shared.'
+            description: 'Videos will appear here when they are shared.',
+            gradient: 'from-red-500 to-pink-500'
           };
         case 'audio':
           return {
             icon: Music,
             title: 'No Audio Content',
-            description: 'Audio content will appear here when shared.'
+            description: 'Audio content will appear here when shared.',
+            gradient: 'from-yellow-500 to-orange-500'
           };
         default:
           return {
             icon: Image,
             title: `No ${activeTab} content`,
-            description: `${activeTab.charAt(0).toUpperCase() + activeTab.slice(1)} content will appear here when available.`
+            description: `${activeTab.charAt(0).toUpperCase() + activeTab.slice(1)} content will appear here when available.`,
+            gradient: 'from-cyan-500 to-purple-500'
           };
       }
     };
@@ -269,47 +293,47 @@ export const ProfileContent = ({ profile, activeTab, isOwnProfile }: ProfileCont
     const EmptyIcon = emptyState.icon;
 
     return (
-      <div className="w-full px-4 md:px-8 py-16">
+      <div className="w-full px-4 md:px-8 py-20">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           className="text-center max-w-md mx-auto"
         >
-          <div className="w-24 h-24 mx-auto mb-6 rounded-full bg-white/5 backdrop-blur-sm border border-white/10 flex items-center justify-center">
-            <EmptyIcon className="w-12 h-12 text-gray-400" />
+          <div className={`w-32 h-32 mx-auto mb-8 rounded-full bg-gradient-to-r ${emptyState.gradient} bg-opacity-20 backdrop-blur-sm border border-white/10 flex items-center justify-center shadow-2xl`}>
+            <EmptyIcon className="w-16 h-16 text-white/80" />
           </div>
-          <h3 className="text-xl font-semibold text-white mb-2">{emptyState.title}</h3>
-          <p className="text-gray-400">{emptyState.description}</p>
+          <h3 className="text-2xl font-bold text-white mb-4">{emptyState.title}</h3>
+          <p className="text-gray-400 text-lg">{emptyState.description}</p>
         </motion.div>
       </div>
     );
   }
 
   return (
-    <div className="w-full px-4 md:px-8 py-8">
+    <div className="w-full py-8 min-h-screen">
       {gridContent}
       
-      {/* Load More Section */}
+      {/* Enhanced Load More Section */}
       {hasMore && (
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="flex justify-center mt-12"
+          className="flex justify-center mt-16 px-4"
         >
           <motion.button
             onClick={loadMore}
             disabled={loading}
-            whileHover={{ scale: 1.05 }}
+            whileHover={{ scale: 1.05, y: -2 }}
             whileTap={{ scale: 0.95 }}
-            className="flex items-center gap-3 px-8 py-4 rounded-2xl bg-white/5 backdrop-blur-sm border border-white/10 hover:border-white/20 text-white hover:bg-white/10 transition-all duration-300 disabled:opacity-50"
+            className="flex items-center gap-4 px-12 py-6 rounded-2xl bg-gradient-to-r from-white/10 to-white/5 backdrop-blur-xl border border-white/20 hover:border-white/30 text-white hover:bg-gradient-to-r hover:from-white/20 hover:to-white/10 transition-all duration-300 disabled:opacity-50 shadow-2xl hover:shadow-cyan-500/25"
           >
             {loading ? (
               <>
-                <Loader2 className="w-5 h-5 animate-spin" />
-                <span>Loading...</span>
+                <Loader2 className="w-6 h-6 animate-spin" />
+                <span className="text-lg font-medium">Loading...</span>
               </>
             ) : (
-              <span>Load More</span>
+              <span className="text-lg font-medium">Load More Content</span>
             )}
           </motion.button>
         </motion.div>
