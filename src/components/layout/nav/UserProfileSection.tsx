@@ -36,9 +36,27 @@ export const UserProfileSection = ({ isExpanded }: UserProfileSectionProps) => {
         if (data) {
           setUsername(data.username);
           setAvailability((data.status as AvailabilityStatus) || 'offline');
-        } else {
-          // Fallback to email username if no profile found
-          setUsername(session.user.email?.split('@')[0] || 'User');
+        } else if (error) {
+          // If no profile exists, create one
+          const defaultUsername = session.user.email?.split('@')[0] || 'User';
+          
+          const { data: newProfile, error: insertError } = await supabase
+            .from('profiles')
+            .insert({
+              id: session.user.id,
+              username: defaultUsername,
+              status: 'online'
+            })
+            .select('username, status')
+            .single();
+
+          if (newProfile && !insertError) {
+            setUsername(newProfile.username);
+            setAvailability('online');
+          } else {
+            // Fallback to email username if insert fails
+            setUsername(defaultUsername);
+          }
         }
       };
 
@@ -53,10 +71,15 @@ export const UserProfileSection = ({ isExpanded }: UserProfileSectionProps) => {
     navigate('/login');
   };
 
-  const handleProfileClick = () => {
-    if (username) {
+  const handleProfileClick = async () => {
+    if (!username && session?.user) {
+      // If username is not loaded yet, try to get it or create profile
+      const defaultUsername = session.user.email?.split('@')[0] || 'User';
+      navigate(`/profile/${defaultUsername}`);
+    } else if (username) {
       navigate(`/profile/${username}`);
     }
+    setIsDropdownOpen(false);
   };
 
   const handleAvailabilityChange = async (newStatus: AvailabilityStatus) => {
@@ -78,13 +101,12 @@ export const UserProfileSection = ({ isExpanded }: UserProfileSectionProps) => {
           <Button 
             variant="ghost" 
             className="w-full justify-start px-2 py-3.5 font-normal hover:bg-white/5"
-            onClick={handleProfileClick}
           >
             <div className="flex items-center gap-2 w-full">
               <div className="relative">
                 <Avatar className="h-8 w-8">
                   <AvatarImage src={avatarUrl || ""} alt={username || "User"} />
-                  <AvatarFallback>{username?.slice(0, 2).toUpperCase()}</AvatarFallback>
+                  <AvatarFallback>{username?.slice(0, 2).toUpperCase() || "U"}</AvatarFallback>
                 </Avatar>
                 <div className="absolute -bottom-1 -right-1">
                   <AvailabilityIndicator 
@@ -97,7 +119,7 @@ export const UserProfileSection = ({ isExpanded }: UserProfileSectionProps) => {
               {isExpanded && (
                 <div className="flex flex-col items-start gap-0 leading-none min-w-0 flex-1">
                   <p className="font-semibold text-sm text-white truncate">
-                    @{username || 'User'}
+                    @{username || session?.user?.email?.split('@')[0] || 'User'}
                   </p>
                   <p className="text-xs text-muted-foreground capitalize">
                     {availability}

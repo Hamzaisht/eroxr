@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { ProfileHeader } from "@/components/profile/ProfileHeader";
@@ -28,6 +28,7 @@ interface ProfileData {
 
 export default function ProfilePage() {
   const { username } = useParams<{ username: string }>();
+  const navigate = useNavigate();
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("all");
@@ -38,11 +39,77 @@ export default function ProfilePage() {
   const isOwnProfile = session?.user && profile?.id === session.user.id;
 
   useEffect(() => {
-    if (!username) return;
+    if (!session?.user) {
+      navigate('/login');
+      return;
+    }
+
+    if (!username) {
+      redirectToUserProfile();
+      return;
+    }
+
     fetchProfile();
-  }, [username]);
+  }, [username, session]);
+
+  const redirectToUserProfile = async () => {
+    if (!session?.user?.id) return;
+
+    try {
+      setLoading(true);
+      
+      let { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('username')
+        .eq('id', session.user.id)
+        .single();
+
+      if (profileError || !profileData) {
+        // Create profile if it doesn't exist
+        const defaultUsername = session.user.email?.split('@')[0] || `user_${session.user.id.slice(0, 8)}`;
+        
+        const { data: newProfile, error: insertError } = await supabase
+          .from('profiles')
+          .insert({
+            id: session.user.id,
+            username: defaultUsername,
+            bio: null,
+            location: null
+          })
+          .select('username')
+          .single();
+
+        if (insertError) {
+          console.error('Error creating profile:', insertError);
+          toast({
+            title: "Error",
+            description: "Failed to create profile",
+            variant: "destructive"
+          });
+          return;
+        }
+
+        profileData = newProfile;
+      }
+
+      if (profileData?.username) {
+        navigate(`/profile/${profileData.username}`, { replace: true });
+      }
+    } catch (error) {
+      console.error('Error redirecting to user profile:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load your profile",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const fetchProfile = async () => {
+    if (!username) return;
+
     try {
       setLoading(true);
       
@@ -53,7 +120,33 @@ export default function ProfilePage() {
         .eq('username', username)
         .single();
 
-      if (profileError) throw profileError;
+      if (profileError) {
+        console.error('Profile not found:', profileError);
+        
+        // If this could be the current user trying to access their own profile
+        if (session?.user?.id) {
+          const { data: currentUserProfile } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', session.user.id)
+            .single();
+
+          if (!currentUserProfile) {
+            // User doesn't have a profile yet, create one
+            await redirectToUserProfile();
+            return;
+          } else if (currentUserProfile.username !== username) {
+            // Profile exists but username doesn't match - show not found
+            setProfile(null);
+            setLoading(false);
+            return;
+          }
+        }
+        
+        setProfile(null);
+        setLoading(false);
+        return;
+      }
 
       // Get follower count
       const { count: followerCount } = await supabase
@@ -153,7 +246,27 @@ export default function ProfilePage() {
           className="text-center"
         >
           <h1 className="text-3xl font-bold text-white mb-4">Profile Not Found</h1>
-          <p className="text-gray-400 text-lg">The user you're looking for doesn't exist.</p>
+          <p className="text-gray-400 text-lg mb-6">The user you're looking for doesn't exist.</p>
+          {session?.user && (
+            <div className="space-y-4">
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => redirectToUserProfile()}
+                className="px-6 py-3 bg-gradient-to-r from-cyan-500 to-purple-500 text-white rounded-2xl font-semibold hover:shadow-lg transition-all duration-300 mr-4"
+              >
+                Go to My Profile
+              </motion.button>
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => navigate('/home')}
+                className="px-6 py-3 bg-white/10 text-white rounded-2xl font-semibold hover:bg-white/20 transition-all duration-300"
+              >
+                Go to Home
+              </motion.button>
+            </div>
+          )}
         </motion.div>
       </div>
     );
