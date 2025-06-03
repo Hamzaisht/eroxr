@@ -1,6 +1,5 @@
 
 import { SearchBar } from "./SearchBar";
-import { UserMenu } from "./UserMenu";
 import { Bell } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useSession } from "@supabase/auth-helpers-react";
@@ -40,7 +39,6 @@ export const MainNav = () => {
         )}
         <div className="flex items-center gap-4">
           <SearchBar />
-          <UserMenu />
         </div>
       </div>
     </nav>
