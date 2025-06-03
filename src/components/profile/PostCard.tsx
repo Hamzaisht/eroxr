@@ -1,7 +1,7 @@
 
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Heart, MessageCircle, Share, Bookmark, Eye, Lock, Play, Volume2, VolumeX, MoreHorizontal, Download, Screenshot } from "lucide-react";
+import { Heart, MessageCircle, Share, Bookmark, Eye, Lock, Play, Volume2, VolumeX, MoreHorizontal, Download, Camera } from "lucide-react";
 import { UniversalMedia } from "@/components/media/UniversalMedia";
 import { MediaWatermark } from "@/components/media/MediaWatermark";
 import { format, formatDistanceToNow } from "date-fns";
