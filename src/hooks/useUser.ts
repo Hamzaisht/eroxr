@@ -1,61 +1,60 @@
 
-import { useEffect, useState } from "react";
-import { useSession, useSupabaseClient } from "@supabase/auth-helpers-react";
+import { useSession } from "@supabase/auth-helpers-react";
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
-interface User {
+interface UserProfile {
   id: string;
   username?: string;
-  email?: string;
   avatar_url?: string;
-  is_verified?: boolean;
+  bio?: string;
+  first_name?: string;
+  last_name?: string;
 }
 
-export function useUser() {
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  
+export const useUser = () => {
   const session = useSession();
-  const supabase = useSupabaseClient();
-  
+  const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
   useEffect(() => {
-    const fetchUser = async () => {
-      if (!session?.user) {
+    const fetchUserProfile = async () => {
+      if (!session?.user?.id) {
         setCurrentUser(null);
         setIsLoading(false);
         return;
       }
-      
-      setIsLoading(true);
-      
+
       try {
         const { data, error } = await supabase
           .from('profiles')
-          .select('*')
+          .select('id, username, avatar_url, bio, first_name, last_name')
           .eq('id', session.user.id)
           .single();
-          
+
         if (error) {
-          throw error;
+          console.error('Error fetching user profile:', error);
+          // Create a basic user object from session data
+          setCurrentUser({
+            id: session.user.id,
+            username: session.user.email?.split('@')[0] || 'User',
+          });
+        } else {
+          setCurrentUser(data);
         }
-        
+      } catch (error) {
+        console.error('Unexpected error fetching user profile:', error);
         setCurrentUser({
           id: session.user.id,
-          username: data?.username,
-          email: session.user.email,
-          avatar_url: data?.avatar_url,
-          is_verified: data?.is_verified
+          username: session.user.email?.split('@')[0] || 'User',
         });
-      } catch (err: any) {
-        console.error('Error fetching user:', err);
-        setError(err.message);
       } finally {
         setIsLoading(false);
       }
     };
-    
-    fetchUser();
-  }, [session, supabase]);
-  
-  return { currentUser, isLoading, error };
-}
+
+    fetchUserProfile();
+  }, [session?.user?.id]);
+
+  return { currentUser, isLoading };
+};

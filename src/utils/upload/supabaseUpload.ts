@@ -25,9 +25,7 @@ export const uploadMediaToSupabase = async (
   console.log("🔥 Starting upload process for file:", {
     name: file.name,
     type: file.type,
-    size: file.size,
-    lastModified: file.lastModified,
-    isValidFile: file instanceof File
+    size: file.size
   });
 
   try {
@@ -62,8 +60,7 @@ export const uploadMediaToSupabase = async (
     
     console.log("📁 Generated file path:", fileName);
 
-    // Test storage connection first
-    console.log("🔗 Testing storage connection...");
+    // Check if media bucket exists, if not return error with setup instruction
     const { data: buckets, error: bucketsError } = await supabase.storage.listBuckets();
     
     if (bucketsError) {
@@ -71,16 +68,11 @@ export const uploadMediaToSupabase = async (
       return { success: false, error: `Storage connection failed: ${bucketsError.message}` };
     }
     
-    console.log("✅ Storage connected. Available buckets:", buckets?.map(b => b.name));
-    
-    // Check if media bucket exists
     const mediaBucket = buckets?.find(b => b.id === 'media');
     if (!mediaBucket) {
       console.error("❌ Media bucket not found");
-      return { success: false, error: 'Media storage bucket does not exist. Please run window.setupStorage() first.' };
+      return { success: false, error: 'Media storage bucket does not exist. Please contact support.' };
     }
-    
-    console.log("✅ Media bucket found:", mediaBucket.name);
 
     // Upload to Supabase Storage
     console.log("📤 Uploading to storage bucket 'media'...");
@@ -105,20 +97,6 @@ export const uploadMediaToSupabase = async (
       .getPublicUrl(uploadData.path);
 
     console.log("🔗 Generated public URL:", publicUrl);
-
-    // Verify the uploaded file exists
-    console.log("🔍 Verifying upload...");
-    const { data: fileInfo, error: infoError } = await supabase.storage
-      .from('media')
-      .list(options.category || 'posts', {
-        search: uploadData.path.split('/').pop()
-      });
-      
-    if (infoError) {
-      console.warn("⚠️ Could not verify upload:", infoError);
-    } else {
-      console.log("✅ Upload verified:", fileInfo);
-    }
 
     // Create media_assets record
     const mediaType = getMediaType(file.type);

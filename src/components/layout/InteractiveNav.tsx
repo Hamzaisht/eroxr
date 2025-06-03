@@ -39,7 +39,7 @@ export const InteractiveNav = () => {
   const [showBodyContactDialog, setShowBodyContactDialog] = useState(false);
 
   const handleSuccessfulAdCreation = () => {
-    // Handle success logic if needed
+    setShowBodyContactDialog(false);
   };
   
   // Modified to handle the BD creation
@@ -202,7 +202,9 @@ export const InteractiveNav = () => {
       )}
       
       {/* Add the dialog for creating body contact ads */}
-      <CreateBodyContactDialog onSuccess={handleSuccessfulAdCreation} />
+      {showBodyContactDialog && (
+        <CreateBodyContactDialog onSuccess={handleSuccessfulAdCreation} />
+      )}
     </>
   );
 };

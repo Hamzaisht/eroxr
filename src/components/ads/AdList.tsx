@@ -1,3 +1,4 @@
+
 import { AdCard } from "./AdCard";
 import { type DatingAd } from "./types/dating";
 
@@ -15,7 +16,7 @@ export const AdList = ({ ads, isLoading }: AdListProps) => {
     );
   }
 
-  if (!ads?.length) {
+  if (!ads || ads.length === 0) {
     return (
       <div className="flex justify-center items-center min-h-[100px] text-gray-400 text-sm">
         No ads found matching your criteria

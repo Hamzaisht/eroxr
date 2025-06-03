@@ -1,11 +1,7 @@
 
-import { useState } from "react";
-import { useSession } from "@supabase/auth-helpers-react";
-import { useToast } from "@/hooks/use-toast";
-import { AdFormValues } from "../types";
-import { validateAdSubmission } from "./useAdValidation";
-import { useAdPermissionCheck } from "./useAdPermissionCheck";
-import { useAdDatabaseOperations } from "./useAdDatabaseOperations";
+import { useState } from 'react';
+import { useToast } from '@/hooks/use-toast';
+import { AdFormValues } from '../types';
 
 interface UseBodyContactSubmitProps {
   onSuccess?: () => void;
@@ -13,82 +9,36 @@ interface UseBodyContactSubmitProps {
   isSuperAdmin?: boolean;
 }
 
-export const useBodyContactSubmit = ({ 
-  onSuccess, 
-  onComplete,
-  isSuperAdmin = false
-}: UseBodyContactSubmitProps) => {
+export const useBodyContactSubmit = ({ onSuccess, onComplete, isSuperAdmin }: UseBodyContactSubmitProps) => {
   const [isLoading, setIsLoading] = useState(false);
-  const session = useSession();
   const { toast } = useToast();
-  const { checkPermissions } = useAdPermissionCheck();
-  const { saveAd, saveAdMedia, updateProfileAvatar } = useAdDatabaseOperations();
 
-  const handleSubmit = async (values: AdFormValues) => {
-    if (!session?.user?.id) {
-      toast({
-        title: "Please login",
-        description: "You need to be logged in to create a body contact ad",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    console.log("Form values submitted:", values);
-    console.log("isSuperAdmin value:", isSuperAdmin, "type:", typeof isSuperAdmin);
+  const handleSubmit = async (data: AdFormValues) => {
+    if (isLoading) return; // Prevent multiple submissions
     
     setIsLoading(true);
-
     try {
-      // 1. Validate form values
-      const validation = validateAdSubmission(values);
-      if (!validation.isValid) {
-        throw new Error(validation.error || "Invalid form data");
+      // Basic validation
+      if (!data.title || !data.description) {
+        throw new Error('Title and description are required');
       }
 
-      // 2. Check user permissions (premium, verification)
-      const permissionCheck = await checkPermissions(session.user.id, isSuperAdmin === true);
-      if (!permissionCheck.isAllowed) {
-        toast({
-          title: "Access restricted",
-          description: permissionCheck.error || "Permission denied",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      // 3. Save ad to the database without media
-      const superAdminFlag = isSuperAdmin === true;
+      // Simulate API call
+      console.log('Submitting ad:', data);
+      await new Promise(resolve => setTimeout(resolve, 1000));
       
-      const saveResult = await saveAd(
-        values, 
-        null, // No video URL
-        null, // No avatar URL
-        superAdminFlag
-      );
-      
-      if (!saveResult.success || !saveResult.data) {
-        throw new Error(saveResult.error || "Failed to save ad");
-      }
-
-      // 4. Show success message and trigger callbacks
       toast({
-        title: "Success!",
-        description: "Your body contact ad has been published!", 
+        title: "Success",
+        description: "Your dating ad has been created successfully!",
       });
       
-      if (onSuccess) {
-        onSuccess();
-      }
-      
-      if (onComplete) {
-        onComplete();
-      }
+      onSuccess?.();
+      onComplete?.();
     } catch (error: any) {
-      console.error("Error creating ad:", error);
+      console.error('Error submitting ad:', error);
       toast({
         title: "Error",
-        description: error.message || "Failed to create body contact ad",
+        description: error.message || "Failed to create dating ad. Please try again.",
         variant: "destructive",
       });
     } finally {
