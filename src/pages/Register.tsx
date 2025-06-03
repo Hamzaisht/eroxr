@@ -2,7 +2,7 @@
 import { useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useSession } from "@supabase/auth-helpers-react";
-import { SignupForm } from "@/components/auth/SignupForm";
+import { SignupForm } from "@/components/auth/signup/SignupForm";
 import { motion, AnimatePresence } from "framer-motion";
 import { LoadingScreen } from "@/components/layout/LoadingScreen";
 import { BackgroundVideo } from "@/components/video/BackgroundVideo";
