@@ -3,8 +3,8 @@ import { useState, useRef, useCallback } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
-import { RotateCcw, Crop, X } from "lucide-react";
-import ReactCrop, { Crop, PixelCrop, centerCrop, makeAspectCrop } from 'react-image-crop';
+import { RotateCcw, Crop as CropIcon, X } from "lucide-react";
+import ReactCrop, { type Crop, type PixelCrop, centerCrop, makeAspectCrop } from 'react-image-crop';
 import 'react-image-crop/dist/ReactCrop.css';
 
 interface ImageCropDialogProps {
@@ -97,7 +97,7 @@ export const ImageCropDialog = ({
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-auto bg-gray-900/95 backdrop-blur-xl border border-white/20">
         <DialogHeader>
           <DialogTitle className="text-white flex items-center gap-2">
-            <Crop className="w-5 h-5" />
+            <CropIcon className="w-5 h-5" />
             Crop Image
           </DialogTitle>
         </DialogHeader>
@@ -175,7 +175,7 @@ export const ImageCropDialog = ({
               onClick={handleCropComplete}
               className="bg-gradient-to-r from-cyan-500 to-purple-500 hover:from-cyan-400 hover:to-purple-400"
             >
-              <Crop className="w-4 h-4 mr-2" />
+              <CropIcon className="w-4 h-4 mr-2" />
               Apply Crop
             </Button>
           </div>
