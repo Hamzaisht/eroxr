@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 
 interface Particle {
@@ -25,12 +25,34 @@ export const ParticleSystem = ({
   className = "fixed inset-0 pointer-events-none" 
 }: ParticleSystemProps) => {
   const [particles, setParticles] = useState<Particle[]>([]);
+  const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
+    // Set initial dimensions
+    setDimensions({
+      width: window.innerWidth,
+      height: window.innerHeight
+    });
+
+    const handleResize = () => {
+      setDimensions({
+        width: window.innerWidth,
+        height: window.innerHeight
+      });
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  useEffect(() => {
+    if (dimensions.width === 0 || dimensions.height === 0) return;
+
     const createParticle = (id: number): Particle => ({
       id,
-      x: Math.random() * window.innerWidth,
-      y: Math.random() * window.innerHeight,
+      x: Math.random() * dimensions.width,
+      y: Math.random() * dimensions.height,
       size: Math.random() * 3 + 1,
       color: colors[Math.floor(Math.random() * colors.length)],
       velocity: {
@@ -41,12 +63,11 @@ export const ParticleSystem = ({
       maxLife: Math.random() * 300 + 200,
     });
 
-    // Initialize particles
-    const initialParticles = Array.from({ length: count }, (_, i) => createParticle(i));
-    setParticles(initialParticles);
+    // Initialize particles only once
+    setParticles(Array.from({ length: count }, (_, i) => createParticle(i)));
 
     // Animation loop
-    const interval = setInterval(() => {
+    intervalRef.current = setInterval(() => {
       setParticles(prevParticles => 
         prevParticles.map(particle => {
           const newParticle = { ...particle };
@@ -59,10 +80,10 @@ export const ParticleSystem = ({
           newParticle.life += 1;
           
           // Wrap around screen edges
-          if (newParticle.x < 0) newParticle.x = window.innerWidth;
-          if (newParticle.x > window.innerWidth) newParticle.x = 0;
-          if (newParticle.y < 0) newParticle.y = window.innerHeight;
-          if (newParticle.y > window.innerHeight) newParticle.y = 0;
+          if (newParticle.x < 0) newParticle.x = dimensions.width;
+          if (newParticle.x > dimensions.width) newParticle.x = 0;
+          if (newParticle.y < 0) newParticle.y = dimensions.height;
+          if (newParticle.y > dimensions.height) newParticle.y = 0;
           
           // Reset particle if life exceeded
           if (newParticle.life > newParticle.maxLife) {
@@ -74,8 +95,16 @@ export const ParticleSystem = ({
       );
     }, 16); // ~60fps
 
-    return () => clearInterval(interval);
-  }, [count, colors]);
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+      }
+    };
+  }, [count, colors, dimensions]);
+
+  if (dimensions.width === 0 || dimensions.height === 0) {
+    return null;
+  }
 
   return (
     <div className={className}>

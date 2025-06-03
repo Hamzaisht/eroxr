@@ -318,28 +318,28 @@ export const ProfileHeader = ({ profile, isOwnProfile, isFollowing, onFollowTogg
               </motion.div>
             </div>
 
-            {/* Enhanced Action Buttons */}
+            {/* Enhanced Action Buttons - Made Smaller */}
             <motion.div
               initial={{ x: 30, opacity: 0 }}
               animate={{ x: 0, opacity: 1 }}
               transition={{ duration: 0.8, delay: 0.4 }}
-              className="flex flex-col gap-4 w-full xl:w-auto xl:min-w-[300px]"
+              className="flex flex-col gap-3 w-full xl:w-auto xl:min-w-[280px]"
             >
               {isOwnProfile ? (
                 <>
                   <Button 
                     onClick={() => setShowEditModal(true)}
-                    className="w-full bg-gradient-to-r from-cyan-500 to-purple-500 hover:from-cyan-400 hover:to-purple-400 text-white font-bold rounded-2xl h-16 shadow-2xl hover:shadow-cyan-500/50 transition-all duration-300 text-lg"
+                    className="w-full bg-gradient-to-r from-cyan-500 to-purple-500 hover:from-cyan-400 hover:to-purple-400 text-white font-semibold rounded-xl h-12 shadow-lg hover:shadow-cyan-500/50 transition-all duration-300"
                   >
-                    <Edit className="w-5 h-5 mr-3" />
+                    <Edit className="w-4 h-4 mr-2" />
                     Edit Profile
                   </Button>
                   <Button 
                     onClick={handleShare}
                     variant="outline" 
-                    className="w-full border-white/30 text-white hover:bg-white/20 rounded-2xl h-16 backdrop-blur-xl hover:border-white/50 transition-all duration-300 text-lg font-semibold"
+                    className="w-full border-white/30 text-white hover:bg-white/20 rounded-xl h-12 backdrop-blur-xl hover:border-white/50 transition-all duration-300 font-semibold"
                   >
-                    <Share className="w-5 h-5 mr-3" />
+                    <Share className="w-4 h-4 mr-2" />
                     Share Profile
                   </Button>
                 </>
@@ -347,46 +347,46 @@ export const ProfileHeader = ({ profile, isOwnProfile, isFollowing, onFollowTogg
                 <>
                   {profile.is_creator && profile.subscription_price && (
                     <Button 
-                      className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-400 hover:to-pink-400 text-white font-bold rounded-2xl h-16 shadow-2xl hover:shadow-pink-500/50 transition-all duration-300 text-lg"
+                      className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-400 hover:to-pink-400 text-white font-semibold rounded-xl h-12 shadow-lg hover:shadow-pink-500/50 transition-all duration-300"
                     >
-                      <Crown className="w-5 h-5 mr-3" />
+                      <Crown className="w-4 h-4 mr-2" />
                       Subscribe ${profile.subscription_price}/month
                     </Button>
                   )}
                   <Button 
                     onClick={handleFollowToggle}
                     disabled={isFollowLoading}
-                    className={`w-full font-bold rounded-2xl h-16 transition-all duration-300 text-lg ${
+                    className={`w-full font-semibold rounded-xl h-12 transition-all duration-300 ${
                       isFollowing 
                         ? 'bg-white/20 text-white hover:bg-white/30 border border-white/30 hover:border-white/50 backdrop-blur-xl' 
-                        : 'bg-gradient-to-r from-cyan-500 to-purple-500 hover:from-cyan-400 hover:to-purple-400 text-white shadow-2xl hover:shadow-cyan-500/50'
+                        : 'bg-gradient-to-r from-cyan-500 to-purple-500 hover:from-cyan-400 hover:to-purple-400 text-white shadow-lg hover:shadow-cyan-500/50'
                     }`}
                   >
                     {isFollowing ? (
                       <>
-                        <UserMinus className="w-5 h-5 mr-3" />
+                        <UserMinus className="w-4 h-4 mr-2" />
                         Unfollow
                       </>
                     ) : (
                       <>
-                        <UserPlus className="w-5 h-5 mr-3" />
+                        <UserPlus className="w-4 h-4 mr-2" />
                         Follow
                       </>
                     )}
                   </Button>
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="grid grid-cols-2 gap-2">
                     <Button 
                       onClick={handleMessage}
                       variant="outline" 
-                      className="border-white/30 text-white hover:bg-white/20 rounded-2xl h-14 backdrop-blur-xl hover:border-white/50 transition-all duration-300 font-semibold"
+                      className="border-white/30 text-white hover:bg-white/20 rounded-xl h-11 backdrop-blur-xl hover:border-white/50 transition-all duration-300 font-medium"
                     >
-                      <MessageCircle className="w-4 h-4 mr-2" />
+                      <MessageCircle className="w-4 h-4 mr-1" />
                       Message
                     </Button>
                     <Button 
-                      className="bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-400 hover:to-orange-400 text-white rounded-2xl h-14 font-semibold shadow-lg hover:shadow-yellow-500/25 transition-all duration-300"
+                      className="bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-400 hover:to-orange-400 text-white rounded-xl h-11 font-medium shadow-lg hover:shadow-yellow-500/25 transition-all duration-300"
                     >
-                      <DollarSign className="w-4 h-4 mr-2" />
+                      <DollarSign className="w-4 h-4 mr-1" />
                       Tip
                     </Button>
                   </div>
