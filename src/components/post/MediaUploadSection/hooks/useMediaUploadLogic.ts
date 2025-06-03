@@ -70,7 +70,7 @@ export const useMediaUploadLogic = ({
 
       // Upload all files
       const results = await uploadMultiple(files, {
-        contentCategory: 'posts',
+        category: 'posts', // Use 'category' instead of 'contentCategory'
         accessLevel: defaultAccessLevel,
         metadata: { 
           usage: 'post',

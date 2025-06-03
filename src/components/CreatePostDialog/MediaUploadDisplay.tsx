@@ -61,7 +61,7 @@ export const MediaUploadDisplay = ({
     try {
       const filesArray = Array.from(selectedFiles);
       const results = await uploadMultiple(filesArray, {
-        contentCategory: 'posts',
+        category: 'posts', // Use 'category' instead of 'contentCategory'
         accessLevel: 'public',
         metadata: { 
           usage: 'post',

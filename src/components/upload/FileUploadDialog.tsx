@@ -32,7 +32,7 @@ export const FileUploadDialog = ({
   const [acceptedFileTypes, setAcceptedFileTypes] = useState<string[]>([]);
   const [uploadedUrl, setUploadedUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const { uploadMedia, uploadState } = useMediaUpload();
+  const { upload, isUploading, uploadProgress, uploadError } = useMediaUpload();
   const session = useSession();
   const { toast } = useToast();
 
@@ -58,11 +58,10 @@ export const FileUploadDialog = ({
 
     try {
       console.log("Starting upload process...");
-      // Using proper parameter structure without maxSizeInMB
-      const result = await uploadMedia(
+      const result = await upload(
         selectedFile,
         {
-          contentCategory: contentCategory
+          category: contentCategory
         }
       );
 
@@ -70,8 +69,7 @@ export const FileUploadDialog = ({
         throw new Error(result.error || "Upload failed");
       }
 
-      // Check if url exists before accessing it
-      if ('url' in result && result.url) {
+      if (result.url) {
         console.log("Upload successful, URL:", result.url);
         setUploadedUrl(result.url);
         onSuccess?.(result.url, selectedFile);
@@ -102,10 +100,6 @@ export const FileUploadDialog = ({
     setUploadedUrl(null);
     setError(null);
   };
-
-  // Check if upload is complete
-  const isComplete = uploadState.isComplete;
-  const isUploading = uploadState.isUploading;
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -172,7 +166,7 @@ export const FileUploadDialog = ({
           </div>
         </div>
 
-        {error && <p className="text-red-500">{error}</p>}
+        {(error || uploadError) && <p className="text-red-500">{error || uploadError}</p>}
 
         <div className="flex justify-end">
           <Button type="button" variant="secondary" onClick={handleClose}>
@@ -182,12 +176,12 @@ export const FileUploadDialog = ({
             type="submit"
             onClick={handleFileUpload}
             className="ml-2"
-            disabled={isUploading || isComplete || !selectedFile}
+            disabled={isUploading || !selectedFile}
           >
             {isUploading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Uploading... {uploadState.progress}%
+                Uploading... {uploadProgress}%
               </>
             ) : (
               <>

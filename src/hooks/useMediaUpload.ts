@@ -6,11 +6,13 @@ export const useMediaUpload = () => {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadError, setUploadError] = useState<string | null>(null);
+  const [isComplete, setIsComplete] = useState(false);
 
   const upload = async (file: File, options: UploadOptions = {}): Promise<UploadResult> => {
     setIsUploading(true);
     setUploadProgress(0);
     setUploadError(null);
+    setIsComplete(false);
 
     try {
       const result = await uploadMediaToSupabase(file, options);
@@ -20,6 +22,7 @@ export const useMediaUpload = () => {
       }
       
       setUploadProgress(100);
+      setIsComplete(true);
       return result;
     } catch (error: any) {
       const errorMessage = error.message || 'Upload failed';
@@ -34,6 +37,7 @@ export const useMediaUpload = () => {
     setIsUploading(true);
     setUploadProgress(0);
     setUploadError(null);
+    setIsComplete(false);
 
     try {
       const results = await uploadMultipleMedia(files, options);
@@ -44,6 +48,7 @@ export const useMediaUpload = () => {
       }
       
       setUploadProgress(100);
+      setIsComplete(true);
       return results;
     } catch (error: any) {
       const errorMessage = error.message || 'Upload failed';
@@ -54,9 +59,20 @@ export const useMediaUpload = () => {
     }
   };
 
+  // Add aliases for backward compatibility
+  const uploadMedia = upload;
+  const uploadState = {
+    isUploading,
+    progress: uploadProgress,
+    error: uploadError,
+    isComplete
+  };
+
   return {
     upload,
     uploadMultiple,
+    uploadMedia, // Alias for backward compatibility
+    uploadState, // State object for backward compatibility
     isUploading,
     uploadProgress,
     uploadError

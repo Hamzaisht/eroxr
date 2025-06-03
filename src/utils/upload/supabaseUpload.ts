@@ -12,6 +12,7 @@ export interface UploadResult {
 export interface UploadOptions {
   accessLevel?: 'private' | 'public' | 'subscribers_only';
   category?: string;
+  contentCategory?: string; // Add this for compatibility
   metadata?: Record<string, any>;
 }
 

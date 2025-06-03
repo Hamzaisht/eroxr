@@ -1,3 +1,4 @@
+
 import { useState, useRef, useEffect } from "react";
 import { useSession } from "@supabase/auth-helpers-react";
 import { useToast } from "@/hooks/use-toast";
@@ -36,7 +37,7 @@ export function VideoUploadForm({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const session = useSession();
   const { toast } = useToast();
-  const { uploadMedia, uploadState } = useMediaUpload();
+  const { upload, isUploading, uploadProgress, uploadError } = useMediaUpload();
   
   // Clean up preview URL when component unmounts
   useEffect(() => {
@@ -115,10 +116,10 @@ export function VideoUploadForm({
       setIsSubmitting(true);
       setValidationError(null);
       
-      const result = await uploadMedia(
+      const result = await upload(
         videoFile,
         {
-          contentCategory: 'videos'
+          category: 'videos'
         }
       );
       
@@ -126,8 +127,7 @@ export function VideoUploadForm({
         throw new Error(result.error || "Failed to upload video");
       }
       
-      // Check if the result has a url property before accessing it
-      const videoUrl = 'url' in result ? result.url : undefined;
+      const videoUrl = result.url;
       
       if (!videoUrl) {
         throw new Error("Upload succeeded but no URL returned");
@@ -251,19 +251,19 @@ export function VideoUploadForm({
           </div>
         )}
         
-        {uploadState.isUploading && (
+        {isUploading && (
           <div className="space-y-1">
             <div className="flex justify-between text-sm">
               <span>Uploading...</span>
-              <span>{uploadState.progress}%</span>
+              <span>{uploadProgress}%</span>
             </div>
-            <Progress value={uploadState.progress} />
+            <Progress value={uploadProgress} />
           </div>
         )}
         
-        {(validationError || uploadState.error) && (
+        {(validationError || uploadError) && (
           <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-2 rounded-md text-sm">
-            {validationError || uploadState.error}
+            {validationError || uploadError}
           </div>
         )}
         
@@ -275,7 +275,7 @@ export function VideoUploadForm({
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="Enter video title"
-              disabled={isSubmitting || uploadState.isUploading}
+              disabled={isSubmitting || isUploading}
             />
           </div>
           
@@ -287,7 +287,7 @@ export function VideoUploadForm({
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Describe your video"
               rows={4}
-              disabled={isSubmitting || uploadState.isUploading}
+              disabled={isSubmitting || isUploading}
             />
           </div>
         </div>
@@ -297,19 +297,19 @@ export function VideoUploadForm({
             type="button" 
             variant="outline" 
             onClick={onCancel}
-            disabled={isSubmitting || uploadState.isUploading}
+            disabled={isSubmitting || isUploading}
           >
             Cancel
           </Button>
           <Button 
             type="submit" 
-            disabled={!videoFile || !title.trim() || isSubmitting || uploadState.isUploading}
+            disabled={!videoFile || !title.trim() || isSubmitting || isUploading}
           >
-            {isSubmitting || uploadState.isUploading ? (
+            {isSubmitting || isUploading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                {uploadState.isUploading 
-                  ? `Uploading (${uploadState.progress}%)`
+                {isUploading 
+                  ? `Uploading (${uploadProgress}%)`
                   : "Processing..."}
               </>
             ) : (
