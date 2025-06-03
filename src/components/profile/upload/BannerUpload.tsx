@@ -1,7 +1,7 @@
 
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Camera, Upload, Loader2, Video, Image as ImageIcon } from "lucide-react";
+import { Camera, Upload, Loader2, Video, Image as ImageIcon, Plus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { ImageCropDialog } from "./ImageCropDialog";
@@ -26,16 +26,39 @@ export const BannerUpload = ({
 
   const isVideo = currentBannerUrl?.includes('.mp4') || currentBannerUrl?.includes('.webm');
 
+  const setupStorageIfNeeded = async () => {
+    try {
+      // Check if buckets exist
+      const { data: buckets } = await supabase.storage.listBuckets();
+      const bannerBucket = buckets?.find(b => b.id === 'banners');
+      
+      if (!bannerBucket) {
+        // Create bucket via RPC call to avoid direct storage schema access
+        const { error: bucketError } = await supabase.rpc('create_storage_bucket', {
+          bucket_name: 'banners',
+          is_public: true
+        });
+        
+        if (bucketError) {
+          console.warn('Could not create bucket, it may already exist:', bucketError);
+        }
+      }
+    } catch (error) {
+      console.warn('Storage setup check failed:', error);
+    }
+  };
+
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Validate file size (20MB max)
-    if (file.size > 20 * 1024 * 1024) {
+    // Validate file size (50MB max for videos, 10MB for images)
+    const maxSize = file.type.startsWith('video/') ? 50 * 1024 * 1024 : 10 * 1024 * 1024;
+    if (file.size > maxSize) {
       toast({
         variant: "destructive",
         title: "File too large",
-        description: "Please upload a file smaller than 20MB",
+        description: `Please upload a ${file.type.startsWith('video/') ? 'video' : 'image'} smaller than ${file.type.startsWith('video/') ? '50MB' : '10MB'}`,
       });
       return;
     }
@@ -48,7 +71,7 @@ export const BannerUpload = ({
       toast({
         variant: "destructive",
         title: "Invalid file type",
-        description: "Please upload an image or video file",
+        description: "Please upload an image (JPG, PNG, GIF, WebP) or video (MP4, WebM) file",
       });
       return;
     }
@@ -68,17 +91,23 @@ export const BannerUpload = ({
   const uploadFile = async (file: File) => {
     try {
       setIsUploading(true);
-      setUploadProgress(0);
+      setUploadProgress(10);
+
+      // Setup storage if needed
+      await setupStorageIfNeeded();
+      setUploadProgress(20);
 
       // Delete old banner if exists
       if (currentBannerUrl) {
-        const oldPath = currentBannerUrl.split('/').pop();
-        if (oldPath) {
-          await supabase.storage
-            .from('banners')
-            .remove([`${profileId}/${oldPath}`]);
-        }
+        const urlParts = currentBannerUrl.split('/');
+        const fileName = urlParts[urlParts.length - 1];
+        const filePath = `${profileId}/${fileName}`;
+        
+        await supabase.storage
+          .from('banners')
+          .remove([filePath]);
       }
+      setUploadProgress(40);
 
       // Upload new banner
       const timestamp = new Date().getTime();
@@ -93,11 +122,14 @@ export const BannerUpload = ({
         });
 
       if (uploadError) throw uploadError;
+      setUploadProgress(70);
 
       // Get public URL
       const { data: { publicUrl } } = supabase.storage
         .from('banners')
         .getPublicUrl(filePath);
+
+      setUploadProgress(90);
 
       // Update profile
       const { error: updateError } = await supabase
@@ -110,6 +142,7 @@ export const BannerUpload = ({
 
       if (updateError) throw updateError;
 
+      setUploadProgress(100);
       onSuccess(publicUrl);
       toast({
         title: "Success",
@@ -147,7 +180,7 @@ export const BannerUpload = ({
 
   return (
     <>
-      <div className="relative group w-full h-72 md:h-96 rounded-3xl overflow-hidden">
+      <div className="relative group w-full h-80 md:h-96 rounded-3xl overflow-hidden bg-gradient-to-br from-cyan-500/20 via-purple-500/15 to-pink-500/20 backdrop-blur-xl border border-white/20">
         {/* Banner Display */}
         {currentBannerUrl ? (
           <>
@@ -168,11 +201,27 @@ export const BannerUpload = ({
             )}
           </>
         ) : (
-          <div className="w-full h-full bg-gradient-to-br from-cyan-500/30 via-purple-500/20 to-pink-500/30 backdrop-blur-xl border border-white/20 flex items-center justify-center">
+          <div className="w-full h-full flex items-center justify-center">
             <div className="text-center">
-              <Camera className="w-16 h-16 text-white/60 mx-auto mb-4" />
-              <p className="text-white/80 text-lg font-medium">Add a banner</p>
-              <p className="text-white/60 text-sm">Image or video supported</p>
+              <motion.div
+                animate={{ scale: [1, 1.1, 1] }}
+                transition={{ duration: 2, repeat: Infinity }}
+                className="w-20 h-20 bg-gradient-to-r from-cyan-500/30 to-purple-500/30 rounded-full flex items-center justify-center mx-auto mb-4 backdrop-blur-sm"
+              >
+                <Camera className="w-10 h-10 text-white/80" />
+              </motion.div>
+              <h3 className="text-2xl font-bold text-white mb-2">Add a banner</h3>
+              <p className="text-white/70 text-lg mb-4">Image or video supported</p>
+              <div className="flex items-center justify-center gap-6">
+                <div className="flex items-center gap-2 text-white/60">
+                  <ImageIcon className="w-5 h-5" />
+                  <span>Images</span>
+                </div>
+                <div className="flex items-center gap-2 text-white/60">
+                  <Video className="w-5 h-5" />
+                  <span>Videos</span>
+                </div>
+              </div>
             </div>
           </div>
         )}
@@ -186,33 +235,34 @@ export const BannerUpload = ({
         >
           {isUploading ? (
             <div className="text-center">
-              <Loader2 className="w-12 h-12 text-white animate-spin mx-auto mb-4" />
-              <div className="w-48 h-2 bg-white/20 rounded-full overflow-hidden">
+              <Loader2 className="w-16 h-16 text-white animate-spin mx-auto mb-6" />
+              <div className="w-64 h-3 bg-white/20 rounded-full overflow-hidden mb-2">
                 <motion.div
                   initial={{ width: 0 }}
                   animate={{ width: `${uploadProgress}%` }}
+                  transition={{ duration: 0.3 }}
                   className="h-full bg-gradient-to-r from-cyan-500 to-purple-500"
                 />
               </div>
-              <p className="text-white text-sm mt-2">Uploading... {uploadProgress}%</p>
+              <p className="text-white text-lg font-medium">Uploading... {uploadProgress}%</p>
             </div>
           ) : (
             <div className="text-center">
               <motion.div
                 whileHover={{ scale: 1.1 }}
-                className="w-20 h-20 bg-gradient-to-r from-cyan-500 to-purple-500 rounded-full flex items-center justify-center mx-auto mb-4 shadow-2xl"
+                className="w-24 h-24 bg-gradient-to-r from-cyan-500 to-purple-500 rounded-full flex items-center justify-center mx-auto mb-6 shadow-2xl"
               >
-                <Upload className="w-8 h-8 text-white" />
+                <Upload className="w-10 h-10 text-white" />
               </motion.div>
-              <p className="text-white text-lg font-semibold mb-2">Upload Banner</p>
-              <div className="flex items-center justify-center gap-4 text-white/80">
-                <div className="flex items-center gap-1">
-                  <ImageIcon className="w-4 h-4" />
-                  <span className="text-sm">Image</span>
+              <p className="text-white text-2xl font-bold mb-3">Upload Banner</p>
+              <div className="flex items-center justify-center gap-6 text-white/80">
+                <div className="flex items-center gap-2">
+                  <ImageIcon className="w-5 h-5" />
+                  <span className="font-medium">Images</span>
                 </div>
-                <div className="flex items-center gap-1">
-                  <Video className="w-4 h-4" />
-                  <span className="text-sm">Video</span>
+                <div className="flex items-center gap-2">
+                  <Video className="w-5 h-5" />
+                  <span className="font-medium">Videos</span>
                 </div>
               </div>
             </div>
@@ -229,18 +279,18 @@ export const BannerUpload = ({
           className="hidden"
         />
 
-        {/* Upload Button */}
+        {/* Floating Upload Button */}
         <motion.button
           whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 0.9 }}
           onClick={() => document.getElementById('banner-upload')?.click()}
           disabled={isUploading}
-          className="absolute top-4 right-4 w-12 h-12 bg-gradient-to-r from-cyan-500 to-purple-500 rounded-full flex items-center justify-center border-2 border-white/30 shadow-lg hover:shadow-xl transition-all duration-300 disabled:opacity-50"
+          className="absolute top-6 right-6 w-14 h-14 bg-gradient-to-r from-cyan-500 to-purple-500 rounded-full flex items-center justify-center border-2 border-white/30 shadow-2xl hover:shadow-cyan-500/50 transition-all duration-300 disabled:opacity-50 z-10"
         >
           {isUploading ? (
-            <Loader2 className="w-5 h-5 text-white animate-spin" />
+            <Loader2 className="w-6 h-6 text-white animate-spin" />
           ) : (
-            <Camera className="w-5 h-5 text-white" />
+            <Plus className="w-6 h-6 text-white" />
           )}
         </motion.button>
       </div>
