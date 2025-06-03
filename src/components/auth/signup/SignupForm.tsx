@@ -15,7 +15,12 @@ import { FloatingIcons } from "./FloatingIcons";
 import { AnimatedFormFields } from "./AnimatedFormFields";
 import { AnimatedSubmitButton } from "./AnimatedSubmitButton";
 
-export const SignupForm = ({ onToggleMode }: { onToggleMode: () => void }) => {
+interface SignupFormProps {
+  onToggleMode: () => void;
+  isLoginMode?: boolean;
+}
+
+export const SignupForm = ({ onToggleMode, isLoginMode = false }: SignupFormProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const supabase = useSupabaseClient();
@@ -35,24 +40,40 @@ export const SignupForm = ({ onToggleMode }: { onToggleMode: () => void }) => {
   const onSubmit = async (values: SignupFormValues) => {
     setIsLoading(true);
     try {
-      const { error } = await supabase.auth.signUp({
-        email: values.email,
-        password: values.password,
-        options: {
-          data: {
-            username: values.username,
-            date_of_birth: values.dateOfBirth,
-            country: values.country,
+      if (isLoginMode) {
+        // Login flow
+        const { error } = await supabase.auth.signInWithPassword({
+          email: values.email,
+          password: values.password,
+        });
+
+        if (error) throw error;
+
+        toast({
+          title: "Welcome back!",
+          description: "You have been successfully logged in.",
+        });
+      } else {
+        // Signup flow
+        const { error } = await supabase.auth.signUp({
+          email: values.email,
+          password: values.password,
+          options: {
+            data: {
+              username: values.username,
+              date_of_birth: values.dateOfBirth,
+              country: values.country,
+            },
           },
-        },
-      });
+        });
 
-      if (error) throw error;
+        if (error) throw error;
 
-      toast({
-        title: "Success!",
-        description: "Please check your email to confirm your account.",
-      });
+        toast({
+          title: "Success!",
+          description: "Please check your email to confirm your account.",
+        });
+      }
     } catch (error: any) {
       toast({
         title: "Error",
@@ -98,7 +119,7 @@ export const SignupForm = ({ onToggleMode }: { onToggleMode: () => void }) => {
             transition={{ delay: 0.2, duration: 0.6 }}
           >
             <FloatingIcons />
-            <SignupHeader />
+            <SignupHeader isLoginMode={isLoginMode} />
           </motion.div>
 
           {/* Form with step animations */}
@@ -119,11 +140,11 @@ export const SignupForm = ({ onToggleMode }: { onToggleMode: () => void }) => {
                     transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
                     className="space-y-4"
                   >
-                    <AnimatedFormFields form={form} isLoading={isLoading} />
+                    <AnimatedFormFields form={form} isLoading={isLoading} isLoginMode={isLoginMode} />
                   </motion.div>
                 </AnimatePresence>
 
-                <AnimatedSubmitButton isLoading={isLoading} />
+                <AnimatedSubmitButton isLoading={isLoading} isLoginMode={isLoginMode} />
               </form>
             </Form>
           </motion.div>
@@ -133,7 +154,7 @@ export const SignupForm = ({ onToggleMode }: { onToggleMode: () => void }) => {
             animate={{ opacity: 1 }}
             transition={{ delay: 1.1, duration: 0.6 }}
           >
-            <SignupFooter onToggleMode={onToggleMode} />
+            <SignupFooter onToggleMode={onToggleMode} isLoginMode={isLoginMode} />
           </motion.div>
         </div>
 

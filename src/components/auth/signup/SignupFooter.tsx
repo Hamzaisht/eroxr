@@ -3,9 +3,10 @@ import { motion } from "framer-motion";
 
 interface SignupFooterProps {
   onToggleMode: () => void;
+  isLoginMode?: boolean;
 }
 
-export const SignupFooter = ({ onToggleMode }: SignupFooterProps) => {
+export const SignupFooter = ({ onToggleMode, isLoginMode = false }: SignupFooterProps) => {
   return (
     <motion.div 
       className="text-center space-y-4"
@@ -14,14 +15,14 @@ export const SignupFooter = ({ onToggleMode }: SignupFooterProps) => {
       transition={{ delay: 0.8, duration: 0.6 }}
     >
       <p className="text-sm text-gray-400">
-        Already have an account?{" "}
+        {isLoginMode ? "Don't have an account?" : "Already have an account?"}{" "}
         <motion.button
           onClick={onToggleMode}
           className="relative text-transparent bg-gradient-to-r from-cyan-400 to-purple-400 bg-clip-text font-medium group"
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
         >
-          <span className="relative z-10">Sign in</span>
+          <span className="relative z-10">{isLoginMode ? "Sign up" : "Sign in"}</span>
           <motion.div
             className="absolute inset-0 bg-gradient-to-r from-cyan-400/10 to-purple-400/10 rounded-lg blur-sm"
             initial={{ scale: 0, opacity: 0 }}
@@ -49,7 +50,7 @@ export const SignupFooter = ({ onToggleMode }: SignupFooterProps) => {
             ease: "easeInOut",
           }}
         />
-        <span>Premium experience awaits</span>
+        <span>{isLoginMode ? "Welcome back to the experience" : "Premium experience awaits"}</span>
         <motion.div
           className="w-1 h-1 bg-gradient-to-r from-cyan-400 to-purple-400 rounded-full"
           animate={{

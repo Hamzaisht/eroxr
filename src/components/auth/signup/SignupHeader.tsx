@@ -1,7 +1,11 @@
 
 import { motion } from "framer-motion";
 
-export const SignupHeader = () => {
+interface SignupHeaderProps {
+  isLoginMode?: boolean;
+}
+
+export const SignupHeader = ({ isLoginMode = false }: SignupHeaderProps) => {
   return (
     <div className="text-center space-y-4">
       <motion.h2 
@@ -24,7 +28,7 @@ export const SignupHeader = () => {
             backgroundSize: '200% auto',
           }}
         >
-          Join Eroxr
+          {isLoginMode ? "Welcome Back" : "Join Eroxr"}
         </motion.span>
         
         {/* Floating sparkles around text */}
@@ -62,7 +66,7 @@ export const SignupHeader = () => {
         animate={{ opacity: 1 }}
         transition={{ delay: 0.3, duration: 0.6 }}
       >
-        Create your{" "}
+        {isLoginMode ? "Sign into your" : "Create your"}{" "}
         <motion.span
           className="text-transparent bg-gradient-to-r from-pink-400 to-cyan-400 bg-clip-text font-semibold"
           animate={{

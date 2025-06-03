@@ -5,9 +5,10 @@ import { Sparkles } from "lucide-react";
 
 interface AnimatedSubmitButtonProps {
   isLoading: boolean;
+  isLoginMode?: boolean;
 }
 
-export const AnimatedSubmitButton = ({ isLoading }: AnimatedSubmitButtonProps) => {
+export const AnimatedSubmitButton = ({ isLoading, isLoginMode = false }: AnimatedSubmitButtonProps) => {
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -44,12 +45,12 @@ export const AnimatedSubmitButton = ({ isLoading }: AnimatedSubmitButtonProps) =
                   animate={{ rotate: 360 }}
                   transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
                 />
-                <span>Creating your account...</span>
+                <span>{isLoginMode ? "Signing in..." : "Creating your account..."}</span>
               </>
             ) : (
               <>
                 <Sparkles className="w-5 h-5" />
-                <span>Create Account</span>
+                <span>{isLoginMode ? "Sign In" : "Create Account"}</span>
                 <motion.div
                   animate={{ x: [0, 5, 0] }}
                   transition={{ duration: 1.5, repeat: Infinity }}
