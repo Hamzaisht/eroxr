@@ -8,6 +8,7 @@ import { ProfileTabs } from "@/components/profile/ProfileTabs";
 import { ProfileContent } from "@/components/profile/ProfileContent";
 import { CreatorDashboard } from "@/components/profile/CreatorDashboard";
 import { useSession } from "@supabase/auth-helpers-react";
+import { motion } from "framer-motion";
 
 interface ProfileData {
   id: string;
@@ -134,7 +135,11 @@ export default function ProfilePage() {
   if (loading) {
     return (
       <div className="min-h-screen w-full bg-gradient-to-br from-gray-900 via-gray-800 to-black flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-cyan-500"></div>
+        <motion.div
+          animate={{ rotate: 360 }}
+          transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+          className="w-12 h-12 border-2 border-cyan-500 border-t-transparent rounded-full"
+        />
       </div>
     );
   }
@@ -142,50 +147,101 @@ export default function ProfilePage() {
   if (!profile) {
     return (
       <div className="min-h-screen w-full bg-gradient-to-br from-gray-900 via-gray-800 to-black flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-white mb-2">Profile Not Found</h1>
-          <p className="text-gray-400">The user you're looking for doesn't exist.</p>
-        </div>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-center"
+        >
+          <h1 className="text-3xl font-bold text-white mb-4">Profile Not Found</h1>
+          <p className="text-gray-400 text-lg">The user you're looking for doesn't exist.</p>
+        </motion.div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen w-full bg-gradient-to-br from-gray-900 via-gray-800 to-black">
-      {/* Background Effects */}
+    <div className="min-h-screen w-full bg-gradient-to-br from-gray-900 via-gray-800 to-black relative overflow-hidden">
+      {/* Enhanced Background Effects */}
       <div className="fixed inset-0 pointer-events-none">
-        <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/5 via-purple-500/5 to-pink-500/5 animate-pulse" />
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl animate-pulse" />
-        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl animate-pulse delay-1000" />
+        <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/3 via-purple-500/3 to-pink-500/3 animate-pulse" />
+        <motion.div 
+          animate={{ 
+            scale: [1, 1.1, 1],
+            opacity: [0.1, 0.2, 0.1]
+          }}
+          transition={{ duration: 8, repeat: Infinity }}
+          className="absolute top-1/4 left-1/4 w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl"
+        />
+        <motion.div 
+          animate={{ 
+            scale: [1.1, 1, 1.1],
+            opacity: [0.1, 0.15, 0.1]
+          }}
+          transition={{ duration: 10, repeat: Infinity, delay: 2 }}
+          className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl"
+        />
+        <motion.div 
+          animate={{ 
+            scale: [1, 1.2, 1],
+            opacity: [0.05, 0.1, 0.05]
+          }}
+          transition={{ duration: 12, repeat: Infinity, delay: 4 }}
+          className="absolute top-1/2 left-1/2 w-96 h-96 bg-pink-500/8 rounded-full blur-3xl transform -translate-x-1/2 -translate-y-1/2"
+        />
       </div>
 
+      {/* Full-width immersive content */}
       <div className="relative z-10 w-full">
-        {/* Profile Header */}
-        <ProfileHeader 
-          profile={profile}
-          isOwnProfile={isOwnProfile}
-          isFollowing={isFollowing}
-          onFollowToggle={setIsFollowing}
-        />
+        {/* Glassmorphism Profile Header */}
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+        >
+          <ProfileHeader 
+            profile={profile}
+            isOwnProfile={isOwnProfile}
+            isFollowing={isFollowing}
+            onFollowToggle={setIsFollowing}
+          />
+        </motion.div>
 
-        {/* Creator Dashboard - Only for creators viewing their own profile */}
+        {/* Creator Dashboard - Enhanced for creators */}
         {isOwnProfile && profile.is_creator && (
-          <CreatorDashboard profile={profile} />
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+          >
+            <CreatorDashboard profile={profile} />
+          </motion.div>
         )}
 
-        {/* Profile Tabs */}
-        <ProfileTabs 
-          activeTab={activeTab}
-          onTabChange={setActiveTab}
-          isCreator={profile.is_creator}
-        />
+        {/* Enhanced Profile Tabs */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.3 }}
+        >
+          <ProfileTabs 
+            activeTab={activeTab}
+            onTabChange={setActiveTab}
+            isCreator={profile.is_creator}
+          />
+        </motion.div>
 
-        {/* Profile Content */}
-        <ProfileContent 
-          profile={profile}
-          activeTab={activeTab}
-          isOwnProfile={isOwnProfile}
-        />
+        {/* Profile Content with enhanced performance */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.4 }}
+        >
+          <ProfileContent 
+            profile={profile}
+            activeTab={activeTab}
+            isOwnProfile={isOwnProfile}
+          />
+        </motion.div>
       </div>
     </div>
   );

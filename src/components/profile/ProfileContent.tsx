@@ -1,9 +1,10 @@
 
-import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
+import { useState, useEffect, useMemo } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { PostCard } from "@/components/profile/PostCard";
 import { useSession } from "@supabase/auth-helpers-react";
+import { Loader2, Image, Video, Music } from "lucide-react";
 
 interface ProfileData {
   id: string;
@@ -28,29 +29,37 @@ interface Post {
   comments_count: number;
   view_count: number;
   media_assets: any[];
+  creator?: any;
 }
 
 export const ProfileContent = ({ profile, activeTab, isOwnProfile }: ProfileContentProps) => {
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
   const session = useSession();
 
   useEffect(() => {
     fetchContent();
   }, [activeTab, profile.id]);
 
-  const fetchContent = async () => {
+  const fetchContent = async (pageNum = 1) => {
     try {
-      setLoading(true);
+      setLoading(pageNum === 1);
+      
+      const limit = 20;
+      const offset = (pageNum - 1) * limit;
       
       let query = supabase
         .from('posts')
         .select(`
           *,
-          media_assets(*)
+          media_assets(*),
+          profiles:creator_id(username, avatar_url)
         `)
         .eq('creator_id', profile.id)
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .range(offset, offset + limit - 1);
 
       // Apply filters based on active tab
       switch (activeTab) {
@@ -61,16 +70,18 @@ export const ProfileContent = ({ profile, activeTab, isOwnProfile }: ProfileCont
           query = query.or('visibility.eq.subscribers_only,is_ppv.eq.true');
           break;
         case 'photos':
-          // This would need a join with media_assets to filter by type
+          // Filter for posts with image media
+          query = query.not('media_assets', 'is', null);
           break;
         case 'videos':
-          // This would need a join with media_assets to filter by type
+          // Filter for posts with video media
+          query = query.not('media_assets', 'is', null);
           break;
         case 'audio':
-          // This would need a join with media_assets to filter by type
+          // Filter for posts with audio media
+          query = query.not('media_assets', 'is', null);
           break;
         case 'liked':
-          // This would require a different query structure
           if (session?.user?.id) {
             const { data: likedPosts } = await supabase
               .from('post_likes')
@@ -78,12 +89,13 @@ export const ProfileContent = ({ profile, activeTab, isOwnProfile }: ProfileCont
                 post_id,
                 posts:posts(
                   *,
-                  media_assets(*)
+                  media_assets(*),
+                  profiles:creator_id(username, avatar_url)
                 )
               `)
-              .eq('user_id', session.user.id);
+              .eq('user_id', session.user.id)
+              .range(offset, offset + limit - 1);
             
-            // Fix the type conversion issue by properly extracting the posts
             const validPosts: Post[] = likedPosts
               ?.map(like => like.posts)
               .filter((post): post is any => post !== null && typeof post === 'object' && !Array.isArray(post))
@@ -97,10 +109,16 @@ export const ProfileContent = ({ profile, activeTab, isOwnProfile }: ProfileCont
                 likes_count: post.likes_count || 0,
                 comments_count: post.comments_count || 0,
                 view_count: post.view_count || 0,
-                media_assets: post.media_assets || []
+                media_assets: post.media_assets || [],
+                creator: post.profiles
               })) || [];
             
-            setPosts(validPosts);
+            if (pageNum === 1) {
+              setPosts(validPosts);
+            } else {
+              setPosts(prev => [...prev, ...validPosts]);
+            }
+            setHasMore(validPosts.length === limit);
             setLoading(false);
             return;
           }
@@ -127,12 +145,34 @@ export const ProfileContent = ({ profile, activeTab, isOwnProfile }: ProfileCont
       if (error) throw error;
 
       // Process posts to ensure proper media assets structure
-      const processedPosts = data?.map(post => ({
+      let processedPosts = data?.map(post => ({
         ...post,
-        media_assets: post.media_assets || []
+        media_assets: post.media_assets || [],
+        creator: post.profiles
       })) || [];
 
-      setPosts(processedPosts as Post[]);
+      // Additional filtering for media types
+      if (activeTab === 'photos') {
+        processedPosts = processedPosts.filter(post => 
+          post.media_assets.some(asset => asset.media_type === 'image' || asset.url?.match(/\.(jpg|jpeg|png|gif|webp)$/i))
+        );
+      } else if (activeTab === 'videos') {
+        processedPosts = processedPosts.filter(post => 
+          post.media_assets.some(asset => asset.media_type === 'video' || asset.url?.match(/\.(mp4|webm|mov|avi)$/i))
+        );
+      } else if (activeTab === 'audio') {
+        processedPosts = processedPosts.filter(post => 
+          post.media_assets.some(asset => asset.media_type === 'audio' || asset.url?.match(/\.(mp3|wav|ogg|m4a)$/i))
+        );
+      }
+
+      if (pageNum === 1) {
+        setPosts(processedPosts as Post[]);
+      } else {
+        setPosts(prev => [...prev, ...processedPosts as Post[]]);
+      }
+      
+      setHasMore(processedPosts.length === limit);
     } catch (error) {
       console.error('Error fetching content:', error);
       setPosts([]);
@@ -141,42 +181,139 @@ export const ProfileContent = ({ profile, activeTab, isOwnProfile }: ProfileCont
     }
   };
 
-  if (loading) {
+  const loadMore = () => {
+    if (!loading && hasMore) {
+      const nextPage = page + 1;
+      setPage(nextPage);
+      fetchContent(nextPage);
+    }
+  };
+
+  // Memoized grid layout
+  const gridContent = useMemo(() => {
+    if (posts.length === 0) return null;
+
     return (
-      <div className="w-full max-w-4xl mx-auto px-4 md:px-8 py-8">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {[...Array(6)].map((_, i) => (
-            <div key={i} className="aspect-square bg-gray-800/50 rounded-xl animate-pulse" />
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        <AnimatePresence mode="popLayout">
+          {posts.map((post, index) => (
+            <motion.div
+              key={post.id}
+              layout
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ 
+                duration: 0.5, 
+                delay: index * 0.05,
+                layout: { duration: 0.3 }
+              }}
+            >
+              <PostCard post={post} isOwnProfile={isOwnProfile} />
+            </motion.div>
+          ))}
+        </AnimatePresence>
+      </div>
+    );
+  }, [posts, isOwnProfile]);
+
+  if (loading && posts.length === 0) {
+    return (
+      <div className="w-full px-4 md:px-8 py-12">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          {[...Array(8)].map((_, i) => (
+            <motion.div
+              key={i}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: i * 0.1 }}
+              className="aspect-square bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl animate-pulse"
+            />
           ))}
         </div>
       </div>
     );
   }
 
-  if (posts.length === 0) {
+  if (posts.length === 0 && !loading) {
+    const getEmptyStateContent = () => {
+      switch (activeTab) {
+        case 'photos':
+          return {
+            icon: Image,
+            title: 'No Photos Yet',
+            description: 'Photos will appear here when they are shared.'
+          };
+        case 'videos':
+          return {
+            icon: Video,
+            title: 'No Videos Yet',
+            description: 'Videos will appear here when they are shared.'
+          };
+        case 'audio':
+          return {
+            icon: Music,
+            title: 'No Audio Content',
+            description: 'Audio content will appear here when shared.'
+          };
+        default:
+          return {
+            icon: Image,
+            title: `No ${activeTab} content`,
+            description: `${activeTab.charAt(0).toUpperCase() + activeTab.slice(1)} content will appear here when available.`
+          };
+      }
+    };
+
+    const emptyState = getEmptyStateContent();
+    const EmptyIcon = emptyState.icon;
+
     return (
-      <div className="w-full max-w-4xl mx-auto px-4 md:px-8 py-16 text-center">
-        <div className="text-gray-400 text-lg">
-          {activeTab === 'all' ? 'No posts yet' : `No ${activeTab} content available`}
-        </div>
+      <div className="w-full px-4 md:px-8 py-16">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-center max-w-md mx-auto"
+        >
+          <div className="w-24 h-24 mx-auto mb-6 rounded-full bg-white/5 backdrop-blur-sm border border-white/10 flex items-center justify-center">
+            <EmptyIcon className="w-12 h-12 text-gray-400" />
+          </div>
+          <h3 className="text-xl font-semibold text-white mb-2">{emptyState.title}</h3>
+          <p className="text-gray-400">{emptyState.description}</p>
+        </motion.div>
       </div>
     );
   }
 
   return (
-    <div className="w-full max-w-4xl mx-auto px-4 md:px-8 py-8">
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {posts.map((post, index) => (
-          <motion.div
-            key={post.id}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: index * 0.1 }}
+    <div className="w-full px-4 md:px-8 py-8">
+      {gridContent}
+      
+      {/* Load More Section */}
+      {hasMore && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="flex justify-center mt-12"
+        >
+          <motion.button
+            onClick={loadMore}
+            disabled={loading}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            className="flex items-center gap-3 px-8 py-4 rounded-2xl bg-white/5 backdrop-blur-sm border border-white/10 hover:border-white/20 text-white hover:bg-white/10 transition-all duration-300 disabled:opacity-50"
           >
-            <PostCard post={post} isOwnProfile={isOwnProfile} />
-          </motion.div>
-        ))}
-      </div>
+            {loading ? (
+              <>
+                <Loader2 className="w-5 h-5 animate-spin" />
+                <span>Loading...</span>
+              </>
+            ) : (
+              <span>Load More</span>
+            )}
+          </motion.button>
+        </motion.div>
+      )}
     </div>
   );
 };
