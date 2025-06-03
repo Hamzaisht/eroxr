@@ -1,7 +1,7 @@
 
 import { useState } from "react";
 import { useParams } from "react-router-dom";
-import { ProfileContainer } from "@/components/profile/ProfileContainer";
+import { ProfileContainer } from "@/components/profile/container/ProfileContainer";
 
 export default function Profile() {
   const { id } = useParams();
