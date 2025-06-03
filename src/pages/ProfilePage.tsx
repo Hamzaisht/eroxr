@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { ProfileContainer } from "@/components/profile/ProfileContainer";
+import { ProfileContainer } from "@/components/profile/container/ProfileContainer";
 import { useSession } from "@supabase/auth-helpers-react";
 import { motion } from "framer-motion";
 
@@ -90,14 +90,12 @@ export default function ProfilePage() {
     try {
       setLoading(true);
       
-      // Try to find by username first
       let { data: profileData, error } = await supabase
         .from('profiles')
         .select('id, username')
         .eq('username', username)
         .single();
 
-      // If not found by username, try by ID
       if (error && error.code === 'PGRST116') {
         const { data: profileByIdData, error: idError } = await supabase
           .from('profiles')
