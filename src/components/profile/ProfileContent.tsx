@@ -3,8 +3,16 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Image, Video, Music, Heart, MessageCircle, Share, Calendar } from "lucide-react";
+import { Image, Video, Music, Heart, MessageCircle, Share, Calendar, Play } from "lucide-react";
 import { format } from "date-fns";
+
+interface MediaAsset {
+  id: string;
+  storage_path: string;
+  media_type: string;
+  alt_text?: string;
+  original_name?: string;
+}
 
 interface Post {
   id: string;
@@ -13,7 +21,7 @@ interface Post {
   likes_count: number;
   comments_count: number;
   share_count: number;
-  media_urls?: string[];
+  media_assets?: MediaAsset[];
   tags: string[];
 }
 
@@ -36,7 +44,8 @@ export const ProfileContent = ({ profile, activeTab, isOwnProfile }: ProfileCont
     try {
       setLoading(true);
       
-      let query = supabase
+      // First get posts
+      const { data: postsData, error: postsError } = await supabase
         .from('posts')
         .select(`
           id,
@@ -45,35 +54,59 @@ export const ProfileContent = ({ profile, activeTab, isOwnProfile }: ProfileCont
           likes_count,
           comments_count,
           share_count,
-          metadata,
           tags
         `)
         .eq('creator_id', profile.id)
         .order('created_at', { ascending: false });
 
-      // Filter by tab if needed
-      if (activeTab === 'photos') {
-        query = query.contains('metadata', { media_type: 'image' });
-      } else if (activeTab === 'videos') {
-        query = query.contains('metadata', { media_type: 'video' });
-      } else if (activeTab === 'audio') {
-        query = query.contains('metadata', { media_type: 'audio' });
+      if (postsError) {
+        console.error('Error fetching posts:', postsError);
+        throw postsError;
       }
 
-      const { data, error } = await query;
-
-      if (error) {
-        console.error('Error fetching posts:', error);
-        throw error;
+      if (!postsData || postsData.length === 0) {
+        setPosts([]);
+        return;
       }
 
-      // Transform the data to include media URLs from metadata
-      const transformedPosts = (data || []).map(post => ({
-        ...post,
-        media_urls: post.metadata?.media_urls || []
-      }));
+      // Then get media assets for each post
+      const postsWithMedia = await Promise.all(
+        postsData.map(async (post) => {
+          const { data: mediaAssets, error: mediaError } = await supabase
+            .from('media_assets')
+            .select('*')
+            .eq('metadata->>post_id', post.id);
 
-      setPosts(transformedPosts);
+          if (mediaError) {
+            console.error('Error fetching media for post:', post.id, mediaError);
+          }
+
+          // Filter by media type based on active tab
+          let filteredAssets = mediaAssets || [];
+          if (activeTab === 'photos') {
+            filteredAssets = filteredAssets.filter(asset => asset.media_type === 'image');
+          } else if (activeTab === 'videos') {
+            filteredAssets = filteredAssets.filter(asset => asset.media_type === 'video');
+          } else if (activeTab === 'audio') {
+            filteredAssets = filteredAssets.filter(asset => asset.media_type === 'audio');
+          }
+
+          return {
+            ...post,
+            media_assets: filteredAssets
+          };
+        })
+      );
+
+      // Filter out posts that don't match the current tab
+      let finalPosts = postsWithMedia;
+      if (activeTab !== 'posts') {
+        finalPosts = postsWithMedia.filter(post => 
+          post.media_assets && post.media_assets.length > 0
+        );
+      }
+
+      setPosts(finalPosts);
     } catch (error: any) {
       console.error('Error fetching posts:', error);
       toast({
@@ -86,49 +119,92 @@ export const ProfileContent = ({ profile, activeTab, isOwnProfile }: ProfileCont
     }
   };
 
+  const getMediaUrl = (storagePath: string) => {
+    if (!storagePath) return '';
+    
+    // Check if it's already a full URL
+    if (storagePath.startsWith('http')) {
+      return storagePath;
+    }
+    
+    // Get public URL from Supabase storage
+    const { data } = supabase.storage
+      .from('media-assets')
+      .getPublicUrl(storagePath);
+    
+    return data.publicUrl;
+  };
+
   const getMediaPreview = (post: Post) => {
-    if (post.media_urls && post.media_urls.length > 0) {
-      const firstMedia = post.media_urls[0];
-      
-      // Check if it's an image
-      if (firstMedia.match(/\.(jpg|jpeg|png|gif|webp)$/i)) {
-        return (
-          <div className="relative w-full aspect-square overflow-hidden rounded-lg mb-3">
-            <img 
-              src={firstMedia} 
-              alt="Post media"
-              className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
-            />
-            {post.media_urls.length > 1 && (
-              <div className="absolute top-2 right-2 bg-black/70 text-white text-xs px-2 py-1 rounded-full">
-                +{post.media_urls.length - 1}
-              </div>
-            )}
-          </div>
-        );
-      }
-      
-      // Check if it's a video
-      if (firstMedia.match(/\.(mp4|webm|mov)$/i)) {
-        return (
-          <div className="relative w-full aspect-square overflow-hidden rounded-lg mb-3">
-            <video 
-              src={firstMedia}
-              className="w-full h-full object-cover"
-              muted
-              poster={firstMedia.replace(/\.(mp4|webm|mov)$/i, '_thumb.jpg')}
-            />
-            <div className="absolute inset-0 flex items-center justify-center bg-black/20">
-              <Video className="w-8 h-8 text-white" />
+    if (!post.media_assets || post.media_assets.length === 0) {
+      return null;
+    }
+
+    const firstMedia = post.media_assets[0];
+    const mediaUrl = getMediaUrl(firstMedia.storage_path);
+    
+    if (!mediaUrl) return null;
+
+    // Check media type
+    if (firstMedia.media_type === 'image') {
+      return (
+        <div className="relative w-full aspect-square overflow-hidden rounded-lg mb-3">
+          <img 
+            src={mediaUrl} 
+            alt={firstMedia.alt_text || "Post media"}
+            className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+            onError={(e) => {
+              console.error('Image failed to load:', mediaUrl);
+              e.currentTarget.style.display = 'none';
+            }}
+          />
+          {post.media_assets.length > 1 && (
+            <div className="absolute top-2 right-2 bg-black/70 text-white text-xs px-2 py-1 rounded-full">
+              +{post.media_assets.length - 1}
             </div>
-            {post.media_urls.length > 1 && (
-              <div className="absolute top-2 right-2 bg-black/70 text-white text-xs px-2 py-1 rounded-full">
-                +{post.media_urls.length - 1}
-              </div>
-            )}
+          )}
+        </div>
+      );
+    }
+    
+    if (firstMedia.media_type === 'video') {
+      return (
+        <div className="relative w-full aspect-square overflow-hidden rounded-lg mb-3">
+          <video 
+            src={mediaUrl}
+            className="w-full h-full object-cover"
+            muted
+            preload="metadata"
+            onError={(e) => {
+              console.error('Video failed to load:', mediaUrl);
+            }}
+          />
+          <div className="absolute inset-0 flex items-center justify-center bg-black/20">
+            <Play className="w-8 h-8 text-white" />
           </div>
-        );
-      }
+          {post.media_assets.length > 1 && (
+            <div className="absolute top-2 right-2 bg-black/70 text-white text-xs px-2 py-1 rounded-full">
+              +{post.media_assets.length - 1}
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    if (firstMedia.media_type === 'audio') {
+      return (
+        <div className="relative w-full aspect-square overflow-hidden rounded-lg mb-3 bg-gradient-to-br from-purple-900/60 to-pink-900/60 flex items-center justify-center">
+          <div className="text-center">
+            <Music className="w-12 h-12 text-white mb-2 mx-auto" />
+            <p className="text-white text-sm">Audio Content</p>
+          </div>
+          {post.media_assets.length > 1 && (
+            <div className="absolute top-2 right-2 bg-black/70 text-white text-xs px-2 py-1 rounded-full">
+              +{post.media_assets.length - 1}
+            </div>
+          )}
+        </div>
+      );
     }
     
     return null;
