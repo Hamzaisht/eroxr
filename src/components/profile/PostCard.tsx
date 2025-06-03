@@ -7,6 +7,12 @@ import { MediaWatermark } from "@/components/media/MediaWatermark";
 import { format, formatDistanceToNow } from "date-fns";
 import { Button } from "@/components/ui/button";
 
+interface Creator {
+  id: string;
+  username?: string;
+  avatar_url?: string;
+}
+
 interface Post {
   id: string;
   content: string;
@@ -18,6 +24,7 @@ interface Post {
   comments_count: number;
   view_count: number;
   media_assets: any[];
+  creator?: Creator;
 }
 
 interface PostCardProps {
@@ -130,10 +137,12 @@ export const PostCard = ({ post, isOwnProfile }: PostCardProps) => {
             )}
             
             {/* Watermark */}
-            <MediaWatermark 
-              creatorHandle={post.creator?.username}
-              className="bottom-2 right-2"
-            />
+            {post.creator?.username && (
+              <MediaWatermark 
+                creatorHandle={post.creator.username}
+                className="bottom-2 right-2"
+              />
+            )}
             
             {/* Media Count Indicator */}
             {post.media_assets.length > 1 && (
