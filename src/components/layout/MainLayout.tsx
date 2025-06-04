@@ -1,5 +1,4 @@
 
-import { useSession } from "@supabase/auth-helpers-react";
 import { useLocation, Outlet, Navigate } from "react-router-dom";
 import { BackgroundEffects } from "./BackgroundEffects";
 import { InteractiveNav } from "./InteractiveNav";
@@ -8,37 +7,30 @@ import { FloatingActionMenu } from "./FloatingActionMenu";
 import { MainNav } from "@/components/MainNav";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { LoadingScreen } from "./LoadingScreen";
-import { useEffect, useState } from "react";
+import { useAuth } from "@/contexts/AuthContext";
 
 export const MainLayout = () => {
-  const session = useSession();
+  const { user, session, loading } = useAuth();
   const location = useLocation();
-  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
   const isErosRoute = location.pathname.includes('/shorts');
   const isMobile = useIsMobile();
   
-  useEffect(() => {
-    // Give time for the session to initialize
-    const timer = setTimeout(() => {
-      setIsCheckingAuth(false);
-    }, 1000);
-    
-    return () => clearTimeout(timer);
-  }, []);
-  
   console.log("MainLayout - Current path:", location.pathname);
-  console.log("MainLayout - Session exists:", !!session);
-  console.log("MainLayout - Is checking auth:", isCheckingAuth);
+  console.log("MainLayout - Auth state:", { 
+    user: user ? "exists" : "null", 
+    session: session ? "exists" : "null",
+    loading 
+  });
   
   // Show loading screen while checking authentication
-  if (isCheckingAuth && session === undefined) {
+  if (loading) {
     console.log("MainLayout - Showing loading screen (checking auth)");
     return <LoadingScreen />;
   }
   
   // Redirect to login if not authenticated
-  if (!session) {
-    console.log("MainLayout - No session, redirecting to login");
+  if (!session || !user) {
+    console.log("MainLayout - No session/user, redirecting to login");
     return <Navigate to="/login" state={{ from: location.pathname }} replace />;
   }
 

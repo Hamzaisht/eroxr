@@ -3,9 +3,8 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useToast } from "@/hooks/use-toast";
-import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { Form } from "@/components/ui/form";
-import { signupSchema, type SignupFormValues } from "../types";
+import { signupSchema, loginSchema, type SignupFormValues, type LoginFormValues } from "../types";
 import { SignupHeader } from "./SignupHeader";
 import { SignupFooter } from "./SignupFooter";
 import { motion, AnimatePresence } from "framer-motion";
@@ -14,6 +13,7 @@ import { FloatingParticles } from "./FloatingParticles";
 import { FloatingIcons } from "./FloatingIcons";
 import { AnimatedFormFields } from "./AnimatedFormFields";
 import { AnimatedSubmitButton } from "./AnimatedSubmitButton";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface SignupFormProps {
   onToggleMode: () => void;
@@ -23,21 +23,27 @@ interface SignupFormProps {
 export const SignupForm = ({ onToggleMode, isLoginMode = false }: SignupFormProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
-  const supabase = useSupabaseClient();
+  const { signIn, signUp } = useAuth();
 
-  const form = useForm<SignupFormValues>({
-    resolver: zodResolver(signupSchema),
-    defaultValues: {
+  // Use different schemas and default values based on mode
+  const form = useForm<SignupFormValues | LoginFormValues>({
+    resolver: zodResolver(isLoginMode ? loginSchema : signupSchema),
+    defaultValues: isLoginMode ? {
+      email: "",
+      password: "",
+    } : {
       email: "",
       password: "",
       confirmPassword: "",
       username: "",
       dateOfBirth: "",
       country: "",
+      firstName: "",
+      lastName: "",
     },
   });
 
-  const onSubmit = async (values: SignupFormValues) => {
+  const onSubmit = async (values: SignupFormValues | LoginFormValues) => {
     console.log("Form submission started", { isLoginMode, email: values.email });
     setIsLoading(true);
     
@@ -45,17 +51,7 @@ export const SignupForm = ({ onToggleMode, isLoginMode = false }: SignupFormProp
       if (isLoginMode) {
         console.log("Attempting login with email:", values.email);
         
-        // Login flow
-        const { data, error } = await supabase.auth.signInWithPassword({
-          email: values.email,
-          password: values.password,
-        });
-
-        console.log("Login response:", { 
-          user: data?.user ? "user object received" : "no user", 
-          session: data?.session ? "session received" : "no session",
-          error: error?.message || "no error" 
-        });
+        const { data, error } = await signIn(values.email, values.password);
 
         if (error) {
           console.error("Login error:", error);
@@ -69,8 +65,6 @@ export const SignupForm = ({ onToggleMode, isLoginMode = false }: SignupFormProp
             title: "Welcome back!",
             description: "You have been successfully logged in.",
           });
-          
-          // The onAuthStateChange listener will handle the redirect
         } else {
           console.error("Login succeeded but missing user or session data");
           throw new Error("Login succeeded but session data is incomplete");
@@ -78,18 +72,18 @@ export const SignupForm = ({ onToggleMode, isLoginMode = false }: SignupFormProp
       } else {
         console.log("Attempting signup with email:", values.email);
         
-        // Signup flow
-        const { data, error } = await supabase.auth.signUp({
-          email: values.email,
-          password: values.password,
-          options: {
-            data: {
-              username: values.username,
-              date_of_birth: values.dateOfBirth,
-              country: values.country,
-            },
-          },
-        });
+        // Type assertion for signup values
+        const signupValues = values as SignupFormValues;
+        
+        const metadata = {
+          username: signupValues.username,
+          first_name: signupValues.firstName,
+          last_name: signupValues.lastName,
+          date_of_birth: signupValues.dateOfBirth,
+          country: signupValues.country,
+        };
+
+        const { data, error } = await signUp(signupValues.email, signupValues.password, metadata);
 
         console.log("Signup response:", { data, error });
 

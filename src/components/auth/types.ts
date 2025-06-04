@@ -1,5 +1,7 @@
+
 import { z } from "zod";
 
+// Base signup schema with all fields
 export const signupSchema = z.object({
   email: z.string({
     required_error: "Email is required",
@@ -50,4 +52,15 @@ export const signupSchema = z.object({
   path: ["confirmPassword"],
 });
 
+// Simplified login schema - only email and password
+export const loginSchema = z.object({
+  email: z.string({
+    required_error: "Email is required",
+  }).email("Please enter a valid email"),
+  password: z.string({
+    required_error: "Password is required",
+  }).min(1, "Password is required"),
+});
+
 export type SignupFormValues = z.infer<typeof signupSchema>;
+export type LoginFormValues = z.infer<typeof loginSchema>;

@@ -1,38 +1,32 @@
 
-import { useSession } from "@supabase/auth-helpers-react";
 import { Navigate } from "react-router-dom";
 import { LoadingScreen } from "@/components/layout/LoadingScreen";
 import Landing from "@/pages/Landing";
-import { useEffect, useState } from "react";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Index = () => {
-  const session = useSession();
-  const [isLoading, setIsLoading] = useState(true);
+  const { user, session, loading } = useAuth();
   
-  useEffect(() => {
-    // Give the session time to initialize
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 1000);
-    
-    return () => clearTimeout(timer);
-  }, []);
-  
-  useEffect(() => {
-    console.log("Index page - session:", session ? "exists" : "undefined/null");
-  }, [session]);
+  console.log("Index page - auth state:", { 
+    user: user ? "exists" : "null", 
+    session: session ? "exists" : "null",
+    loading 
+  });
 
   // Show loading while session is being determined
-  if (isLoading && session === undefined) {
+  if (loading) {
+    console.log("Index page - showing loading screen");
     return <LoadingScreen />;
   }
 
   // If authenticated, redirect to home
-  if (session) {
+  if (session && user) {
+    console.log("Index page - user authenticated, redirecting to home");
     return <Navigate to="/home" replace />;
   }
 
   // If not authenticated, show landing page
+  console.log("Index page - showing landing page");
   return <Landing />;
 };
 

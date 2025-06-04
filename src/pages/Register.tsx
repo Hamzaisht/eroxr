@@ -1,62 +1,42 @@
 
 import { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { useSession, useSupabaseClient } from "@supabase/auth-helpers-react";
 import { SignupForm } from "@/components/auth/signup/SignupForm";
 import { motion, AnimatePresence } from "framer-motion";
 import { LoadingScreen } from "@/components/layout/LoadingScreen";
 import { BackgroundVideo } from "@/components/video/BackgroundVideo";
 import { BackgroundEffects } from "@/components/layout/BackgroundEffects";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Register = () => {
-  const session = useSession();
-  const supabase = useSupabaseClient();
+  const { user, session, loading } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const [isCheckingSession, setIsCheckingSession] = useState(true);
 
   useEffect(() => {
-    console.log("Register page - session:", session ? "exists" : "null");
-    
-    // Check for session changes and redirect if authenticated
-    const checkSession = async () => {
-      const { data: { session: currentSession } } = await supabase.auth.getSession();
-      console.log("Current session check:", currentSession ? "exists" : "null");
-      
-      if (currentSession) {
-        const from = location.state?.from || "/home";
-        console.log("User is already logged in, redirecting to:", from);
-        navigate(from, { replace: true });
-        return;
-      }
-      setIsCheckingSession(false);
-    };
-
-    checkSession();
-  }, [navigate, location, supabase]);
-
-  useEffect(() => {
-    // Listen for auth state changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      console.log("Auth state change:", event, session ? "session exists" : "no session");
-      
-      if (event === 'SIGNED_IN' && session) {
-        const from = location.state?.from || "/home";
-        console.log("User signed in, redirecting to:", from);
-        navigate(from, { replace: true });
-      }
+    console.log("Register page - auth state:", { 
+      user: user ? "exists" : "null", 
+      session: session ? "exists" : "null",
+      loading 
     });
-
-    return () => subscription.unsubscribe();
-  }, [navigate, location, supabase]);
+    
+    // If we have a session and not loading, redirect
+    if (!loading && session && user) {
+      const from = location.state?.from || "/home";
+      console.log("User already authenticated, redirecting to:", from);
+      navigate(from, { replace: true });
+    }
+  }, [user, session, loading, navigate, location]);
 
   // Show loading while checking session
-  if (isCheckingSession || session === undefined) {
+  if (loading) {
+    console.log("Register page - showing loading screen");
     return <LoadingScreen />;
   }
 
-  // If authenticated, redirect (this should be handled by the useEffect above)
-  if (session) {
+  // If we have a session, show loading while redirecting
+  if (session && user) {
+    console.log("Register page - have session, showing loading during redirect");
     return <LoadingScreen />;
   }
 
