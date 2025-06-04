@@ -1,10 +1,8 @@
-
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useToast } from "@/hooks/use-toast";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
-import { useNavigate } from "react-router-dom";
 import { Form } from "@/components/ui/form";
 import { signupSchema, type SignupFormValues } from "../types";
 import { SignupHeader } from "./SignupHeader";
@@ -25,7 +23,6 @@ export const SignupForm = ({ onToggleMode, isLoginMode = false }: SignupFormProp
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const supabase = useSupabaseClient();
-  const navigate = useNavigate();
 
   const form = useForm<SignupFormValues>({
     resolver: zodResolver(signupSchema),
@@ -60,15 +57,14 @@ export const SignupForm = ({ onToggleMode, isLoginMode = false }: SignupFormProp
           throw error;
         }
 
-        console.log("Login successful, redirecting...");
+        console.log("Login successful");
         
         toast({
           title: "Welcome back!",
           description: "You have been successfully logged in.",
         });
 
-        // Redirect to home page after successful login
-        navigate("/home");
+        // Don't manually navigate - let the session change trigger the redirect
       } else {
         console.log("Attempting signup with email:", values.email);
         
