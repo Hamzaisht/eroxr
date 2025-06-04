@@ -4,6 +4,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useToast } from "@/hooks/use-toast";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
+import { useNavigate } from "react-router-dom";
 import { Form } from "@/components/ui/form";
 import { signupSchema, type SignupFormValues } from "../types";
 import { SignupHeader } from "./SignupHeader";
@@ -24,6 +25,7 @@ export const SignupForm = ({ onToggleMode, isLoginMode = false }: SignupFormProp
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const supabase = useSupabaseClient();
+  const navigate = useNavigate();
 
   const form = useForm<SignupFormValues>({
     resolver: zodResolver(signupSchema),
@@ -38,24 +40,40 @@ export const SignupForm = ({ onToggleMode, isLoginMode = false }: SignupFormProp
   });
 
   const onSubmit = async (values: SignupFormValues) => {
+    console.log("Form submission started", { isLoginMode, email: values.email });
     setIsLoading(true);
+    
     try {
       if (isLoginMode) {
+        console.log("Attempting login with email:", values.email);
+        
         // Login flow
-        const { error } = await supabase.auth.signInWithPassword({
+        const { data, error } = await supabase.auth.signInWithPassword({
           email: values.email,
           password: values.password,
         });
 
-        if (error) throw error;
+        console.log("Login response:", { data, error });
 
+        if (error) {
+          console.error("Login error:", error);
+          throw error;
+        }
+
+        console.log("Login successful, redirecting...");
+        
         toast({
           title: "Welcome back!",
           description: "You have been successfully logged in.",
         });
+
+        // Redirect to home page after successful login
+        navigate("/home");
       } else {
+        console.log("Attempting signup with email:", values.email);
+        
         // Signup flow
-        const { error } = await supabase.auth.signUp({
+        const { data, error } = await supabase.auth.signUp({
           email: values.email,
           password: values.password,
           options: {
@@ -67,7 +85,12 @@ export const SignupForm = ({ onToggleMode, isLoginMode = false }: SignupFormProp
           },
         });
 
-        if (error) throw error;
+        console.log("Signup response:", { data, error });
+
+        if (error) {
+          console.error("Signup error:", error);
+          throw error;
+        }
 
         toast({
           title: "Success!",
@@ -75,9 +98,22 @@ export const SignupForm = ({ onToggleMode, isLoginMode = false }: SignupFormProp
         });
       }
     } catch (error: any) {
+      console.error("Authentication error:", error);
+      
+      let errorMessage = error.message;
+      
+      // Handle specific error cases
+      if (error.message?.includes("Invalid login credentials")) {
+        errorMessage = "Invalid email or password. Please check your credentials and try again.";
+      } else if (error.message?.includes("Email not confirmed")) {
+        errorMessage = "Please check your email and click the confirmation link before signing in.";
+      } else if (error.message?.includes("User already registered")) {
+        errorMessage = "An account with this email already exists. Please sign in instead.";
+      }
+      
       toast({
         title: "Error",
-        description: error.message,
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
