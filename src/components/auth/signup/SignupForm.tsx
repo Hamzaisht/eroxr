@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -50,21 +51,30 @@ export const SignupForm = ({ onToggleMode, isLoginMode = false }: SignupFormProp
           password: values.password,
         });
 
-        console.log("Login response:", { data, error });
+        console.log("Login response:", { 
+          user: data?.user ? "user object received" : "no user", 
+          session: data?.session ? "session received" : "no session",
+          error: error?.message || "no error" 
+        });
 
         if (error) {
           console.error("Login error:", error);
           throw error;
         }
 
-        console.log("Login successful");
-        
-        toast({
-          title: "Welcome back!",
-          description: "You have been successfully logged in.",
-        });
-
-        // Don't manually navigate - let the session change trigger the redirect
+        if (data?.user && data?.session) {
+          console.log("Login successful - user and session received");
+          
+          toast({
+            title: "Welcome back!",
+            description: "You have been successfully logged in.",
+          });
+          
+          // The onAuthStateChange listener will handle the redirect
+        } else {
+          console.error("Login succeeded but missing user or session data");
+          throw new Error("Login succeeded but session data is incomplete");
+        }
       } else {
         console.log("Attempting signup with email:", values.email);
         
@@ -96,7 +106,7 @@ export const SignupForm = ({ onToggleMode, isLoginMode = false }: SignupFormProp
     } catch (error: any) {
       console.error("Authentication error:", error);
       
-      let errorMessage = error.message;
+      let errorMessage = error.message || "An unexpected error occurred";
       
       // Handle specific error cases
       if (error.message?.includes("Invalid login credentials")) {

@@ -13,27 +13,42 @@ const Login = () => {
   const supabase = useSupabaseClient();
   const navigate = useNavigate();
   const location = useLocation();
-  const [isCheckingSession, setIsCheckingSession] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    console.log("Login page - session:", session ? "exists" : "null");
+    console.log("Login page mounted, session:", session ? "exists" : "null");
     
-    // Check for session changes and redirect if authenticated
+    // If we already have a session, redirect immediately
+    if (session) {
+      const from = location.state?.from || "/home";
+      console.log("User already authenticated, redirecting to:", from);
+      navigate(from, { replace: true });
+      return;
+    }
+
+    // Check for existing session
     const checkSession = async () => {
-      const { data: { session: currentSession } } = await supabase.auth.getSession();
-      console.log("Current session check:", currentSession ? "exists" : "null");
-      
-      if (currentSession) {
-        const from = location.state?.from || "/home";
-        console.log("User is already logged in, redirecting to:", from);
-        navigate(from, { replace: true });
-        return;
+      try {
+        const { data: { session: currentSession } } = await supabase.auth.getSession();
+        console.log("Session check result:", currentSession ? "found" : "none");
+        
+        if (currentSession) {
+          const from = location.state?.from || "/home";
+          console.log("Found existing session, redirecting to:", from);
+          navigate(from, { replace: true });
+        }
+      } catch (error) {
+        console.error("Error checking session:", error);
+      } finally {
+        setIsLoading(false);
       }
-      setIsCheckingSession(false);
     };
 
-    checkSession();
-  }, [navigate, location, supabase]);
+    // Only check if we don't already have a session
+    if (!session) {
+      checkSession();
+    }
+  }, [session, navigate, location, supabase]);
 
   useEffect(() => {
     // Listen for auth state changes
@@ -42,7 +57,7 @@ const Login = () => {
       
       if (event === 'SIGNED_IN' && session) {
         const from = location.state?.from || "/home";
-        console.log("User signed in, redirecting to:", from);
+        console.log("User signed in successfully, redirecting to:", from);
         navigate(from, { replace: true });
       }
     });
@@ -51,11 +66,11 @@ const Login = () => {
   }, [navigate, location, supabase]);
 
   // Show loading while checking session
-  if (isCheckingSession || session === undefined) {
+  if (isLoading) {
     return <LoadingScreen />;
   }
 
-  // If authenticated, redirect (this should be handled by the useEffect above)
+  // If we have a session, show loading while redirecting
   if (session) {
     return <LoadingScreen />;
   }

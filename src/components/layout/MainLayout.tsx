@@ -13,32 +13,36 @@ import { useEffect, useState } from "react";
 export const MainLayout = () => {
   const session = useSession();
   const location = useLocation();
-  const [isLoading, setIsLoading] = useState(true);
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
   const isErosRoute = location.pathname.includes('/shorts');
   const isMobile = useIsMobile();
   
   useEffect(() => {
-    // Shorter loading time to get users to content faster
+    // Give time for the session to initialize
     const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 500);
+      setIsCheckingAuth(false);
+    }, 1000);
     
     return () => clearTimeout(timer);
   }, []);
   
   console.log("MainLayout - Current path:", location.pathname);
   console.log("MainLayout - Session exists:", !!session);
+  console.log("MainLayout - Is checking auth:", isCheckingAuth);
   
-  // Show loading screen while session is being determined
-  if (isLoading && session === undefined) {
+  // Show loading screen while checking authentication
+  if (isCheckingAuth && session === undefined) {
+    console.log("MainLayout - Showing loading screen (checking auth)");
     return <LoadingScreen />;
   }
   
   // Redirect to login if not authenticated
   if (!session) {
-    console.log("No session in MainLayout, redirecting to login");
+    console.log("MainLayout - No session, redirecting to login");
     return <Navigate to="/login" state={{ from: location.pathname }} replace />;
   }
+
+  console.log("MainLayout - Rendering authenticated layout");
 
   return (
     <div className="flex min-h-screen w-full bg-[#0D1117] overflow-x-hidden">
