@@ -25,14 +25,15 @@ const Login = () => {
       
       if (currentSession) {
         const from = location.state?.from || "/home";
-        console.log("User is logged in, redirecting to:", from);
+        console.log("User is already logged in, redirecting to:", from);
         navigate(from, { replace: true });
+        return;
       }
       setIsCheckingSession(false);
     };
 
     checkSession();
-  }, [session, navigate, location, supabase]);
+  }, [navigate, location, supabase]);
 
   useEffect(() => {
     // Listen for auth state changes
