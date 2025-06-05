@@ -22,8 +22,8 @@ interface Story {
 
 export const useStoriesFeed = () => {
   const [stories, setStories] = useState<Story[]>([]);
-  const [loading, setLoading] = useState(true);
   const [userStory, setUserStory] = useState<Story | null>(null);
+  const [loading, setLoading] = useState(true);
   const session = useSession();
   const { toast } = useToast();
 
@@ -50,10 +50,15 @@ export const useStoriesFeed = () => {
 
       if (error) throw error;
 
-      const formattedStories = data?.map(story => ({
-        ...story,
-        creator: story.profiles || { id: story.creator_id, username: 'Unknown', avatar_url: null }
-      })) || [];
+      const formattedStories = data?.map(story => {
+        // Handle the profiles relationship correctly
+        const profile = Array.isArray(story.profiles) ? story.profiles[0] : story.profiles;
+        
+        return {
+          ...story,
+          creator: profile || { id: story.creator_id, username: 'Unknown', avatar_url: null }
+        };
+      }) || [];
 
       // Separate user's story from others
       const currentUserStory = formattedStories.find(story => story.creator_id === session?.user?.id);

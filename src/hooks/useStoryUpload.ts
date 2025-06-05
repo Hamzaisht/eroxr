@@ -29,13 +29,16 @@ export const useStoryUpload = () => {
       const fileName = `${session.user.id}-${Date.now()}.${fileExt}`;
       const filePath = `stories/${fileName}`;
 
+      // Simulate progress since Supabase doesn't provide upload progress
+      const progressInterval = setInterval(() => {
+        setUploadProgress(prev => Math.min(prev + 10, 90));
+      }, 200);
+
       const { error: uploadError } = await supabase.storage
         .from('media')
-        .upload(filePath, file, {
-          onUploadProgress: (progress) => {
-            setUploadProgress((progress.loaded / progress.total) * 50); // 50% for upload
-          },
-        });
+        .upload(filePath, file);
+
+      clearInterval(progressInterval);
 
       if (uploadError) throw uploadError;
 
@@ -44,7 +47,7 @@ export const useStoryUpload = () => {
         .from('media')
         .getPublicUrl(filePath);
 
-      setUploadProgress(75);
+      setUploadProgress(95);
 
       // Create story record
       const contentType = file.type.startsWith('video/') ? 'video' : 'image';
@@ -56,7 +59,8 @@ export const useStoryUpload = () => {
         content_type: contentType,
         is_active: true,
         expires_at: expiresAt.toISOString(),
-        ...(contentType === 'video' ? { video_url: publicUrl } : { media_url: publicUrl }),
+        media_url: contentType === 'image' ? publicUrl : null,
+        video_url: contentType === 'video' ? publicUrl : null,
       };
 
       const { data, error } = await supabase
