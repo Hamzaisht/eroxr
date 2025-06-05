@@ -8,6 +8,7 @@ import { Upload, Camera, Image, Video, X } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useStoryUpload } from '@/hooks/useStoryUpload';
 import { useToast } from '@/hooks/use-toast';
+import { CameraCapture } from './CameraCapture';
 
 interface StoryUploadModalProps {
   open: boolean;
@@ -18,10 +19,9 @@ export const StoryUploadModal = ({ open, onOpenChange }: StoryUploadModalProps) 
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [caption, setCaption] = useState('');
-  const [uploadMode, setUploadMode] = useState<'select' | 'camera' | 'preview'>('select');
+  const [uploadMode, setUploadMode] = useState<'select' | 'camera-photo' | 'camera-video' | 'preview'>('select');
   
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const videoRef = useRef<HTMLVideoElement>(null);
   
   const { user } = useAuth();
   const { uploadStory, uploading, uploadProgress } = useStoryUpload();
@@ -64,6 +64,12 @@ export const StoryUploadModal = ({ open, onOpenChange }: StoryUploadModalProps) 
       setPreviewUrl(URL.createObjectURL(file));
       setUploadMode('preview');
     }
+  };
+
+  const handleCameraCapture = (file: File) => {
+    setSelectedFile(file);
+    setPreviewUrl(URL.createObjectURL(file));
+    setUploadMode('preview');
   };
 
   const handleUpload = async () => {
@@ -121,7 +127,31 @@ export const StoryUploadModal = ({ open, onOpenChange }: StoryUploadModalProps) 
                 exit={{ opacity: 0, scale: 0.9 }}
                 className="space-y-4"
               >
-                <div className="grid grid-cols-1 gap-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <Button
+                    variant="outline"
+                    onClick={() => setUploadMode('camera-photo')}
+                    className="h-20 border-luxury-neutral/20 hover:border-luxury-primary bg-luxury-darker/50 hover:bg-luxury-primary/10"
+                  >
+                    <div className="flex flex-col items-center space-y-2">
+                      <Camera className="w-6 h-6 text-luxury-primary" />
+                      <span className="text-sm text-luxury-neutral">Take Photo</span>
+                    </div>
+                  </Button>
+
+                  <Button
+                    variant="outline"
+                    onClick={() => setUploadMode('camera-video')}
+                    className="h-20 border-luxury-neutral/20 hover:border-luxury-accent bg-luxury-darker/50 hover:bg-luxury-accent/10"
+                  >
+                    <div className="flex flex-col items-center space-y-2">
+                      <Video className="w-6 h-6 text-luxury-accent" />
+                      <span className="text-sm text-luxury-neutral">Record Video</span>
+                    </div>
+                  </Button>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
                   <Button
                     variant="outline"
                     onClick={() => fileInputRef.current?.click()}
@@ -139,7 +169,7 @@ export const StoryUploadModal = ({ open, onOpenChange }: StoryUploadModalProps) 
                     className="h-20 border-luxury-neutral/20 hover:border-luxury-accent bg-luxury-darker/50 hover:bg-luxury-accent/10"
                   >
                     <div className="flex flex-col items-center space-y-2">
-                      <Video className="w-6 h-6 text-luxury-accent" />
+                      <Upload className="w-6 h-6 text-luxury-accent" />
                       <span className="text-sm text-luxury-neutral">Upload Video</span>
                     </div>
                   </Button>
@@ -151,6 +181,22 @@ export const StoryUploadModal = ({ open, onOpenChange }: StoryUploadModalProps) 
                   accept="image/*,video/*"
                   onChange={handleFileSelect}
                   className="hidden"
+                />
+              </motion.div>
+            )}
+
+            {(uploadMode === 'camera-photo' || uploadMode === 'camera-video') && (
+              <motion.div
+                key="camera"
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.9 }}
+                className="space-y-4"
+              >
+                <CameraCapture
+                  mode={uploadMode === 'camera-photo' ? 'photo' : 'video'}
+                  onCapture={handleCameraCapture}
+                  onCancel={() => setUploadMode('select')}
                 />
               </motion.div>
             )}
