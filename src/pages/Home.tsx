@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { CreatePostArea } from "@/components/home/CreatePostArea";
 import { RightSidebar } from "@/components/home/RightSidebar";
-import { StoryReel } from "@/components/StoryReel";
+import { StoryBar } from "@/components/stories/StoryBar";
 import { LiveStreams } from "@/components/home/LiveStreams";
 import { EnhancedPostCard } from "@/components/feed/EnhancedPostCard";
 import { Loader2, RefreshCw } from "lucide-react";
@@ -81,7 +81,9 @@ const Home = () => {
             <p className="text-gray-400">Discover amazing content from creators around the world</p>
           </div>
 
-          <StoryReel />
+          {/* Modern Stories Bar */}
+          <StoryBar />
+          
           <LiveStreams />
           
           <CreatePostArea 
