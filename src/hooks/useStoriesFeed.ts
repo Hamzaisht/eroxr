@@ -24,12 +24,14 @@ export const useStoriesFeed = () => {
   const [stories, setStories] = useState<Story[]>([]);
   const [userStory, setUserStory] = useState<Story | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const session = useSession();
   const { toast } = useToast();
 
   const fetchStories = async () => {
     try {
       setLoading(true);
+      setError(null);
       
       const { data, error } = await supabase
         .from('stories')
@@ -68,6 +70,8 @@ export const useStoriesFeed = () => {
       setStories(otherStories);
     } catch (error) {
       console.error('Error fetching stories:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Failed to load stories';
+      setError(errorMessage);
       toast({
         title: 'Error loading stories',
         description: 'Failed to load stories. Please try again.',
@@ -136,6 +140,7 @@ export const useStoriesFeed = () => {
     stories,
     userStory,
     loading,
+    error,
     refetch: fetchStories,
     deleteStory,
   };
