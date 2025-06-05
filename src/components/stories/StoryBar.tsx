@@ -18,7 +18,7 @@ interface StoryAvatarProps {
 const StoryAvatar = ({ username, avatarUrl, hasStory = false, isOwn = false, onClick }: StoryAvatarProps) => {
   return (
     <motion.div
-      className="flex flex-col items-center space-y-2 cursor-pointer min-w-[80px]"
+      className="flex flex-col items-center space-y-2 cursor-pointer min-w-[80px] flex-shrink-0"
       whileHover={{ scale: 1.05 }}
       whileTap={{ scale: 0.95 }}
       onClick={onClick}
@@ -85,18 +85,37 @@ export const StoryBar = () => {
   const [showViewer, setShowViewer] = useState(false);
   const [selectedStoryIndex, setSelectedStoryIndex] = useState(0);
   const session = useSession();
-  const { stories, userStory, loading } = useStoriesFeed();
+  const { stories, userStory, loading, error } = useStoriesFeed();
+
+  console.log('StoryBar render:', { 
+    session: session ? 'exists' : 'null',
+    storiesCount: stories.length,
+    userStory: userStory ? 'exists' : 'null',
+    loading,
+    error 
+  });
 
   if (loading) {
     return (
-      <div className="w-full py-4 px-4">
+      <div className="w-full py-4 px-4 bg-luxury-darker/50 backdrop-blur-sm border-b border-luxury-neutral/10">
         <div className="flex space-x-4 overflow-x-auto scrollbar-hide">
           {[...Array(5)].map((_, i) => (
-            <div key={i} className="flex flex-col items-center space-y-2 animate-pulse min-w-[80px]">
+            <div key={i} className="flex flex-col items-center space-y-2 animate-pulse min-w-[80px] flex-shrink-0">
               <div className="w-16 h-16 rounded-full bg-luxury-neutral/20" />
               <div className="w-12 h-3 bg-luxury-neutral/20 rounded" />
             </div>
           ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    console.error('StoryBar error:', error);
+    return (
+      <div className="w-full py-4 px-4 bg-luxury-darker/50 backdrop-blur-sm border-b border-luxury-neutral/10">
+        <div className="text-center text-luxury-neutral text-sm">
+          Unable to load stories
         </div>
       </div>
     );
@@ -121,7 +140,6 @@ export const StoryBar = () => {
 
   const handleOwnStoryClick = () => {
     if (userStory) {
-      // Show user's own story in viewer
       const userStoryArray = [{
         id: userStory.id,
         creator_id: userStory.creator_id,
@@ -144,18 +162,19 @@ export const StoryBar = () => {
     setShowUploadModal(true);
   };
 
+  // Always show the stories bar, even if empty
   return (
     <>
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="w-full py-4 px-4 bg-luxury-darker/50 backdrop-blur-sm border-b border-luxury-neutral/10"
+        className="w-full py-4 px-4 bg-luxury-darker/50 backdrop-blur-sm border-b border-luxury-neutral/10 relative z-10"
       >
         <div className="flex space-x-4 overflow-x-auto scrollbar-hide pb-2">
-          {/* User's own story - always show first */}
+          {/* Always show user's own story option first if logged in */}
           {session?.user && (
             <StoryAvatar
-              username={session.user.user_metadata?.username || 'You'}
+              username={session.user.user_metadata?.username || session.user.email?.split('@')[0] || 'You'}
               avatarUrl={session.user.user_metadata?.avatar_url}
               hasStory={!!userStory}
               isOwn={true}
@@ -163,7 +182,7 @@ export const StoryBar = () => {
             />
           )}
           
-          {/* Other users' stories */}
+          {/* Show other users' stories */}
           {stories.map((story, index) => (
             <StoryAvatar
               key={story.id}
@@ -174,10 +193,10 @@ export const StoryBar = () => {
             />
           ))}
 
-          {/* If no stories and user is logged in, show prominent create button */}
+          {/* Show create story prompt if no stories exist and user is logged in */}
           {session?.user && stories.length === 0 && !userStory && (
             <motion.div
-              className="flex flex-col items-center space-y-2 cursor-pointer min-w-[120px] bg-luxury-card/50 rounded-lg p-4 border border-luxury-primary/20"
+              className="flex flex-col items-center space-y-2 cursor-pointer min-w-[120px] bg-luxury-card/50 rounded-lg p-4 border border-luxury-primary/20 flex-shrink-0"
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               onClick={handleCreateStory}
@@ -185,8 +204,15 @@ export const StoryBar = () => {
               <div className="w-12 h-12 rounded-full bg-gradient-to-r from-luxury-primary to-luxury-accent flex items-center justify-center">
                 <Plus className="w-6 h-6 text-white" />
               </div>
-              <span className="text-sm text-luxury-primary font-medium">Create Story</span>
+              <span className="text-sm text-luxury-primary font-medium text-center">Create Story</span>
             </motion.div>
+          )}
+          
+          {/* Show message if not logged in */}
+          {!session?.user && (
+            <div className="flex items-center justify-center w-full py-8">
+              <p className="text-luxury-neutral text-sm">Sign in to view and create stories</p>
+            </div>
           )}
         </div>
       </motion.div>
@@ -200,7 +226,7 @@ export const StoryBar = () => {
       {/* Story Viewer */}
       {showViewer && (
         <StoryViewer
-          stories={userStory ? [userStory] : allStories}
+          stories={userStory && selectedStoryIndex === 0 ? [userStory] : allStories}
           initialStoryIndex={selectedStoryIndex}
           onClose={() => setShowViewer(false)}
         />

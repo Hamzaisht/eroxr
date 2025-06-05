@@ -73,61 +73,65 @@ const Home = () => {
   };
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-7xl bg-luxury-darker min-h-screen">
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        <div className="lg:col-span-2 lg:col-start-2 space-y-6">
-          <div className="text-center mb-6">
-            <h1 className="text-3xl font-bold text-white mb-2">Welcome to Eroxr</h1>
-            <p className="text-gray-400">Discover amazing content from creators around the world</p>
-          </div>
-
-          {/* Modern Stories Bar */}
-          <StoryBar />
-          
-          <LiveStreams />
-          
-          <CreatePostArea 
-            onCreatePost={openCreatePost}
-            onGoLive={openGoLive}
-          />
-          
-          <div className="space-y-6">
-            {posts && posts.length > 0 ? (
-              posts.map((post) => (
-                <EnhancedPostCard
-                  key={post.id}
-                  post={post}
-                  currentUserId={session?.user?.id}
-                  onLike={onLike}
-                  onDelete={onDelete}
-                />
-              ))
-            ) : (
-              <div className="text-center py-12 bg-luxury-card rounded-lg">
-                <p className="text-gray-400 mb-2">No posts found</p>
-                <p className="text-gray-500 text-sm mb-4">Be the first to create a post!</p>
-                <Button onClick={openCreatePost} className="bg-luxury-primary hover:bg-luxury-primary/90">
-                  Create First Post
-                </Button>
-              </div>
-            )}
-          </div>
-        </div>
-        
-        <div className="lg:col-span-1 lg:col-start-4">
-          <RightSidebar />
-        </div>
+    <div className="min-h-screen bg-luxury-darker">
+      {/* Stories Bar - Fixed at top */}
+      <div className="sticky top-16 z-40">
+        <StoryBar />
       </div>
 
-      <CreatePostDialog
-        open={isCreatePostOpen}
-        onOpenChange={(open) => {
-          if (!open) handlePostCreated();
-          else openCreatePost();
-        }}
-        selectedFiles={selectedFiles}
-        onFileSelect={setSelectedFiles}
-      />
+      <div className="container mx-auto px-4 py-8 max-w-7xl">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+          <div className="lg:col-span-2 lg:col-start-2 space-y-6">
+            <div className="text-center mb-6">
+              <h1 className="text-3xl font-bold text-white mb-2">Welcome to Eroxr</h1>
+              <p className="text-gray-400">Discover amazing content from creators around the world</p>
+            </div>
+
+            <LiveStreams />
+            
+            <CreatePostArea 
+              onCreatePost={openCreatePost}
+              onGoLive={openGoLive}
+            />
+            
+            <div className="space-y-6">
+              {posts && posts.length > 0 ? (
+                posts.map((post) => (
+                  <EnhancedPostCard
+                    key={post.id}
+                    post={post}
+                    currentUserId={session?.user?.id}
+                    onLike={onLike}
+                    onDelete={onDelete}
+                  />
+                ))
+              ) : (
+                <div className="text-center py-12 bg-luxury-card rounded-lg">
+                  <p className="text-gray-400 mb-2">No posts found</p>
+                  <p className="text-gray-500 text-sm mb-4">Be the first to create a post!</p>
+                  <Button onClick={openCreatePost} className="bg-luxury-primary hover:bg-luxury-primary/90">
+                    Create First Post
+                  </Button>
+                </div>
+              )}
+            </div>
+          </div>
+          
+          <div className="lg:col-span-1 lg:col-start-4">
+            <RightSidebar />
+          </div>
+        </div>
+
+        <CreatePostDialog
+          open={isCreatePostOpen}
+          onOpenChange={(open) => {
+            if (!open) handlePostCreated();
+            else openCreatePost();
+          }}
+          selectedFiles={selectedFiles}
+          onFileSelect={setSelectedFiles}
+        />
+      </div>
     </div>
   );
 };
