@@ -6,9 +6,9 @@ import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { FloatingMenuItem } from "./menu/FloatingMenuItem";
 import { useToast } from "@/hooks/use-toast";
-import { useSession } from "@supabase/auth-helpers-react";
+import { useAuth } from "@/contexts/AuthContext";
 import { UploadVideoDialog } from "../home/UploadVideoDialog";
-import { CreateBodyContactDialog } from "../ads/body-contact"; // Add this import
+import { CreateBodyContactDialog } from "../ads/body-contact";
 
 interface FloatingActionMenuProps {
   currentPath: string;
@@ -17,13 +17,13 @@ interface FloatingActionMenuProps {
 export const FloatingActionMenu = ({ currentPath }: FloatingActionMenuProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [isVideoDialogOpen, setIsVideoDialogOpen] = useState(false);
-  const [isBodyContactDialogOpen, setIsBodyContactDialogOpen] = useState(false); // Add this state
+  const [isBodyContactDialogOpen, setIsBodyContactDialogOpen] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
-  const session = useSession();
+  const { user } = useAuth();
 
   const handleAuthentication = (action: () => void) => {
-    if (!session?.user) {
+    if (!user) {
       toast({
         title: "Authentication required",
         description: "Please sign in to access this feature",
@@ -80,7 +80,6 @@ export const FloatingActionMenu = ({ currentPath }: FloatingActionMenuProps) => 
         onClick: () => {
           setIsOpen(false);
           handleAuthentication(() => {
-            // Open the dialog instead of navigating
             setIsBodyContactDialogOpen(true);
             toast({
               title: "Create Dating Profile",
@@ -105,11 +104,11 @@ export const FloatingActionMenu = ({ currentPath }: FloatingActionMenuProps) => 
   const menuItems = getContextualMenuItems();
 
   const handleBodyContactSuccess = () => {
+    setIsBodyContactDialogOpen(false);
     toast({
       title: "Dating Ad Created",
       description: "Your dating ad has been created successfully",
     });
-    // Optionally refresh data or update UI here
   };
 
   return (
@@ -149,10 +148,12 @@ export const FloatingActionMenu = ({ currentPath }: FloatingActionMenuProps) => 
         onOpenChange={setIsVideoDialogOpen}
       />
       
-      {/* Body Contact Dialog */}
-      <CreateBodyContactDialog 
-        onSuccess={handleBodyContactSuccess} 
-      />
+      {/* Body Contact Dialog - only show when explicitly opened */}
+      {isBodyContactDialogOpen && (
+        <CreateBodyContactDialog 
+          onSuccess={handleBodyContactSuccess} 
+        />
+      )}
     </div>
   );
 };

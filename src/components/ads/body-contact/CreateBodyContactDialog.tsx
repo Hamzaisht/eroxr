@@ -11,17 +11,7 @@ interface CreateBodyContactDialogProps {
 }
 
 export const CreateBodyContactDialog = ({ onSuccess }: CreateBodyContactDialogProps) => {
-  const [isOpen, setIsOpen] = useState(true); // Open by default when rendered
-  const [animateButton, setAnimateButton] = useState(false);
-
-  // Auto-animate the button periodically to attract attention
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setAnimateButton(true);
-      setTimeout(() => setAnimateButton(false), 1000);
-    }, 10000);
-    return () => clearInterval(interval);
-  }, []);
+  const [isOpen, setIsOpen] = useState(true);
 
   // Prevent page scroll when dialog is open
   useEffect(() => {

@@ -49,13 +49,10 @@ export const NavLinks = () => {
   const location = useLocation();
   
   const handleCreateBD = () => {
-    if (location.pathname === "/dating") {
-      setShowBodyContactDialog(true);
-    }
+    setShowBodyContactDialog(true);
   };
   
   const handleSuccessfulAdCreation = () => {
-    // Handle success logic if needed
     setShowBodyContactDialog(false);
   };
 
@@ -66,7 +63,7 @@ export const NavLinks = () => {
       to: "/dating", 
       icon: Heart, 
       label: "Create a BD",
-      onClick: location.pathname === "/dating" ? handleCreateBD : undefined
+      onClick: handleCreateBD
     },
     { to: "/messages", icon: MessageSquare, label: "Messages" },
     { to: "/eroboard", icon: Play, label: "Eroboard" },
@@ -81,9 +78,11 @@ export const NavLinks = () => {
         ))}
       </nav>
       
-      <CreateBodyContactDialog 
-        onSuccess={handleSuccessfulAdCreation} 
-      />
+      {showBodyContactDialog && (
+        <CreateBodyContactDialog 
+          onSuccess={handleSuccessfulAdCreation} 
+        />
+      )}
     </>
   );
 };
