@@ -58,6 +58,14 @@ export function useAudioRecording(options = { maxDuration: 60 }): UseAudioRecord
       setAudioUrl(null);
       chunksRef.current = [];
       
+      console.log('Requesting microphone access...');
+      
+      // Check if getUserMedia is supported
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        throw new Error('getUserMedia is not supported in this browser');
+      }
+      
+      // Request microphone permission explicitly
       const stream = await navigator.mediaDevices.getUserMedia({ 
         audio: {
           echoCancellation: true,
@@ -65,6 +73,8 @@ export function useAudioRecording(options = { maxDuration: 60 }): UseAudioRecord
           autoGainControl: true
         }
       });
+      
+      console.log('Microphone access granted, starting recording...');
       streamRef.current = stream;
       
       const mediaRecorder = new MediaRecorder(stream, {
@@ -109,11 +119,26 @@ export function useAudioRecording(options = { maxDuration: 60 }): UseAudioRecord
       
     } catch (err: any) {
       console.error('Error starting recording:', err);
-      setError(err.message || 'Failed to start recording');
+      
+      let errorMessage = 'Failed to start recording';
+      let toastDescription = 'Please check your microphone permissions and try again';
+      
+      if (err.name === 'NotAllowedError') {
+        errorMessage = 'Microphone access denied';
+        toastDescription = 'Please allow microphone access in your browser settings and refresh the page';
+      } else if (err.name === 'NotFoundError') {
+        errorMessage = 'No microphone found';
+        toastDescription = 'Please connect a microphone and try again';
+      } else if (err.name === 'NotSupportedError') {
+        errorMessage = 'Recording not supported';
+        toastDescription = 'Your browser does not support audio recording';
+      }
+      
+      setError(errorMessage);
       
       toast({
-        title: "Permission Required",
-        description: "Please allow microphone access to record audio",
+        title: errorMessage,
+        description: toastDescription,
         variant: "destructive"
       });
       
