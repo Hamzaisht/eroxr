@@ -41,7 +41,40 @@ export const useStoryUpload = () => {
         .from('stories')
         .upload(filePath, file);
 
-      if (uploadError) throw uploadError;
+      if (uploadError) {
+        console.error('Upload error:', uploadError);
+        
+        // If bucket doesn't exist, try to create it
+        if (uploadError.message.includes('Bucket not found')) {
+          console.log('Creating stories bucket...');
+          
+          // Try to create the bucket using a simple approach
+          const { error: createError } = await supabase.storage.createBucket('stories', {
+            public: true,
+            fileSizeLimit: 104857600, // 100MB
+            allowedMimeTypes: ['image/*', 'video/*']
+          });
+          
+          if (createError) {
+            console.error('Bucket creation error:', createError);
+          } else {
+            console.log('Bucket created successfully');
+            
+            // Retry upload
+            const { data: retryUploadData, error: retryUploadError } = await supabase.storage
+              .from('stories')
+              .upload(filePath, file);
+              
+            if (retryUploadError) {
+              throw retryUploadError;
+            }
+            
+            console.log('Retry upload successful:', retryUploadData);
+          }
+        } else {
+          throw uploadError;
+        }
+      }
 
       // Get public URL
       const { data: { publicUrl } } = supabase.storage

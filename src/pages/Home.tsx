@@ -74,8 +74,8 @@ const Home = () => {
 
   return (
     <div className="min-h-screen bg-luxury-darker">
-      {/* Stories Bar - Fixed at top */}
-      <div className="sticky top-16 z-40">
+      {/* Stories Bar - Positioned to account for fixed nav */}
+      <div className="sticky top-16 z-40 bg-luxury-darker/95 backdrop-blur-sm">
         <StoryBar />
       </div>
 
