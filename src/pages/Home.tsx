@@ -1,6 +1,5 @@
 
 import { useState } from "react";
-import { useSession } from "@supabase/auth-helpers-react";
 import { CreatePostArea } from "@/components/home/CreatePostArea";
 import { RightSidebar } from "@/components/home/RightSidebar";
 import { StoryReel } from "@/components/StoryReel";
@@ -14,9 +13,10 @@ import { useGoLiveDialog } from "@/hooks/useGoLiveDialog";
 import { CreatePostDialog } from "@/components/CreatePostDialog";
 import { useRealtimeUpdates } from "@/hooks/useRealtimeUpdates";
 import { useHomePosts } from "@/hooks/useHomePosts";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Home = () => {
-  const session = useSession();
+  const { session } = useAuth();
   const { handleLike, handleDelete } = usePostActions();
   const { isOpen: isCreatePostOpen, openDialog: openCreatePost, closeDialog: closeCreatePost } = useCreatePostDialog();
   const { openDialog: openGoLive } = useGoLiveDialog();

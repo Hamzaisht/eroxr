@@ -1,10 +1,10 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useSession } from "@supabase/auth-helpers-react";
+import { useAuth } from "@/contexts/AuthContext";
 
 export const useHomePosts = () => {
-  const session = useSession();
+  const { session } = useAuth();
 
   return useQuery({
     queryKey: ['home-posts'],
@@ -164,7 +164,7 @@ export const useHomePosts = () => {
       }
     },
     enabled: !!session,
-    retry: 3,
+    retry: 1,
     staleTime: 0,
     refetchInterval: false
   });
