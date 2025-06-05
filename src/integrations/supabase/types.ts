@@ -1572,6 +1572,7 @@ export type Database = {
       }
       stories: {
         Row: {
+          content_type: string | null
           created_at: string
           creator_id: string
           duration: number | null
@@ -1580,9 +1581,13 @@ export type Database = {
           is_active: boolean | null
           is_public: boolean | null
           last_modified_by: string | null
+          media_url: string | null
           screenshot_disabled: boolean | null
+          video_url: string | null
+          view_count: number | null
         }
         Insert: {
+          content_type?: string | null
           created_at?: string
           creator_id: string
           duration?: number | null
@@ -1591,9 +1596,13 @@ export type Database = {
           is_active?: boolean | null
           is_public?: boolean | null
           last_modified_by?: string | null
+          media_url?: string | null
           screenshot_disabled?: boolean | null
+          video_url?: string | null
+          view_count?: number | null
         }
         Update: {
+          content_type?: string | null
           created_at?: string
           creator_id?: string
           duration?: number | null
@@ -1602,7 +1611,10 @@ export type Database = {
           is_active?: boolean | null
           is_public?: boolean | null
           last_modified_by?: string | null
+          media_url?: string | null
           screenshot_disabled?: boolean | null
+          video_url?: string | null
+          view_count?: number | null
         }
         Relationships: [
           {
