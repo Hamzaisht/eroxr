@@ -1,6 +1,7 @@
+
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Plus } from 'lucide-react';
+import { Plus, Camera } from 'lucide-react';
 import { useSession } from '@supabase/auth-helpers-react';
 import { useStoriesFeed } from '@/hooks/useStoriesFeed';
 import { StoryUploadModal } from './StoryUploadModal';
@@ -17,7 +18,7 @@ interface StoryAvatarProps {
 const StoryAvatar = ({ username, avatarUrl, hasStory = false, isOwn = false, onClick }: StoryAvatarProps) => {
   return (
     <motion.div
-      className="flex flex-col items-center space-y-2 cursor-pointer"
+      className="flex flex-col items-center space-y-2 cursor-pointer min-w-[80px]"
       whileHover={{ scale: 1.05 }}
       whileTap={{ scale: 0.95 }}
       onClick={onClick}
@@ -27,6 +28,8 @@ const StoryAvatar = ({ username, avatarUrl, hasStory = false, isOwn = false, onC
           className={`w-16 h-16 rounded-full p-0.5 ${
             hasStory
               ? 'bg-gradient-to-r from-luxury-primary via-luxury-accent to-luxury-secondary'
+              : isOwn
+              ? 'bg-gradient-to-r from-luxury-primary/50 to-luxury-accent/50 border-2 border-dashed border-luxury-primary/60'
               : 'bg-luxury-neutral/20'
           }`}
           animate={hasStory ? {
@@ -41,7 +44,10 @@ const StoryAvatar = ({ username, avatarUrl, hasStory = false, isOwn = false, onC
         >
           <div className="w-full h-full rounded-full bg-luxury-darker flex items-center justify-center overflow-hidden">
             {isOwn && !hasStory ? (
-              <Plus className="w-6 h-6 text-luxury-primary" />
+              <div className="flex flex-col items-center">
+                <Plus className="w-6 h-6 text-luxury-primary mb-1" />
+                <Camera className="w-4 h-4 text-luxury-accent" />
+              </div>
             ) : avatarUrl ? (
               <img
                 src={avatarUrl}
@@ -67,8 +73,8 @@ const StoryAvatar = ({ username, avatarUrl, hasStory = false, isOwn = false, onC
         )}
       </div>
       
-      <span className="text-xs text-luxury-neutral text-center max-w-[64px] truncate">
-        {isOwn ? 'Your Story' : username}
+      <span className="text-xs text-luxury-neutral text-center max-w-[70px] truncate">
+        {isOwn ? (hasStory ? 'Your Story' : 'Add Story') : username}
       </span>
     </motion.div>
   );
@@ -86,7 +92,7 @@ export const StoryBar = () => {
       <div className="w-full py-4 px-4">
         <div className="flex space-x-4 overflow-x-auto scrollbar-hide">
           {[...Array(5)].map((_, i) => (
-            <div key={i} className="flex flex-col items-center space-y-2 animate-pulse">
+            <div key={i} className="flex flex-col items-center space-y-2 animate-pulse min-w-[80px]">
               <div className="w-16 h-16 rounded-full bg-luxury-neutral/20" />
               <div className="w-12 h-3 bg-luxury-neutral/20 rounded" />
             </div>
@@ -116,7 +122,7 @@ export const StoryBar = () => {
   const handleOwnStoryClick = () => {
     if (userStory) {
       // Show user's own story in viewer
-      const userStoryData = [{
+      const userStoryArray = [{
         id: userStory.id,
         creator_id: userStory.creator_id,
         media_url: userStory.media_url,
@@ -134,6 +140,10 @@ export const StoryBar = () => {
     }
   };
 
+  const handleCreateStory = () => {
+    setShowUploadModal(true);
+  };
+
   return (
     <>
       <motion.div
@@ -141,8 +151,8 @@ export const StoryBar = () => {
         animate={{ opacity: 1, y: 0 }}
         className="w-full py-4 px-4 bg-luxury-darker/50 backdrop-blur-sm border-b border-luxury-neutral/10"
       >
-        <div className="flex space-x-4 overflow-x-auto scrollbar-hide">
-          {/* User's own story */}
+        <div className="flex space-x-4 overflow-x-auto scrollbar-hide pb-2">
+          {/* User's own story - always show first */}
           {session?.user && (
             <StoryAvatar
               username={session.user.user_metadata?.username || 'You'}
@@ -163,6 +173,21 @@ export const StoryBar = () => {
               onClick={() => handleStoryClick(index)}
             />
           ))}
+
+          {/* If no stories and user is logged in, show prominent create button */}
+          {session?.user && stories.length === 0 && !userStory && (
+            <motion.div
+              className="flex flex-col items-center space-y-2 cursor-pointer min-w-[120px] bg-luxury-card/50 rounded-lg p-4 border border-luxury-primary/20"
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={handleCreateStory}
+            >
+              <div className="w-12 h-12 rounded-full bg-gradient-to-r from-luxury-primary to-luxury-accent flex items-center justify-center">
+                <Plus className="w-6 h-6 text-white" />
+              </div>
+              <span className="text-sm text-luxury-primary font-medium">Create Story</span>
+            </motion.div>
+          )}
         </div>
       </motion.div>
 
@@ -173,9 +198,9 @@ export const StoryBar = () => {
       />
 
       {/* Story Viewer */}
-      {showViewer && allStories.length > 0 && (
+      {showViewer && (
         <StoryViewer
-          stories={allStories}
+          stories={userStory ? [userStory] : allStories}
           initialStoryIndex={selectedStoryIndex}
           onClose={() => setShowViewer(false)}
         />
