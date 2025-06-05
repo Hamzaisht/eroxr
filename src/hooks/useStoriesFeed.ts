@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { useSession } from '@supabase/auth-helpers-react';
+import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
@@ -25,7 +25,7 @@ export const useStoriesFeed = () => {
   const [userStory, setUserStory] = useState<Story | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const session = useSession();
+  const { user } = useAuth();
   const { toast } = useToast();
 
   const fetchStories = async () => {
@@ -63,8 +63,8 @@ export const useStoriesFeed = () => {
       }) || [];
 
       // Separate user's story from others
-      const currentUserStory = formattedStories.find(story => story.creator_id === session?.user?.id);
-      const otherStories = formattedStories.filter(story => story.creator_id !== session?.user?.id);
+      const currentUserStory = formattedStories.find(story => story.creator_id === user?.id);
+      const otherStories = formattedStories.filter(story => story.creator_id !== user?.id);
 
       setUserStory(currentUserStory || null);
       setStories(otherStories);
@@ -134,7 +134,7 @@ export const useStoriesFeed = () => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [session?.user?.id]);
+  }, [user?.id]);
 
   return {
     stories,

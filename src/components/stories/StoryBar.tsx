@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Plus, Camera } from 'lucide-react';
-import { useSession } from '@supabase/auth-helpers-react';
+import { useAuth } from '@/contexts/AuthContext';
 import { useStoriesFeed } from '@/hooks/useStoriesFeed';
 import { StoryUploadModal } from './StoryUploadModal';
 import { StoryViewer } from './StoryViewer';
@@ -84,11 +84,11 @@ export const StoryBar = () => {
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [showViewer, setShowViewer] = useState(false);
   const [selectedStoryIndex, setSelectedStoryIndex] = useState(0);
-  const session = useSession();
+  const { user } = useAuth();
   const { stories, userStory, loading, error } = useStoriesFeed();
 
   console.log('StoryBar render:', { 
-    session: session ? 'exists' : 'null',
+    user: user ? 'exists' : 'null',
     storiesCount: stories.length,
     userStory: userStory ? 'exists' : 'null',
     loading,
@@ -172,10 +172,10 @@ export const StoryBar = () => {
       >
         <div className="flex space-x-4 overflow-x-auto scrollbar-hide pb-2">
           {/* Always show user's own story option first if logged in */}
-          {session?.user && (
+          {user && (
             <StoryAvatar
-              username={session.user.user_metadata?.username || session.user.email?.split('@')[0] || 'You'}
-              avatarUrl={session.user.user_metadata?.avatar_url}
+              username={user.user_metadata?.username || user.email?.split('@')[0] || 'You'}
+              avatarUrl={user.user_metadata?.avatar_url}
               hasStory={!!userStory}
               isOwn={true}
               onClick={handleOwnStoryClick}
@@ -194,7 +194,7 @@ export const StoryBar = () => {
           ))}
 
           {/* Show create story prompt if no stories exist and user is logged in */}
-          {session?.user && stories.length === 0 && !userStory && (
+          {user && stories.length === 0 && !userStory && (
             <motion.div
               className="flex flex-col items-center space-y-2 cursor-pointer min-w-[120px] bg-luxury-card/50 rounded-lg p-4 border border-luxury-primary/20 flex-shrink-0"
               whileHover={{ scale: 1.02 }}
@@ -209,7 +209,7 @@ export const StoryBar = () => {
           )}
           
           {/* Show message if not logged in */}
-          {!session?.user && (
+          {!user && (
             <div className="flex items-center justify-center w-full py-8">
               <p className="text-luxury-neutral text-sm">Sign in to view and create stories</p>
             </div>
