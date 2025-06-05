@@ -5,8 +5,8 @@ import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Upload, Camera, Image, Video, X } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
 import { useStoryUpload } from '@/hooks/useStoryUpload';
-import { useCameraRecording } from '@/hooks/useCameraRecording';
 import { useToast } from '@/hooks/use-toast';
 
 interface StoryUploadModalProps {
@@ -23,19 +23,8 @@ export const StoryUploadModal = ({ open, onOpenChange }: StoryUploadModalProps) 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   
+  const { user } = useAuth();
   const { uploadStory, uploading, uploadProgress } = useStoryUpload();
-  const {
-    isRecording,
-    recordedBlob,
-    recordingTime,
-    hasPermission,
-    startRecording,
-    stopRecording,
-    resetRecording,
-    cleanup,
-    requestPermissions,
-  } = useCameraRecording();
-  
   const { toast } = useToast();
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -77,29 +66,19 @@ export const StoryUploadModal = ({ open, onOpenChange }: StoryUploadModalProps) 
     }
   };
 
-  const handleCameraMode = async () => {
-    const stream = await requestPermissions();
-    if (stream && videoRef.current) {
-      videoRef.current.srcObject = stream;
-      setUploadMode('camera');
-    }
-  };
-
-  const handleRecordedVideo = () => {
-    if (recordedBlob) {
-      const file = new File([recordedBlob], 'recorded-story.webm', { type: 'video/webm' });
-      setSelectedFile(file);
-      setPreviewUrl(URL.createObjectURL(recordedBlob));
-      setUploadMode('preview');
-      resetRecording();
-    }
-  };
-
   const handleUpload = async () => {
     if (!selectedFile) return;
+    if (!user) {
+      toast({
+        title: 'Authentication required',
+        description: 'Please sign in to upload stories',
+        variant: 'destructive',
+      });
+      return;
+    }
 
     const result = await uploadStory(selectedFile, caption);
-    if (result) {
+    if (result.success) {
       // Reset form
       setSelectedFile(null);
       setPreviewUrl(null);
@@ -110,19 +89,11 @@ export const StoryUploadModal = ({ open, onOpenChange }: StoryUploadModalProps) 
   };
 
   const handleClose = () => {
-    cleanup();
     setSelectedFile(null);
     setPreviewUrl(null);
     setCaption('');
     setUploadMode('select');
-    resetRecording();
     onOpenChange(false);
-  };
-
-  const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
   return (
@@ -172,17 +143,6 @@ export const StoryUploadModal = ({ open, onOpenChange }: StoryUploadModalProps) 
                       <span className="text-sm text-luxury-neutral">Upload Video</span>
                     </div>
                   </Button>
-
-                  <Button
-                    variant="outline"
-                    onClick={handleCameraMode}
-                    className="h-20 border-luxury-neutral/20 hover:border-luxury-secondary bg-luxury-darker/50 hover:bg-luxury-secondary/10"
-                  >
-                    <div className="flex flex-col items-center space-y-2">
-                      <Camera className="w-6 h-6 text-luxury-secondary" />
-                      <span className="text-sm text-luxury-neutral">Record Video</span>
-                    </div>
-                  </Button>
                 </div>
 
                 <input
@@ -192,66 +152,6 @@ export const StoryUploadModal = ({ open, onOpenChange }: StoryUploadModalProps) 
                   onChange={handleFileSelect}
                   className="hidden"
                 />
-              </motion.div>
-            )}
-
-            {uploadMode === 'camera' && (
-              <motion.div
-                key="camera"
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.9 }}
-                className="space-y-4"
-              >
-                <div className="relative aspect-[9/16] bg-black rounded-lg overflow-hidden">
-                  <video
-                    ref={videoRef}
-                    autoPlay
-                    muted
-                    className="w-full h-full object-cover"
-                  />
-                  
-                  {isRecording && (
-                    <div className="absolute top-4 left-4 bg-red-500 text-white px-3 py-1 rounded-full text-sm font-medium">
-                      REC {formatTime(recordingTime)}
-                    </div>
-                  )}
-                </div>
-
-                <div className="flex justify-center space-x-4">
-                  <Button
-                    variant="ghost"
-                    onClick={() => setUploadMode('select')}
-                    className="text-luxury-neutral"
-                  >
-                    Back
-                  </Button>
-                  
-                  {!isRecording ? (
-                    <Button
-                      onClick={startRecording}
-                      className="bg-red-500 hover:bg-red-600 text-white"
-                    >
-                      Start Recording
-                    </Button>
-                  ) : (
-                    <Button
-                      onClick={stopRecording}
-                      className="bg-luxury-primary hover:bg-luxury-primary/80"
-                    >
-                      Stop Recording
-                    </Button>
-                  )}
-                </div>
-
-                {recordedBlob && (
-                  <Button
-                    onClick={handleRecordedVideo}
-                    className="w-full bg-luxury-primary hover:bg-luxury-primary/80"
-                  >
-                    Use Recording
-                  </Button>
-                )}
               </motion.div>
             )}
 
@@ -312,7 +212,7 @@ export const StoryUploadModal = ({ open, onOpenChange }: StoryUploadModalProps) 
                   </Button>
                   <Button
                     onClick={handleUpload}
-                    disabled={uploading}
+                    disabled={uploading || !user}
                     className="flex-1 bg-luxury-primary hover:bg-luxury-primary/80"
                   >
                     {uploading ? 'Uploading...' : 'Share Story'}
