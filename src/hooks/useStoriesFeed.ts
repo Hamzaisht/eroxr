@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -68,11 +69,24 @@ export const useStoriesFeed = () => {
         };
       }) || [];
 
-      console.log('Formatted stories:', formattedStories);
+      // Filter out stories with corrupted URLs
+      const validStories = formattedStories.filter(story => {
+        const mediaUrl = story.content_type === 'video' ? story.video_url : story.media_url;
+        
+        // Check for valid URL
+        if (!mediaUrl) return false;
+        if (mediaUrl.includes('undefined')) return false;
+        if (mediaUrl.includes('stories/stories/')) return false; // Corrupted double path
+        if (!mediaUrl.startsWith('http')) return false;
+        
+        return true;
+      });
+
+      console.log('Valid stories after filtering:', validStories);
 
       // Separate user's story from others
-      const currentUserStory = formattedStories.find(story => story.creator_id === user?.id);
-      const otherStories = formattedStories.filter(story => story.creator_id !== user?.id);
+      const currentUserStory = validStories.find(story => story.creator_id === user?.id);
+      const otherStories = validStories.filter(story => story.creator_id !== user?.id);
 
       setUserStory(currentUserStory || null);
       setStories(otherStories);

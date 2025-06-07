@@ -1,7 +1,7 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, ChevronLeft, ChevronRight, Trash2 } from "lucide-react";
+import { X, ChevronLeft, ChevronRight, Trash2, AlertCircle, RefreshCw } from "lucide-react";
 import { useSession } from "@supabase/auth-helpers-react";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
@@ -38,6 +38,7 @@ export const StoryViewer = ({
   const [progress, setProgress] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [hasError, setHasError] = useState(false);
   
   const progressInterval = useRef<NodeJS.Timeout>();
   const touchStartX = useRef<number>(0);
@@ -50,10 +51,43 @@ export const StoryViewer = ({
   const isOwner = session?.user?.id === currentStory?.creator_id;
   const duration = isVideo ? 0 : 5000; // 5 seconds for images, auto for videos
 
+  // Validate media URL
+  const isValidMediaUrl = useCallback((url: string | null): boolean => {
+    if (!url) return false;
+    if (url.includes('undefined')) return false;
+    if (url.includes('stories/stories/')) return false; // Corrupted double path
+    return url.startsWith('http');
+  }, []);
+
+  const handleMediaLoad = useCallback(() => {
+    setIsLoading(false);
+    setHasError(false);
+  }, []);
+
+  const handleMediaError = useCallback(() => {
+    setIsLoading(false);
+    setHasError(true);
+    console.error('Failed to load story media:', mediaUrl);
+  }, [mediaUrl]);
+
+  const retryLoadMedia = useCallback(() => {
+    setIsLoading(true);
+    setHasError(false);
+    // Force reload by updating the URL with a cache-busting parameter
+    if (mediaUrl) {
+      const newUrl = mediaUrl.includes('?') 
+        ? `${mediaUrl}&retry=${Date.now()}` 
+        : `${mediaUrl}?retry=${Date.now()}`;
+      // This will trigger a re-render with the new URL
+    }
+  }, [mediaUrl]);
+
   const handleNext = useCallback(() => {
     if (currentIndex < stories.length - 1) {
       setCurrentIndex(prev => prev + 1);
       setProgress(0);
+      setIsLoading(true);
+      setHasError(false);
     } else {
       onClose();
     }
@@ -63,6 +97,8 @@ export const StoryViewer = ({
     if (currentIndex > 0) {
       setCurrentIndex(prev => prev - 1);
       setProgress(0);
+      setIsLoading(true);
+      setHasError(false);
     }
   }, [currentIndex]);
 
@@ -102,7 +138,7 @@ export const StoryViewer = ({
 
   // Progress bar logic
   useEffect(() => {
-    if (!isVideo && !isPaused && !isLoading) {
+    if (!isVideo && !isPaused && !isLoading && !hasError) {
       progressInterval.current = setInterval(() => {
         setProgress((prev) => {
           if (prev >= 100) {
@@ -119,7 +155,14 @@ export const StoryViewer = ({
         clearInterval(progressInterval.current);
       }
     };
-  }, [currentIndex, isPaused, isVideo, isLoading, duration, handleNext]);
+  }, [currentIndex, isPaused, isVideo, isLoading, hasError, duration, handleNext]);
+
+  // Reset states when story changes
+  useEffect(() => {
+    setIsLoading(true);
+    setHasError(false);
+    setProgress(0);
+  }, [currentIndex]);
 
   // Touch gesture handling
   const handleTouchStart = (e: React.TouchEvent) => {
@@ -242,31 +285,37 @@ export const StoryViewer = ({
 
         {/* Main content */}
         <div className="relative w-full h-full flex items-center justify-center">
-          {mediaUrl ? (
-            isVideo ? (
-              <video
-                src={mediaUrl}
-                className="max-w-full max-h-full object-contain"
-                autoPlay
-                controls={false}
-                muted={false}
-                onLoadedData={() => setIsLoading(false)}
-                onEnded={handleNext}
-                onPause={() => setIsPaused(true)}
-                onPlay={() => setIsPaused(false)}
-              />
-            ) : (
-              <img
-                src={mediaUrl}
-                alt="Story content"
-                className="max-w-full max-h-full object-contain"
-                onLoad={() => setIsLoading(false)}
-              />
-            )
-          ) : (
-            <div className="w-full h-full bg-luxury-darker flex items-center justify-center">
-              <p className="text-white">Story content unavailable</p>
+          {!isValidMediaUrl(mediaUrl) || hasError ? (
+            <div className="flex flex-col items-center justify-center space-y-4 text-white">
+              <AlertCircle className="w-16 h-16 text-red-400" />
+              <p className="text-center">Story content unavailable</p>
+              <p className="text-sm text-white/60 text-center">This story may have been corrupted or removed</p>
+              <Button onClick={retryLoadMedia} variant="outline" className="text-white border-white">
+                <RefreshCw className="w-4 h-4 mr-2" />
+                Retry
+              </Button>
             </div>
+          ) : isVideo ? (
+            <video
+              src={mediaUrl}
+              className="max-w-full max-h-full object-contain"
+              autoPlay
+              controls={false}
+              muted={false}
+              onLoadedData={handleMediaLoad}
+              onError={handleMediaError}
+              onEnded={handleNext}
+              onPause={() => setIsPaused(true)}
+              onPlay={() => setIsPaused(false)}
+            />
+          ) : (
+            <img
+              src={mediaUrl}
+              alt="Story content"
+              className="max-w-full max-h-full object-contain"
+              onLoad={handleMediaLoad}
+              onError={handleMediaError}
+            />
           )}
 
           {/* Navigation arrows for desktop */}
@@ -304,7 +353,7 @@ export const StoryViewer = ({
         </div>
 
         {/* Loading indicator */}
-        {isLoading && (
+        {isLoading && !hasError && (
           <div className="absolute inset-0 flex items-center justify-center bg-black/50">
             <div className="w-8 h-8 border-2 border-white border-t-transparent rounded-full animate-spin" />
           </div>

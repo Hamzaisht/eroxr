@@ -26,14 +26,36 @@ export const useStoryUpload = () => {
     setUploadProgress(0);
 
     try {
+      // Check if stories bucket exists
+      const { data: buckets, error: bucketsError } = await supabase.storage.listBuckets();
+      if (bucketsError) {
+        throw new Error(`Failed to check storage: ${bucketsError.message}`);
+      }
+
+      const storiesBucket = buckets?.find(bucket => bucket.id === 'stories');
+      if (!storiesBucket) {
+        throw new Error('Stories storage bucket not found. Please contact support.');
+      }
+
+      // Validate file
+      const maxSize = 100 * 1024 * 1024; // 100MB
+      if (file.size > maxSize) {
+        throw new Error('File size must be less than 100MB');
+      }
+
+      const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'video/mp4', 'video/webm', 'video/quicktime'];
+      if (!allowedTypes.includes(file.type)) {
+        throw new Error('File type not supported. Please use JPEG, PNG, GIF, WebP, MP4, or WebM files.');
+      }
+
       // Simulate upload progress
       const progressInterval = setInterval(() => {
         setUploadProgress(prev => Math.min(prev + 10, 90));
       }, 200);
 
-      // Generate unique filename
+      // Generate clean filename without duplicate prefix
       const fileExtension = file.name.split('.').pop()?.toLowerCase() || 'bin';
-      const fileName = `stories/${user.id}-${Date.now()}.${fileExtension}`;
+      const fileName = `${user.id}-${Date.now()}.${fileExtension}`;
 
       console.log('Uploading story file:', fileName, 'Size:', file.size, 'Type:', file.type);
 
@@ -59,17 +81,31 @@ export const useStoryUpload = () => {
 
       console.log('Generated public URL:', publicUrl);
 
-      // Create story record
-      const { data: storyData, error: dbError } = await supabase
+      // Validate the public URL
+      if (!publicUrl || publicUrl.includes('undefined')) {
+        throw new Error('Failed to generate valid public URL');
+      }
+
+      // Create story record with proper media URL assignment
+      const storyData = {
+        creator_id: user.id,
+        content_type: file.type.startsWith('video/') ? 'video' : 'image',
+        is_active: true,
+        expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // 24 hours from now
+      };
+
+      // Assign URL to correct field based on content type
+      if (file.type.startsWith('video/')) {
+        (storyData as any).video_url = publicUrl;
+        (storyData as any).media_url = null;
+      } else {
+        (storyData as any).media_url = publicUrl;
+        (storyData as any).video_url = null;
+      }
+
+      const { data: dbData, error: dbError } = await supabase
         .from('stories')
-        .insert({
-          creator_id: user.id,
-          media_url: file.type.startsWith('image/') ? publicUrl : null,
-          video_url: file.type.startsWith('video/') ? publicUrl : null,
-          content_type: file.type.startsWith('video/') ? 'video' : 'image',
-          is_active: true,
-          expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24 hours from now
-        })
+        .insert(storyData)
         .select()
         .single();
 
@@ -80,7 +116,7 @@ export const useStoryUpload = () => {
         throw new Error(`Database error: ${dbError.message}`);
       }
 
-      console.log('Story created successfully:', storyData);
+      console.log('Story created successfully:', dbData);
 
       clearInterval(progressInterval);
       setUploadProgress(100);
@@ -91,9 +127,9 @@ export const useStoryUpload = () => {
       });
 
       // Refresh stories feed
-      refetch();
+      await refetch();
 
-      return { success: true, data: storyData };
+      return { success: true, data: dbData };
     } catch (error: any) {
       console.error('Story upload error:', error);
       toast({
