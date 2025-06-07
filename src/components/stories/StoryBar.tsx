@@ -64,8 +64,8 @@ export const StoryBar = () => {
 
   if (loading) {
     return (
-      <div className="w-full px-4 py-3">
-        <div className="flex space-x-4 overflow-x-auto scrollbar-hide">
+      <div className="w-full bg-background border-b border-border/50 py-4">
+        <div className="flex space-x-4 overflow-x-auto scrollbar-hide px-4">
           {[...Array(6)].map((_, i) => (
             <div key={i} className="flex-shrink-0">
               <div className="w-16 h-16 rounded-full bg-gray-200 animate-pulse" />
@@ -78,8 +78,8 @@ export const StoryBar = () => {
 
   return (
     <>
-      <div className="w-full px-4 py-3 bg-background border-b border-border">
-        <div className="flex space-x-4 overflow-x-auto scrollbar-hide">
+      <div className="w-full bg-background border-b border-border/50 py-4 mb-6">
+        <div className="flex space-x-4 overflow-x-auto scrollbar-hide px-4">
           {/* User's Story or Add Story Button */}
           <motion.div
             className="flex-shrink-0 cursor-pointer"
@@ -87,37 +87,39 @@ export const StoryBar = () => {
             whileTap={{ scale: 0.95 }}
             onClick={handleUserStoryClick}
           >
-            <div className="relative">
-              <div className={`w-16 h-16 rounded-full p-0.5 ${
-                userStory 
-                  ? 'bg-gradient-to-tr from-pink-500 via-purple-500 to-orange-500' 
-                  : 'bg-gradient-to-tr from-gray-300 to-gray-500'
-              }`}>
-                <div className="w-full h-full rounded-full bg-white p-0.5">
-                  {getUserAvatar() ? (
-                    <img
-                      src={getUserAvatar()!}
-                      alt="Your story"
-                      className="w-full h-full rounded-full object-cover"
-                    />
-                  ) : (
-                    <div className="w-full h-full rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white text-sm font-bold">
-                      {getUserDisplayName().slice(0, 2).toUpperCase()}
-                    </div>
-                  )}
+            <div className="text-center">
+              <div className="relative">
+                <div className={`w-16 h-16 rounded-full p-0.5 ${
+                  userStory 
+                    ? 'bg-gradient-to-tr from-pink-500 via-purple-500 to-orange-500' 
+                    : 'bg-gradient-to-tr from-gray-300 to-gray-500'
+                }`}>
+                  <div className="w-full h-full rounded-full bg-white p-0.5">
+                    {getUserAvatar() ? (
+                      <img
+                        src={getUserAvatar()!}
+                        alt="Your story"
+                        className="w-full h-full rounded-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white text-sm font-bold">
+                        {getUserDisplayName().slice(0, 2).toUpperCase()}
+                      </div>
+                    )}
+                  </div>
                 </div>
+                
+                {!userStory && (
+                  <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center border-2 border-white">
+                    <Plus className="w-3 h-3 text-white" />
+                  </div>
+                )}
               </div>
               
-              {!userStory && (
-                <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center border-2 border-white">
-                  <Plus className="w-3 h-3 text-white" />
-                </div>
-              )}
+              <p className="text-xs text-center mt-1 text-muted-foreground truncate w-16">
+                {userStory ? 'Your story' : 'Add story'}
+              </p>
             </div>
-            
-            <p className="text-xs text-center mt-1 text-muted-foreground truncate w-16">
-              {userStory ? 'Your story' : 'Add story'}
-            </p>
           </motion.div>
 
           {/* Other Users' Stories */}
@@ -129,27 +131,29 @@ export const StoryBar = () => {
               whileTap={{ scale: 0.95 }}
               onClick={() => handleStoryClick(userStory ? index + 1 : index)}
             >
-              <div className="relative">
-                <div className="w-16 h-16 rounded-full p-0.5 bg-gradient-to-tr from-pink-500 via-purple-500 to-orange-500">
-                  <div className="w-full h-full rounded-full bg-white p-0.5">
-                    {story.creator.avatar_url ? (
-                      <img
-                        src={story.creator.avatar_url}
-                        alt={story.creator.username || 'User'}
-                        className="w-full h-full rounded-full object-cover"
-                      />
-                    ) : (
-                      <div className="w-full h-full rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white text-sm font-bold">
-                        {(story.creator.username || 'U').slice(0, 2).toUpperCase()}
-                      </div>
-                    )}
+              <div className="text-center">
+                <div className="relative">
+                  <div className="w-16 h-16 rounded-full p-0.5 bg-gradient-to-tr from-pink-500 via-purple-500 to-orange-500">
+                    <div className="w-full h-full rounded-full bg-white p-0.5">
+                      {story.creator.avatar_url ? (
+                        <img
+                          src={story.creator.avatar_url}
+                          alt={story.creator.username || 'User'}
+                          className="w-full h-full rounded-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white text-sm font-bold">
+                          {(story.creator.username || 'U').slice(0, 2).toUpperCase()}
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
+                
+                <p className="text-xs text-center mt-1 text-muted-foreground truncate w-16">
+                  {story.creator.username || 'User'}
+                </p>
               </div>
-              
-              <p className="text-xs text-center mt-1 text-muted-foreground truncate w-16">
-                {story.creator.username || 'User'}
-              </p>
             </motion.div>
           ))}
 
@@ -161,12 +165,14 @@ export const StoryBar = () => {
               whileTap={{ scale: 0.95 }}
               onClick={() => setShowUploadModal(true)}
             >
-              <div className="w-16 h-16 rounded-full border-2 border-dashed border-gray-300 flex items-center justify-center">
-                <Upload className="w-6 h-6 text-gray-400" />
+              <div className="text-center">
+                <div className="w-16 h-16 rounded-full border-2 border-dashed border-gray-300 flex items-center justify-center">
+                  <Upload className="w-6 h-6 text-gray-400" />
+                </div>
+                <p className="text-xs text-center mt-1 text-muted-foreground truncate w-16">
+                  Share story
+                </p>
               </div>
-              <p className="text-xs text-center mt-1 text-muted-foreground truncate w-16">
-                Share story
-              </p>
             </motion.div>
           )}
         </div>

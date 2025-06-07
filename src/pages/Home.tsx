@@ -74,16 +74,16 @@ const Home = () => {
 
   return (
     <div className="min-h-screen bg-luxury-darker">
-      {/* Stories Bar - Fixed positioning with proper spacing */}
-      <div className="fixed top-16 left-0 right-0 z-30 bg-luxury-darker/95 backdrop-blur-sm border-b border-white/5">
-        <StoryBar />
-      </div>
-
-      {/* Main Content with proper top margin to account for fixed story bar */}
-      <div className="pt-32 pb-8">
+      {/* Main Content */}
+      <div className="pt-20 pb-8">
         <div className="container mx-auto px-4 max-w-7xl">
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
             <div className="lg:col-span-2 lg:col-start-2 space-y-6">
+              {/* Stories Bar - First thing in the feed */}
+              <div className="w-full">
+                <StoryBar />
+              </div>
+              
               <div className="text-center mb-6">
                 <h1 className="text-3xl font-bold text-white mb-2">Welcome to Eroxr</h1>
                 <p className="text-gray-400">Discover amazing content from creators around the world</p>
