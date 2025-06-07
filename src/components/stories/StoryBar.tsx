@@ -1,316 +1,270 @@
-import { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Camera, Sparkles, Zap } from 'lucide-react';
-import { useAuth } from '@/contexts/AuthContext';
-import { useStoriesFeed } from '@/hooks/useStoriesFeed';
-import { StoryUploadModal } from './StoryUploadModal';
-import { ImmersiveStoryViewer } from './ImmersiveStoryViewer';
+/* Futuristic Story Viewer Animations */
 
-interface StoryAvatarProps {
-  username: string;
-  avatarUrl?: string;
-  hasStory?: boolean;
-  isOwn?: boolean;
-  onClick: () => void;
-  index?: number;
+@keyframes mesh-move {
+  0% { 
+    transform: translate(0, 0); 
+    opacity: 0.3;
+  }
+  50% { 
+    opacity: 0.6;
+  }
+  100% { 
+    transform: translate(50px, 50px); 
+    opacity: 0.3;
+  }
 }
 
-const StoryAvatar = ({ username, avatarUrl, hasStory = false, isOwn = false, onClick, index = 0 }: StoryAvatarProps) => {
-  return (
-    <motion.div
-      className="flex flex-col items-center space-y-3 cursor-pointer min-w-[85px] flex-shrink-0 group"
-      whileHover={{ scale: 1.05, y: -2 }}
-      whileTap={{ scale: 0.95 }}
-      onClick={onClick}
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: index * 0.1, duration: 0.6, ease: "easeOut" }}
-    >
-      <div className="relative">
-        {/* Floating particles around avatar */}
-        <div className="absolute inset-0 -m-4">
-          {[...Array(3)].map((_, i) => (
-            <motion.div
-              key={i}
-              className="absolute w-1 h-1 bg-gradient-to-r from-luxury-primary to-luxury-accent rounded-full"
-              style={{
-                top: `${20 + i * 20}%`,
-                left: `${10 + i * 30}%`,
-              }}
-              animate={{
-                y: [-4, 4, -4],
-                opacity: [0.4, 0.8, 0.4],
-                scale: [0.5, 1, 0.5],
-              }}
-              transition={{
-                duration: 2 + i * 0.5,
-                repeat: Infinity,
-                ease: "easeInOut",
-              }}
-            />
-          ))}
-        </div>
-
-        {/* Animated gradient border */}
-        <motion.div
-          className={`w-20 h-20 rounded-full p-0.5 relative ${
-            hasStory
-              ? 'bg-gradient-to-r from-luxury-primary via-luxury-accent to-luxury-secondary'
-              : isOwn
-              ? 'bg-gradient-to-r from-luxury-primary/40 to-luxury-accent/40'
-              : 'bg-gradient-to-r from-gray-600/30 to-gray-500/30'
-          }`}
-          animate={hasStory ? {
-            background: [
-              'linear-gradient(45deg, #9333ea, #f59e0b, #ef4444)',
-              'linear-gradient(90deg, #f59e0b, #ef4444, #9333ea)',
-              'linear-gradient(135deg, #ef4444, #9333ea, #f59e0b)',
-              'linear-gradient(180deg, #9333ea, #f59e0b, #ef4444)',
-            ]
-          } : {}}
-          transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
-        >
-          {/* Glass morphism inner container */}
-          <div className="w-full h-full rounded-full bg-luxury-darker/80 backdrop-blur-xl border border-white/10 flex items-center justify-center overflow-hidden relative">
-            {/* Mesh gradient overlay */}
-            <div className="absolute inset-0 bg-gradient-to-br from-luxury-primary/10 via-transparent to-luxury-accent/10 rounded-full" />
-            
-            {isOwn && !hasStory ? (
-              <div className="flex flex-col items-center relative z-10">
-                <motion.div
-                  animate={{ rotate: 360 }}
-                  transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
-                >
-                  <Plus className="w-7 h-7 text-luxury-primary mb-1" />
-                </motion.div>
-                <motion.div
-                  animate={{ scale: [1, 1.1, 1] }}
-                  transition={{ duration: 2, repeat: Infinity }}
-                >
-                  <Camera className="w-4 h-4 text-luxury-accent" />
-                </motion.div>
-              </div>
-            ) : avatarUrl ? (
-              <img
-                src={avatarUrl}
-                alt={username}
-                className="w-full h-full object-cover rounded-full relative z-10"
-              />
-            ) : (
-              <div className="w-full h-full bg-gradient-to-br from-luxury-neutral/20 to-luxury-neutral/10 rounded-full flex items-center justify-center relative z-10">
-                <span className="text-luxury-neutral text-sm font-bold">
-                  {username.slice(0, 2).toUpperCase()}
-                </span>
-              </div>
-            )}
-          </div>
-        </motion.div>
-        
-        {/* Floating glow effect */}
-        {hasStory && (
-          <motion.div
-            className="absolute -inset-2 rounded-full bg-gradient-to-r from-luxury-primary/20 to-luxury-accent/20 blur-xl"
-            animate={{ 
-              scale: [1, 1.2, 1],
-              opacity: [0.5, 0.8, 0.5]
-            }}
-            transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-          />
-        )}
-      </div>
-      
-      {/* Username with better typography */}
-      <motion.span 
-        className="text-xs text-luxury-neutral text-center max-w-[80px] truncate font-medium tracking-wide group-hover:text-white transition-colors duration-300"
-        whileHover={{ scale: 1.05 }}
-      >
-        {isOwn ? (hasStory ? 'Your Story' : 'Create Story') : username}
-      </motion.span>
-    </motion.div>
-  );
-};
-
-export const StoryBar = () => {
-  const [showUploadModal, setShowUploadModal] = useState(false);
-  const [showViewer, setShowViewer] = useState(false);
-  const [selectedStoryIndex, setSelectedStoryIndex] = useState(0);
-  const { user } = useAuth();
-  const { stories, userStory, loading, error } = useStoriesFeed();
-
-  if (loading) {
-    return (
-      <div className="w-full py-6 px-6 bg-gradient-to-r from-luxury-darker/60 via-luxury-darker/40 to-luxury-darker/60 backdrop-blur-xl border-b border-white/5">
-        <div className="flex space-x-6 overflow-x-auto scrollbar-hide">
-          {[...Array(5)].map((_, i) => (
-            <motion.div 
-              key={i} 
-              className="flex flex-col items-center space-y-3 min-w-[85px] flex-shrink-0"
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: i * 0.1, duration: 0.6 }}
-            >
-              <motion.div 
-                className="w-20 h-20 rounded-full bg-gradient-to-br from-luxury-neutral/20 to-luxury-neutral/10 backdrop-blur-sm"
-                animate={{ 
-                  background: [
-                    'linear-gradient(45deg, rgba(147, 51, 234, 0.2), rgba(245, 158, 11, 0.1))',
-                    'linear-gradient(90deg, rgba(245, 158, 11, 0.2), rgba(239, 68, 68, 0.1))',
-                    'linear-gradient(135deg, rgba(239, 68, 68, 0.2), rgba(147, 51, 234, 0.1))',
-                  ]
-                }}
-                transition={{ duration: 3, repeat: Infinity }}
-              />
-              <div className="w-12 h-3 bg-luxury-neutral/20 rounded-full animate-pulse" />
-            </motion.div>
-          ))}
-        </div>
-      </div>
-    );
+@keyframes border-glow {
+  0% { 
+    transform: rotate(0deg); 
+    filter: hue-rotate(0deg);
   }
-
-  if (error) {
-    return (
-      <div className="w-full py-6 px-6 bg-gradient-to-r from-luxury-darker/60 via-luxury-darker/40 to-luxury-darker/60 backdrop-blur-xl border-b border-white/5">
-        <div className="text-center text-luxury-neutral text-sm flex items-center justify-center space-x-2">
-          <Zap className="w-4 h-4 text-red-400" />
-          <span>Unable to load stories</span>
-        </div>
-      </div>
-    );
+  25% { 
+    filter: hue-rotate(90deg);
   }
+  50% { 
+    filter: hue-rotate(180deg);
+  }
+  75% { 
+    filter: hue-rotate(270deg);
+  }
+  100% { 
+    transform: rotate(360deg); 
+    filter: hue-rotate(360deg);
+  }
+}
 
-  const allStories = stories.map(story => ({
-    id: story.id,
-    creator_id: story.creator_id,
-    media_url: story.media_url,
-    video_url: story.video_url,
-    content_type: story.content_type,
-    created_at: story.created_at,
-    expires_at: story.expires_at,
-    is_active: story.is_active,
-    creator: story.creator,
-  }));
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: 
+      0 0 20px rgba(139, 92, 246, 0.3),
+      0 0 40px rgba(139, 92, 246, 0.2),
+      0 0 60px rgba(139, 92, 246, 0.1);
+  }
+  50% {
+    box-shadow: 
+      0 0 30px rgba(139, 92, 246, 0.5),
+      0 0 60px rgba(139, 92, 246, 0.3),
+      0 0 90px rgba(139, 92, 246, 0.2);
+  }
+}
 
-  const handleStoryClick = (index: number) => {
-    setSelectedStoryIndex(index);
-    setShowViewer(true);
-  };
+@keyframes float-particle {
+  0%, 100% {
+    transform: translateY(0) translateX(0) scale(1);
+    opacity: 0.3;
+  }
+  25% {
+    transform: translateY(-10px) translateX(5px) scale(1.2);
+    opacity: 0.8;
+  }
+  50% {
+    transform: translateY(-5px) translateX(-5px) scale(0.8);
+    opacity: 0.6;
+  }
+  75% {
+    transform: translateY(5px) translateX(10px) scale(1.1);
+    opacity: 0.9;
+  }
+}
 
-  const handleOwnStoryClick = () => {
-    if (userStory) {
-      setSelectedStoryIndex(0);
-      setShowViewer(true);
-    } else {
-      setShowUploadModal(true);
-    }
-  };
+@keyframes holographic-shimmer {
+  0% {
+    background-position: -200% 0;
+    opacity: 0.5;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    background-position: 200% 0;
+    opacity: 0.5;
+  }
+}
 
-  const handleCreateStory = () => {
-    setShowUploadModal(true);
-  };
+@keyframes energy-pulse {
+  0% {
+    transform: scale(1);
+    opacity: 0.8;
+  }
+  50% {
+    transform: scale(1.05);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 0.8;
+  }
+}
 
-  return (
-    <>
-      <motion.div
-        initial={{ opacity: 0, y: -10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.8, ease: "easeOut" }}
-        className="w-full py-6 px-6 relative overflow-hidden"
-        style={{
-          background: 'linear-gradient(135deg, rgba(13, 13, 13, 0.9) 0%, rgba(23, 23, 23, 0.8) 50%, rgba(13, 13, 13, 0.9) 100%)',
-          backdropFilter: 'blur(20px)',
-          borderBottom: '1px solid rgba(255, 255, 255, 0.05)',
-        }}
-      >
-        {/* Animated background mesh */}
-        <div className="absolute inset-0 opacity-30">
-          <div className="absolute top-0 left-1/4 w-32 h-32 bg-gradient-to-br from-luxury-primary/20 to-transparent rounded-full blur-3xl animate-pulse" />
-          <div className="absolute bottom-0 right-1/4 w-24 h-24 bg-gradient-to-tl from-luxury-accent/20 to-transparent rounded-full blur-2xl animate-pulse" />
-        </div>
+@keyframes scanline-move {
+  0% {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  90% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(200vh);
+    opacity: 0;
+  }
+}
 
-        <div className="flex space-x-6 overflow-x-auto scrollbar-hide pb-2 relative z-10">
-          {/* User's own story */}
-          {user && (
-            <StoryAvatar
-              username={user.user_metadata?.username || user.email?.split('@')[0] || 'You'}
-              avatarUrl={user.user_metadata?.avatar_url}
-              hasStory={!!userStory}
-              isOwn={true}
-              onClick={handleOwnStoryClick}
-              index={0}
-            />
-          )}
-          
-          {/* Other users' stories */}
-          {stories.map((story, index) => (
-            <StoryAvatar
-              key={story.id}
-              username={story.creator.username || 'User'}
-              avatarUrl={story.creator.avatar_url || undefined}
-              hasStory={true}
-              onClick={() => handleStoryClick(index)}
-              index={index + 1}
-            />
-          ))}
+@keyframes orbital-spin {
+  0% {
+    transform: rotate(0deg) translateX(30px) rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg) translateX(30px) rotate(-360deg);
+  }
+}
 
-          {/* Create story prompt for empty state */}
-          {user && stories.length === 0 && !userStory && (
-            <motion.div
-              className="flex flex-col items-center space-y-4 cursor-pointer min-w-[140px] bg-gradient-to-br from-luxury-card/60 to-luxury-card/40 backdrop-blur-xl rounded-2xl p-6 border border-white/10 flex-shrink-0 group hover:border-luxury-primary/50 transition-all duration-500"
-              whileHover={{ scale: 1.02, y: -4 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={handleCreateStory}
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.3, duration: 0.6 }}
-            >
-              <motion.div 
-                className="w-14 h-14 rounded-full bg-gradient-to-r from-luxury-primary to-luxury-accent flex items-center justify-center relative overflow-hidden"
-                whileHover={{ rotate: 180 }}
-                transition={{ duration: 0.6 }}
-              >
-                <div className="absolute inset-0 bg-gradient-to-r from-luxury-primary/50 to-luxury-accent/50 animate-pulse" />
-                <Plus className="w-7 h-7 text-white relative z-10" />
-              </motion.div>
-              <div className="text-center">
-                <span className="text-sm text-luxury-primary font-semibold mb-1 block">Create Story</span>
-                <div className="flex items-center space-x-1 text-xs text-luxury-neutral">
-                  <Sparkles className="w-3 h-3" />
-                  <span>Share your moment</span>
-                </div>
-              </div>
-            </motion.div>
-          )}
-          
-          {/* Not logged in message */}
-          {!user && (
-            <div className="flex items-center justify-center w-full py-8">
-              <motion.p 
-                className="text-luxury-neutral text-sm bg-luxury-card/30 backdrop-blur-sm px-6 py-3 rounded-full border border-white/10"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.2 }}
-              >
-                Sign in to view and create stories
-              </motion.p>
-            </div>
-          )}
-        </div>
-      </motion.div>
+@keyframes hologram-flicker {
+  0%, 100% {
+    opacity: 1;
+    filter: brightness(1);
+  }
+  2% {
+    opacity: 0.8;
+    filter: brightness(1.2);
+  }
+  4% {
+    opacity: 1;
+    filter: brightness(0.8);
+  }
+  6% {
+    opacity: 0.9;
+    filter: brightness(1.1);
+  }
+  8% {
+    opacity: 1;
+    filter: brightness(1);
+  }
+}
 
-      {/* Modals */}
-      <StoryUploadModal
-        open={showUploadModal}
-        onOpenChange={setShowUploadModal}
-      />
+/* Utility Classes */
+.story-mesh-bg {
+  animation: mesh-move 20s linear infinite;
+}
 
-      {showViewer && (
-        <ImmersiveStoryViewer
-          stories={userStory && selectedStoryIndex === 0 ? [userStory] : stories}
-          initialStoryIndex={selectedStoryIndex}
-          onClose={() => setShowViewer(false)}
-        />
-      )}
-    </>
+.story-border-glow {
+  position: relative;
+}
+
+.story-border-glow::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: conic-gradient(from 0deg, 
+    transparent, 
+    rgba(139, 92, 246, 0.3), 
+    transparent, 
+    rgba(245, 158, 11, 0.3), 
+    transparent
   );
-};
+  animation: border-glow 4s linear infinite;
+}
+
+.story-pulse-glow {
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+.story-float-particle {
+  animation: float-particle 4s ease-in-out infinite;
+}
+
+.story-holographic-shimmer {
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  background-size: 200% 100%;
+  animation: holographic-shimmer 3s ease-in-out infinite;
+}
+
+.story-energy-pulse {
+  animation: energy-pulse 2s ease-in-out infinite;
+}
+
+.story-scanline {
+  animation: scanline-move 3s linear infinite;
+}
+
+.story-orbital {
+  animation: orbital-spin 8s linear infinite;
+}
+
+.story-hologram-flicker {
+  animation: hologram-flicker 0.5s ease-in-out infinite;
+}
+
+/* Glassmorphism Effects */
+.story-glass {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.story-glass-heavy {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(30px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 
+    0 16px 64px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+/* Cyberpunk Glow Effects */
+.story-cyber-glow {
+  filter: drop-shadow(0 0 10px currentColor);
+}
+
+.story-cyber-glow-heavy {
+  filter: 
+    drop-shadow(0 0 5px currentColor)
+    drop-shadow(0 0 15px currentColor)
+    drop-shadow(0 0 25px currentColor);
+}
+
+/* Interactive States */
+.story-interactive:hover {
+  transform: scale(1.05);
+  filter: brightness(1.2);
+  box-shadow: 0 0 30px rgba(139, 92, 246, 0.6);
+}
+
+.story-interactive:active {
+  transform: scale(0.95);
+}
+
+/* Responsive Optimizations */
+@media (max-width: 640px) {
+  .story-glass,
+  .story-glass-heavy {
+    backdrop-filter: blur(15px);
+  }
+  
+  .story-cyber-glow-heavy {
+    filter: drop-shadow(0 0 8px currentColor);
+  }
+}
+
+/* Performance Optimizations */
+@media (prefers-reduced-motion: reduce) {
+  .story-mesh-bg,
+  .story-border-glow::before,
+  .story-pulse-glow,
+  .story-float-particle,
+  .story-holographic-shimmer,
+  .story-energy-pulse,
+  .story-scanline,
+  .story-orbital,
+  .story-hologram-flicker {
+    animation: none;
+  }
+}
