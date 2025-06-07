@@ -26,9 +26,9 @@ export const MainFeed = () => {
     isFetchingNextPage,
     isLoading,
     error,
-  } = useInfiniteQuery({
-    queryKey: ['posts'],
-    queryFn: async ({ pageParam = 0 }) => {
+  } = useInfiniteQuery(
+    ['posts'],
+    async ({ pageParam = 0 }) => {
       const { data, error } = await supabase
         .from('posts')
         .select(`
@@ -44,14 +44,25 @@ export const MainFeed = () => {
       if (error) throw error;
       return data || [];
     },
-    getNextPageParam: (lastPage, pages) => {
-      if (lastPage.length < 10) return undefined;
-      return pages.length * 10;
-    },
-    initialPageParam: 0,
-  });
+    {
+      getNextPageParam: (lastPage, pages) => {
+        if (lastPage.length < 10) return undefined;
+        return pages.length * 10;
+      },
+    }
+  );
 
   const posts = data?.pages.flat() || [];
+
+  const handleLike = async (postId: string) => {
+    // TODO: Implement like functionality
+    console.log('Like post:', postId);
+  };
+
+  const handleDelete = async (postId: string, creatorId: string) => {
+    // TODO: Implement delete functionality
+    console.log('Delete post:', postId, 'by creator:', creatorId);
+  };
 
   if (isLoading) return <LoadingSkeleton />;
   if (error) return <div>Error loading posts</div>;
@@ -66,8 +77,13 @@ export const MainFeed = () => {
         {posts.length === 0 ? (
           <EmptyFeed />
         ) : (
-          posts.map((post) => (
-            <PostCard key={post.id} post={post} />
+          posts.map((post: Post) => (
+            <PostCard 
+              key={post.id} 
+              post={post} 
+              onLike={handleLike}
+              onDelete={handleDelete}
+            />
           ))
         )}
         
