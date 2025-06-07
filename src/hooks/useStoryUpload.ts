@@ -3,6 +3,7 @@ import { useState, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { useStoriesFeed } from '@/hooks/useStoriesFeed';
+import { uploadMediaToSupabase } from '@/utils/upload/supabaseUpload';
 import { supabase } from '@/integrations/supabase/client';
 
 export const useStoryUpload = () => {
@@ -31,63 +32,27 @@ export const useStoryUpload = () => {
         setUploadProgress(prev => Math.min(prev + 10, 90));
       }, 200);
 
-      // Generate a unique filename
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${user.id}-${Date.now()}.${fileExt}`;
-      const filePath = `stories/${fileName}`;
-
-      // Upload file to Supabase Storage
-      const { data: uploadData, error: uploadError } = await supabase.storage
-        .from('stories')
-        .upload(filePath, file);
-
-      if (uploadError) {
-        console.error('Upload error:', uploadError);
-        
-        // If bucket doesn't exist, try to create it
-        if (uploadError.message.includes('Bucket not found')) {
-          console.log('Creating stories bucket...');
-          
-          // Try to create the bucket using a simple approach
-          const { error: createError } = await supabase.storage.createBucket('stories', {
-            public: true,
-            fileSizeLimit: 104857600, // 100MB
-            allowedMimeTypes: ['image/*', 'video/*']
-          });
-          
-          if (createError) {
-            console.error('Bucket creation error:', createError);
-          } else {
-            console.log('Bucket created successfully');
-            
-            // Retry upload
-            const { data: retryUploadData, error: retryUploadError } = await supabase.storage
-              .from('stories')
-              .upload(filePath, file);
-              
-            if (retryUploadError) {
-              throw retryUploadError;
-            }
-            
-            console.log('Retry upload successful:', retryUploadData);
-          }
-        } else {
-          throw uploadError;
+      // Use the proven upload method that works for other media
+      const result = await uploadMediaToSupabase(file, {
+        category: 'stories',
+        accessLevel: 'public',
+        metadata: {
+          caption: caption || null,
+          contentType: file.type.startsWith('video/') ? 'video' : 'image'
         }
+      });
+
+      if (!result.success) {
+        throw new Error(result.error || 'Upload failed');
       }
 
-      // Get public URL
-      const { data: { publicUrl } } = supabase.storage
-        .from('stories')
-        .getPublicUrl(filePath);
-
-      // Create story record
+      // Create story record using the uploaded media URL
       const { error: dbError } = await supabase
         .from('stories')
         .insert({
           creator_id: user.id,
-          media_url: publicUrl,
-          video_url: file.type.startsWith('video/') ? publicUrl : null,
+          media_url: result.url,
+          video_url: file.type.startsWith('video/') ? result.url : null,
           content_type: file.type.startsWith('video/') ? 'video' : 'image',
           is_active: true,
           expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24 hours from now

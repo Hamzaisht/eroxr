@@ -74,63 +74,66 @@ const Home = () => {
 
   return (
     <div className="min-h-screen bg-luxury-darker">
-      {/* Stories Bar - Positioned to account for fixed nav */}
-      <div className="sticky top-16 z-40 bg-luxury-darker/95 backdrop-blur-sm">
+      {/* Stories Bar - Fixed positioning with proper spacing */}
+      <div className="fixed top-16 left-0 right-0 z-30 bg-luxury-darker/95 backdrop-blur-sm border-b border-white/5">
         <StoryBar />
       </div>
 
-      <div className="container mx-auto px-4 py-8 max-w-7xl">
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-          <div className="lg:col-span-2 lg:col-start-2 space-y-6">
-            <div className="text-center mb-6">
-              <h1 className="text-3xl font-bold text-white mb-2">Welcome to Eroxr</h1>
-              <p className="text-gray-400">Discover amazing content from creators around the world</p>
-            </div>
+      {/* Main Content with proper top margin to account for fixed story bar */}
+      <div className="pt-32 pb-8">
+        <div className="container mx-auto px-4 max-w-7xl">
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+            <div className="lg:col-span-2 lg:col-start-2 space-y-6">
+              <div className="text-center mb-6">
+                <h1 className="text-3xl font-bold text-white mb-2">Welcome to Eroxr</h1>
+                <p className="text-gray-400">Discover amazing content from creators around the world</p>
+              </div>
 
-            <LiveStreams />
+              <LiveStreams />
+              
+              <CreatePostArea 
+                onCreatePost={openCreatePost}
+                onGoLive={openGoLive}
+              />
+              
+              <div className="space-y-6">
+                {posts && posts.length > 0 ? (
+                  posts.map((post) => (
+                    <EnhancedPostCard
+                      key={post.id}
+                      post={post}
+                      currentUserId={session?.user?.id}
+                      onLike={onLike}
+                      onDelete={onDelete}
+                    />
+                  ))
+                ) : (
+                  <div className="text-center py-12 bg-luxury-card rounded-lg">
+                    <p className="text-gray-400 mb-2">No posts found</p>
+                    <p className="text-gray-500 text-sm mb-4">Be the first to create a post!</p>
+                    <Button onClick={openCreatePost} className="bg-luxury-primary hover:bg-luxury-primary/90">
+                      Create First Post
+                    </Button>
+                  </div>
+                )}
+              </div>
+            </div>
             
-            <CreatePostArea 
-              onCreatePost={openCreatePost}
-              onGoLive={openGoLive}
-            />
-            
-            <div className="space-y-6">
-              {posts && posts.length > 0 ? (
-                posts.map((post) => (
-                  <EnhancedPostCard
-                    key={post.id}
-                    post={post}
-                    currentUserId={session?.user?.id}
-                    onLike={onLike}
-                    onDelete={onDelete}
-                  />
-                ))
-              ) : (
-                <div className="text-center py-12 bg-luxury-card rounded-lg">
-                  <p className="text-gray-400 mb-2">No posts found</p>
-                  <p className="text-gray-500 text-sm mb-4">Be the first to create a post!</p>
-                  <Button onClick={openCreatePost} className="bg-luxury-primary hover:bg-luxury-primary/90">
-                    Create First Post
-                  </Button>
-                </div>
-              )}
+            <div className="lg:col-span-1 lg:col-start-4">
+              <RightSidebar />
             </div>
           </div>
-          
-          <div className="lg:col-span-1 lg:col-start-4">
-            <RightSidebar />
-          </div>
+
+          <CreatePostDialog
+            open={isCreatePostOpen}
+            onOpenChange={(open) => {
+              if (!open) handlePostCreated();
+              else openCreatePost();
+            }}
+            selectedFiles={selectedFiles}
+            onFileSelect={setSelectedFiles}
+          />
         </div>
-
-        <CreatePostDialog
-          open={isCreatePostOpen}
-          onOpenChange={(open) => {
-            if (!open) handlePostCreated();
-            else openCreatePost();
-          }}
-          selectedFiles={selectedFiles}
-          onFileSelect={setSelectedFiles}
-        />
       </div>
     </div>
   );

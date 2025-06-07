@@ -1,3 +1,4 @@
+
 import { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
@@ -40,7 +41,17 @@ export const StoryUploadModal = ({ open, onOpenChange }: StoryUploadModalProps) 
       return;
     }
 
-    // Validate video duration (max 60s)
+    // Validate file size (max 100MB)
+    if (file.size > 100 * 1024 * 1024) {
+      toast({
+        title: 'File too large',
+        description: 'Files must be 100MB or less.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    // Validate video duration if it's a video
     if (file.type.startsWith('video/')) {
       const video = document.createElement('video');
       video.src = URL.createObjectURL(file);
@@ -84,16 +95,14 @@ export const StoryUploadModal = ({ open, onOpenChange }: StoryUploadModalProps) 
 
     const result = await uploadStory(selectedFile, caption);
     if (result.success) {
-      // Reset form
-      setSelectedFile(null);
-      setPreviewUrl(null);
-      setCaption('');
-      setUploadMode('select');
-      onOpenChange(false);
+      handleClose();
     }
   };
 
   const handleClose = () => {
+    if (previewUrl) {
+      URL.revokeObjectURL(previewUrl);
+    }
     setSelectedFile(null);
     setPreviewUrl(null);
     setCaption('');
@@ -104,7 +113,6 @@ export const StoryUploadModal = ({ open, onOpenChange }: StoryUploadModalProps) 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="max-w-md mx-auto border-none p-0 overflow-hidden">
-        {/* Modern glass morphism container */}
         <motion.div 
           className="relative rounded-3xl overflow-hidden"
           style={{
@@ -138,7 +146,7 @@ export const StoryUploadModal = ({ open, onOpenChange }: StoryUploadModalProps) 
           </div>
 
           <div className="relative p-8 z-10">
-            {/* Header with better design */}
+            {/* Header */}
             <div className="flex items-center justify-between mb-8">
               <motion.div
                 initial={{ x: -20, opacity: 0 }}
@@ -176,7 +184,6 @@ export const StoryUploadModal = ({ open, onOpenChange }: StoryUploadModalProps) 
                   transition={{ duration: 0.3 }}
                   className="space-y-6"
                 >
-                  {/* Action buttons with modern design */}
                   <div className="grid grid-cols-2 gap-4">
                     <motion.button
                       onClick={() => setUploadMode('camera-photo')}
@@ -184,13 +191,9 @@ export const StoryUploadModal = ({ open, onOpenChange }: StoryUploadModalProps) 
                       whileHover={{ scale: 1.02, y: -2 }}
                       whileTap={{ scale: 0.98 }}
                     >
-                      <div className="absolute inset-0 bg-gradient-to-br from-luxury-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                       <div className="relative flex flex-col items-center justify-center h-full space-y-2">
                         <Camera className="w-6 h-6 text-luxury-primary group-hover:scale-110 transition-transform duration-300" />
                         <span className="text-sm text-luxury-neutral font-medium">Take Photo</span>
-                      </div>
-                      <div className="absolute top-2 right-2">
-                        <Star className="w-3 h-3 text-luxury-primary/50" />
                       </div>
                     </motion.button>
 
@@ -200,13 +203,9 @@ export const StoryUploadModal = ({ open, onOpenChange }: StoryUploadModalProps) 
                       whileHover={{ scale: 1.02, y: -2 }}
                       whileTap={{ scale: 0.98 }}
                     >
-                      <div className="absolute inset-0 bg-gradient-to-br from-luxury-accent/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                       <div className="relative flex flex-col items-center justify-center h-full space-y-2">
                         <Video className="w-6 h-6 text-luxury-accent group-hover:scale-110 transition-transform duration-300" />
                         <span className="text-sm text-luxury-neutral font-medium">Record Video</span>
-                      </div>
-                      <div className="absolute top-2 right-2">
-                        <Zap className="w-3 h-3 text-luxury-accent/50" />
                       </div>
                     </motion.button>
                   </div>
@@ -218,7 +217,6 @@ export const StoryUploadModal = ({ open, onOpenChange }: StoryUploadModalProps) 
                       whileHover={{ scale: 1.02, y: -2 }}
                       whileTap={{ scale: 0.98 }}
                     >
-                      <div className="absolute inset-0 bg-gradient-to-br from-luxury-secondary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                       <div className="relative flex flex-col items-center justify-center h-full space-y-2">
                         <Image className="w-6 h-6 text-luxury-secondary group-hover:scale-110 transition-transform duration-300" />
                         <span className="text-sm text-luxury-neutral font-medium">Upload Photo</span>
@@ -231,7 +229,6 @@ export const StoryUploadModal = ({ open, onOpenChange }: StoryUploadModalProps) 
                       whileHover={{ scale: 1.02, y: -2 }}
                       whileTap={{ scale: 0.98 }}
                     >
-                      <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                       <div className="relative flex flex-col items-center justify-center h-full space-y-2">
                         <Upload className="w-6 h-6 text-emerald-500 group-hover:scale-110 transition-transform duration-300" />
                         <span className="text-sm text-luxury-neutral font-medium">Upload Video</span>
@@ -274,7 +271,6 @@ export const StoryUploadModal = ({ open, onOpenChange }: StoryUploadModalProps) 
                   transition={{ duration: 0.3 }}
                   className="space-y-6"
                 >
-                  {/* Preview with better styling */}
                   <div className="relative aspect-[9/16] bg-black rounded-2xl overflow-hidden border border-white/10">
                     {selectedFile?.type.startsWith('video/') ? (
                       <video
@@ -289,11 +285,8 @@ export const StoryUploadModal = ({ open, onOpenChange }: StoryUploadModalProps) 
                         className="w-full h-full object-cover rounded-2xl"
                       />
                     )}
-                    {/* Overlay gradient */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-black/10 rounded-2xl" />
                   </div>
 
-                  {/* Caption input with modern styling */}
                   <div className="relative">
                     <Input
                       placeholder="Add a caption (optional)"
@@ -302,12 +295,8 @@ export const StoryUploadModal = ({ open, onOpenChange }: StoryUploadModalProps) 
                       className="bg-white/5 backdrop-blur-sm border-white/10 text-white placeholder:text-luxury-neutral/60 rounded-xl py-3 px-4 focus:border-luxury-primary/50 transition-all duration-300"
                       maxLength={200}
                     />
-                    <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-xs text-luxury-neutral/50">
-                      {caption.length}/200
-                    </div>
                   </div>
 
-                  {/* Upload progress */}
                   {uploading && (
                     <motion.div 
                       className="space-y-3"
@@ -328,7 +317,6 @@ export const StoryUploadModal = ({ open, onOpenChange }: StoryUploadModalProps) 
                     </motion.div>
                   )}
 
-                  {/* Action buttons */}
                   <div className="flex space-x-3">
                     <Button
                       variant="outline"
