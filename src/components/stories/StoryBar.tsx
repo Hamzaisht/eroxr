@@ -4,7 +4,7 @@ import { Plus, Camera, Sparkles, Zap } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useStoriesFeed } from '@/hooks/useStoriesFeed';
 import { StoryUploadModal } from './StoryUploadModal';
-import { StoryViewer } from './StoryViewer';
+import { ImmersiveStoryViewer } from './ImmersiveStoryViewer';
 
 interface StoryAvatarProps {
   username: string;
@@ -305,7 +305,7 @@ export const StoryBar = () => {
       />
 
       {showViewer && (
-        <StoryViewer
+        <ImmersiveStoryViewer
           stories={userStory && selectedStoryIndex === 0 ? [userStory] : stories}
           initialStoryIndex={selectedStoryIndex}
           onClose={() => setShowViewer(false)}

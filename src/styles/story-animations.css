@@ -1,0 +1,256 @@
+
+/* Futuristic Story Viewer Animations */
+
+@keyframes mesh-move {
+  0% { 
+    transform: translate(0, 0); 
+    opacity: 0.3;
+  }
+  50% { 
+    opacity: 0.6;
+  }
+  100% { 
+    transform: translate(50px, 50px); 
+    opacity: 0.3;
+  }
+}
+
+@keyframes border-glow {
+  0% { 
+    transform: rotate(0deg); 
+    filter: hue-rotate(0deg);
+  }
+  25% { 
+    filter: hue-rotate(90deg);
+  }
+  50% { 
+    filter: hue-rotate(180deg);
+  }
+  75% { 
+    filter: hue-rotate(270deg);
+  }
+  100% { 
+    transform: rotate(360deg); 
+    filter: hue-rotate(360deg);
+  }
+}
+
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: 
+      0 0 20px rgba(139, 92, 246, 0.3),
+      0 0 40px rgba(139, 92, 246, 0.2),
+      0 0 60px rgba(139, 92, 246, 0.1);
+  }
+  50% {
+    box-shadow: 
+      0 0 30px rgba(139, 92, 246, 0.5),
+      0 0 60px rgba(139, 92, 246, 0.3),
+      0 0 90px rgba(139, 92, 246, 0.2);
+  }
+}
+
+@keyframes float-particle {
+  0%, 100% {
+    transform: translateY(0) translateX(0) scale(1);
+    opacity: 0.3;
+  }
+  25% {
+    transform: translateY(-10px) translateX(5px) scale(1.2);
+    opacity: 0.8;
+  }
+  50% {
+    transform: translateY(-5px) translateX(-5px) scale(0.8);
+    opacity: 0.6;
+  }
+  75% {
+    transform: translateY(5px) translateX(10px) scale(1.1);
+    opacity: 0.9;
+  }
+}
+
+@keyframes holographic-shimmer {
+  0% {
+    background-position: -200% 0;
+    opacity: 0.5;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    background-position: 200% 0;
+    opacity: 0.5;
+  }
+}
+
+@keyframes energy-pulse {
+  0% {
+    transform: scale(1);
+    opacity: 0.8;
+  }
+  50% {
+    transform: scale(1.05);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 0.8;
+  }
+}
+
+@keyframes scanline-move {
+  0% {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  90% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(200vh);
+    opacity: 0;
+  }
+}
+
+@keyframes orbital-spin {
+  0% {
+    transform: rotate(0deg) translateX(30px) rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg) translateX(30px) rotate(-360deg);
+  }
+}
+
+@keyframes hologram-flicker {
+  0%, 100% {
+    opacity: 1;
+    filter: brightness(1);
+  }
+  2% {
+    opacity: 0.8;
+    filter: brightness(1.2);
+  }
+  4% {
+    opacity: 1;
+    filter: brightness(0.8);
+  }
+  6% {
+    opacity: 0.9;
+    filter: brightness(1.1);
+  }
+  8% {
+    opacity: 1;
+    filter: brightness(1);
+  }
+}
+
+/* Utility Classes */
+.story-mesh-bg {
+  animation: mesh-move 20s linear infinite;
+}
+
+.story-border-glow {
+  animation: border-glow 4s linear infinite;
+}
+
+.story-pulse-glow {
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+.story-float-particle {
+  animation: float-particle 4s ease-in-out infinite;
+}
+
+.story-holographic-shimmer {
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  background-size: 200% 100%;
+  animation: holographic-shimmer 3s ease-in-out infinite;
+}
+
+.story-energy-pulse {
+  animation: energy-pulse 2s ease-in-out infinite;
+}
+
+.story-scanline {
+  animation: scanline-move 3s linear infinite;
+}
+
+.story-orbital {
+  animation: orbital-spin 8s linear infinite;
+}
+
+.story-hologram-flicker {
+  animation: hologram-flicker 0.5s ease-in-out infinite;
+}
+
+/* Glassmorphism Effects */
+.story-glass {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.story-glass-heavy {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(30px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 
+    0 16px 64px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+/* Cyberpunk Glow Effects */
+.story-cyber-glow {
+  filter: drop-shadow(0 0 10px currentColor);
+}
+
+.story-cyber-glow-heavy {
+  filter: 
+    drop-shadow(0 0 5px currentColor)
+    drop-shadow(0 0 15px currentColor)
+    drop-shadow(0 0 25px currentColor);
+}
+
+/* Interactive States */
+.story-interactive:hover {
+  transform: scale(1.05);
+  filter: brightness(1.2);
+  box-shadow: 0 0 30px rgba(139, 92, 246, 0.6);
+}
+
+.story-interactive:active {
+  transform: scale(0.95);
+}
+
+/* Responsive Optimizations */
+@media (max-width: 640px) {
+  .story-glass,
+  .story-glass-heavy {
+    backdrop-filter: blur(15px);
+  }
+  
+  .story-cyber-glow-heavy {
+    filter: drop-shadow(0 0 8px currentColor);
+  }
+}
+
+/* Performance Optimizations */
+@media (prefers-reduced-motion: reduce) {
+  .story-mesh-bg,
+  .story-border-glow,
+  .story-pulse-glow,
+  .story-float-particle,
+  .story-holographic-shimmer,
+  .story-energy-pulse,
+  .story-scanline,
+  .story-orbital,
+  .story-hologram-flicker {
+    animation: none;
+  }
+}
