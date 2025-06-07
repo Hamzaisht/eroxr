@@ -1,43 +1,87 @@
 
-interface MainFeedProps {
-  userId: string;
-  isPayingCustomer: boolean;
-  onOpenCreatePost: () => void;
-  onFileSelect: (files: FileList) => void;
-  onOpenGoLive: () => void;
-}
+import React from 'react';
+import { useInfiniteQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { PostCard } from '@/components/feed/PostCard';
+import { LoadingSkeleton } from '@/components/feed/LoadingSkeleton';
+import { EmptyFeed } from '@/components/feed/EmptyFeed';
+import { StoryBar } from '@/components/stories/StoryBar';
+import type { Database } from '@/integrations/supabase/types';
 
-export const MainFeed = ({ 
-  userId, 
-  isPayingCustomer, 
-  onOpenCreatePost, 
-  onFileSelect, 
-  onOpenGoLive 
-}: MainFeedProps) => {
+type Post = Database['public']['Tables']['posts']['Row'] & {
+  profiles: {
+    username: string | null;
+    avatar_url: string | null;
+  } | null;
+  post_likes: { user_id: string }[];
+  post_saves: { user_id: string }[];
+  comments: { id: string }[];
+};
+
+export const MainFeed = () => {
+  const {
+    data,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    isLoading,
+    error,
+  } = useInfiniteQuery({
+    queryKey: ['posts'],
+    queryFn: async ({ pageParam = 0 }) => {
+      const { data, error } = await supabase
+        .from('posts')
+        .select(`
+          *,
+          profiles:user_id(username, avatar_url),
+          post_likes(user_id),
+          post_saves(user_id),
+          comments(id)
+        `)
+        .order('created_at', { ascending: false })
+        .range(pageParam, pageParam + 9);
+
+      if (error) throw error;
+      return data || [];
+    },
+    getNextPageParam: (lastPage, pages) => {
+      if (lastPage.length < 10) return undefined;
+      return pages.length * 10;
+    },
+    initialPageParam: 0,
+  });
+
+  const posts = data?.pages.flat() || [];
+
+  if (isLoading) return <LoadingSkeleton />;
+  if (error) return <div>Error loading posts</div>;
+
   return (
-    <div className="space-y-4">
-      <div className="bg-gray-800 rounded-lg p-4">
-        <button
-          onClick={onOpenCreatePost}
-          className="w-full bg-luxury-primary text-white py-2 px-4 rounded-md hover:bg-luxury-primary/90"
-        >
-          Create Post
-        </button>
-      </div>
+    <div className="max-w-2xl mx-auto">
+      {/* Stories Bar */}
+      <StoryBar />
       
-      {isPayingCustomer && (
-        <div className="bg-gray-800 rounded-lg p-4">
-          <button
-            onClick={onOpenGoLive}
-            className="w-full bg-red-600 text-white py-2 px-4 rounded-md hover:bg-red-700"
-          >
-            Go Live
-          </button>
-        </div>
-      )}
-      
-      <div className="text-center text-gray-400">
-        <p>No posts to show yet</p>
+      {/* Main Feed */}
+      <div className="space-y-6">
+        {posts.length === 0 ? (
+          <EmptyFeed />
+        ) : (
+          posts.map((post) => (
+            <PostCard key={post.id} post={post} />
+          ))
+        )}
+        
+        {hasNextPage && (
+          <div className="flex justify-center py-4">
+            <button
+              onClick={() => fetchNextPage()}
+              disabled={isFetchingNextPage}
+              className="px-6 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 disabled:opacity-50"
+            >
+              {isFetchingNextPage ? 'Loading...' : 'Load More'}
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
