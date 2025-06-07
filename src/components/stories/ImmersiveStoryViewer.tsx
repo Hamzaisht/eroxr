@@ -221,13 +221,12 @@ export const ImmersiveStoryViewer = ({
       >
         {/* Animated Background Mesh */}
         <div className="absolute inset-0 opacity-30">
-          <div className="absolute inset-0" style={{
+          <div className="absolute inset-0 story-mesh-bg" style={{
             backgroundImage: `
               linear-gradient(rgba(139, 92, 246, 0.03) 1px, transparent 1px),
               linear-gradient(90deg, rgba(139, 92, 246, 0.03) 1px, transparent 1px)
             `,
             backgroundSize: '50px 50px',
-            animation: 'mesh-move 20s linear infinite'
           }} />
           {/* Floating Particles */}
           {[...Array(12)].map((_, i) => (
@@ -449,7 +448,7 @@ export const ImmersiveStoryViewer = ({
               }}
             >
               <div 
-                className="relative w-full h-full rounded-3xl overflow-hidden"
+                className="relative w-full h-full rounded-3xl overflow-hidden story-border-glow"
                 style={{
                   background: 'rgba(0, 0, 0, 0.2)',
                   backdropFilter: 'blur(10px)',
@@ -460,18 +459,6 @@ export const ImmersiveStoryViewer = ({
                   `,
                 }}
               >
-                {/* Holographic Border Effect */}
-                <div className="absolute inset-0 rounded-3xl" style={{
-                  background: `conic-gradient(from 0deg, 
-                    transparent, 
-                    rgba(139, 92, 246, 0.3), 
-                    transparent, 
-                    rgba(245, 158, 11, 0.3), 
-                    transparent
-                  )`,
-                  animation: 'border-glow 4s linear infinite',
-                }} />
-                
                 <div className="absolute inset-[2px] rounded-3xl overflow-hidden bg-black">
                   {isVideo ? (
                     <video
@@ -602,17 +589,6 @@ export const ImmersiveStoryViewer = ({
           />
         </div>
       </motion.div>
-
-      <style jsx>{`
-        @keyframes mesh-move {
-          0% { transform: translate(0, 0); }
-          100% { transform: translate(50px, 50px); }
-        }
-        @keyframes border-glow {
-          0% { transform: rotate(0deg); }
-          100% { transform: rotate(360deg); }
-        }
-      `}</style>
     </AnimatePresence>
   );
 };

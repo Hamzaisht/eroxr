@@ -153,6 +153,21 @@
 }
 
 .story-border-glow {
+  position: relative;
+}
+
+.story-border-glow::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: conic-gradient(from 0deg, 
+    transparent, 
+    rgba(139, 92, 246, 0.3), 
+    transparent, 
+    rgba(245, 158, 11, 0.3), 
+    transparent
+  );
   animation: border-glow 4s linear infinite;
 }
 
@@ -243,7 +258,7 @@
 /* Performance Optimizations */
 @media (prefers-reduced-motion: reduce) {
   .story-mesh-bg,
-  .story-border-glow,
+  .story-border-glow::before,
   .story-pulse-glow,
   .story-float-particle,
   .story-holographic-shimmer,
