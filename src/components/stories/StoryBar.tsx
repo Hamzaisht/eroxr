@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, Upload } from 'lucide-react';
@@ -49,6 +50,18 @@ export const StoryBar = () => {
   // Combine user story with other stories for viewer
   const allStories = userStory ? [userStory, ...stories] : stories;
 
+  // Get user display info with fallbacks
+  const getUserDisplayName = () => {
+    if (!user) return 'You';
+    return user.email?.split('@')[0] || 'You';
+  };
+
+  const getUserAvatar = () => {
+    // Since User type doesn't have avatar_url, we'll return null
+    // In a real app, you'd fetch this from a profiles table
+    return null;
+  };
+
   if (loading) {
     return (
       <div className="w-full px-4 py-3">
@@ -81,15 +94,15 @@ export const StoryBar = () => {
                   : 'bg-gradient-to-tr from-gray-300 to-gray-500'
               }`}>
                 <div className="w-full h-full rounded-full bg-white p-0.5">
-                  {user?.avatar_url ? (
+                  {getUserAvatar() ? (
                     <img
-                      src={user.avatar_url}
+                      src={getUserAvatar()!}
                       alt="Your story"
                       className="w-full h-full rounded-full object-cover"
                     />
                   ) : (
                     <div className="w-full h-full rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white text-sm font-bold">
-                      {(user?.username || 'You').slice(0, 2).toUpperCase()}
+                      {getUserDisplayName().slice(0, 2).toUpperCase()}
                     </div>
                   )}
                 </div>
