@@ -5,7 +5,6 @@ import { RightSidebar } from "@/components/home/RightSidebar";
 import { StoryBar } from "@/components/stories/StoryBar";
 import { LiveStreams } from "@/components/home/LiveStreams";
 import { EnhancedPostCard } from "@/components/feed/EnhancedPostCard";
-import { SearchBar } from "@/components/home/SearchBar";
 import { Loader2, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { usePostActions } from "@/hooks/usePostActions";
@@ -85,18 +84,13 @@ const Home = () => {
                 <StoryBar />
               </div>
               
-              {/* Welcome Header with Search */}
+              {/* Welcome Header - removed search bar */}
               <div className="text-center space-y-6">
                 <div className="space-y-3">
                   <h1 className="text-4xl font-bold bg-gradient-to-r from-luxury-primary via-luxury-accent to-luxury-secondary bg-clip-text text-transparent">
                     Welcome to Eroxr
                   </h1>
                   <p className="text-luxury-muted text-lg">Discover amazing creators around the world</p>
-                </div>
-                
-                {/* Enhanced Search Bar */}
-                <div className="py-8">
-                  <SearchBar />
                 </div>
               </div>
 
