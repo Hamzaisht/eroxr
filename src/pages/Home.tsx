@@ -5,6 +5,7 @@ import { RightSidebar } from "@/components/home/RightSidebar";
 import { StoryBar } from "@/components/stories/StoryBar";
 import { LiveStreams } from "@/components/home/LiveStreams";
 import { EnhancedPostCard } from "@/components/feed/EnhancedPostCard";
+import { SearchBar } from "@/components/home/SearchBar";
 import { Loader2, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { usePostActions } from "@/hooks/usePostActions";
@@ -78,15 +79,25 @@ const Home = () => {
       <div className="pt-20 pb-8">
         <div className="container mx-auto px-4 max-w-7xl">
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-            <div className="lg:col-span-2 lg:col-start-2 space-y-6">
-              {/* Stories Bar - First thing in the feed */}
+            <div className="lg:col-span-2 lg:col-start-2 space-y-8">
+              {/* Stories Bar */}
               <div className="w-full">
                 <StoryBar />
               </div>
               
-              <div className="text-center mb-6">
-                <h1 className="text-3xl font-bold text-white mb-2">Welcome to Eroxr</h1>
-                <p className="text-gray-400">Discover amazing content from creators around the world</p>
+              {/* Welcome Header with Search */}
+              <div className="text-center space-y-6">
+                <div className="space-y-3">
+                  <h1 className="text-4xl font-bold bg-gradient-to-r from-luxury-primary via-luxury-accent to-luxury-secondary bg-clip-text text-transparent">
+                    Welcome to Eroxr
+                  </h1>
+                  <p className="text-luxury-muted text-lg">Discover amazing creators around the world</p>
+                </div>
+                
+                {/* Enhanced Search Bar */}
+                <div className="py-8">
+                  <SearchBar />
+                </div>
               </div>
 
               <LiveStreams />
