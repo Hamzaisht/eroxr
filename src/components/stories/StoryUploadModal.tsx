@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Upload, Camera, Image, Video, X, Sparkles, Zap, Star } from 'lucide-react';
+import { Upload, Camera, Image, Video, X, Sparkles } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useStoryUpload } from '@/hooks/useStoryUpload';
 import { useToast } from '@/hooks/use-toast';
@@ -26,6 +26,23 @@ export const StoryUploadModal = ({ open, onOpenChange }: StoryUploadModalProps) 
   const { user } = useAuth();
   const { uploadStory, uploading, uploadProgress } = useStoryUpload();
   const { toast } = useToast();
+
+  // Check authentication early
+  if (!user) {
+    return (
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="max-w-md mx-auto border-none p-0 overflow-hidden">
+          <div className="relative rounded-3xl bg-luxury-darker p-8 text-center">
+            <h2 className="text-2xl font-bold text-white mb-4">Login Required</h2>
+            <p className="text-luxury-neutral mb-4">You need to be logged in to create stories</p>
+            <Button onClick={() => onOpenChange(false)} className="bg-luxury-primary hover:bg-luxury-primary/90">
+              Close
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  }
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -84,14 +101,6 @@ export const StoryUploadModal = ({ open, onOpenChange }: StoryUploadModalProps) 
 
   const handleUpload = async () => {
     if (!selectedFile) return;
-    if (!user) {
-      toast({
-        title: 'Authentication required',
-        description: 'Please sign in to upload stories',
-        variant: 'destructive',
-      });
-      return;
-    }
 
     const result = await uploadStory(selectedFile, caption);
     if (result.success) {
@@ -328,7 +337,7 @@ export const StoryUploadModal = ({ open, onOpenChange }: StoryUploadModalProps) 
                     </Button>
                     <Button
                       onClick={handleUpload}
-                      disabled={uploading || !user}
+                      disabled={uploading}
                       className="flex-1 bg-gradient-to-r from-luxury-primary to-luxury-accent hover:from-luxury-primary/80 hover:to-luxury-accent/80 text-white rounded-xl border-none"
                     >
                       {uploading ? 'Uploading...' : 'Share Story'}

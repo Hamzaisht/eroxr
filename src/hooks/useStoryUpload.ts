@@ -26,17 +26,6 @@ export const useStoryUpload = () => {
     setUploadProgress(0);
 
     try {
-      // Check if stories bucket exists
-      const { data: buckets, error: bucketsError } = await supabase.storage.listBuckets();
-      if (bucketsError) {
-        throw new Error(`Failed to check storage: ${bucketsError.message}`);
-      }
-
-      const storiesBucket = buckets?.find(bucket => bucket.id === 'stories');
-      if (!storiesBucket) {
-        throw new Error('Stories storage bucket not found. Please contact support.');
-      }
-
       // Validate file
       const maxSize = 100 * 1024 * 1024; // 100MB
       if (file.size > maxSize) {
@@ -53,7 +42,7 @@ export const useStoryUpload = () => {
         setUploadProgress(prev => Math.min(prev + 10, 90));
       }, 200);
 
-      // Generate clean filename without duplicate prefix
+      // Generate clean filename
       const fileExtension = file.name.split('.').pop()?.toLowerCase() || 'bin';
       const fileName = `${user.id}-${Date.now()}.${fileExtension}`;
 
