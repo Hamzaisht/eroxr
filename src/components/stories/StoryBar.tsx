@@ -62,6 +62,19 @@ export const StoryBar = () => {
     return null;
   };
 
+  // Check if story is new (created within last 3 hours)
+  const isNewStory = (createdAt: string) => {
+    const storyTime = new Date(createdAt).getTime();
+    const now = new Date().getTime();
+    const threeHours = 3 * 60 * 60 * 1000; // 3 hours in milliseconds
+    return (now - storyTime) < threeHours;
+  };
+
+  // Get story preview URL
+  const getStoryPreviewUrl = (story: Story) => {
+    return story.content_type === 'video' ? story.video_url : story.media_url;
+  };
+
   if (loading) {
     return (
       <div className="w-full bg-background border-b border-border/50 py-4">
@@ -91,11 +104,30 @@ export const StoryBar = () => {
               <div className="relative">
                 <div className={`w-16 h-16 rounded-full p-0.5 ${
                   userStory 
-                    ? 'bg-gradient-to-tr from-pink-500 via-purple-500 to-orange-500' 
+                    ? `bg-gradient-to-tr from-pink-500 via-purple-500 to-orange-500 ${
+                        isNewStory(userStory.created_at) ? 'shadow-lg shadow-purple-500/50 animate-pulse' : ''
+                      }`
                     : 'bg-gradient-to-tr from-gray-300 to-gray-500'
                 }`}>
                   <div className="w-full h-full rounded-full bg-white p-0.5">
-                    {getUserAvatar() ? (
+                    {userStory ? (
+                      // Show story preview
+                      <div className="w-full h-full rounded-full overflow-hidden relative">
+                        {userStory.content_type === 'video' ? (
+                          <video
+                            src={getStoryPreviewUrl(userStory) || ''}
+                            className="w-full h-full object-cover rounded-full"
+                            muted
+                          />
+                        ) : (
+                          <img
+                            src={getStoryPreviewUrl(userStory) || ''}
+                            alt="Your story"
+                            className="w-full h-full object-cover rounded-full"
+                          />
+                        )}
+                      </div>
+                    ) : getUserAvatar() ? (
                       <img
                         src={getUserAvatar()!}
                         alt="Your story"
@@ -133,19 +165,29 @@ export const StoryBar = () => {
             >
               <div className="text-center">
                 <div className="relative">
-                  <div className="w-16 h-16 rounded-full p-0.5 bg-gradient-to-tr from-pink-500 via-purple-500 to-orange-500">
+                  <div className={`w-16 h-16 rounded-full p-0.5 bg-gradient-to-tr from-pink-500 via-purple-500 to-orange-500 ${
+                    isNewStory(story.created_at) ? 'shadow-lg shadow-purple-500/50 animate-pulse' : ''
+                  }`}>
                     <div className="w-full h-full rounded-full bg-white p-0.5">
-                      {story.creator.avatar_url ? (
-                        <img
-                          src={story.creator.avatar_url}
-                          alt={story.creator.username || 'User'}
-                          className="w-full h-full rounded-full object-cover"
-                        />
-                      ) : (
-                        <div className="w-full h-full rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white text-sm font-bold">
-                          {(story.creator.username || 'U').slice(0, 2).toUpperCase()}
-                        </div>
-                      )}
+                      <div className="w-full h-full rounded-full overflow-hidden relative">
+                        {story.content_type === 'video' ? (
+                          <video
+                            src={getStoryPreviewUrl(story) || ''}
+                            className="w-full h-full object-cover rounded-full"
+                            muted
+                          />
+                        ) : story.creator.avatar_url ? (
+                          <img
+                            src={getStoryPreviewUrl(story) || story.creator.avatar_url}
+                            alt={story.creator.username || 'User'}
+                            className="w-full h-full rounded-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-full h-full rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white text-sm font-bold">
+                            {(story.creator.username || 'U').slice(0, 2).toUpperCase()}
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
