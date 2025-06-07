@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -33,6 +32,8 @@ export const useStoriesFeed = () => {
       setLoading(true);
       setError(null);
       
+      console.log('Fetching stories...');
+
       const { data, error } = await supabase
         .from('stories')
         .select(`
@@ -50,7 +51,12 @@ export const useStoriesFeed = () => {
         .gte('expires_at', new Date().toISOString())
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Stories fetch error:', error);
+        throw error;
+      }
+
+      console.log('Fetched stories data:', data);
 
       const formattedStories = data?.map(story => {
         // Handle the profiles relationship correctly
@@ -62,12 +68,17 @@ export const useStoriesFeed = () => {
         };
       }) || [];
 
+      console.log('Formatted stories:', formattedStories);
+
       // Separate user's story from others
       const currentUserStory = formattedStories.find(story => story.creator_id === user?.id);
       const otherStories = formattedStories.filter(story => story.creator_id !== user?.id);
 
       setUserStory(currentUserStory || null);
       setStories(otherStories);
+
+      console.log('User story:', currentUserStory);
+      console.log('Other stories:', otherStories);
     } catch (error) {
       console.error('Error fetching stories:', error);
       const errorMessage = error instanceof Error ? error.message : 'Failed to load stories';
@@ -126,6 +137,7 @@ export const useStoriesFeed = () => {
           table: 'stories',
         },
         () => {
+          console.log('Stories updated, refetching...');
           fetchStories();
         }
       )

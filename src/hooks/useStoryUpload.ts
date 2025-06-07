@@ -3,7 +3,6 @@ import { useState, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { useStoriesFeed } from '@/hooks/useStoriesFeed';
-import { uploadMediaToSupabase } from '@/utils/upload/supabaseUpload';
 import { supabase } from '@/integrations/supabase/client';
 
 export const useStoryUpload = () => {
@@ -32,33 +31,56 @@ export const useStoryUpload = () => {
         setUploadProgress(prev => Math.min(prev + 10, 90));
       }, 200);
 
-      // Use the proven upload method that works for other media
-      const result = await uploadMediaToSupabase(file, {
-        category: 'stories',
-        accessLevel: 'public',
-        metadata: {
-          caption: caption || null,
-          contentType: file.type.startsWith('video/') ? 'video' : 'image'
-        }
-      });
+      // Generate unique filename
+      const fileExtension = file.name.split('.').pop()?.toLowerCase() || 'bin';
+      const fileName = `stories/${user.id}-${Date.now()}.${fileExtension}`;
 
-      if (!result.success) {
-        throw new Error(result.error || 'Upload failed');
+      console.log('Uploading story file:', fileName, 'Size:', file.size, 'Type:', file.type);
+
+      // Upload to Supabase Storage
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('stories')
+        .upload(fileName, file, {
+          cacheControl: '3600',
+          contentType: file.type,
+          upsert: false
+        });
+
+      if (uploadError) {
+        throw new Error(`Storage upload failed: ${uploadError.message}`);
       }
 
-      // Create story record using the uploaded media URL
-      const { error: dbError } = await supabase
+      console.log('File uploaded successfully:', uploadData);
+
+      // Get public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('stories')
+        .getPublicUrl(uploadData.path);
+
+      console.log('Generated public URL:', publicUrl);
+
+      // Create story record
+      const { data: storyData, error: dbError } = await supabase
         .from('stories')
         .insert({
           creator_id: user.id,
-          media_url: result.url,
-          video_url: file.type.startsWith('video/') ? result.url : null,
+          media_url: file.type.startsWith('image/') ? publicUrl : null,
+          video_url: file.type.startsWith('video/') ? publicUrl : null,
           content_type: file.type.startsWith('video/') ? 'video' : 'image',
           is_active: true,
           expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24 hours from now
-        });
+        })
+        .select()
+        .single();
 
-      if (dbError) throw dbError;
+      if (dbError) {
+        console.error('Database error:', dbError);
+        // Clean up uploaded file if database insert fails
+        await supabase.storage.from('stories').remove([uploadData.path]);
+        throw new Error(`Database error: ${dbError.message}`);
+      }
+
+      console.log('Story created successfully:', storyData);
 
       clearInterval(progressInterval);
       setUploadProgress(100);
@@ -71,7 +93,7 @@ export const useStoryUpload = () => {
       // Refresh stories feed
       refetch();
 
-      return { success: true };
+      return { success: true, data: storyData };
     } catch (error: any) {
       console.error('Story upload error:', error);
       toast({
