@@ -5,6 +5,7 @@ import { AvatarUpload } from "../upload/AvatarUpload";
 import { BannerUpload } from "../upload/BannerUpload";
 import { ProfileStats } from "../ProfileStats";
 import { FollowButton } from "../FollowButton";
+import { ProfileEditDialog } from "../ProfileEditDialog";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
@@ -31,6 +32,7 @@ export const ProfileHeader = ({ profile, isOwnProfile, onMediaSuccess, onEditCli
   const navigate = useNavigate();
   const { toast } = useToast();
   const [isFollowing, setIsFollowing] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -98,9 +100,18 @@ export const ProfileHeader = ({ profile, isOwnProfile, onMediaSuccess, onEditCli
     }
   };
 
+  const handleEditProfileClick = () => {
+    setIsEditDialogOpen(true);
+  };
+
+  const handleEditSuccess = () => {
+    // Trigger a page refresh to show updated data
+    window.location.reload();
+  };
+
   return (
     <div className="relative">
-      {/* Cinematic Banner Section */}
+      {/* Banner Section */}
       <div className="relative h-[500px] overflow-hidden">
         {isOwnProfile ? (
           <BannerUpload
@@ -138,13 +149,12 @@ export const ProfileHeader = ({ profile, isOwnProfile, onMediaSuccess, onEditCli
               </div>
             )}
             
-            {/* Luxury cinematic overlay */}
             <div className="absolute inset-0 bg-gradient-to-t from-luxury-dark via-luxury-dark/50 to-transparent" />
             <div className="absolute inset-0 bg-gradient-to-r from-luxury-dark/30 via-transparent to-luxury-dark/30" />
           </div>
         )}
 
-        {/* Floating Action Buttons with enhanced animations */}
+        {/* Floating Action Buttons */}
         {isOwnProfile && (
           <div className="absolute top-6 right-6 flex gap-3">
             <motion.button
@@ -172,7 +182,7 @@ export const ProfileHeader = ({ profile, isOwnProfile, onMediaSuccess, onEditCli
           </div>
         )}
 
-        {/* Premium Badge with pulse animation */}
+        {/* Premium Badge */}
         <div className="absolute top-6 left-6">
           <motion.div
             initial={{ opacity: 0, x: -20 }}
@@ -201,7 +211,7 @@ export const ProfileHeader = ({ profile, isOwnProfile, onMediaSuccess, onEditCli
       <div className="relative -mt-32 z-10">
         <div className="max-w-7xl mx-auto px-8">
           <div className="flex flex-col lg:flex-row items-end gap-8 mb-8">
-            {/* Avatar with Premium Glow and enhanced animations */}
+            {/* Avatar */}
             <motion.div
               initial={{ scale: 0.8, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
@@ -247,7 +257,6 @@ export const ProfileHeader = ({ profile, isOwnProfile, onMediaSuccess, onEditCli
                 </motion.div>
               )}
               
-              {/* Online Status Indicator with pulse */}
               <motion.div
                 animate={{ scale: [1, 1.2, 1] }}
                 transition={{ duration: 2, repeat: Infinity }}
@@ -263,7 +272,7 @@ export const ProfileHeader = ({ profile, isOwnProfile, onMediaSuccess, onEditCli
               className="flex-1 text-center lg:text-left"
             >
               <div className="bg-luxury-dark/80 backdrop-blur-xl rounded-3xl p-8 border border-luxury-primary/20 shadow-luxury">
-                {/* Username and Verification */}
+                {/* Username and Actions */}
                 <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-6">
                   <div className="flex items-center gap-4 mb-4 lg:mb-0">
                     <motion.h1
@@ -290,7 +299,7 @@ export const ProfileHeader = ({ profile, isOwnProfile, onMediaSuccess, onEditCli
                     </div>
                   </div>
                   
-                  {/* Action Buttons with enhanced animations */}
+                  {/* Action Buttons */}
                   <div className="flex flex-wrap gap-3">
                     {isOwnProfile ? (
                       <>
@@ -300,7 +309,7 @@ export const ProfileHeader = ({ profile, isOwnProfile, onMediaSuccess, onEditCli
                           transition={{ delay: 0.6 }}
                           whileHover={{ scale: 1.05, y: -2 }}
                           whileTap={{ scale: 0.95 }}
-                          onClick={onEditClick}
+                          onClick={handleEditProfileClick}
                           className="flex items-center gap-2 bg-button-gradient hover:bg-hover-gradient text-white px-6 py-3 rounded-xl font-semibold transition-all duration-300 shadow-button hover:shadow-button-hover group"
                         >
                           <Edit className="w-5 h-5 group-hover:rotate-12 transition-transform duration-300" />
@@ -378,7 +387,7 @@ export const ProfileHeader = ({ profile, isOwnProfile, onMediaSuccess, onEditCli
                   </motion.p>
                 )}
                 
-                {/* Metadata with icon animations */}
+                {/* Metadata */}
                 <motion.div
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
@@ -417,6 +426,14 @@ export const ProfileHeader = ({ profile, isOwnProfile, onMediaSuccess, onEditCli
           <ProfileStats profileId={profile.id} isOwnProfile={isOwnProfile} />
         </div>
       </div>
+
+      {/* Edit Profile Dialog */}
+      <ProfileEditDialog
+        profile={profile}
+        isOpen={isEditDialogOpen}
+        onClose={() => setIsEditDialogOpen(false)}
+        onSuccess={handleEditSuccess}
+      />
     </div>
   );
 };

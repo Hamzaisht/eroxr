@@ -84,7 +84,6 @@ export const FollowButton = ({ profileId, initialIsFollowing = false, onFollowCh
     
     try {
       if (isFollowing) {
-        // Unfollow
         const { error } = await supabase
           .from('followers')
           .delete()
@@ -102,7 +101,6 @@ export const FollowButton = ({ profileId, initialIsFollowing = false, onFollowCh
           description: "You are no longer following this user.",
         });
       } else {
-        // Follow
         const { error } = await supabase
           .from('followers')
           .insert({

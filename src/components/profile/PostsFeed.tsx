@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -17,11 +18,11 @@ interface Post {
   likes_count: number;
   comments_count: number;
   view_count: number;
-  post_media_actions: Array<{
+  media_assets?: Array<{
     id: string;
-    media_url: string;
+    storage_path: string;
     media_type: string;
-    thumbnail_url?: string;
+    mime_type: string;
   }>;
   creator?: {
     id: string;
@@ -55,19 +56,16 @@ export const PostsFeed = ({ profileId, isOwnProfile }: PostsFeedProps) => {
         .from('posts')
         .select(`
           *,
-          post_media_actions!left(id, media_url, media_type, thumbnail_url),
           creator:profiles!creator_id(id, username, avatar_url)
         `)
         .eq('creator_id', profileId)
         .order('created_at', { ascending: false });
 
-      if (filter === 'media') {
-        query = query.not('post_media_actions', 'is', null);
-      } else if (filter === 'premium') {
+      if (filter === 'premium') {
         query = query.eq('is_ppv', true);
       }
 
-      const { data, error } = await query;
+      const { data: postsData, error } = await query;
 
       if (error) {
         console.error('Error fetching posts:', error);
@@ -79,23 +77,28 @@ export const PostsFeed = ({ profileId, isOwnProfile }: PostsFeedProps) => {
         return;
       }
 
-      // Group media by post
-      const groupedPosts = data?.reduce((acc: Post[], post) => {
-        const existingPost = acc.find(p => p.id === post.id);
-        if (existingPost) {
-          if (post.post_media_actions) {
-            existingPost.post_media_actions.push(post.post_media_actions);
-          }
-        } else {
-          acc.push({
-            ...post,
-            post_media_actions: post.post_media_actions ? [post.post_media_actions] : []
-          });
-        }
-        return acc;
-      }, []) || [];
+      // Fetch media assets for posts if filter is 'media' or 'all'
+      let postsWithMedia = postsData || [];
+      
+      if (filter === 'media' || filter === 'all') {
+        for (const post of postsWithMedia) {
+          const { data: mediaData, error: mediaError } = await supabase
+            .from('media_assets')
+            .select('id, storage_path, media_type, mime_type')
+            .eq('metadata->post_id', post.id);
 
-      setPosts(groupedPosts);
+          if (!mediaError && mediaData) {
+            post.media_assets = mediaData;
+          }
+        }
+
+        // Filter posts with media if needed
+        if (filter === 'media') {
+          postsWithMedia = postsWithMedia.filter(post => post.media_assets && post.media_assets.length > 0);
+        }
+      }
+
+      setPosts(postsWithMedia);
     } catch (error) {
       console.error('Error:', error);
       toast({
@@ -146,7 +149,6 @@ export const PostsFeed = ({ profileId, isOwnProfile }: PostsFeedProps) => {
 
       if (error) throw error;
 
-      // Update local state
       setPosts(prev => prev.map(post => 
         post.id === postId 
           ? { ...post, likes_count: post.likes_count + 1 }
@@ -167,6 +169,11 @@ export const PostsFeed = ({ profileId, isOwnProfile }: PostsFeedProps) => {
     }
   };
 
+  const getMediaUrl = (storagePath: string) => {
+    const { data } = supabase.storage.from('media').getPublicUrl(storagePath);
+    return data.publicUrl;
+  };
+
   if (loading) {
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -185,7 +192,7 @@ export const PostsFeed = ({ profileId, isOwnProfile }: PostsFeedProps) => {
 
   return (
     <div className="space-y-8">
-      {/* Controls with enhanced animations */}
+      {/* Controls */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2 p-1.5 bg-luxury-dark/50 backdrop-blur-xl border border-luxury-primary/20 rounded-2xl">
@@ -322,12 +329,12 @@ export const PostsFeed = ({ profileId, isOwnProfile }: PostsFeedProps) => {
             >
               <div className="bg-luxury-dark/50 backdrop-blur-xl border border-luxury-primary/20 hover:border-luxury-primary/40 rounded-3xl overflow-hidden transition-all duration-300 hover:shadow-luxury">
                 {/* Media Preview */}
-                {post.post_media_actions && post.post_media_actions.length > 0 && (
+                {post.media_assets && post.media_assets.length > 0 && (
                   <div className="relative aspect-video overflow-hidden">
-                    {post.post_media_actions[0].media_type?.startsWith('video') ? (
+                    {post.media_assets[0].media_type?.startsWith('video') ? (
                       <div className="relative w-full h-full">
                         <video
-                          src={post.post_media_actions[0].media_url}
+                          src={getMediaUrl(post.media_assets[0].storage_path)}
                           className="w-full h-full object-cover"
                           muted
                           preload="metadata"
@@ -348,13 +355,12 @@ export const PostsFeed = ({ profileId, isOwnProfile }: PostsFeedProps) => {
                       </div>
                     ) : (
                       <img
-                        src={post.post_media_actions[0].media_url}
+                        src={getMediaUrl(post.media_assets[0].storage_path)}
                         alt="Post media"
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                       />
                     )}
                     
-                    {/* PPV Badge */}
                     {post.is_ppv && (
                       <motion.div
                         initial={{ opacity: 0, scale: 0.8 }}
@@ -373,7 +379,7 @@ export const PostsFeed = ({ profileId, isOwnProfile }: PostsFeedProps) => {
                     {post.content}
                   </p>
                   
-                  {/* Stats with hover animations */}
+                  {/* Stats */}
                   <div className="flex items-center justify-between text-luxury-muted text-sm">
                     <div className="flex items-center gap-4">
                       <motion.button
