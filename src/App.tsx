@@ -6,6 +6,7 @@ import { MainLayout } from "@/components/layout/MainLayout";
 import { ErrorBoundary } from "@/components/ui/ErrorBoundary";
 import ProfilePage from "@/pages/ProfilePage";
 import Home from "@/pages/Home";
+import SearchPage from "@/pages/Search";
 import Index from "@/pages/Index";
 import Login from "@/pages/Login";
 import Register from "@/pages/Register";
@@ -37,6 +38,9 @@ function App() {
                   <Route path="/register" element={<Register />} />
                   <Route path="/home" element={<MainLayout />}>
                     <Route index element={<Home />} />
+                  </Route>
+                  <Route path="/search" element={<MainLayout />}>
+                    <Route index element={<SearchPage />} />
                   </Route>
                   <Route path="/profile/:username" element={<MainLayout />}>
                     <Route index element={<ProfilePage />} />
