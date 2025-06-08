@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { PostCard } from "./PostCard";
 import { motion } from "framer-motion";
-import { Grid, List, Filter, Plus, Camera, Video, Image, Play } from "lucide-react";
+import { Grid, List, Filter, Plus, Camera, Video, Image, Play, Heart, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface Post {
