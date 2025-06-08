@@ -17,13 +17,14 @@ export default function ProfilePage() {
   const session = useSession();
 
   useEffect(() => {
-    if (!session?.user) {
-      navigate('/login');
-      return;
-    }
-
     if (!username) {
-      redirectToUserProfile();
+      // If no username provided and user is logged in, redirect to their profile
+      if (session?.user) {
+        redirectToUserProfile();
+      } else {
+        setLoading(false);
+        setProfileId(null);
+      }
       return;
     }
 
@@ -89,13 +90,16 @@ export default function ProfilePage() {
 
     try {
       setLoading(true);
+      console.log('Fetching profile for username:', username);
       
+      // First try to find by username
       let { data: profileData, error } = await supabase
         .from('profiles')
         .select('id, username')
         .eq('username', username)
         .single();
 
+      // If not found by username, try by ID (fallback)
       if (error && error.code === 'PGRST116') {
         const { data: profileByIdData, error: idError } = await supabase
           .from('profiles')
@@ -109,29 +113,12 @@ export default function ProfilePage() {
 
       if (error) {
         console.error('Profile not found:', error);
-        
-        if (session?.user?.id) {
-          const { data: currentUserProfile } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', session.user.id)
-            .single();
-
-          if (!currentUserProfile) {
-            await redirectToUserProfile();
-            return;
-          } else if (currentUserProfile.username !== username) {
-            setProfileId(null);
-            setLoading(false);
-            return;
-          }
-        }
-        
         setProfileId(null);
         setLoading(false);
         return;
       }
 
+      console.log('Profile found:', profileData);
       setProfileId(profileData.id);
     } catch (error: any) {
       console.error('Error fetching profile:', error);
@@ -148,11 +135,11 @@ export default function ProfilePage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen w-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black flex items-center justify-center overflow-hidden">
+      <div className="min-h-screen w-screen bg-luxury-gradient relative flex items-center justify-center overflow-hidden">
         <motion.div
           animate={{ rotate: 360 }}
           transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-          className="w-16 h-16 border-4 border-cyan-500 border-t-transparent rounded-full"
+          className="w-16 h-16 border-4 border-luxury-primary border-t-transparent rounded-full"
         />
       </div>
     );
@@ -160,34 +147,34 @@ export default function ProfilePage() {
 
   if (!profileId) {
     return (
-      <div className="min-h-screen w-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black flex items-center justify-center overflow-hidden">
+      <div className="min-h-screen w-screen bg-luxury-gradient relative flex items-center justify-center overflow-hidden">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           className="text-center px-8"
         >
-          <h1 className="text-4xl font-bold text-white mb-4">Profile Not Found</h1>
-          <p className="text-gray-400 text-xl mb-8">The user you're looking for doesn't exist.</p>
-          {session?.user && (
-            <div className="space-y-4">
+          <h1 className="text-4xl font-bold text-luxury-neutral mb-4">Profile Not Found</h1>
+          <p className="text-luxury-muted text-xl mb-8">The user you're looking for doesn't exist.</p>
+          <div className="space-y-4">
+            {session?.user && (
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={() => redirectToUserProfile()}
-                className="px-8 py-4 bg-gradient-to-r from-cyan-500 to-purple-500 text-white rounded-2xl font-semibold hover:shadow-xl transition-all duration-300 mr-4 text-lg"
+                className="px-8 py-4 bg-button-gradient text-white rounded-2xl font-semibold hover:shadow-button-hover transition-all duration-300 mr-4 text-lg"
               >
                 Go to My Profile
               </motion.button>
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => navigate('/home')}
-                className="px-8 py-4 bg-white/10 text-white rounded-2xl font-semibold hover:bg-white/20 transition-all duration-300 text-lg backdrop-blur-sm"
-              >
-                Go to Home
-              </motion.button>
-            </div>
-          )}
+            )}
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => navigate('/home')}
+              className="px-8 py-4 bg-luxury-primary/10 text-luxury-neutral rounded-2xl font-semibold hover:bg-luxury-primary/20 transition-all duration-300 text-lg backdrop-blur-sm"
+            >
+              Go to Home
+            </motion.button>
+          </div>
         </motion.div>
       </div>
     );

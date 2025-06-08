@@ -55,16 +55,6 @@ export default function SearchPage() {
       const cleanTerm = searchTerm.replace(/^@/, '').trim().toLowerCase();
       console.log('Searching for cleaned term:', cleanTerm);
 
-      const { data: allProfiles, error: countError } = await supabase
-        .from('profiles')
-        .select('id, username')
-        .limit(5);
-      
-      console.log('Sample profiles in database:', allProfiles);
-      if (countError) {
-        console.error('Error checking profiles:', countError);
-      }
-
       const { data, error } = await supabase
         .from('profiles')
         .select(`
@@ -171,44 +161,44 @@ export default function SearchPage() {
   });
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 relative overflow-hidden">
-      {/* Studio Background Effects */}
+    <div className="min-h-screen bg-luxury-gradient-from relative overflow-hidden">
+      {/* Luxury Background Effects */}
       <div className="absolute inset-0 pointer-events-none">
-        {/* Grid overlay */}
-        <div className="absolute inset-0 bg-[linear-gradient(rgba(59,130,246,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(59,130,246,0.03)_1px,transparent_1px)] bg-[size:50px_50px]" />
+        {/* Premium grid overlay */}
+        <div className="absolute inset-0 bg-[linear-gradient(rgba(155,135,245,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(155,135,245,0.02)_1px,transparent_1px)] bg-[size:50px_50px]" />
         
-        {/* Floating orbs */}
-        <div className="absolute top-20 left-20 w-96 h-96 bg-blue-500/5 rounded-full blur-3xl animate-pulse" />
-        <div className="absolute bottom-40 right-32 w-80 h-80 bg-purple-500/5 rounded-full blur-3xl animate-pulse delay-1000" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-cyan-500/5 rounded-full blur-3xl animate-pulse delay-500" />
+        {/* Floating luxury orbs */}
+        <div className="absolute top-20 left-20 w-96 h-96 bg-luxury-primary/5 rounded-full blur-3xl animate-pulse" />
+        <div className="absolute bottom-40 right-32 w-80 h-80 bg-luxury-accent/5 rounded-full blur-3xl animate-pulse delay-1000" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-luxury-secondary/5 rounded-full blur-3xl animate-pulse delay-500" />
         
-        {/* Scan lines effect */}
-        <div className="absolute inset-0 bg-[linear-gradient(transparent_2px,rgba(0,255,255,0.01)_2px,rgba(0,255,255,0.01)_4px,transparent_4px)] bg-[length:100%_4px] animate-pulse" />
+        {/* Premium scan lines effect */}
+        <div className="absolute inset-0 bg-[linear-gradient(transparent_2px,rgba(155,135,245,0.01)_2px,rgba(155,135,245,0.01)_4px,transparent_4px)] bg-[length:100%_4px] animate-pulse" />
       </div>
 
       <div className="relative z-10 pt-20">
         <div className="container mx-auto px-4 py-8 max-w-7xl">
-          {/* Professional Header */}
+          {/* Luxury Studio Header */}
           <motion.div 
             className="mb-12 text-center"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
           >
-            <div className="inline-flex items-center gap-3 mb-6 px-6 py-3 bg-slate-800/30 backdrop-blur-xl border border-blue-500/20 rounded-2xl">
-              <TrendingUp className="h-6 w-6 text-blue-400" />
-              <span className="text-blue-400 font-medium tracking-wide">CREATOR DISCOVERY STUDIO</span>
+            <div className="inline-flex items-center gap-3 mb-6 px-6 py-3 bg-luxury-dark/30 backdrop-blur-xl border border-luxury-primary/20 rounded-2xl">
+              <TrendingUp className="h-6 w-6 text-luxury-primary" />
+              <span className="text-luxury-primary font-medium tracking-wide">CREATOR DISCOVERY STUDIO</span>
             </div>
             
-            <h1 className="text-5xl font-bold mb-4 bg-gradient-to-r from-blue-400 via-purple-400 to-cyan-400 bg-clip-text text-transparent tracking-tight">
+            <h1 className="text-5xl font-bold mb-4 bg-gradient-to-r from-luxury-primary via-luxury-accent to-luxury-secondary bg-clip-text text-transparent tracking-tight">
               Advanced Search
             </h1>
-            <p className="text-slate-400 text-lg max-w-2xl mx-auto leading-relaxed">
+            <p className="text-luxury-muted text-lg max-w-2xl mx-auto leading-relaxed">
               Professional creator discovery platform with real-time analytics and precision matching
             </p>
           </motion.div>
           
-          {/* Professional Search Interface */}
+          {/* Luxury Search Interface */}
           <motion.div 
             className="mb-12"
             initial={{ opacity: 0, y: 20 }}
@@ -217,13 +207,13 @@ export default function SearchPage() {
           >
             <form onSubmit={handleSearch} className="max-w-3xl mx-auto">
               <div className="relative group">
-                {/* Glow effect */}
-                <div className="absolute -inset-1 bg-gradient-to-r from-blue-500 via-purple-500 to-cyan-500 rounded-2xl blur opacity-25 group-hover:opacity-40 transition-opacity duration-300" />
+                {/* Luxury glow effect */}
+                <div className="absolute -inset-1 bg-premium-gradient rounded-2xl blur opacity-25 group-hover:opacity-40 transition-opacity duration-300" />
                 
-                <div className="relative bg-slate-900/90 backdrop-blur-xl border border-slate-700/50 rounded-2xl p-2 shadow-2xl">
+                <div className="relative bg-luxury-dark/90 backdrop-blur-xl border border-luxury-primary/20 rounded-2xl p-2 shadow-luxury">
                   <div className="flex items-center gap-4">
                     {/* Search icon */}
-                    <div className="flex items-center justify-center w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl shadow-lg">
+                    <div className="flex items-center justify-center w-12 h-12 bg-button-gradient rounded-xl shadow-button">
                       <SearchIcon className="h-5 w-5 text-white" />
                     </div>
                     
@@ -234,7 +224,7 @@ export default function SearchPage() {
                         value={query}
                         onChange={(e) => setQuery(e.target.value)}
                         placeholder="Search creators by username, bio, or expertise..."
-                        className="bg-transparent border-none text-white placeholder:text-slate-400 focus:ring-0 focus:outline-none text-lg h-12 font-medium"
+                        className="bg-transparent border-none text-luxury-neutral placeholder:text-luxury-muted focus:ring-0 focus:outline-none text-lg h-12 font-medium"
                       />
                     </div>
                     
@@ -243,7 +233,7 @@ export default function SearchPage() {
                       type="button"
                       variant="ghost"
                       size="icon"
-                      className="w-12 h-12 text-slate-400 hover:text-white hover:bg-slate-800/50 rounded-xl"
+                      className="w-12 h-12 text-luxury-muted hover:text-luxury-neutral hover:bg-luxury-primary/10 rounded-xl"
                     >
                       <Filter className="h-5 w-5" />
                     </Button>
@@ -251,7 +241,7 @@ export default function SearchPage() {
                     {/* Search button */}
                     <Button 
                       type="submit" 
-                      className="h-12 px-8 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-medium rounded-xl shadow-lg transition-all duration-300 hover:scale-105"
+                      className="h-12 px-8 bg-button-gradient hover:bg-hover-gradient text-white font-medium rounded-xl shadow-button hover:shadow-button-hover transition-all duration-300 hover:scale-105"
                     >
                       Search
                     </Button>
@@ -268,8 +258,8 @@ export default function SearchPage() {
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
             >
-              <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-xl backdrop-blur-xl">
-                <p className="text-red-400 text-center">{error}</p>
+              <div className="p-4 bg-luxury-error/10 border border-luxury-error/20 rounded-xl backdrop-blur-xl">
+                <p className="text-luxury-error text-center">{error}</p>
               </div>
             </motion.div>
           )}
@@ -284,38 +274,38 @@ export default function SearchPage() {
             <div className="flex items-center gap-4">
               {currentQuery ? (
                 <>
-                  <div className="flex items-center gap-3 px-4 py-2 bg-slate-800/50 backdrop-blur-xl border border-blue-500/20 rounded-xl">
-                    <User className="h-5 w-5 text-blue-400" />
-                    <span className="text-white font-medium">Results for</span>
-                    <span className="text-blue-400 font-bold">"{currentQuery}"</span>
+                  <div className="flex items-center gap-3 px-4 py-2 bg-luxury-dark/50 backdrop-blur-xl border border-luxury-primary/20 rounded-xl">
+                    <User className="h-5 w-5 text-luxury-primary" />
+                    <span className="text-luxury-neutral font-medium">Results for</span>
+                    <span className="text-luxury-primary font-bold">"{currentQuery}"</span>
                   </div>
-                  <div className="px-3 py-1 bg-blue-500/20 border border-blue-500/30 rounded-lg">
-                    <span className="text-blue-300 text-sm font-medium">
+                  <div className="px-3 py-1 bg-luxury-primary/20 border border-luxury-primary/30 rounded-lg">
+                    <span className="text-luxury-primary text-sm font-medium">
                       {searchResults.length} found
                     </span>
                   </div>
                 </>
               ) : (
-                <div className="flex items-center gap-3 px-4 py-2 bg-slate-800/50 backdrop-blur-xl border border-purple-500/20 rounded-xl">
-                  <Star className="h-5 w-5 text-purple-400" />
-                  <span className="text-white font-medium">Featured Creators</span>
+                <div className="flex items-center gap-3 px-4 py-2 bg-luxury-dark/50 backdrop-blur-xl border border-luxury-accent/20 rounded-xl">
+                  <Star className="h-5 w-5 text-luxury-accent" />
+                  <span className="text-luxury-neutral font-medium">Featured Creators</span>
                 </div>
               )}
             </div>
             
             {/* View toggle */}
-            <div className="flex items-center gap-2 p-1 bg-slate-800/50 backdrop-blur-xl border border-slate-700/50 rounded-xl">
+            <div className="flex items-center gap-2 p-1 bg-luxury-dark/50 backdrop-blur-xl border border-luxury-primary/20 rounded-xl">
               <Button 
                 variant="ghost" 
                 size="sm" 
-                className="text-slate-400 hover:text-white hover:bg-slate-700/50 data-[state=active]:bg-blue-500/20 data-[state=active]:text-blue-400"
+                className="text-luxury-muted hover:text-luxury-neutral hover:bg-luxury-primary/20 data-[state=active]:bg-luxury-primary/20 data-[state=active]:text-luxury-primary"
               >
                 <Grid className="h-4 w-4" />
               </Button>
               <Button 
                 variant="ghost" 
                 size="sm" 
-                className="text-slate-400 hover:text-white hover:bg-slate-700/50"
+                className="text-luxury-muted hover:text-luxury-neutral hover:bg-luxury-primary/20"
               >
                 <List className="h-4 w-4" />
               </Button>
@@ -328,7 +318,7 @@ export default function SearchPage() {
               {[...Array(8)].map((_, i) => (
                 <motion.div 
                   key={i} 
-                  className="h-80 bg-slate-800/30 backdrop-blur-xl border border-slate-700/30 rounded-2xl animate-pulse"
+                  className="h-80 bg-luxury-dark/30 backdrop-blur-xl border border-luxury-primary/20 rounded-2xl animate-pulse"
                   initial={{ opacity: 0, scale: 0.9 }}
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ duration: 0.3, delay: i * 0.1 }}
@@ -346,24 +336,24 @@ export default function SearchPage() {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                 >
-                  <div className="w-24 h-24 bg-slate-800/50 backdrop-blur-xl border border-slate-700/30 rounded-2xl flex items-center justify-center mx-auto mb-6">
-                    <User className="h-12 w-12 text-slate-500" />
+                  <div className="w-24 h-24 bg-luxury-dark/50 backdrop-blur-xl border border-luxury-primary/20 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                    <User className="h-12 w-12 text-luxury-muted" />
                   </div>
                   {searchPerformed && currentQuery ? (
                     <>
-                      <h3 className="text-2xl font-semibold text-white mb-3">
+                      <h3 className="text-2xl font-semibold text-luxury-neutral mb-3">
                         No creators found for "{currentQuery}"
                       </h3>
-                      <p className="text-slate-400 mb-6 max-w-md mx-auto">
+                      <p className="text-luxury-muted mb-6 max-w-md mx-auto">
                         Try adjusting your search terms or explore our featured creators below
                       </p>
                     </>
                   ) : (
                     <>
-                      <h3 className="text-2xl font-semibold text-white mb-3">
+                      <h3 className="text-2xl font-semibold text-luxury-neutral mb-3">
                         No creators available
                       </h3>
-                      <p className="text-slate-400 mb-6 max-w-md mx-auto">
+                      <p className="text-luxury-muted mb-6 max-w-md mx-auto">
                         Be the first to join our creator community
                       </p>
                     </>
@@ -374,7 +364,7 @@ export default function SearchPage() {
                       setSearchParams({});
                       loadPopularCreators();
                     }}
-                    className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white px-8 py-3 rounded-xl shadow-lg transition-all duration-300 hover:scale-105"
+                    className="bg-button-gradient hover:bg-hover-gradient text-white px-8 py-3 rounded-xl shadow-button transition-all duration-300 hover:scale-105"
                   >
                     Explore Creators
                   </Button>
