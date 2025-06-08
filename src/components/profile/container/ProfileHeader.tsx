@@ -4,6 +4,10 @@ import { MapPin, Calendar, Edit, Camera, Users, Heart, MessageCircle, Crown, Ver
 import { AvatarUpload } from "../upload/AvatarUpload";
 import { BannerUpload } from "../upload/BannerUpload";
 import { ProfileStats } from "../ProfileStats";
+import { FollowButton } from "../FollowButton";
+import { useNavigate } from "react-router-dom";
+import { useToast } from "@/hooks/use-toast";
+import { useState } from "react";
 
 interface ProfileData {
   id: string;
@@ -24,11 +28,74 @@ interface ProfileHeaderProps {
 }
 
 export const ProfileHeader = ({ profile, isOwnProfile, onMediaSuccess, onEditClick }: ProfileHeaderProps) => {
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  const [isFollowing, setIsFollowing] = useState(false);
+
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'long'
     });
+  };
+
+  const handleMessageClick = () => {
+    if (!isOwnProfile) {
+      navigate(`/messages?user=${profile.id}&username=${profile.username}`);
+      toast({
+        title: "Opening Messages",
+        description: `Starting conversation with @${profile.username}`,
+      });
+    }
+  };
+
+  const handleTipClick = () => {
+    if (!isOwnProfile) {
+      toast({
+        title: "Tip Feature",
+        description: "Tip functionality coming soon!",
+      });
+    }
+  };
+
+  const handleShareProfile = async () => {
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: `@${profile.username} on the platform`,
+          text: `Check out @${profile.username}'s profile`,
+          url: window.location.href,
+        });
+      } else {
+        await navigator.clipboard.writeText(window.location.href);
+        toast({
+          title: "Link Copied",
+          description: "Profile link copied to clipboard!",
+        });
+      }
+    } catch (error) {
+      console.error('Error sharing:', error);
+      toast({
+        title: "Share Failed",
+        description: "Could not share profile. Please try again.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleSettingsClick = () => {
+    if (isOwnProfile) {
+      navigate('/settings');
+    }
+  };
+
+  const handleAnalyticsClick = () => {
+    if (isOwnProfile) {
+      toast({
+        title: "Analytics",
+        description: "Analytics dashboard coming soon!",
+      });
+    }
   };
 
   return (
@@ -86,6 +153,7 @@ export const ProfileHeader = ({ profile, isOwnProfile, onMediaSuccess, onEditCli
               transition={{ delay: 0.5 }}
               whileHover={{ scale: 1.1, y: -2 }}
               whileTap={{ scale: 0.95 }}
+              onClick={handleSettingsClick}
               className="w-12 h-12 bg-luxury-dark/80 backdrop-blur-xl border border-luxury-primary/30 rounded-xl flex items-center justify-center text-luxury-primary hover:bg-luxury-primary/20 transition-all duration-300 hover:shadow-luxury group"
             >
               <Settings className="w-5 h-5 group-hover:rotate-90 transition-transform duration-300" />
@@ -96,6 +164,7 @@ export const ProfileHeader = ({ profile, isOwnProfile, onMediaSuccess, onEditCli
               transition={{ delay: 0.6 }}
               whileHover={{ scale: 1.1, y: -2 }}
               whileTap={{ scale: 0.95 }}
+              onClick={handleShareProfile}
               className="w-12 h-12 bg-luxury-dark/80 backdrop-blur-xl border border-luxury-primary/30 rounded-xl flex items-center justify-center text-luxury-primary hover:bg-luxury-primary/20 transition-all duration-300 hover:shadow-luxury group"
             >
               <Share2 className="w-5 h-5 group-hover:scale-110 transition-transform duration-300" />
@@ -243,6 +312,7 @@ export const ProfileHeader = ({ profile, isOwnProfile, onMediaSuccess, onEditCli
                           transition={{ delay: 0.7 }}
                           whileHover={{ scale: 1.05, y: -2 }}
                           whileTap={{ scale: 0.95 }}
+                          onClick={handleAnalyticsClick}
                           className="flex items-center gap-2 bg-luxury-dark/50 hover:bg-luxury-primary/20 text-luxury-primary px-6 py-3 rounded-xl font-semibold transition-all duration-300 border border-luxury-primary/30 backdrop-blur-xl group"
                         >
                           <Star className="w-5 h-5 group-hover:rotate-180 transition-transform duration-500" />
@@ -251,23 +321,18 @@ export const ProfileHeader = ({ profile, isOwnProfile, onMediaSuccess, onEditCli
                       </>
                     ) : (
                       <>
-                        <motion.button
-                          initial={{ opacity: 0, y: 20 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: 0.6 }}
-                          whileHover={{ scale: 1.05, y: -2 }}
-                          whileTap={{ scale: 0.95 }}
-                          className="flex items-center gap-2 bg-button-gradient hover:bg-hover-gradient text-white px-6 py-3 rounded-xl font-semibold transition-all duration-300 shadow-button hover:shadow-button-hover group"
-                        >
-                          <Users className="w-5 h-5 group-hover:scale-110 transition-transform duration-300" />
-                          Follow
-                        </motion.button>
+                        <FollowButton
+                          profileId={profile.id}
+                          initialIsFollowing={isFollowing}
+                          onFollowChange={setIsFollowing}
+                        />
                         <motion.button
                           initial={{ opacity: 0, y: 20 }}
                           animate={{ opacity: 1, y: 0 }}
                           transition={{ delay: 0.7 }}
                           whileHover={{ scale: 1.05, y: -2 }}
                           whileTap={{ scale: 0.95 }}
+                          onClick={handleMessageClick}
                           className="flex items-center gap-2 bg-luxury-dark/50 hover:bg-luxury-primary/20 text-luxury-primary px-6 py-3 rounded-xl font-semibold transition-all duration-300 border border-luxury-primary/30 backdrop-blur-xl group"
                         >
                           <MessageCircle className="w-5 h-5 group-hover:rotate-12 transition-transform duration-300" />
@@ -279,6 +344,7 @@ export const ProfileHeader = ({ profile, isOwnProfile, onMediaSuccess, onEditCli
                           transition={{ delay: 0.8 }}
                           whileHover={{ scale: 1.05, y: -2 }}
                           whileTap={{ scale: 0.95 }}
+                          onClick={handleTipClick}
                           className="flex items-center gap-2 bg-luxury-accent/20 hover:bg-luxury-accent/30 text-luxury-accent px-6 py-3 rounded-xl font-semibold transition-all duration-300 border border-luxury-accent/30 backdrop-blur-xl group"
                         >
                           <Heart className="w-5 h-5 group-hover:scale-125 transition-transform duration-300" />
@@ -290,6 +356,7 @@ export const ProfileHeader = ({ profile, isOwnProfile, onMediaSuccess, onEditCli
                           transition={{ delay: 0.9 }}
                           whileHover={{ scale: 1.1, rotate: 90 }}
                           whileTap={{ scale: 0.95 }}
+                          onClick={handleShareProfile}
                           className="w-12 h-12 bg-luxury-dark/50 hover:bg-luxury-primary/20 text-luxury-primary rounded-xl transition-all duration-300 border border-luxury-primary/30 backdrop-blur-xl flex items-center justify-center"
                         >
                           <MoreHorizontal className="w-5 h-5" />

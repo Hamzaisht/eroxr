@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -6,6 +5,7 @@ import { PostCard } from "./PostCard";
 import { motion } from "framer-motion";
 import { Grid, List, Filter, Plus, Camera, Video, Image, Play, Heart, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
 
 interface Post {
   id: string;
@@ -41,6 +41,7 @@ export const PostsFeed = ({ profileId, isOwnProfile }: PostsFeedProps) => {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [filter, setFilter] = useState<'all' | 'media' | 'premium'>('all');
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchPosts();
@@ -107,6 +108,65 @@ export const PostsFeed = ({ profileId, isOwnProfile }: PostsFeedProps) => {
     }
   };
 
+  const handleCreatePost = () => {
+    if (isOwnProfile) {
+      navigate('/create-post');
+      toast({
+        title: "Create Post",
+        description: "Opening post creation...",
+      });
+    }
+  };
+
+  const handleFilterChange = (newFilter: 'all' | 'media' | 'premium') => {
+    setFilter(newFilter);
+    toast({
+      title: "Filter Applied",
+      description: `Showing ${newFilter === 'all' ? 'all posts' : newFilter === 'media' ? 'media posts' : 'premium posts'}`,
+    });
+  };
+
+  const handleViewModeChange = (mode: 'grid' | 'list') => {
+    setViewMode(mode);
+    toast({
+      title: "View Changed",
+      description: `Switched to ${mode} view`,
+    });
+  };
+
+  const handlePostClick = (postId: string) => {
+    navigate(`/post/${postId}`);
+  };
+
+  const handleLikePost = async (postId: string) => {
+    try {
+      const { error } = await supabase
+        .from('post_likes')
+        .upsert({ post_id: postId, user_id: profileId });
+
+      if (error) throw error;
+
+      // Update local state
+      setPosts(prev => prev.map(post => 
+        post.id === postId 
+          ? { ...post, likes_count: post.likes_count + 1 }
+          : post
+      ));
+
+      toast({
+        title: "Liked!",
+        description: "Post liked successfully",
+      });
+    } catch (error) {
+      console.error('Error liking post:', error);
+      toast({
+        title: "Error",
+        description: "Failed to like post",
+        variant: "destructive"
+      });
+    }
+  };
+
   if (loading) {
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -129,7 +189,7 @@ export const PostsFeed = ({ profileId, isOwnProfile }: PostsFeedProps) => {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2 p-1.5 bg-luxury-dark/50 backdrop-blur-xl border border-luxury-primary/20 rounded-2xl">
-            {['all', 'media', 'premium'].map((f, index) => (
+            {(['all', 'media', 'premium'] as const).map((f, index) => (
               <motion.button
                 key={f}
                 initial={{ opacity: 0, x: -20 }}
@@ -137,7 +197,7 @@ export const PostsFeed = ({ profileId, isOwnProfile }: PostsFeedProps) => {
                 transition={{ delay: index * 0.1 }}
                 whileHover={{ scale: 1.05, y: -1 }}
                 whileTap={{ scale: 0.95 }}
-                onClick={() => setFilter(f as any)}
+                onClick={() => handleFilterChange(f)}
                 className={`px-4 py-2 text-sm font-medium rounded-xl transition-all duration-300 ${
                   filter === f
                     ? 'bg-luxury-primary text-white shadow-lg'
@@ -169,7 +229,7 @@ export const PostsFeed = ({ profileId, isOwnProfile }: PostsFeedProps) => {
             <motion.button
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.9 }}
-              onClick={() => setViewMode('grid')}
+              onClick={() => handleViewModeChange('grid')}
               className={`p-2 transition-all duration-300 ${viewMode === 'grid' ? 'bg-luxury-primary/20 text-luxury-primary' : 'text-luxury-muted hover:text-luxury-neutral'}`}
             >
               <Grid className="w-4 h-4" />
@@ -177,7 +237,7 @@ export const PostsFeed = ({ profileId, isOwnProfile }: PostsFeedProps) => {
             <motion.button
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.9 }}
-              onClick={() => setViewMode('list')}
+              onClick={() => handleViewModeChange('list')}
               className={`p-2 transition-all duration-300 ${viewMode === 'list' ? 'bg-luxury-primary/20 text-luxury-primary' : 'text-luxury-muted hover:text-luxury-neutral'}`}
             >
               <List className="w-4 h-4" />
@@ -191,6 +251,7 @@ export const PostsFeed = ({ profileId, isOwnProfile }: PostsFeedProps) => {
               transition={{ delay: 0.4 }}
               whileHover={{ scale: 1.05, y: -2 }}
               whileTap={{ scale: 0.95 }}
+              onClick={handleCreatePost}
               className="flex items-center gap-2 px-4 py-2 bg-button-gradient text-white rounded-xl font-medium shadow-button hover:shadow-button-hover transition-all duration-300 group"
             >
               <Plus className="w-4 h-4 group-hover:rotate-90 transition-transform duration-300" />
@@ -230,6 +291,7 @@ export const PostsFeed = ({ profileId, isOwnProfile }: PostsFeedProps) => {
             <motion.button
               whileHover={{ scale: 1.05, y: -2 }}
               whileTap={{ scale: 0.95 }}
+              onClick={handleCreatePost}
               className="bg-button-gradient text-white px-8 py-3 rounded-xl font-medium shadow-button transition-all duration-300 group"
             >
               <span className="flex items-center gap-2">
@@ -255,7 +317,8 @@ export const PostsFeed = ({ profileId, isOwnProfile }: PostsFeedProps) => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3, delay: index * 0.1 }}
               whileHover={{ y: -4 }}
-              className="group"
+              className="group cursor-pointer"
+              onClick={() => handlePostClick(post.id)}
             >
               <div className="bg-luxury-dark/50 backdrop-blur-xl border border-luxury-primary/20 hover:border-luxury-primary/40 rounded-3xl overflow-hidden transition-all duration-300 hover:shadow-luxury">
                 {/* Media Preview */}
@@ -313,13 +376,18 @@ export const PostsFeed = ({ profileId, isOwnProfile }: PostsFeedProps) => {
                   {/* Stats with hover animations */}
                   <div className="flex items-center justify-between text-luxury-muted text-sm">
                     <div className="flex items-center gap-4">
-                      <motion.span
+                      <motion.button
                         whileHover={{ scale: 1.1 }}
-                        className="flex items-center gap-1 hover:text-red-400 transition-colors duration-300"
+                        whileTap={{ scale: 0.9 }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleLikePost(post.id);
+                        }}
+                        className="flex items-center gap-1 hover:text-red-400 transition-colors duration-300 group"
                       >
-                        <Heart className="w-4 h-4" />
+                        <Heart className="w-4 h-4 group-hover:scale-110 transition-transform duration-300" />
                         {post.likes_count}
-                      </motion.span>
+                      </motion.button>
                       <motion.span
                         whileHover={{ scale: 1.1 }}
                         className="flex items-center gap-1 hover:text-blue-400 transition-colors duration-300"
