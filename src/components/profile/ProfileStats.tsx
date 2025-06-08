@@ -145,9 +145,15 @@ export const ProfileStats = ({ profileId, isOwnProfile }: ProfileStatsProps) => 
     return (
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
         {[...Array(5)].map((_, i) => (
-          <div key={i} className="bg-luxury-dark/30 backdrop-blur-xl border border-luxury-primary/20 rounded-2xl p-4 animate-pulse">
+          <motion.div
+            key={i}
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.4, delay: i * 0.1 }}
+            className="bg-luxury-dark/30 backdrop-blur-xl border border-luxury-primary/20 rounded-2xl p-4 animate-pulse"
+          >
             <div className="w-full h-16" />
-          </div>
+          </motion.div>
         ))}
       </div>
     );
@@ -166,52 +172,117 @@ export const ProfileStats = ({ profileId, isOwnProfile }: ProfileStatsProps) => 
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.4, delay: index * 0.1 }}
-          whileHover={{ scale: 1.05, y: -4 }}
-          className="bg-luxury-dark/50 backdrop-blur-xl border border-luxury-primary/20 hover:border-luxury-primary/40 rounded-2xl p-4 transition-all duration-300 hover:shadow-luxury group"
+          whileHover={{ 
+            scale: 1.05, 
+            y: -4,
+            rotateY: 5
+          }}
+          className="bg-luxury-dark/50 backdrop-blur-xl border border-luxury-primary/20 hover:border-luxury-primary/40 rounded-2xl p-4 transition-all duration-300 hover:shadow-luxury group relative overflow-hidden cursor-pointer"
         >
-          <div className="flex items-center justify-between mb-3">
-            <div className={`w-10 h-10 ${stat.bgColor} rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300`}>
+          {/* Animated background gradient */}
+          <motion.div
+            initial={{ x: '-100%' }}
+            whileHover={{ x: '100%' }}
+            transition={{ duration: 0.6 }}
+            className="absolute inset-0 bg-gradient-to-r from-transparent via-luxury-primary/10 to-transparent"
+          />
+
+          <div className="flex items-center justify-between mb-3 relative z-10">
+            <motion.div
+              whileHover={{ 
+                scale: 1.2,
+                rotate: 360
+              }}
+              transition={{ duration: 0.5 }}
+              className={`w-10 h-10 ${stat.bgColor} rounded-xl flex items-center justify-center`}
+            >
               <stat.icon className={`w-5 h-5 ${stat.color}`} />
-            </div>
+            </motion.div>
             {stat.label === "Earnings" && isOwnProfile && (
-              <Crown className="w-4 h-4 text-yellow-500" />
+              <motion.div
+                animate={{ 
+                  rotate: [0, 10, -10, 0],
+                  scale: [1, 1.1, 1]
+                }}
+                transition={{ duration: 2, repeat: Infinity }}
+              >
+                <Crown className="w-4 h-4 text-yellow-500" />
+              </motion.div>
             )}
           </div>
           
-          <div className="space-y-1">
-            <div className={`text-2xl font-bold ${stat.color} group-hover:scale-105 transition-transform duration-300`}>
+          <div className="space-y-1 relative z-10">
+            <motion.div
+              whileHover={{ scale: 1.1 }}
+              transition={{ type: "spring", stiffness: 300 }}
+              className={`text-2xl font-bold ${stat.color}`}
+            >
               {stat.value}
-            </div>
+            </motion.div>
             <div className="text-luxury-muted text-sm font-medium">
               {stat.label}
             </div>
           </div>
-
-          {/* Animated background effect */}
-          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-luxury-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-2xl" />
         </motion.div>
       ))}
 
-      {/* Premium Tier Badge for own profile */}
+      {/* Premium Tier Badge for own profile with enhanced animations */}
       {isOwnProfile && stats.subscriptionTier && (
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.4, delay: 0.6 }}
-          whileHover={{ scale: 1.05, y: -4 }}
-          className="bg-gradient-to-br from-luxury-primary/20 to-luxury-accent/20 backdrop-blur-xl border border-luxury-primary/40 rounded-2xl p-4 transition-all duration-300 hover:shadow-luxury group"
+          whileHover={{ 
+            scale: 1.05, 
+            y: -4,
+            rotateY: 10
+          }}
+          className="bg-gradient-to-br from-luxury-primary/20 to-luxury-accent/20 backdrop-blur-xl border border-luxury-primary/40 rounded-2xl p-4 transition-all duration-300 hover:shadow-luxury group relative overflow-hidden cursor-pointer"
         >
-          <div className="flex items-center justify-between mb-3">
-            <div className="w-10 h-10 bg-gradient-to-r from-luxury-primary to-luxury-accent rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+          {/* Animated shimmer effect */}
+          <motion.div
+            animate={{ 
+              x: [-100, 200],
+              opacity: [0, 1, 0]
+            }}
+            transition={{ 
+              duration: 2, 
+              repeat: Infinity,
+              repeatDelay: 3
+            }}
+            className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent skew-x-12"
+          />
+
+          <div className="flex items-center justify-between mb-3 relative z-10">
+            <motion.div
+              whileHover={{ 
+                scale: 1.2,
+                rotate: [0, 360]
+              }}
+              transition={{ duration: 0.8 }}
+              className="w-10 h-10 bg-gradient-to-r from-luxury-primary to-luxury-accent rounded-xl flex items-center justify-center"
+            >
               <Crown className="w-5 h-5 text-white" />
-            </div>
-            <Zap className="w-4 h-4 text-luxury-accent animate-pulse" />
+            </motion.div>
+            <motion.div
+              animate={{ 
+                scale: [1, 1.2, 1],
+                rotate: [0, 180, 360]
+              }}
+              transition={{ duration: 3, repeat: Infinity }}
+            >
+              <Zap className="w-4 h-4 text-luxury-accent" />
+            </motion.div>
           </div>
           
-          <div className="space-y-1">
-            <div className="text-2xl font-bold bg-gradient-to-r from-luxury-primary to-luxury-accent bg-clip-text text-transparent group-hover:scale-105 transition-transform duration-300">
+          <div className="space-y-1 relative z-10">
+            <motion.div
+              whileHover={{ scale: 1.1 }}
+              transition={{ type: "spring", stiffness: 300 }}
+              className="text-2xl font-bold bg-gradient-to-r from-luxury-primary to-luxury-accent bg-clip-text text-transparent"
+            >
               {stats.subscriptionTier}
-            </div>
+            </motion.div>
             <div className="text-luxury-muted text-sm font-medium">
               Creator Tier
             </div>

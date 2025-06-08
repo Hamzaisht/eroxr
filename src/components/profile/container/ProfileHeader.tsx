@@ -77,27 +77,33 @@ export const ProfileHeader = ({ profile, isOwnProfile, onMediaSuccess, onEditCli
           </div>
         )}
 
-        {/* Floating Action Buttons */}
+        {/* Floating Action Buttons with enhanced animations */}
         {isOwnProfile && (
           <div className="absolute top-6 right-6 flex gap-3">
             <motion.button
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.9 }}
-              className="w-12 h-12 bg-luxury-dark/80 backdrop-blur-xl border border-luxury-primary/30 rounded-xl flex items-center justify-center text-luxury-primary hover:bg-luxury-primary/20 transition-all duration-300"
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.5 }}
+              whileHover={{ scale: 1.1, y: -2 }}
+              whileTap={{ scale: 0.95 }}
+              className="w-12 h-12 bg-luxury-dark/80 backdrop-blur-xl border border-luxury-primary/30 rounded-xl flex items-center justify-center text-luxury-primary hover:bg-luxury-primary/20 transition-all duration-300 hover:shadow-luxury group"
             >
-              <Settings className="w-5 h-5" />
+              <Settings className="w-5 h-5 group-hover:rotate-90 transition-transform duration-300" />
             </motion.button>
             <motion.button
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.9 }}
-              className="w-12 h-12 bg-luxury-dark/80 backdrop-blur-xl border border-luxury-primary/30 rounded-xl flex items-center justify-center text-luxury-primary hover:bg-luxury-primary/20 transition-all duration-300"
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.6 }}
+              whileHover={{ scale: 1.1, y: -2 }}
+              whileTap={{ scale: 0.95 }}
+              className="w-12 h-12 bg-luxury-dark/80 backdrop-blur-xl border border-luxury-primary/30 rounded-xl flex items-center justify-center text-luxury-primary hover:bg-luxury-primary/20 transition-all duration-300 hover:shadow-luxury group"
             >
-              <Share2 className="w-5 h-5" />
+              <Share2 className="w-5 h-5 group-hover:scale-110 transition-transform duration-300" />
             </motion.button>
           </div>
         )}
 
-        {/* Premium Badge */}
+        {/* Premium Badge with pulse animation */}
         <div className="absolute top-6 left-6">
           <motion.div
             initial={{ opacity: 0, x: -20 }}
@@ -105,9 +111,19 @@ export const ProfileHeader = ({ profile, isOwnProfile, onMediaSuccess, onEditCli
             transition={{ delay: 0.3 }}
             className="flex items-center gap-2 px-4 py-2 bg-luxury-dark/80 backdrop-blur-xl border border-luxury-primary/30 rounded-xl"
           >
-            <Crown className="w-5 h-5 text-yellow-500" />
+            <motion.div
+              animate={{ scale: [1, 1.1, 1] }}
+              transition={{ duration: 2, repeat: Infinity }}
+            >
+              <Crown className="w-5 h-5 text-yellow-500" />
+            </motion.div>
             <span className="text-yellow-500 font-medium text-sm">PREMIUM CREATOR</span>
-            <Verified className="w-4 h-4 text-luxury-primary" />
+            <motion.div
+              animate={{ scale: [1, 1.2, 1] }}
+              transition={{ duration: 1.5, repeat: Infinity, delay: 0.5 }}
+            >
+              <Verified className="w-4 h-4 text-luxury-primary" />
+            </motion.div>
           </motion.div>
         </div>
       </div>
@@ -116,14 +132,21 @@ export const ProfileHeader = ({ profile, isOwnProfile, onMediaSuccess, onEditCli
       <div className="relative -mt-32 z-10">
         <div className="max-w-7xl mx-auto px-8">
           <div className="flex flex-col lg:flex-row items-end gap-8 mb-8">
-            {/* Avatar with Premium Glow */}
+            {/* Avatar with Premium Glow and enhanced animations */}
             <motion.div
               initial={{ scale: 0.8, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               transition={{ delay: 0.2, type: "spring", stiffness: 100 }}
-              className="relative"
+              className="relative group"
             >
-              <div className="absolute inset-0 bg-button-gradient rounded-full blur-xl opacity-50 animate-pulse" />
+              <motion.div
+                animate={{ 
+                  scale: [1, 1.05, 1],
+                  rotate: [0, 1, -1, 0]
+                }}
+                transition={{ duration: 4, repeat: Infinity }}
+                className="absolute inset-0 bg-button-gradient rounded-full blur-xl opacity-50"
+              />
               {isOwnProfile ? (
                 <AvatarUpload
                   currentAvatarUrl={profile.avatar_url}
@@ -132,7 +155,11 @@ export const ProfileHeader = ({ profile, isOwnProfile, onMediaSuccess, onEditCli
                   size={200}
                 />
               ) : (
-                <div className="relative w-48 h-48 rounded-full bg-button-gradient p-2 shadow-luxury">
+                <motion.div
+                  whileHover={{ scale: 1.05 }}
+                  transition={{ type: "spring", stiffness: 300 }}
+                  className="relative w-48 h-48 rounded-full bg-button-gradient p-2 shadow-luxury"
+                >
                   <div className="w-full h-full rounded-full overflow-hidden bg-luxury-dark border-4 border-luxury-dark">
                     {profile.avatar_url ? (
                       <img 
@@ -148,11 +175,15 @@ export const ProfileHeader = ({ profile, isOwnProfile, onMediaSuccess, onEditCli
                       </div>
                     )}
                   </div>
-                </div>
+                </motion.div>
               )}
               
-              {/* Online Status Indicator */}
-              <div className="absolute -bottom-2 -right-2 w-8 h-8 bg-luxury-success border-4 border-luxury-dark rounded-full animate-pulse shadow-lg" />
+              {/* Online Status Indicator with pulse */}
+              <motion.div
+                animate={{ scale: [1, 1.2, 1] }}
+                transition={{ duration: 2, repeat: Infinity }}
+                className="absolute -bottom-2 -right-2 w-8 h-8 bg-luxury-success border-4 border-luxury-dark rounded-full shadow-lg"
+              />
             </motion.div>
 
             {/* Profile Details */}
@@ -166,65 +197,98 @@ export const ProfileHeader = ({ profile, isOwnProfile, onMediaSuccess, onEditCli
                 {/* Username and Verification */}
                 <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-6">
                   <div className="flex items-center gap-4 mb-4 lg:mb-0">
-                    <h1 className="text-5xl font-bold text-luxury-neutral tracking-tight">
+                    <motion.h1
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.5 }}
+                      className="text-5xl font-bold text-luxury-neutral tracking-tight"
+                    >
                       @{profile.username}
-                    </h1>
+                    </motion.h1>
                     <div className="flex items-center gap-2">
-                      <Verified className="w-8 h-8 text-luxury-primary" />
-                      <Crown className="w-8 h-8 text-yellow-500" />
+                      <motion.div
+                        animate={{ rotate: [0, 10, -10, 0] }}
+                        transition={{ duration: 3, repeat: Infinity, delay: 1 }}
+                      >
+                        <Verified className="w-8 h-8 text-luxury-primary" />
+                      </motion.div>
+                      <motion.div
+                        animate={{ y: [0, -2, 0] }}
+                        transition={{ duration: 2, repeat: Infinity, delay: 0.5 }}
+                      >
+                        <Crown className="w-8 h-8 text-yellow-500" />
+                      </motion.div>
                     </div>
                   </div>
                   
-                  {/* Action Buttons */}
+                  {/* Action Buttons with enhanced animations */}
                   <div className="flex flex-wrap gap-3">
                     {isOwnProfile ? (
                       <>
                         <motion.button
-                          whileHover={{ scale: 1.05 }}
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: 0.6 }}
+                          whileHover={{ scale: 1.05, y: -2 }}
                           whileTap={{ scale: 0.95 }}
                           onClick={onEditClick}
-                          className="flex items-center gap-2 bg-button-gradient hover:bg-hover-gradient text-white px-6 py-3 rounded-xl font-semibold transition-all duration-300 shadow-button hover:shadow-button-hover"
+                          className="flex items-center gap-2 bg-button-gradient hover:bg-hover-gradient text-white px-6 py-3 rounded-xl font-semibold transition-all duration-300 shadow-button hover:shadow-button-hover group"
                         >
-                          <Edit className="w-5 h-5" />
+                          <Edit className="w-5 h-5 group-hover:rotate-12 transition-transform duration-300" />
                           Edit Profile
                         </motion.button>
                         <motion.button
-                          whileHover={{ scale: 1.05 }}
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: 0.7 }}
+                          whileHover={{ scale: 1.05, y: -2 }}
                           whileTap={{ scale: 0.95 }}
-                          className="flex items-center gap-2 bg-luxury-dark/50 hover:bg-luxury-primary/20 text-luxury-primary px-6 py-3 rounded-xl font-semibold transition-all duration-300 border border-luxury-primary/30 backdrop-blur-xl"
+                          className="flex items-center gap-2 bg-luxury-dark/50 hover:bg-luxury-primary/20 text-luxury-primary px-6 py-3 rounded-xl font-semibold transition-all duration-300 border border-luxury-primary/30 backdrop-blur-xl group"
                         >
-                          <Star className="w-5 h-5" />
+                          <Star className="w-5 h-5 group-hover:rotate-180 transition-transform duration-500" />
                           Analytics
                         </motion.button>
                       </>
                     ) : (
                       <>
                         <motion.button
-                          whileHover={{ scale: 1.05 }}
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: 0.6 }}
+                          whileHover={{ scale: 1.05, y: -2 }}
                           whileTap={{ scale: 0.95 }}
-                          className="flex items-center gap-2 bg-button-gradient hover:bg-hover-gradient text-white px-6 py-3 rounded-xl font-semibold transition-all duration-300 shadow-button hover:shadow-button-hover"
+                          className="flex items-center gap-2 bg-button-gradient hover:bg-hover-gradient text-white px-6 py-3 rounded-xl font-semibold transition-all duration-300 shadow-button hover:shadow-button-hover group"
                         >
-                          <Users className="w-5 h-5" />
+                          <Users className="w-5 h-5 group-hover:scale-110 transition-transform duration-300" />
                           Follow
                         </motion.button>
                         <motion.button
-                          whileHover={{ scale: 1.05 }}
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: 0.7 }}
+                          whileHover={{ scale: 1.05, y: -2 }}
                           whileTap={{ scale: 0.95 }}
-                          className="flex items-center gap-2 bg-luxury-dark/50 hover:bg-luxury-primary/20 text-luxury-primary px-6 py-3 rounded-xl font-semibold transition-all duration-300 border border-luxury-primary/30 backdrop-blur-xl"
+                          className="flex items-center gap-2 bg-luxury-dark/50 hover:bg-luxury-primary/20 text-luxury-primary px-6 py-3 rounded-xl font-semibold transition-all duration-300 border border-luxury-primary/30 backdrop-blur-xl group"
                         >
-                          <MessageCircle className="w-5 h-5" />
+                          <MessageCircle className="w-5 h-5 group-hover:rotate-12 transition-transform duration-300" />
                           Message
                         </motion.button>
                         <motion.button
-                          whileHover={{ scale: 1.05 }}
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: 0.8 }}
+                          whileHover={{ scale: 1.05, y: -2 }}
                           whileTap={{ scale: 0.95 }}
-                          className="flex items-center gap-2 bg-luxury-accent/20 hover:bg-luxury-accent/30 text-luxury-accent px-6 py-3 rounded-xl font-semibold transition-all duration-300 border border-luxury-accent/30 backdrop-blur-xl"
+                          className="flex items-center gap-2 bg-luxury-accent/20 hover:bg-luxury-accent/30 text-luxury-accent px-6 py-3 rounded-xl font-semibold transition-all duration-300 border border-luxury-accent/30 backdrop-blur-xl group"
                         >
-                          <Heart className="w-5 h-5" />
+                          <Heart className="w-5 h-5 group-hover:scale-125 transition-transform duration-300" />
                           Tip
                         </motion.button>
                         <motion.button
-                          whileHover={{ scale: 1.05 }}
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: 0.9 }}
+                          whileHover={{ scale: 1.1, rotate: 90 }}
                           whileTap={{ scale: 0.95 }}
                           className="w-12 h-12 bg-luxury-dark/50 hover:bg-luxury-primary/20 text-luxury-primary rounded-xl transition-all duration-300 border border-luxury-primary/30 backdrop-blur-xl flex items-center justify-center"
                         >
@@ -247,7 +311,7 @@ export const ProfileHeader = ({ profile, isOwnProfile, onMediaSuccess, onEditCli
                   </motion.p>
                 )}
                 
-                {/* Metadata */}
+                {/* Metadata with icon animations */}
                 <motion.div
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
@@ -255,19 +319,28 @@ export const ProfileHeader = ({ profile, isOwnProfile, onMediaSuccess, onEditCli
                   className="flex flex-wrap items-center gap-6 text-luxury-muted mb-6"
                 >
                   {profile.location && (
-                    <div className="flex items-center gap-2">
-                      <MapPin className="w-5 h-5 text-luxury-primary" />
+                    <motion.div
+                      whileHover={{ scale: 1.05 }}
+                      className="flex items-center gap-2 group"
+                    >
+                      <MapPin className="w-5 h-5 text-luxury-primary group-hover:scale-110 transition-transform duration-300" />
                       <span className="font-medium">{profile.location}</span>
-                    </div>
+                    </motion.div>
                   )}
-                  <div className="flex items-center gap-2">
-                    <Calendar className="w-5 h-5 text-luxury-primary" />
+                  <motion.div
+                    whileHover={{ scale: 1.05 }}
+                    className="flex items-center gap-2 group"
+                  >
+                    <Calendar className="w-5 h-5 text-luxury-primary group-hover:scale-110 transition-transform duration-300" />
                     <span className="font-medium">Joined {formatDate(profile.created_at)}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Star className="w-5 h-5 text-yellow-500" />
+                  </motion.div>
+                  <motion.div
+                    whileHover={{ scale: 1.05 }}
+                    className="flex items-center gap-2 group"
+                  >
+                    <Star className="w-5 h-5 text-yellow-500 group-hover:rotate-180 transition-transform duration-500" />
                     <span className="font-medium">Premium Creator</span>
-                  </div>
+                  </motion.div>
                 </motion.div>
               </div>
             </motion.div>
