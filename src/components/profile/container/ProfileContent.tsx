@@ -1,6 +1,20 @@
 
+import { useState } from "react";
 import { motion } from "framer-motion";
-import { Users, Heart, Share2, MapPin, Calendar } from "lucide-react";
+import { PostsFeed } from "../PostsFeed";
+import { 
+  Grid, 
+  User, 
+  Heart, 
+  Bookmark, 
+  Settings, 
+  Camera,
+  Video,
+  Music,
+  Star,
+  Crown,
+  Zap
+} from "lucide-react";
 
 interface ProfileData {
   id: string;
@@ -18,7 +32,58 @@ interface ProfileContentProps {
   isOwnProfile: boolean;
 }
 
-export const ProfileContent = ({ profile }: ProfileContentProps) => {
+export const ProfileContent = ({ profile, isOwnProfile }: ProfileContentProps) => {
+  const [activeTab, setActiveTab] = useState('posts');
+
+  const tabs = [
+    {
+      id: 'posts',
+      label: 'Posts',
+      icon: Grid,
+      count: 0, // Will be updated with real data
+      premium: false
+    },
+    {
+      id: 'media',
+      label: 'Media',
+      icon: Camera,
+      count: 0,
+      premium: false
+    },
+    {
+      id: 'videos',
+      label: 'Videos',
+      icon: Video,
+      count: 0,
+      premium: true
+    },
+    {
+      id: 'audio',
+      label: 'Audio',
+      icon: Music,
+      count: 0,
+      premium: true
+    },
+    {
+      id: 'liked',
+      label: 'Liked',
+      icon: Heart,
+      count: 0,
+      premium: false,
+      private: true
+    },
+    {
+      id: 'saved',
+      label: 'Saved',
+      icon: Bookmark,
+      count: 0,
+      premium: false,
+      private: true
+    }
+  ];
+
+  const visibleTabs = tabs.filter(tab => !tab.private || isOwnProfile);
+
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
       year: 'numeric',
@@ -26,106 +91,166 @@ export const ProfileContent = ({ profile }: ProfileContentProps) => {
     });
   };
 
+  const renderTabContent = () => {
+    switch (activeTab) {
+      case 'posts':
+      case 'media':
+      case 'videos':
+      case 'audio':
+        return <PostsFeed profileId={profile.id} isOwnProfile={isOwnProfile} />;
+      
+      case 'liked':
+        return (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="text-center py-20"
+          >
+            <div className="w-24 h-24 bg-luxury-dark/50 backdrop-blur-xl border border-red-400/20 rounded-3xl flex items-center justify-center mx-auto mb-6">
+              <Heart className="w-12 h-12 text-red-400" />
+            </div>
+            <h3 className="text-2xl font-bold text-luxury-neutral mb-3">Liked Posts</h3>
+            <p className="text-luxury-muted">Your liked content will appear here</p>
+          </motion.div>
+        );
+      
+      case 'saved':
+        return (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="text-center py-20"
+          >
+            <div className="w-24 h-24 bg-luxury-dark/50 backdrop-blur-xl border border-yellow-400/20 rounded-3xl flex items-center justify-center mx-auto mb-6">
+              <Bookmark className="w-12 h-12 text-yellow-400" />
+            </div>
+            <h3 className="text-2xl font-bold text-luxury-neutral mb-3">Saved Posts</h3>
+            <p className="text-luxury-muted">Your saved content will appear here</p>
+          </motion.div>
+        );
+      
+      default:
+        return <PostsFeed profileId={profile.id} isOwnProfile={isOwnProfile} />;
+    }
+  };
+
   return (
-    <div className="max-w-6xl mx-auto px-8 py-12">
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Main Content */}
-        <div className="lg:col-span-2 space-y-8">
-          {/* About Section */}
-          <motion.div
-            initial={{ y: 20, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ delay: 0.4 }}
-            className="bg-slate-900/50 backdrop-blur-xl rounded-2xl p-8 border border-slate-700/50"
-          >
-            <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-3">
-              <div className="w-1 h-6 bg-gradient-to-b from-emerald-400 to-teal-500 rounded-full"></div>
-              About
-            </h2>
-            <p className="text-slate-300 text-lg leading-relaxed">
-              {profile.bio || "This user hasn't added a bio yet."}
-            </p>
-          </motion.div>
-
-          {/* Activity Section */}
-          <motion.div
-            initial={{ y: 20, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ delay: 0.5 }}
-            className="bg-slate-900/50 backdrop-blur-xl rounded-2xl p-8 border border-slate-700/50"
-          >
-            <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-3">
-              <div className="w-1 h-6 bg-gradient-to-b from-emerald-400 to-teal-500 rounded-full"></div>
-              Recent Activity
-            </h2>
-            <div className="text-center py-12">
-              <div className="w-16 h-16 bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Share2 className="w-8 h-8 text-slate-500" />
-              </div>
-              <p className="text-slate-400 text-lg">No recent activity to show</p>
-            </div>
-          </motion.div>
-        </div>
-
-        {/* Sidebar */}
-        <div className="space-y-8">
-          {/* Stats Card */}
-          <motion.div
-            initial={{ y: 20, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ delay: 0.6 }}
-            className="bg-slate-900/50 backdrop-blur-xl rounded-2xl p-6 border border-slate-700/50"
-          >
-            <h3 className="text-xl font-bold text-white mb-6">Statistics</h3>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between p-4 bg-slate-800/50 rounded-xl">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-emerald-500/20 rounded-full flex items-center justify-center">
-                    <Users className="w-5 h-5 text-emerald-400" />
+    <div className="max-w-7xl mx-auto px-8 py-12">
+      {/* Premium Content Tabs */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.5 }}
+        className="mb-12"
+      >
+        <div className="bg-luxury-dark/50 backdrop-blur-xl border border-luxury-primary/20 rounded-2xl p-2 shadow-luxury">
+          <div className="flex flex-wrap items-center gap-2">
+            {visibleTabs.map((tab) => (
+              <motion.button
+                key={tab.id}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => setActiveTab(tab.id)}
+                className={`relative flex items-center gap-3 px-6 py-4 rounded-xl font-semibold transition-all duration-300 ${
+                  activeTab === tab.id
+                    ? 'bg-button-gradient text-white shadow-button'
+                    : 'text-luxury-muted hover:text-luxury-neutral hover:bg-luxury-primary/10'
+                }`}
+              >
+                <tab.icon className="w-5 h-5" />
+                <span>{tab.label}</span>
+                
+                {/* Premium Badge */}
+                {tab.premium && (
+                  <div className="flex items-center gap-1">
+                    <Crown className="w-4 h-4 text-yellow-500" />
                   </div>
-                  <span className="text-slate-300">Followers</span>
-                </div>
-                <span className="text-white font-bold">0</span>
-              </div>
-              <div className="flex items-center justify-between p-4 bg-slate-800/50 rounded-xl">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-red-500/20 rounded-full flex items-center justify-center">
-                    <Heart className="w-5 h-5 text-red-400" />
+                )}
+                
+                {/* Count Badge */}
+                {tab.count > 0 && (
+                  <div className="px-2 py-1 bg-luxury-primary/20 text-luxury-primary text-xs font-bold rounded-full">
+                    {tab.count}
                   </div>
-                  <span className="text-slate-300">Likes</span>
-                </div>
-                <span className="text-white font-bold">0</span>
-              </div>
-            </div>
-          </motion.div>
-
-          {/* Additional Info Card */}
-          <motion.div
-            initial={{ y: 20, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ delay: 0.7 }}
-            className="bg-slate-900/50 backdrop-blur-xl rounded-2xl p-6 border border-slate-700/50"
-          >
-            <h3 className="text-xl font-bold text-white mb-6">Profile Info</h3>
-            <div className="space-y-4 text-sm">
-              <div className="flex justify-between">
-                <span className="text-slate-400">Member since</span>
-                <span className="text-white">{formatDate(profile.created_at)}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-slate-400">Last updated</span>
-                <span className="text-white">{formatDate(profile.updated_at)}</span>
-              </div>
-              {profile.location && (
-                <div className="flex justify-between">
-                  <span className="text-slate-400">Location</span>
-                  <span className="text-white">{profile.location}</span>
-                </div>
-              )}
-            </div>
-          </motion.div>
+                )}
+                
+                {/* Active Indicator */}
+                {activeTab === tab.id && (
+                  <motion.div
+                    layoutId="activeTab"
+                    className="absolute inset-0 bg-button-gradient rounded-xl -z-10"
+                    transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                  />
+                )}
+              </motion.button>
+            ))}
+          </div>
         </div>
-      </div>
+      </motion.div>
+
+      {/* Content Area */}
+      <motion.div
+        key={activeTab}
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4 }}
+        className="min-h-[600px]"
+      >
+        {renderTabContent()}
+      </motion.div>
+
+      {/* About Section at the Bottom */}
+      {activeTab === 'posts' && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.8 }}
+          className="mt-16 bg-luxury-dark/30 backdrop-blur-xl border border-luxury-primary/20 rounded-3xl p-8"
+        >
+          <h2 className="text-3xl font-bold text-luxury-neutral mb-6 flex items-center gap-3">
+            <div className="w-2 h-8 bg-button-gradient rounded-full" />
+            About @{profile.username}
+          </h2>
+          
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div>
+              <h3 className="text-xl font-semibold text-luxury-neutral mb-4">Bio</h3>
+              <p className="text-luxury-muted text-lg leading-relaxed">
+                {profile.bio || "This creator hasn't added a bio yet."}
+              </p>
+            </div>
+            
+            <div className="space-y-6">
+              <div>
+                <h3 className="text-xl font-semibold text-luxury-neutral mb-4">Profile Info</h3>
+                <div className="space-y-3">
+                  <div className="flex justify-between items-center">
+                    <span className="text-luxury-muted">Member since</span>
+                    <span className="text-luxury-neutral font-medium">{formatDate(profile.created_at)}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-luxury-muted">Last updated</span>
+                    <span className="text-luxury-neutral font-medium">{formatDate(profile.updated_at)}</span>
+                  </div>
+                  {profile.location && (
+                    <div className="flex justify-between items-center">
+                      <span className="text-luxury-muted">Location</span>
+                      <span className="text-luxury-neutral font-medium">{profile.location}</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between items-center">
+                    <span className="text-luxury-muted">Creator Tier</span>
+                    <div className="flex items-center gap-2">
+                      <Crown className="w-4 h-4 text-yellow-500" />
+                      <span className="text-luxury-neutral font-medium">Premium</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </motion.div>
+      )}
     </div>
   );
 };
