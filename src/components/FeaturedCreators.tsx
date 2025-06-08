@@ -72,9 +72,8 @@ export const FeaturedCreators = () => {
           avatarUrl={creator.image}
           bannerUrl={creator.banner}
           bio={creator.description}
-          followerCount={creator.subscribers}
+          subscriberCount={creator.subscribers}
           isVerified={true}
-          isPremium={Math.random() > 0.5}
         />
       ))}
     </div>
