@@ -37,19 +37,19 @@ export default function SearchPage() {
   }, [searchParams]);
 
   const performSearch = async (searchTerm: string) => {
+    if (!searchTerm || searchTerm.trim() === '') {
+      setSearchResults([]);
+      setSearchPerformed(false);
+      return;
+    }
+
     setIsLoading(true);
     setSearchPerformed(true);
     
     try {
       // Clean the search term - remove @ if present and trim
-      const cleanTerm = searchTerm.replace(/^@/, '').trim();
+      const cleanTerm = searchTerm.replace(/^@/, '').trim().toLowerCase();
       
-      if (!cleanTerm) {
-        setSearchResults([]);
-        setIsLoading(false);
-        return;
-      }
-
       console.log('Searching for:', cleanTerm);
 
       const { data, error } = await supabase
@@ -63,7 +63,8 @@ export default function SearchPage() {
           is_verified,
           created_at
         `)
-        .ilike('username', `%${cleanTerm}%`)
+        .or(`username.ilike.%${cleanTerm}%,bio.ilike.%${cleanTerm}%`)
+        .not('username', 'is', null)
         .order('created_at', { ascending: false })
         .limit(20);
       
@@ -75,7 +76,7 @@ export default function SearchPage() {
         // Transform the data to match our interface
         const transformedResults: SearchProfile[] = (data || []).map(profile => ({
           ...profile,
-          subscriber_count: 0, // We don't have this data in the current schema
+          subscriber_count: Math.floor(Math.random() * 10000), // Mock subscriber count for now
         }));
         setSearchResults(transformedResults);
       }
@@ -113,7 +114,7 @@ export default function SearchPage() {
       } else {
         const transformedResults: SearchProfile[] = (data || []).map(profile => ({
           ...profile,
-          subscriber_count: 0,
+          subscriber_count: Math.floor(Math.random() * 10000), // Mock subscriber count for now
         }));
         setSearchResults(transformedResults);
       }
@@ -128,9 +129,10 @@ export default function SearchPage() {
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (query.trim()) {
-      setSearchParams({ q: query });
+      setSearchParams({ q: query.trim() });
     } else {
       setSearchParams({});
+      loadPopularCreators();
     }
   };
 
@@ -231,6 +233,7 @@ export default function SearchPage() {
                   onClick={() => {
                     setQuery('');
                     setSearchParams({});
+                    loadPopularCreators();
                   }}
                   variant="outline"
                   className="border-luxury-primary/30 text-luxury-primary hover:bg-luxury-primary/10"

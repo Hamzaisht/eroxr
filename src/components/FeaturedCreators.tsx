@@ -1,5 +1,4 @@
 
-// Import components and utilities
 import { useEffect, useState } from "react";
 import { CreatorCard } from "@/components/CreatorCard";
 
@@ -36,7 +35,6 @@ export const FeaturedCreators = () => {
 
   useEffect(() => {
     // Simulate fetching featured creators from an API
-    // In a real application, you would replace this with an actual API call
     setTimeout(() => {
       setCreators([
         {
@@ -61,7 +59,6 @@ export const FeaturedCreators = () => {
     }, 1500);
   }, []);
 
-  // Update the CreatorCard usage for compatibility
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       {creators.map((creator) => (
