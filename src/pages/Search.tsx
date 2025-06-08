@@ -25,6 +25,7 @@ export default function SearchPage() {
   const [searchResults, setSearchResults] = useState<SearchProfile[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [searchPerformed, setSearchPerformed] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const searchQuery = searchParams.get('q');
@@ -37,21 +38,37 @@ export default function SearchPage() {
   }, [searchParams]);
 
   const performSearch = async (searchTerm: string) => {
+    console.log('performSearch called with:', searchTerm);
+    
     if (!searchTerm || searchTerm.trim() === '') {
       setSearchResults([]);
       setSearchPerformed(false);
+      setError(null);
       return;
     }
 
     setIsLoading(true);
     setSearchPerformed(true);
+    setError(null);
     
     try {
       // Clean the search term - remove @ if present and trim
       const cleanTerm = searchTerm.replace(/^@/, '').trim().toLowerCase();
       
-      console.log('Searching for:', cleanTerm);
+      console.log('Searching for cleaned term:', cleanTerm);
 
+      // First, let's check if we have any profiles at all
+      const { data: allProfiles, error: countError } = await supabase
+        .from('profiles')
+        .select('id, username')
+        .limit(5);
+      
+      console.log('Sample profiles in database:', allProfiles);
+      if (countError) {
+        console.error('Error checking profiles:', countError);
+      }
+
+      // Now perform the actual search
       const { data, error } = await supabase
         .from('profiles')
         .select(`
@@ -68,11 +85,14 @@ export default function SearchPage() {
         .order('created_at', { ascending: false })
         .limit(20);
       
+      console.log('Search query result:', { data, error });
+      
       if (error) {
         console.error('Search error:', error);
+        setError(`Search failed: ${error.message}`);
         setSearchResults([]);
       } else {
-        console.log('Search results:', data);
+        console.log('Search results found:', data?.length || 0);
         // Transform the data to match our interface
         const transformedResults: SearchProfile[] = (data || []).map(profile => ({
           ...profile,
@@ -82,6 +102,7 @@ export default function SearchPage() {
       }
     } catch (error) {
       console.error('Search error:', error);
+      setError(`Unexpected error: ${error instanceof Error ? error.message : 'Unknown error'}`);
       setSearchResults([]);
     } finally {
       setIsLoading(false);
@@ -89,8 +110,10 @@ export default function SearchPage() {
   };
 
   const loadPopularCreators = async () => {
+    console.log('loadPopularCreators called');
     setIsLoading(true);
     setSearchPerformed(false);
+    setError(null);
     
     try {
       const { data, error } = await supabase
@@ -108,8 +131,11 @@ export default function SearchPage() {
         .order('created_at', { ascending: false })
         .limit(12);
       
+      console.log('Popular creators result:', { data, error });
+      
       if (error) {
         console.error('Error loading popular creators:', error);
+        setError(`Failed to load creators: ${error.message}`);
         setSearchResults([]);
       } else {
         const transformedResults: SearchProfile[] = (data || []).map(profile => ({
@@ -120,6 +146,7 @@ export default function SearchPage() {
       }
     } catch (error) {
       console.error('Error loading popular creators:', error);
+      setError(`Unexpected error: ${error instanceof Error ? error.message : 'Unknown error'}`);
       setSearchResults([]);
     } finally {
       setIsLoading(false);
@@ -128,6 +155,8 @@ export default function SearchPage() {
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
+    console.log('handleSearch called with query:', query);
+    
     if (query.trim()) {
       setSearchParams({ q: query.trim() });
     } else {
@@ -137,6 +166,14 @@ export default function SearchPage() {
   };
 
   const currentQuery = searchParams.get('q');
+
+  console.log('Render state:', {
+    isLoading,
+    searchPerformed,
+    currentQuery,
+    resultsCount: searchResults.length,
+    error
+  });
 
   return (
     <div className="min-h-screen bg-luxury-darker pt-20">
@@ -170,6 +207,13 @@ export default function SearchPage() {
             </Button>
           </div>
         </form>
+
+        {/* Error Message */}
+        {error && (
+          <div className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-lg">
+            <p className="text-red-400">{error}</p>
+          </div>
+        )}
         
         {/* Results Header */}
         <div className="flex items-center gap-2 mb-6">
