@@ -1,15 +1,19 @@
 
 import { MediaErrorPlaceholder } from './renderers/MediaErrorPlaceholder';
 import { MediaGrid } from './MediaRenderer/MediaGrid';
-import { useMediaRenderer } from './MediaRenderer/hooks/useMediaRenderer';
 import { ImageRenderer } from './renderers/ImageRenderer';
 import { VideoRenderer } from './renderers/VideoRenderer';
 import { AudioRenderer } from './renderers/AudioRenderer';
+import { useValidMediaUrl } from '@/hooks/useValidMediaUrl';
+import { getMediaType, isValidMediaAsset } from '@/utils/media/mediaUtils';
+import { useState } from 'react';
+import { Loader2 } from 'lucide-react';
 
 interface MediaAsset {
   id: string;
   storage_path: string;
   media_type: string;
+  mime_type: string;
   alt_text?: string;
   original_name?: string;
   user_id?: string;
@@ -36,45 +40,53 @@ export const MediaRenderer = ({
   showWatermark = false,
   onError 
 }: MediaRendererProps) => {
-  const {
-    isLoading,
-    isMuted,
-    failedAssets,
-    setIsMuted,
-    handleError,
-    handleLoad,
-    getMediaUrl,
-    getMediaType
-  } = useMediaRenderer();
+  const [isMuted, setIsMuted] = useState(true);
 
   const mediaArray = Array.isArray(media) ? media : [media];
   
-  console.log("MediaRenderer - Received media:", mediaArray);
+  console.log("MediaRenderer - Processing media:", mediaArray);
 
   const renderSingleMedia = (mediaItem: MediaAsset, index: number = 0) => {
-    if (!mediaItem || !mediaItem.storage_path) {
-      console.error("MediaRenderer - Invalid media item:", mediaItem);
-      return <MediaErrorPlaceholder mediaItem={mediaItem || { id: 'unknown', storage_path: '', media_type: '' }} error="Invalid media data" />;
+    // Validate media asset
+    if (!isValidMediaAsset(mediaItem)) {
+      console.error("MediaRenderer - Invalid media asset:", mediaItem);
+      return <MediaErrorPlaceholder mediaItem={mediaItem} error="Invalid media data" />;
     }
 
-    if (failedAssets.has(mediaItem.id)) {
-      return <MediaErrorPlaceholder mediaItem={mediaItem} error="Previously failed to load" />;
+    const { url: mediaUrl, isLoading, isError, error } = useValidMediaUrl(mediaItem.storage_path);
+
+    // Show loading state
+    if (isLoading) {
+      return (
+        <div className={`flex items-center justify-center bg-gray-900 p-8 ${className}`}>
+          <div className="text-center">
+            <Loader2 className="h-8 w-8 animate-spin text-luxury-primary mx-auto mb-2" />
+            <p className="text-white text-sm">Loading media...</p>
+          </div>
+        </div>
+      );
     }
 
-    const mediaUrl = getMediaUrl(mediaItem.storage_path);
-    if (!mediaUrl) {
-      return <MediaErrorPlaceholder mediaItem={mediaItem} error="Invalid storage path" />;
+    // Show error state
+    if (isError || !mediaUrl) {
+      console.error("MediaRenderer - Media loading error:", error);
+      onError?.();
+      return <MediaErrorPlaceholder mediaItem={mediaItem} error={error || "Failed to load media"} />;
     }
 
-    const mediaType = getMediaType(mediaItem.media_type);
+    // Determine media type
+    const mediaType = getMediaType(mediaItem.media_type || mediaItem.mime_type, mediaItem.original_name);
 
     const commonProps = {
       mediaItem,
       mediaUrl,
-      isLoading,
+      isLoading: false,
       showWatermark,
-      onLoad: handleLoad,
-      onError: () => handleError(mediaItem.id, mediaItem.storage_path, onError)
+      onLoad: () => console.log(`MediaRenderer - Media loaded: ${mediaItem.id}`),
+      onError: () => {
+        console.error(`MediaRenderer - Media render error: ${mediaItem.id}`);
+        onError?.();
+      }
     };
 
     switch (mediaType) {
@@ -93,22 +105,21 @@ export const MediaRenderer = ({
       case 'audio':
         return <AudioRenderer {...commonProps} controls={controls} />;
       default:
-        return <MediaErrorPlaceholder mediaItem={mediaItem} error={`Unsupported media type: ${mediaItem.media_type}`} />;
+        return <MediaErrorPlaceholder mediaItem={mediaItem} error={`Unsupported media type: ${mediaType}`} />;
     }
   };
 
-  if (mediaArray.length === 0) {
-    console.log("MediaRenderer - No media to render");
-    return null;
-  }
-
-  const validMediaArray = mediaArray.filter(item => item && item.storage_path && item.id);
+  // Filter valid media
+  const validMediaArray = mediaArray.filter(isValidMediaAsset);
   
   if (validMediaArray.length === 0) {
-    console.error("MediaRenderer - No valid media items found");
+    console.log("MediaRenderer - No valid media items found");
     return (
       <div className={className}>
-        <MediaErrorPlaceholder mediaItem={{ id: 'invalid', storage_path: '', media_type: '' }} error="No valid media items" />
+        <MediaErrorPlaceholder 
+          mediaItem={{ id: 'invalid', storage_path: '', media_type: '', mime_type: '' }} 
+          error="No valid media items" 
+        />
       </div>
     );
   }

@@ -9,10 +9,9 @@ export const useHomePosts = () => {
   return useQuery({
     queryKey: ['home-posts'],
     queryFn: async () => {
-      console.log("Home - Fetching posts with proper relationships...");
+      console.log("Home - Fetching posts with proper media relationships...");
       
       try {
-        // Use the new post_id relationship for clean joins
         const { data: postsData, error: postsError } = await supabase
           .from('posts')
           .select(`
@@ -62,7 +61,7 @@ export const useHomePosts = () => {
           return [];
         }
         
-        // Transform the data to ensure proper structure
+        // Transform and validate the data
         const transformedPosts = postsData.map((post) => {
           const creator = post.creator && !Array.isArray(post.creator) 
             ? post.creator 
@@ -70,7 +69,18 @@ export const useHomePosts = () => {
             ? post.creator[0]
             : null;
 
-          return {
+          // Filter and validate media assets
+          const validMediaAssets = Array.isArray(post.media_assets) 
+            ? post.media_assets.filter(asset => 
+                asset && 
+                asset.id && 
+                asset.storage_path && 
+                asset.media_type && 
+                asset.mime_type
+              )
+            : [];
+
+          const transformedPost = {
             ...post,
             creator: {
               id: creator?.id || post.creator_id || '',
@@ -79,8 +89,11 @@ export const useHomePosts = () => {
               bio: creator?.bio || '',
               location: creator?.location || ''
             },
-            media_assets: Array.isArray(post.media_assets) ? post.media_assets : []
+            media_assets: validMediaAssets
           };
+
+          console.log(`Home - Post ${post.id} has ${validMediaAssets.length} valid media assets`);
+          return transformedPost;
         });
 
         console.log("Home - Posts transformed successfully:", transformedPosts.length);
@@ -92,7 +105,7 @@ export const useHomePosts = () => {
     },
     enabled: !!session,
     retry: 2,
-    staleTime: 30000, // 30 seconds
+    staleTime: 30000,
     refetchInterval: false
   });
 };
