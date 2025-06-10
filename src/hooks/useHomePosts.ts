@@ -2,9 +2,27 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useOrphanedAssetsCleanup } from "./useOrphanedAssetsCleanup";
+import { useEffect } from "react";
 
 export const useHomePosts = () => {
   const { session } = useAuth();
+  const { cleanupOrphanedAssets } = useOrphanedAssetsCleanup();
+
+  // Trigger cleanup periodically
+  useEffect(() => {
+    if (session?.user?.id) {
+      const cleanup = () => cleanupOrphanedAssets(session.user.id);
+      
+      // Run cleanup on mount
+      cleanup();
+      
+      // Set up periodic cleanup every 10 minutes
+      const interval = setInterval(cleanup, 10 * 60 * 1000);
+      
+      return () => clearInterval(interval);
+    }
+  }, [session?.user?.id, cleanupOrphanedAssets]);
 
   return useQuery({
     queryKey: ['home-posts'],
@@ -78,7 +96,8 @@ export const useHomePosts = () => {
         console.log(`Post ${post.id} media assets:`, {
           hasMedia: !!post.media_assets,
           count: post.media_assets?.length || 0,
-          assets: post.media_assets
+          assets: post.media_assets,
+          validAssets: post.media_assets?.filter(asset => asset && asset.storage_path)
         });
       });
 

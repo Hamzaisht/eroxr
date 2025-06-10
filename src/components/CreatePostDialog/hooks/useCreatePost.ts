@@ -83,6 +83,38 @@ export const useCreatePost = () => {
     try {
       console.log("CreatePost - Creating post with asset IDs:", uploadedAssetIds);
 
+      // First, verify that the asset IDs exist and are owned by the current user
+      if (uploadedAssetIds.length > 0) {
+        const { data: existingAssets, error: verifyError } = await supabase
+          .from('media_assets')
+          .select('id, user_id, post_id')
+          .in('id', uploadedAssetIds);
+
+        if (verifyError) {
+          console.error("CreatePost - Error verifying assets:", verifyError);
+          throw new Error("Failed to verify media assets");
+        }
+
+        console.log("CreatePost - Existing assets found:", existingAssets);
+
+        // Check if assets exist and are owned by current user
+        const validAssets = existingAssets?.filter(asset => 
+          asset.user_id === session.user.id && asset.post_id === null
+        ) || [];
+
+        if (validAssets.length !== uploadedAssetIds.length) {
+          console.error("CreatePost - Asset validation failed:", {
+            expected: uploadedAssetIds.length,
+            valid: validAssets.length,
+            existingAssets,
+            uploadedAssetIds
+          });
+          throw new Error("Some media assets are invalid or already linked to posts");
+        }
+
+        console.log("CreatePost - All assets validated successfully:", validAssets);
+      }
+
       // Create the post first
       const { data: newPost, error: postError } = await supabase
         .from('posts')
@@ -102,8 +134,11 @@ export const useCreatePost = () => {
       console.log("CreatePost - Post created successfully:", newPost);
 
       // If we have uploaded assets, link them to the post
-      if (uploadedAssetIds.length > 0) {
-        console.log("CreatePost - Linking media assets to post:", { postId: newPost.id, assetIds: uploadedAssetIds });
+      if (uploadedAssetIds.length > 0 && newPost) {
+        console.log("CreatePost - Linking media assets to post:", { 
+          postId: newPost.id, 
+          assetIds: uploadedAssetIds 
+        });
         
         // Update the media assets to link them to the post
         const { error: linkError, data: linkedAssets } = await supabase
@@ -116,18 +151,39 @@ export const useCreatePost = () => {
 
         if (linkError) {
           console.error("CreatePost - Error linking media assets:", linkError);
+          
+          // If linking fails, we should probably delete the post to maintain consistency
+          await supabase.from('posts').delete().eq('id', newPost.id);
+          
+          throw new Error(`Failed to link media to post: ${linkError.message}`);
+        }
+
+        console.log("CreatePost - Media assets linking result:", linkedAssets);
+        
+        // Verify that the linking worked
+        if (!linkedAssets || linkedAssets.length === 0) {
+          console.error("CreatePost - No assets were linked, rolling back post creation");
+          
+          // Delete the post since no media was linked
+          await supabase.from('posts').delete().eq('id', newPost.id);
+          
+          throw new Error("Failed to link any media assets to the post");
+        }
+
+        if (linkedAssets.length !== uploadedAssetIds.length) {
+          console.warn("CreatePost - Not all assets were linked:", {
+            expected: uploadedAssetIds.length,
+            actual: linkedAssets.length,
+            linkedAssets
+          });
+          
           toast({
             title: "Warning",
-            description: "Post created but some media may not be linked properly",
+            description: `Post created but only ${linkedAssets.length} of ${uploadedAssetIds.length} media files were linked`,
             variant: "destructive",
           });
         } else {
-          console.log("CreatePost - Media assets linked successfully:", linkedAssets);
-          
-          // Verify the linking worked
-          if (!linkedAssets || linkedAssets.length === 0) {
-            console.warn("CreatePost - No assets were linked. They may already be linked to other posts.");
-          }
+          console.log("CreatePost - All media assets linked successfully:", linkedAssets);
         }
       }
 
