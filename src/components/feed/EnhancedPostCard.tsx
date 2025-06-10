@@ -80,6 +80,9 @@ export const EnhancedPostCard = ({ post, onLike, onDelete, currentUserId }: Enha
         <div className="flex items-center justify-between p-4">
           <div className="flex items-center gap-3">
             <Avatar className="h-10 w-10">
+              {post.creator.avatar_url ? (
+                <AvatarImage src={post.creator.avatar_url} alt={post.creator.username} />
+              ) : null}
               <AvatarFallback className="bg-luxury-darker text-luxury-neutral">
                 {getInitials(post.creator.username)}
               </AvatarFallback>
@@ -112,15 +115,6 @@ export const EnhancedPostCard = ({ post, onLike, onDelete, currentUserId }: Enha
               showWatermark={false}
               onError={() => console.error(`EnhancedPostCard - Media render error for post ${post.id}`)}
             />
-          </div>
-        )}
-
-        {/* Debug info - remove this in production */}
-        {post.media_assets && post.media_assets.length > 0 && !hasValidMedia && (
-          <div className="px-4 py-2 bg-yellow-50 border border-yellow-200">
-            <p className="text-xs text-yellow-800">
-              Debug: Media assets found but invalid - {post.media_assets.length} assets
-            </p>
           </div>
         )}
 

@@ -986,6 +986,7 @@ export type Database = {
           metadata: Json | null
           mime_type: string
           original_name: string
+          post_id: string | null
           storage_path: string
           updated_at: string
           user_id: string
@@ -1000,6 +1001,7 @@ export type Database = {
           metadata?: Json | null
           mime_type: string
           original_name: string
+          post_id?: string | null
           storage_path: string
           updated_at?: string
           user_id: string
@@ -1014,11 +1016,20 @@ export type Database = {
           metadata?: Json | null
           mime_type?: string
           original_name?: string
+          post_id?: string | null
           storage_path?: string
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "media_assets_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "posts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       nordic_cities: {
         Row: {
@@ -1336,6 +1347,13 @@ export type Database = {
           visibility?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "fk_posts_creator_id"
+            columns: ["creator_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "posts_creator_id_fkey"
             columns: ["creator_id"]

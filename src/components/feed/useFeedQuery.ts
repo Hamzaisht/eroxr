@@ -20,9 +20,17 @@ export const useFeedQuery = (userId?: string, feedType: FeedType = 'feed') => {
         .from("posts")
         .select(`
           *,
-          creator:profiles(id, username),
+          creator:profiles!posts_creator_id_fkey(id, username, avatar_url),
           post_likes(user_id),
-          post_saves(user_id)
+          post_saves(user_id),
+          media_assets!media_assets_post_id_fkey(
+            id,
+            storage_path,
+            media_type,
+            mime_type,
+            original_name,
+            alt_text
+          )
         `)
         .order('created_at', { ascending: false })
         .range(from, to);
@@ -33,7 +41,9 @@ export const useFeedQuery = (userId?: string, feedType: FeedType = 'feed') => {
           query = query.order('engagement_score', { ascending: false });
           break;
         case 'shorts':
-          query = query.not('video_urls', 'is', null);
+          // Look for posts with video media assets
+          query = query.not('media_assets.media_type', 'is', null)
+                      .like('media_assets.media_type', 'video%');
           break;
         case 'recent':
           // Show all recent posts
@@ -51,7 +61,7 @@ export const useFeedQuery = (userId?: string, feedType: FeedType = 'feed') => {
         throw error;
       }
 
-      console.log("Fetched posts:", posts); // Debug log
+      console.log("Fetched posts:", posts?.length || 0);
 
       return posts?.map(post => ({
         ...post,
@@ -60,11 +70,12 @@ export const useFeedQuery = (userId?: string, feedType: FeedType = 'feed') => {
         visibility: post.visibility || 'public',
         screenshots_count: post.screenshots_count || 0,
         downloads_count: post.downloads_count || 0,
-        video_urls: post.video_urls || [],
-        media_url: post.media_url || [],
+        video_urls: [],
+        media_url: [],
         updated_at: post.updated_at || post.created_at,
         view_count: post.view_count || 0,
-        video_thumbnail_url: post.video_thumbnail_url || null
+        video_thumbnail_url: null,
+        media_assets: Array.isArray(post.media_assets) ? post.media_assets : []
       })) as Post[];
     },
     getNextPageParam: (lastPage, allPages) => {

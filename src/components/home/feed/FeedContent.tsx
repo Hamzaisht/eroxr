@@ -17,7 +17,15 @@ export const FeedContent = () => {
         .from('posts')
         .select(`
           *,
-          creator:profiles(id, username)
+          creator:profiles!posts_creator_id_fkey(id, username, avatar_url),
+          media_assets!media_assets_post_id_fkey(
+            id,
+            storage_path,
+            media_type,
+            mime_type,
+            original_name,
+            alt_text
+          )
         `)
         .eq('visibility', 'public')
         .order('created_at', { ascending: false })
@@ -64,7 +72,8 @@ export const FeedContent = () => {
               likesCount: post.likes_count || 0,
               commentsCount: post.comments_count || 0,
               isLiked: false,
-              isSaved: false
+              isSaved: false,
+              media_assets: Array.isArray(post.media_assets) ? post.media_assets : []
             }}
             currentUser={session?.user ? {
               id: session.user.id,
