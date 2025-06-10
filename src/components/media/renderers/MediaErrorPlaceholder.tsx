@@ -6,6 +6,7 @@ interface MediaErrorPlaceholderProps {
     id: string;
     storage_path: string;
     media_type: string;
+    mime_type?: string;
     original_name?: string;
   };
   error: string;
@@ -28,6 +29,7 @@ export const MediaErrorPlaceholder = ({ mediaItem, error }: MediaErrorPlaceholde
             <p className="mt-1">Error: {error}</p>
             <p>Path: {mediaItem.storage_path}</p>
             <p>Type: {mediaItem.media_type}</p>
+            {mediaItem.mime_type && <p>MIME: {mediaItem.mime_type}</p>}
           </details>
         )}
       </div>

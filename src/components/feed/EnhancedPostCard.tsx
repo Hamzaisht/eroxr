@@ -1,3 +1,4 @@
+
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -9,8 +10,14 @@ interface MediaAsset {
   id: string;
   storage_path: string;
   media_type: string;
+  mime_type: string;
   alt_text?: string;
-  original_name: string;
+  original_name?: string;
+  user_id?: string;
+  metadata?: {
+    post_id?: string;
+    [key: string]: any;
+  };
 }
 
 interface PostData {
@@ -59,13 +66,13 @@ export const EnhancedPostCard = ({ post, onLike, onDelete, currentUserId }: Enha
   };
 
   const hasValidMedia = post.media_assets && post.media_assets.length > 0 && 
-    post.media_assets.some(asset => asset.storage_path && asset.id && asset.media_type);
+    post.media_assets.some(asset => asset.storage_path && asset.id && asset.media_type && asset.mime_type);
 
   console.log(`EnhancedPostCard - Rendering post ${post.id} with media:`, {
     hasMediaAssets: !!post.media_assets,
     mediaCount: post.media_assets?.length || 0,
     hasValidMedia,
-    validAssets: post.media_assets?.filter(asset => asset.storage_path && asset.id && asset.media_type).length || 0
+    validAssets: post.media_assets?.filter(asset => asset.storage_path && asset.id && asset.media_type && asset.mime_type).length || 0
   });
 
   return (
@@ -103,7 +110,7 @@ export const EnhancedPostCard = ({ post, onLike, onDelete, currentUserId }: Enha
         {hasValidMedia && (
           <div className="relative">
             <MediaRenderer
-              media={post.media_assets!.filter(asset => asset.storage_path && asset.id && asset.media_type)}
+              media={post.media_assets!.filter(asset => asset.storage_path && asset.id && asset.media_type && asset.mime_type)}
               className="w-full"
               autoPlay={false}
               controls={true}
