@@ -21,8 +21,9 @@ export const MediaUploader = ({
 }: MediaUploaderProps) => {
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [dragActive, setDragActive] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const { upload, isUploading, uploadProgress, uploadError } = useMediaUpload();
+  const { uploadMultiple, isUploading } = useMediaUpload();
 
   const handleFiles = (files: FileList) => {
     const newFiles = Array.from(files).slice(0, maxFiles - selectedFiles.length);
@@ -36,9 +37,12 @@ export const MediaUploader = ({
   const handleUpload = async () => {
     if (selectedFiles.length === 0) return;
 
-    const results = await Promise.all(
-      selectedFiles.map(file => upload(file, { category: 'media' }))
-    );
+    setUploadProgress(0);
+    
+    const results = await uploadMultiple(selectedFiles, { 
+      category: 'media',
+      accessLevel 
+    });
     
     const successfulUploads = results.filter(r => r.success);
     
@@ -47,6 +51,8 @@ export const MediaUploader = ({
       onUploadComplete?.(urls);
       setSelectedFiles([]);
     }
+    
+    setUploadProgress(100);
   };
 
   const getFileIcon = (file: File) => {

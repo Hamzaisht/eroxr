@@ -32,7 +32,7 @@ export const FileUploadDialog = ({
   const [acceptedFileTypes, setAcceptedFileTypes] = useState<string[]>([]);
   const [uploadedUrl, setUploadedUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const { upload, isUploading, uploadProgress, uploadError } = useMediaUpload();
+  const { uploadSingle, isUploading } = useMediaUpload();
   const session = useSession();
   const { toast } = useToast();
 
@@ -58,7 +58,7 @@ export const FileUploadDialog = ({
 
     try {
       console.log("Starting upload process...");
-      const result = await upload(
+      const result = await uploadSingle(
         selectedFile,
         {
           category: contentCategory
@@ -166,7 +166,7 @@ export const FileUploadDialog = ({
           </div>
         </div>
 
-        {(error || uploadError) && <p className="text-red-500">{error || uploadError}</p>}
+        {error && <p className="text-red-500">{error}</p>}
 
         <div className="flex justify-end">
           <Button type="button" variant="secondary" onClick={handleClose}>
@@ -181,7 +181,7 @@ export const FileUploadDialog = ({
             {isUploading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Uploading... {uploadProgress}%
+                Uploading...
               </>
             ) : (
               <>

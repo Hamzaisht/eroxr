@@ -33,11 +33,12 @@ export function VideoUploadForm({
   const [validationError, setValidationError] = useState<string | null>(null);
   const [isPreviewPlaying, setIsPreviewPlaying] = useState(false);
   const [isHovering, setIsHovering] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
   
   const fileInputRef = useRef<HTMLInputElement>(null);
   const session = useSession();
   const { toast } = useToast();
-  const { upload, isUploading, uploadProgress, uploadError } = useMediaUpload();
+  const { uploadSingle, isUploading } = useMediaUpload();
   
   // Clean up preview URL when component unmounts
   useEffect(() => {
@@ -115,8 +116,9 @@ export function VideoUploadForm({
     try {
       setIsSubmitting(true);
       setValidationError(null);
+      setUploadProgress(0);
       
-      const result = await upload(
+      const result = await uploadSingle(
         videoFile,
         {
           category: 'videos'
@@ -169,12 +171,26 @@ export function VideoUploadForm({
       
     } finally {
       setIsSubmitting(false);
+      setUploadProgress(0);
     }
   };
   
   const togglePreviewPlayback = () => {
     setIsPreviewPlaying(!isPreviewPlaying);
   };
+  
+  // Update progress when uploading
+  useEffect(() => {
+    if (isUploading) {
+      const interval = setInterval(() => {
+        setUploadProgress(prev => Math.min(prev + 10, 90));
+      }, 200);
+      
+      return () => clearInterval(interval);
+    } else if (uploadProgress > 0) {
+      setUploadProgress(100);
+    }
+  }, [isUploading, uploadProgress]);
   
   return (
     <Card className="p-6">
@@ -261,9 +277,9 @@ export function VideoUploadForm({
           </div>
         )}
         
-        {(validationError || uploadError) && (
+        {validationError && (
           <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-2 rounded-md text-sm">
-            {validationError || uploadError}
+            {validationError}
           </div>
         )}
         
