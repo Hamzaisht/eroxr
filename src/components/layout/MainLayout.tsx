@@ -37,21 +37,24 @@ export const MainLayout = () => {
   console.log("MainLayout - Rendering authenticated layout");
 
   return (
-    <div className="flex min-h-screen w-full bg-[#0D1117] overflow-x-hidden">
+    <div className="flex min-h-screen w-full bg-luxury-gradient-from overflow-x-hidden">
       <InteractiveNav />
       
       <div className="flex-1 min-h-screen relative w-full">
-        {/* Background */}
+        {/* Background with geex art studio aesthetic */}
         <div className="fixed inset-0 pointer-events-none">
           <BackgroundEffects />
+          {/* Additional studio-inspired background elements */}
+          <div className="absolute inset-0 bg-[url('/grid.svg')] bg-center [mask-image:radial-gradient(white,transparent_80%)] opacity-5" />
+          <div className="absolute inset-0 bg-gradient-to-br from-luxury-dark via-luxury-darker to-luxury-gradient-to opacity-90" />
         </div>
         
         {/* Main Navigation Header */}
         <MainNav />
         
-        {/* Main content wrapper */}
+        {/* Main content wrapper with studio styling */}
         <MainContent isErosRoute={isErosRoute}>
-          <div className="pt-16"> {/* Add padding for fixed header */}
+          <div className="pt-20 relative z-10"> {/* Add padding for fixed header and ensure content is above background */}
             <Outlet />
           </div>
         </MainContent>
