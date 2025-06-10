@@ -65,6 +65,10 @@ export const CreatePostDialog = ({
     }
   };
 
+  const handleVisibilityChange = (value: string) => {
+    setVisibility(value as "public" | "subscribers_only" | "private" | "hidden");
+  };
+
   return (
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="max-w-2xl max-h-[95vh] overflow-hidden bg-slate-900/95 border border-cyan-500/20 backdrop-blur-xl shadow-2xl p-0">
@@ -176,7 +180,7 @@ export const CreatePostDialog = ({
                 <Globe className="w-4 h-4 text-purple-400" />
                 <label className="text-sm font-medium text-white">Post Visibility</label>
               </div>
-              <Select value={visibility} onValueChange={setVisibility}>
+              <Select value={visibility} onValueChange={handleVisibilityChange}>
                 <SelectTrigger className="bg-slate-800/50 border border-slate-700/50 text-white hover:border-purple-400/50 transition-all duration-200">
                   <SelectValue />
                 </SelectTrigger>
