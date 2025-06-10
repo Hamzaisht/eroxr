@@ -1,8 +1,6 @@
 
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Play, Volume2, VolumeX } from "lucide-react";
-import { motion } from "framer-motion";
 
 interface MediaAsset {
   id: string;
@@ -35,20 +33,23 @@ export const MediaRenderer = ({ assets, media, className = "" }: MediaRendererPr
   }
 
   const getMediaUrl = (storagePath: string) => {
-    // Try different bucket names and path combinations
+    // Try the 'media' bucket first, then fallback to 'uploads'
+    console.log("MediaRenderer - Getting URL for path:", storagePath);
+    
     let publicUrl;
     
-    // First try 'media' bucket
+    // Try 'media' bucket first
     const mediaResult = supabase.storage.from('media').getPublicUrl(storagePath);
     if (mediaResult.data?.publicUrl) {
       publicUrl = mediaResult.data.publicUrl;
+      console.log("MediaRenderer - Using media bucket URL:", publicUrl);
     } else {
-      // Fallback to other common bucket names
-      const fallbackResult = supabase.storage.from('uploads').getPublicUrl(storagePath);
-      publicUrl = fallbackResult.data?.publicUrl || storagePath;
+      // Fallback to 'uploads' bucket
+      const uploadsResult = supabase.storage.from('uploads').getPublicUrl(storagePath);
+      publicUrl = uploadsResult.data?.publicUrl || storagePath;
+      console.log("MediaRenderer - Using uploads bucket URL:", publicUrl);
     }
     
-    console.log("MediaRenderer - Generated URL:", publicUrl, "for path:", storagePath);
     return publicUrl;
   };
 
@@ -64,6 +65,11 @@ export const MediaRenderer = ({ assets, media, className = "" }: MediaRendererPr
   };
 
   const currentAsset = mediaAssets[currentIndex];
+  if (!currentAsset) {
+    console.log("MediaRenderer - No current asset available");
+    return null;
+  }
+
   const mediaUrl = getMediaUrl(currentAsset.storage_path);
 
   console.log("MediaRenderer - Current asset:", currentAsset);
@@ -113,13 +119,14 @@ export const MediaRenderer = ({ assets, media, className = "" }: MediaRendererPr
           </div>
         )}
 
-        {/* Error overlay */}
+        {/* Error overlay with more details */}
         {hasError[currentAsset.id] && (
           <div className="absolute inset-0 bg-black/70 flex items-center justify-center">
-            <div className="text-center">
+            <div className="text-center p-4">
               <p className="text-white text-sm mb-2">Failed to load media</p>
-              <p className="text-gray-400 text-xs">Path: {currentAsset.storage_path}</p>
-              <p className="text-gray-400 text-xs">URL: {mediaUrl}</p>
+              <p className="text-gray-400 text-xs mb-1">Path: {currentAsset.storage_path}</p>
+              <p className="text-gray-400 text-xs mb-1">URL: {mediaUrl}</p>
+              <p className="text-gray-400 text-xs">Type: {currentAsset.media_type}</p>
             </div>
           </div>
         )}
