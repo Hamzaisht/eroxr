@@ -6,7 +6,7 @@ import { UploadHeader } from "./components/UploadHeader";
 import { UploadStatusMessages } from "./components/UploadStatusMessages";
 import { FilePreviewGrid } from "./components/FilePreviewGrid";
 import { UploadSuccessMessage } from "./components/UploadSuccessMessage";
-import { Sparkles, Upload, Zap } from "lucide-react";
+import { Sparkles, Upload, Zap, CheckCircle } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 
 interface MediaUploadDisplayProps {
@@ -121,93 +121,132 @@ export const MediaUploadDisplay = ({
 
   return (
     <motion.div 
-      initial={{ opacity: 0, y: 20 }}
+      initial={{ opacity: 0, y: 30 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4, ease: "easeOut" }}
-      className="w-full space-y-4"
+      transition={{ duration: 0.6, ease: "easeOut" }}
+      className="w-full space-y-6"
     >
-      {/* Premium container with studio aesthetic */}
-      <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-luxury-dark/90 via-luxury-darker/95 to-luxury-dark/90 border border-luxury-primary/20 backdrop-blur-xl">
+      {/* Futuristic container with advanced blur and RGB borders */}
+      <div className="relative overflow-hidden rounded-2xl backdrop-blur-3xl">
         
-        {/* Animated background effects */}
-        <div className="absolute inset-0 bg-[url('/grid.svg')] bg-center [mask-image:radial-gradient(white,transparent_80%)] opacity-5" />
-        <div className="absolute inset-0 bg-gradient-to-br from-luxury-primary/5 via-transparent to-luxury-accent/5" />
+        {/* Animated RGB border */}
+        <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-cyan-400/60 via-purple-500/60 via-pink-500/60 to-yellow-400/60 blur-sm animate-[spin_6s_linear_infinite]"></div>
+        <div className="absolute inset-[1px] rounded-2xl bg-black/60 backdrop-blur-3xl"></div>
         
-        {/* Floating particles */}
+        {/* Neural network background pattern */}
+        <div className="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"%3E%3Cg fill="none" fill-rule="evenodd"%3E%3Cg fill="%23ffffff" fill-opacity="0.03"%3E%3Ccircle cx="30" cy="30" r="2"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')] opacity-30" />
+        
+        {/* Floating quantum particles */}
         <AnimatePresence>
-          {[...Array(3)].map((_, i) => (
+          {[...Array(8)].map((_, i) => (
             <motion.div
               key={i}
-              className="absolute w-1 h-1 rounded-full bg-luxury-primary/40"
+              className="absolute w-1.5 h-1.5 rounded-full"
               style={{
-                left: `${20 + i * 30}%`,
-                top: `${30 + (i % 2) * 40}%`,
+                background: `linear-gradient(45deg, ${['#00f5ff', '#8b5cf6', '#f472b6', '#facc15'][i % 4]}, transparent)`,
+                left: `${15 + i * 10}%`,
+                top: `${20 + (i % 3) * 25}%`,
               }}
               animate={{
-                y: [0, -10, 0],
-                opacity: [0, 1, 0],
-                scale: [0, 1, 0],
+                y: [0, -30, 0],
+                opacity: [0.3, 1, 0.3],
+                scale: [0.8, 1.4, 0.8],
+                rotate: [0, 180, 360],
               }}
               transition={{
-                duration: 2 + i * 0.3,
+                duration: 4 + i * 0.5,
                 repeat: Infinity,
-                delay: i * 0.5,
+                delay: i * 0.3,
                 ease: "easeInOut",
               }}
             />
           ))}
         </AnimatePresence>
 
-        <div className="relative p-6 space-y-4">
-          {/* Header with animations */}
+        <div className="relative z-10 p-8 space-y-6">
+          {/* Header with holographic effect */}
           <motion.div 
-            className="flex items-center gap-3"
-            initial={{ opacity: 0, x: -10 }}
+            className="flex items-center gap-4"
+            initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.1 }}
+            transition={{ delay: 0.2 }}
           >
             <motion.div
-              animate={{ rotate: uploadInProgress ? 360 : 0 }}
-              transition={{ duration: uploadInProgress ? 2 : 0, repeat: uploadInProgress ? Infinity : 0, ease: "linear" }}
+              animate={{ 
+                rotate: uploadInProgress ? 360 : 0,
+                scale: uploadInProgress ? [1, 1.2, 1] : 1
+              }}
+              transition={{ 
+                rotate: { duration: uploadInProgress ? 2 : 0, repeat: uploadInProgress ? Infinity : 0, ease: "linear" },
+                scale: { duration: 1, repeat: Infinity, ease: "easeInOut" }
+              }}
+              className="relative"
             >
-              <Upload className="w-5 h-5 text-luxury-primary" />
+              <Upload className="w-6 h-6 text-cyan-400" />
+              <div className="absolute inset-0 bg-cyan-400/30 rounded-full blur-lg animate-pulse" />
             </motion.div>
             <div>
-              <h4 className="text-sm font-semibold text-white">Add Media</h4>
-              <p className="text-xs text-luxury-muted">Optimizing your media for best quality</p>
+              <h4 className="text-lg font-bold bg-gradient-to-r from-cyan-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
+                Quantum Media Processing
+              </h4>
+              <p className="text-sm text-white/50">Optimizing your cosmic creations</p>
             </div>
           </motion.div>
 
-          {/* Upload progress */}
+          {/* Enhanced upload progress */}
           {uploadInProgress && (
             <motion.div 
-              className="space-y-2"
+              className="space-y-4"
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: 'auto' }}
-              transition={{ duration: 0.3 }}
+              transition={{ duration: 0.4 }}
             >
               <div className="flex items-center justify-between text-sm">
-                <div className="flex items-center gap-2">
-                  <Zap className="w-4 h-4 text-luxury-accent animate-pulse" />
-                  <span className="text-luxury-accent font-medium">Uploading...</span>
+                <div className="flex items-center gap-3">
+                  <motion.div
+                    animate={{ rotate: 360 }}
+                    transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                  >
+                    <Zap className="w-5 h-5 text-yellow-400" />
+                  </motion.div>
+                  <span className="text-yellow-400 font-semibold">Neural Network Processing...</span>
                 </div>
-                <span className="text-luxury-primary font-mono">{Math.round(uploadProgress)}%</span>
+                <span className="text-cyan-400 font-mono text-lg">{Math.round(uploadProgress)}%</span>
               </div>
-              <div className="relative">
-                <Progress 
-                  value={uploadProgress} 
-                  className="h-2 bg-luxury-darker border border-luxury-primary/20" 
+              
+              <div className="relative h-3 bg-black/40 rounded-full overflow-hidden border border-white/10">
+                <motion.div
+                  className="absolute inset-0 bg-gradient-to-r from-cyan-400 via-purple-500 to-pink-500 rounded-full"
+                  initial={{ width: "0%" }}
+                  animate={{ width: `${uploadProgress}%` }}
+                  transition={{ duration: 0.5 }}
                 />
                 <motion.div
-                  className="absolute inset-0 bg-gradient-to-r from-luxury-primary/20 to-luxury-accent/20 rounded-full"
-                  animate={{ opacity: [0.5, 1, 0.5] }}
-                  transition={{ duration: 1.5, repeat: Infinity }}
+                  className="absolute inset-0 bg-gradient-to-r from-white/30 to-transparent rounded-full"
+                  animate={{ x: ["0%", "100%"] }}
+                  transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }}
                 />
+              </div>
+              
+              {/* Quantum processing indicators */}
+              <div className="grid grid-cols-3 gap-2 text-xs">
+                <div className="flex items-center gap-2 text-cyan-400">
+                  <div className="w-2 h-2 bg-cyan-400 rounded-full animate-pulse" />
+                  <span>Analyzing</span>
+                </div>
+                <div className="flex items-center gap-2 text-purple-400">
+                  <div className="w-2 h-2 bg-purple-400 rounded-full animate-pulse" />
+                  <span>Enhancing</span>
+                </div>
+                <div className="flex items-center gap-2 text-pink-400">
+                  <div className="w-2 h-2 bg-pink-400 rounded-full animate-pulse" />
+                  <span>Uploading</span>
+                </div>
               </div>
             </motion.div>
           )}
 
-          {/* Status messages */}
+          {/* Status messages with enhanced styling */}
           <UploadStatusMessages
             uploadError={uploadError}
             uploadSuccess={uploadSuccess}
@@ -215,7 +254,7 @@ export const MediaUploadDisplay = ({
             uploadedAssetIds={uploadedAssetIds}
           />
 
-          {/* File preview grid */}
+          {/* Enhanced file preview grid */}
           <FilePreviewGrid
             selectedFiles={selectedFiles}
             filePreviews={filePreviews}
@@ -223,8 +262,26 @@ export const MediaUploadDisplay = ({
             uploadInProgress={uploadInProgress}
           />
 
-          {/* Success message */}
-          <UploadSuccessMessage uploadSuccess={uploadSuccess} />
+          {/* Success message with celebration effect */}
+          {uploadSuccess && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.5 }}
+              className="flex items-center gap-3 p-4 rounded-xl bg-green-500/10 border border-green-400/30"
+            >
+              <motion.div
+                animate={{ rotate: [0, 360] }}
+                transition={{ duration: 2, ease: "easeInOut" }}
+              >
+                <CheckCircle className="w-6 h-6 text-green-400" />
+              </motion.div>
+              <div>
+                <p className="text-green-400 font-semibold">Quantum Upload Complete!</p>
+                <p className="text-green-300/60 text-sm">Your cosmic creation is ready to launch</p>
+              </div>
+            </motion.div>
+          )}
         </div>
       </div>
     </motion.div>

@@ -1,0 +1,184 @@
+
+/* Futuristic UI Components */
+
+/* Custom Scrollbar */
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 245, 255, 0.6) transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 8px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 10px;
+  margin: 10px 0;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: linear-gradient(
+    45deg,
+    rgba(0, 245, 255, 0.6),
+    rgba(139, 92, 246, 0.6),
+    rgba(244, 114, 182, 0.6)
+  );
+  border-radius: 10px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+  box-shadow: 
+    0 0 10px rgba(0, 245, 255, 0.3),
+    inset 0 0 10px rgba(255, 255, 255, 0.1);
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(
+    45deg,
+    rgba(0, 245, 255, 0.8),
+    rgba(139, 92, 246, 0.8),
+    rgba(244, 114, 182, 0.8)
+  );
+  box-shadow: 
+    0 0 15px rgba(0, 245, 255, 0.5),
+    inset 0 0 15px rgba(255, 255, 255, 0.2);
+}
+
+/* Futuristic Container */
+.futuristic-container {
+  position: relative;
+}
+
+.futuristic-container::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: 16px;
+  padding: 2px;
+  background: linear-gradient(
+    45deg,
+    #00f5ff,
+    #8b5cf6,
+    #f472b6,
+    #facc15,
+    #00f5ff
+  );
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  -webkit-mask-composite: xor;
+  animation: futuristic-border 8s linear infinite;
+  z-index: -1;
+}
+
+@keyframes futuristic-border {
+  0% {
+    background: linear-gradient(45deg, #00f5ff, #8b5cf6, #f472b6, #facc15, #00f5ff);
+  }
+  25% {
+    background: linear-gradient(45deg, #f472b6, #facc15, #00f5ff, #8b5cf6, #f472b6);
+  }
+  50% {
+    background: linear-gradient(45deg, #facc15, #00f5ff, #8b5cf6, #f472b6, #facc15);
+  }
+  75% {
+    background: linear-gradient(45deg, #8b5cf6, #f472b6, #facc15, #00f5ff, #8b5cf6);
+  }
+  100% {
+    background: linear-gradient(45deg, #00f5ff, #8b5cf6, #f472b6, #facc15, #00f5ff);
+  }
+}
+
+/* Glassmorphism Effects */
+.glass-panel {
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+/* Holographic Text Effect */
+.holographic-text {
+  background: linear-gradient(
+    45deg,
+    #00f5ff,
+    #8b5cf6,
+    #f472b6,
+    #facc15,
+    #00f5ff
+  );
+  background-size: 400% 400%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: holographic 6s ease-in-out infinite;
+}
+
+@keyframes holographic {
+  0%, 100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+/* Energy Pulse Animation */
+.energy-pulse {
+  position: relative;
+}
+
+.energy-pulse::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(45deg, #00f5ff, #8b5cf6, #f472b6);
+  opacity: 0;
+  animation: energy-pulse 2s ease-in-out infinite;
+}
+
+@keyframes energy-pulse {
+  0%, 100% {
+    opacity: 0;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.3;
+    transform: scale(1.05);
+  }
+}
+
+/* Quantum Glow */
+.quantum-glow {
+  box-shadow: 
+    0 0 20px rgba(0, 245, 255, 0.3),
+    0 0 40px rgba(139, 92, 246, 0.2),
+    0 0 60px rgba(244, 114, 182, 0.1);
+}
+
+/* Floating Animation */
+.floating {
+  animation: floating 6s ease-in-out infinite;
+}
+
+@keyframes floating {
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  33% {
+    transform: translateY(-10px) rotate(1deg);
+  }
+  66% {
+    transform: translateY(5px) rotate(-1deg);
+  }
+}
+
+/* Neural Network Background */
+.neural-bg {
+  background-image: 
+    radial-gradient(circle at 25% 25%, rgba(0, 245, 255, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 75% 75%, rgba(139, 92, 246, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 50% 50%, rgba(244, 114, 182, 0.1) 0%, transparent 50%);
+}
