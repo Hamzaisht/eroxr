@@ -6,13 +6,13 @@ import { useOrphanedAssetsCleanup } from "./useOrphanedAssetsCleanup";
 import { useEffect } from "react";
 
 export const useHomePosts = () => {
-  const { session } = useAuth();
+  const { session, user } = useAuth();
   const { cleanupOrphanedAssets } = useOrphanedAssetsCleanup();
 
   // Trigger cleanup periodically
   useEffect(() => {
-    if (session?.user?.id) {
-      const cleanup = () => cleanupOrphanedAssets(session.user.id);
+    if (user?.id) {
+      const cleanup = () => cleanupOrphanedAssets(user.id);
       
       // Run cleanup on mount
       cleanup();
@@ -22,10 +22,10 @@ export const useHomePosts = () => {
       
       return () => clearInterval(interval);
     }
-  }, [session?.user?.id, cleanupOrphanedAssets]);
+  }, [user?.id, cleanupOrphanedAssets]);
 
   return useQuery({
-    queryKey: ['home-posts'],
+    queryKey: ['home-posts', user?.id],
     queryFn: async () => {
       console.log("Home - Fetching posts...");
       
@@ -63,6 +63,9 @@ export const useHomePosts = () => {
             post_id,
             file_size,
             access_level
+          ),
+          post_likes!inner(
+            user_id
           )
         `)
         .eq('visibility', 'public')
@@ -86,10 +89,17 @@ export const useHomePosts = () => {
       });
 
       // Transform the data to ensure creator is always an object, not an array
-      const transformedData = postsData?.map(post => ({
-        ...post,
-        creator: Array.isArray(post.creator) ? post.creator[0] : post.creator
-      })) || [];
+      const transformedData = postsData?.map(post => {
+        // Check if current user has liked this post
+        const isLiked = user?.id ? post.post_likes?.some((like: any) => like.user_id === user.id) : false;
+        
+        return {
+          ...post,
+          creator: Array.isArray(post.creator) ? post.creator[0] : post.creator,
+          isLiked,
+          isSaved: false // TODO: Add saved posts functionality
+        };
+      }) || [];
 
       // Debug logging for each post's media assets
       transformedData.forEach(post => {

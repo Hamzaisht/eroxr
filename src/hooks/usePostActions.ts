@@ -2,27 +2,38 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "./use-toast";
+import { useAuth } from "@/contexts/AuthContext";
 
 export const usePostActions = () => {
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const { user } = useAuth();
 
   const handleLike = useMutation({
-    mutationFn: async ({ postId, isLiked }: { postId: string; isLiked: boolean }) => {
-      const { data: { user } } = await supabase.auth.getUser();
+    mutationFn: async (postId: string) => {
       if (!user) throw new Error("User not authenticated");
 
-      if (isLiked) {
-        // Unlike - remove from post_likes (trigger will handle everything else)
+      // Check if user already liked this post
+      const { data: existingLike, error: checkError } = await supabase
+        .from('post_likes')
+        .select('id')
+        .eq('post_id', postId)
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (checkError) throw checkError;
+
+      if (existingLike) {
+        // Unlike - remove from post_likes
         const { error } = await supabase
           .from('post_likes')
           .delete()
-          .eq('post_id', postId)
-          .eq('user_id', user.id);
+          .eq('id', existingLike.id);
         
         if (error) throw error;
+        return { action: 'unliked' };
       } else {
-        // Like - add to post_likes (trigger will handle everything else)
+        // Like - add to post_likes  
         const { error } = await supabase
           .from('post_likes')
           .insert({
@@ -31,17 +42,18 @@ export const usePostActions = () => {
           });
         
         if (error) throw error;
+        return { action: 'liked' };
       }
-
-      // Database triggers automatically:
-      // - Update posts.likes_count
-      // - Update trending_content table
-      // - Calculate new trending scores
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['home-posts'] });
       queryClient.invalidateQueries({ queryKey: ['trending-posts'] });
       queryClient.invalidateQueries({ queryKey: ['trending-creators'] });
+      
+      toast({
+        title: data.action === 'liked' ? "Liked!" : "Unliked",
+        description: data.action === 'liked' ? "You liked this post" : "You removed your like",
+      });
     },
     onError: (error) => {
       console.error('Like error:', error);
@@ -55,7 +67,21 @@ export const usePostActions = () => {
 
   const handleDelete = useMutation({
     mutationFn: async (postId: string) => {
-      // Delete the post - triggers will handle trending_content cleanup
+      if (!user) throw new Error("User not authenticated");
+
+      // First verify the user owns this post
+      const { data: post, error: fetchError } = await supabase
+        .from('posts')
+        .select('creator_id')
+        .eq('id', postId)
+        .single();
+
+      if (fetchError) throw fetchError;
+      if (post.creator_id !== user.id) {
+        throw new Error("You can only delete your own posts");
+      }
+
+      // Delete the post - triggers will handle cleanup
       const { error } = await supabase
         .from('posts')
         .delete()
@@ -83,8 +109,8 @@ export const usePostActions = () => {
   });
 
   // Create wrapper functions that match the expected signatures
-  const likePost = (postId: string, isLiked?: boolean) => {
-    handleLike.mutate({ postId, isLiked: isLiked || false });
+  const likePost = (postId: string) => {
+    handleLike.mutate(postId);
   };
 
   const deletePost = (postId: string) => {
@@ -94,7 +120,7 @@ export const usePostActions = () => {
   return {
     handleLike: likePost,
     handleDelete: deletePost,
-    isLiking: handleLike.isLoading,
-    isDeleting: handleDelete.isLoading,
+    isLiking: handleLike.isPending,
+    isDeleting: handleDelete.isPending,
   };
 };

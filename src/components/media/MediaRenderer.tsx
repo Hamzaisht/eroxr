@@ -1,6 +1,7 @@
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useInView } from "react-intersection-observer";
 
 interface MediaAsset {
   id: string;
@@ -21,11 +22,31 @@ export const MediaRenderer = ({ assets, media, className = "" }: MediaRendererPr
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isLoading, setIsLoading] = useState<Record<string, boolean>>({});
   const [hasError, setHasError] = useState<Record<string, boolean>>({});
+  const videoRef = useRef<HTMLVideoElement>(null);
+  
+  // Use intersection observer to detect when video is in viewport
+  const { ref: inViewRef, inView } = useInView({
+    threshold: 0.5, // Trigger when 50% of video is visible
+    triggerOnce: false
+  });
 
   // Use assets or fall back to media prop for backward compatibility
   const mediaAssets = assets || media || [];
 
   console.log("MediaRenderer - Received assets:", mediaAssets);
+
+  // Handle autoplay when video comes into view
+  useEffect(() => {
+    if (videoRef.current && currentAsset?.media_type === 'video') {
+      if (inView) {
+        videoRef.current.play().catch(err => {
+          console.log("Autoplay prevented:", err);
+        });
+      } else {
+        videoRef.current.pause();
+      }
+    }
+  }, [inView]);
 
   if (!mediaAssets || mediaAssets.length === 0) {
     console.log("MediaRenderer - No media assets to render");
@@ -83,7 +104,7 @@ export const MediaRenderer = ({ assets, media, className = "" }: MediaRendererPr
   });
 
   return (
-    <div className={`relative overflow-hidden rounded-lg ${className}`}>
+    <div className={`relative overflow-hidden rounded-lg ${className}`} ref={inViewRef}>
       {/* Media Content */}
       <div className="relative aspect-video bg-gray-900">
         {currentAsset.media_type === 'image' ? (
@@ -100,9 +121,13 @@ export const MediaRenderer = ({ assets, media, className = "" }: MediaRendererPr
           />
         ) : currentAsset.media_type === 'video' ? (
           <video
+            ref={videoRef}
             src={mediaUrl}
             className="w-full h-full object-cover"
             controls
+            muted
+            loop
+            playsInline
             preload="metadata"
             onLoadStart={() => {
               console.log("MediaRenderer - Video load started for:", mediaUrl);
