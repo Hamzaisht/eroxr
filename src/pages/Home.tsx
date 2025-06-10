@@ -25,14 +25,14 @@ const Home = () => {
   const [selectedFiles, setSelectedFiles] = useState<FileList | null>(null);
   const navigate = useNavigate();
 
-  const { data: posts, isLoading: postsLoading, error, refetch } = useHomePosts();
-
   const isLoggedIn = !!user && !!session;
-  const isLoading = postsLoading && isLoggedIn; // Only show loading for authenticated users fetching posts
+  
+  // Only fetch posts for authenticated users
+  const { data: posts, isLoading: postsLoading, error, refetch } = useHomePosts();
 
   console.log('Home - Render state:', {
     authLoading,
-    isLoading,
+    postsLoading,
     isLoggedIn,
     postsCount: posts?.length || 0,
     errorMessage: error instanceof Error ? error.message : 'Unknown error'
@@ -52,7 +52,7 @@ const Home = () => {
   }
 
   // Show posts loading only for authenticated users
-  if (isLoading) {
+  if (isLoggedIn && postsLoading) {
     console.log('Home - Showing posts loading');
     return (
       <div className="flex items-center justify-center min-h-screen bg-luxury-darker">
@@ -98,7 +98,9 @@ const Home = () => {
 
   const handlePostCreated = useCallback(() => {
     console.log('Home - Post created, refreshing feed');
-    refetch();
+    if (refetch) {
+      refetch();
+    }
     closeCreatePost();
   }, [refetch, closeCreatePost]);
 
@@ -235,15 +237,17 @@ const Home = () => {
             </div>
           </div>
 
-          <CreatePostDialog
-            open={isCreatePostOpen}
-            onOpenChange={(open) => {
-              if (!open) handlePostCreated();
-              else openCreatePost();
-            }}
-            selectedFiles={selectedFiles}
-            onFileSelect={setSelectedFiles}
-          />
+          {isCreatePostOpen && (
+            <CreatePostDialog
+              open={isCreatePostOpen}
+              onOpenChange={(open) => {
+                if (!open) handlePostCreated();
+                else openCreatePost();
+              }}
+              selectedFiles={selectedFiles}
+              onFileSelect={setSelectedFiles}
+            />
+          )}
         </div>
       </div>
     </div>
