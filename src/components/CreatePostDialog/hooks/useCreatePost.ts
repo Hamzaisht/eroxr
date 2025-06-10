@@ -101,25 +101,48 @@ export const useCreatePost = () => {
 
       console.log("CreatePost - Post created successfully:", newPost);
 
-      // If we have uploaded assets, link them to the post
+      // If we have uploaded assets, link them to the post with better error handling
       if (uploadedAssetIds.length > 0) {
         console.log("CreatePost - Linking media assets to post:", { postId: newPost.id, assetIds: uploadedAssetIds });
         
-        const { error: linkError } = await supabase
+        // First verify the assets exist and are owned by the current user
+        const { data: existingAssets, error: verifyError } = await supabase
           .from('media_assets')
-          .update({ post_id: newPost.id })
-          .in('id', uploadedAssetIds);
+          .select('id, user_id, post_id')
+          .in('id', uploadedAssetIds)
+          .eq('user_id', session.user.id);
 
-        if (linkError) {
-          console.error("CreatePost - Error linking media assets:", linkError);
-          // Don't fail the post creation, but log the error
-          toast({
-            title: "Warning",
-            description: "Post created but some media may not be linked properly",
-            variant: "destructive",
-          });
+        if (verifyError) {
+          console.error("CreatePost - Error verifying media assets:", verifyError);
+          throw new Error("Failed to verify media assets");
+        }
+
+        if (!existingAssets || existingAssets.length === 0) {
+          console.error("CreatePost - No valid media assets found for IDs:", uploadedAssetIds);
+          throw new Error("No valid media assets found to link");
+        }
+
+        const assetsToLink = existingAssets.filter(asset => !asset.post_id);
+        
+        if (assetsToLink.length === 0) {
+          console.warn("CreatePost - All assets are already linked to posts");
         } else {
-          console.log("CreatePost - Media assets linked successfully");
+          const { error: linkError } = await supabase
+            .from('media_assets')
+            .update({ post_id: newPost.id })
+            .in('id', assetsToLink.map(asset => asset.id));
+
+          if (linkError) {
+            console.error("CreatePost - Error linking media assets:", linkError);
+            // Don't fail the post creation, but log the error
+            toast({
+              title: "Warning",
+              description: "Post created but some media may not be linked properly",
+              variant: "destructive",
+            });
+          } else {
+            console.log("CreatePost - Media assets linked successfully:", assetsToLink.length);
+          }
         }
       }
 

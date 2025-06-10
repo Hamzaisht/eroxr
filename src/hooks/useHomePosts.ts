@@ -35,14 +35,16 @@ export const useHomePosts = () => {
             bio,
             location
           ),
-          media_assets(
+          media_assets!media_assets_post_id_fkey(
             id,
             storage_path,
             media_type,
             mime_type,
             original_name,
             alt_text,
-            post_id
+            post_id,
+            file_size,
+            access_level
           )
         `)
         .eq('visibility', 'public')
@@ -69,14 +71,15 @@ export const useHomePosts = () => {
           ? post.creator[0]
           : null;
 
-        // Ensure media_assets is properly handled and filtered
+        // Enhanced media assets filtering and validation
         const mediaAssets = Array.isArray(post.media_assets) 
           ? post.media_assets.filter(asset => 
               asset && 
               asset.id && 
               asset.storage_path && 
               asset.media_type && 
-              asset.mime_type
+              asset.mime_type &&
+              asset.post_id === post.id // Ensure asset is properly linked
             )
           : [];
 
@@ -92,7 +95,10 @@ export const useHomePosts = () => {
           media_assets: mediaAssets
         };
 
-        console.log(`Home - Post ${post.id} has ${mediaAssets.length} media assets:`, mediaAssets);
+        console.log(`Home - Post ${post.id} has ${mediaAssets.length} valid media assets:`, 
+          mediaAssets.map(a => ({ id: a.id, type: a.media_type, linked: a.post_id === post.id }))
+        );
+        
         return transformedPost;
       });
 
