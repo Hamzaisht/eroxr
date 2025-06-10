@@ -1,20 +1,31 @@
 
 import { useState } from "react";
 import { useDropzone } from "react-dropzone";
-import { useSession } from "@supabase/auth-helpers-react";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
-import { Camera, X } from "lucide-react";
+import { Camera, X, UserPlus } from "lucide-react";
 import { useUniversalUpload } from "@/hooks/useUniversalUpload";
 import { MediaAccessLevel } from "@/utils/media/types";
 import { supabase } from "@/integrations/supabase/client";
+import { useCurrentUser } from "@/hooks/useCurrentUser";
+import { useNavigate } from "react-router-dom";
 
 export const StoryUploader = () => {
+  const { user, isLoggedIn } = useCurrentUser();
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const { toast } = useToast();
-  const session = useSession();
   const { upload, isUploading, progress } = useUniversalUpload();
+  const navigate = useNavigate();
+
+  const handleAuthRequired = () => {
+    toast({
+      title: "Sign in required",
+      description: "Please sign in to upload stories.",
+      variant: "destructive",
+    });
+    navigate('/login');
+  };
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     accept: {
@@ -24,6 +35,11 @@ export const StoryUploader = () => {
     maxSize: 10485760, // 10MB max
     maxFiles: 1,
     onDrop: (acceptedFiles) => {
+      if (!isLoggedIn) {
+        handleAuthRequired();
+        return;
+      }
+      
       if (acceptedFiles.length > 0) {
         const file = acceptedFiles[0];
         setFile(file);
@@ -44,7 +60,7 @@ export const StoryUploader = () => {
   });
 
   const uploadStory = async () => {
-    if (!file || !session?.user?.id) {
+    if (!file || !user?.id) {
       toast({
         title: "Upload error",
         description: "Please select a file and ensure you're logged in",
@@ -76,7 +92,7 @@ export const StoryUploader = () => {
       const { error: dbError } = await supabase
         .from('stories')
         .insert({
-          creator_id: session.user.id,
+          creator_id: user.id,
           media_url: result.url,
           video_url: file.type.startsWith('video/') ? result.url : null,
           is_active: true,
@@ -111,6 +127,22 @@ export const StoryUploader = () => {
       URL.revokeObjectURL(preview);
     }
   };
+
+  // Guest state
+  if (!isLoggedIn) {
+    return (
+      <div className="w-full">
+        <div
+          onClick={handleAuthRequired}
+          className="relative cursor-pointer transition-all duration-300 bg-luxury-neutral/10 hover:bg-luxury-neutral/20 rounded-full p-1 aspect-square flex items-center justify-center"
+        >
+          <div className="flex flex-col items-center justify-center">
+            <UserPlus className="w-5 h-5 text-luxury-neutral/60" />
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="w-full">

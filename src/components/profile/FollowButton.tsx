@@ -2,10 +2,11 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
-import { useSession } from '@supabase/auth-helpers-react';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, UserPlus, UserMinus } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { useCurrentUser } from '@/hooks/useCurrentUser';
+import { useNavigate } from 'react-router-dom';
 
 interface FollowButtonProps {
   profileId: string;
@@ -14,25 +15,37 @@ interface FollowButtonProps {
 }
 
 export const FollowButton = ({ profileId, initialIsFollowing = false, onFollowChange }: FollowButtonProps) => {
+  const { user, isLoggedIn } = useCurrentUser();
   const [isFollowing, setIsFollowing] = useState(initialIsFollowing);
   const [isLoading, setIsLoading] = useState(false);
   const [followerCount, setFollowerCount] = useState(0);
-  const session = useSession();
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   useEffect(() => {
-    checkFollowStatus();
+    if (isLoggedIn) {
+      checkFollowStatus();
+    }
     getFollowerCount();
-  }, [profileId, session]);
+  }, [profileId, isLoggedIn]);
+
+  const handleAuthRequired = () => {
+    toast({
+      title: "Sign in required",
+      description: "Please sign in to follow other users.",
+      variant: "destructive",
+    });
+    navigate('/login');
+  };
 
   const checkFollowStatus = async () => {
-    if (!session?.user || !profileId) return;
+    if (!user || !profileId) return;
 
     try {
       const { data, error } = await supabase
         .from('followers')
         .select('id')
-        .eq('follower_id', session.user.id)
+        .eq('follower_id', user.id)
         .eq('following_id', profileId)
         .single();
 
@@ -62,16 +75,12 @@ export const FollowButton = ({ profileId, initialIsFollowing = false, onFollowCh
   };
   
   const handleFollowToggle = async () => {
-    if (!session?.user) {
-      toast({
-        title: "Authentication required",
-        description: "Please sign in to follow other users.",
-        variant: "destructive",
-      });
+    if (!isLoggedIn) {
+      handleAuthRequired();
       return;
     }
 
-    if (session.user.id === profileId) {
+    if (user?.id === profileId) {
       toast({
         title: "Cannot follow yourself",
         description: "You cannot follow your own profile.",
@@ -87,7 +96,7 @@ export const FollowButton = ({ profileId, initialIsFollowing = false, onFollowCh
         const { error } = await supabase
           .from('followers')
           .delete()
-          .eq('follower_id', session.user.id)
+          .eq('follower_id', user!.id)
           .eq('following_id', profileId);
           
         if (error) throw error;
@@ -104,7 +113,7 @@ export const FollowButton = ({ profileId, initialIsFollowing = false, onFollowCh
         const { error } = await supabase
           .from('followers')
           .insert({
-            follower_id: session.user.id,
+            follower_id: user!.id,
             following_id: profileId,
           });
           
@@ -157,7 +166,7 @@ export const FollowButton = ({ profileId, initialIsFollowing = false, onFollowCh
         ) : (
           <UserPlus className="h-5 w-5 mr-2 group-hover:scale-110 transition-transform duration-300" />
         )}
-        {isFollowing ? "Following" : "Follow"}
+        {!isLoggedIn ? "Sign in to Follow" : isFollowing ? "Following" : "Follow"}
       </Button>
       {followerCount > 0 && (
         <motion.span 

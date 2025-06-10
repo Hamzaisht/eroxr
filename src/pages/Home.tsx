@@ -5,7 +5,7 @@ import { RightSidebar } from "@/components/home/RightSidebar";
 import { StoryBar } from "@/components/stories/StoryBar";
 import { LiveStreams } from "@/components/home/LiveStreams";
 import { EnhancedPostCard } from "@/components/feed/EnhancedPostCard";
-import { Loader2, RefreshCw } from "lucide-react";
+import { Loader2, RefreshCw, UserPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { usePostActions } from "@/hooks/usePostActions";
 import { useCreatePostDialog } from "@/hooks/useCreatePostDialog";
@@ -13,19 +13,32 @@ import { useGoLiveDialog } from "@/hooks/useGoLiveDialog";
 import { CreatePostDialog } from "@/components/CreatePostDialog";
 import { useRealtimeUpdates } from "@/hooks/useRealtimeUpdates";
 import { useHomePosts } from "@/hooks/useHomePosts";
-import { useAuth } from "@/contexts/AuthContext";
+import { useCurrentUser } from "@/hooks/useCurrentUser";
+import { useNavigate } from "react-router-dom";
 
 const Home = () => {
-  const { session } = useAuth();
+  const { user, profile, isLoggedIn, isLoading: userLoading } = useCurrentUser();
   const { handleLike, handleDelete } = usePostActions();
   const { isOpen: isCreatePostOpen, openDialog: openCreatePost, closeDialog: closeCreatePost } = useCreatePostDialog();
   const { openDialog: openGoLive } = useGoLiveDialog();
   const [selectedFiles, setSelectedFiles] = useState<FileList | null>(null);
+  const navigate = useNavigate();
 
   const { data: posts, isLoading, error, refetch } = useHomePosts();
 
   useRealtimeUpdates('posts', [], { column: 'visibility', value: 'public' });
   useRealtimeUpdates('media_assets');
+
+  if (userLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-luxury-darker">
+        <div className="text-center">
+          <Loader2 className="h-8 w-8 animate-spin text-luxury-primary mx-auto mb-4" />
+          <p className="text-white">Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (isLoading) {
     return (
@@ -58,11 +71,13 @@ const Home = () => {
   }
 
   const onLike = (postId: string) => {
+    if (!isLoggedIn) return;
     handleLike(postId, false);
     setTimeout(() => refetch(), 100);
   };
 
   const onDelete = (postId: string, creatorId: string) => {
+    if (!isLoggedIn) return;
     handleDelete(postId);
     setTimeout(() => refetch(), 100);
   };
@@ -72,9 +87,83 @@ const Home = () => {
     closeCreatePost();
   };
 
+  const handleAuthAction = () => {
+    navigate('/login');
+  };
+
+  // Guest view
+  if (!isLoggedIn) {
+    return (
+      <div className="min-h-screen bg-luxury-darker">
+        <div className="pt-20 pb-8">
+          <div className="container mx-auto px-4 max-w-7xl">
+            <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+              <div className="lg:col-span-2 lg:col-start-2 space-y-8">
+                {/* Welcome Header for Guests */}
+                <div className="text-center space-y-6">
+                  <div className="space-y-3">
+                    <h1 className="text-4xl font-bold bg-gradient-to-r from-luxury-primary via-luxury-accent to-luxury-secondary bg-clip-text text-transparent">
+                      Welcome to Eroxr
+                    </h1>
+                    <p className="text-luxury-muted text-lg">Join our community to discover amazing creators</p>
+                  </div>
+                  <div className="space-y-4">
+                    <Button 
+                      onClick={handleAuthAction}
+                      className="bg-luxury-primary hover:bg-luxury-primary/90 text-white px-8 py-3 rounded-xl font-semibold"
+                    >
+                      <UserPlus className="h-5 w-5 mr-2" />
+                      Sign Up to Get Started
+                    </Button>
+                    <p className="text-gray-400 text-sm">
+                      Already have an account?{" "}
+                      <button 
+                        onClick={handleAuthAction}
+                        className="text-luxury-primary hover:underline"
+                      >
+                        Sign in here
+                      </button>
+                    </p>
+                  </div>
+                </div>
+
+                {/* Public Posts for Guests */}
+                <div className="space-y-6">
+                  {posts && posts.length > 0 ? (
+                    posts.slice(0, 5).map((post) => (
+                      <EnhancedPostCard
+                        key={post.id}
+                        post={post}
+                        currentUserId={undefined}
+                        onLike={onLike}
+                        onDelete={onDelete}
+                      />
+                    ))
+                  ) : (
+                    <div className="text-center py-12 bg-luxury-card rounded-lg">
+                      <p className="text-gray-400 mb-2">No posts available</p>
+                      <p className="text-gray-500 text-sm mb-4">Join to see more content!</p>
+                      <Button onClick={handleAuthAction} className="bg-luxury-primary hover:bg-luxury-primary/90">
+                        Sign Up Now
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              </div>
+              
+              <div className="lg:col-span-1 lg:col-start-4">
+                <RightSidebar />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Logged-in user view
   return (
     <div className="min-h-screen bg-luxury-darker">
-      {/* Main Content */}
       <div className="pt-20 pb-8">
         <div className="container mx-auto px-4 max-w-7xl">
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
@@ -84,11 +173,11 @@ const Home = () => {
                 <StoryBar />
               </div>
               
-              {/* Welcome Header - removed search bar */}
+              {/* Welcome Header */}
               <div className="text-center space-y-6">
                 <div className="space-y-3">
                   <h1 className="text-4xl font-bold bg-gradient-to-r from-luxury-primary via-luxury-accent to-luxury-secondary bg-clip-text text-transparent">
-                    Welcome to Eroxr
+                    Welcome back{profile?.username ? `, ${profile.username}` : ''}
                   </h1>
                   <p className="text-luxury-muted text-lg">Discover amazing creators around the world</p>
                 </div>
@@ -107,7 +196,7 @@ const Home = () => {
                     <EnhancedPostCard
                       key={post.id}
                       post={post}
-                      currentUserId={session?.user?.id}
+                      currentUserId={user?.id}
                       onLike={onLike}
                       onDelete={onDelete}
                     />

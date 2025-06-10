@@ -2,11 +2,12 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Image, Video, Mic, Camera } from "lucide-react";
-import { useSession } from "@supabase/auth-helpers-react";
+import { Image, Video, Mic, Camera, UserPlus } from "lucide-react";
 import { UserAvatar } from "@/components/avatar/UserAvatar";
 import { AudioRecordingDialog } from "./AudioRecordingDialog";
 import { useToast } from "@/hooks/use-toast";
+import { useCurrentUser } from "@/hooks/useCurrentUser";
+import { useNavigate } from "react-router-dom";
 
 interface CreatePostAreaProps {
   onCreatePost: () => void;
@@ -14,22 +15,84 @@ interface CreatePostAreaProps {
 }
 
 export const CreatePostArea = ({ onCreatePost, onGoLive }: CreatePostAreaProps) => {
-  const session = useSession();
-  const username = session?.user?.user_metadata?.username || session?.user?.email?.split('@')[0] || 'User';
+  const { user, profile, isLoggedIn } = useCurrentUser();
   const [isAudioDialogOpen, setIsAudioDialogOpen] = useState(false);
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   const handleAudioRecorded = (audioBlob: Blob) => {
-    // For now, just show a success message
-    // This could be extended to actually handle the audio upload
+    if (!isLoggedIn) {
+      handleAuthRequired();
+      return;
+    }
+    
     toast({
       title: "Audio Recorded",
       description: "Your audio has been recorded successfully. Audio post creation will be implemented soon.",
     });
     
     console.log("Audio recorded:", audioBlob);
-    // TODO: Implement audio post creation logic here
   };
+
+  const handleAuthRequired = () => {
+    toast({
+      title: "Sign in required",
+      description: "Please sign in to create posts and interact with content.",
+      variant: "destructive",
+    });
+    navigate('/login');
+  };
+
+  const handleCreatePost = () => {
+    if (!isLoggedIn) {
+      handleAuthRequired();
+      return;
+    }
+    onCreatePost();
+  };
+
+  const handleGoLive = () => {
+    if (!isLoggedIn) {
+      handleAuthRequired();
+      return;
+    }
+    onGoLive();
+  };
+
+  const handleAudioAction = () => {
+    if (!isLoggedIn) {
+      handleAuthRequired();
+      return;
+    }
+    setIsAudioDialogOpen(true);
+  };
+
+  if (!isLoggedIn) {
+    return (
+      <Card className="bg-luxury-darker border-luxury-neutral/10">
+        <CardContent className="p-4">
+          <div className="text-center space-y-4">
+            <div className="flex items-center justify-center">
+              <div className="w-10 h-10 rounded-full bg-luxury-neutral/20 flex items-center justify-center">
+                <UserPlus className="h-5 w-5 text-luxury-neutral/60" />
+              </div>
+            </div>
+            <div>
+              <p className="text-luxury-neutral/80 mb-2">Join the conversation</p>
+              <Button
+                onClick={handleAuthRequired}
+                className="bg-luxury-primary hover:bg-luxury-primary/90 text-white"
+              >
+                Sign Up to Post
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  const username = profile?.username || user?.user_metadata?.username || user?.email?.split('@')[0] || 'User';
 
   return (
     <>
@@ -37,14 +100,14 @@ export const CreatePostArea = ({ onCreatePost, onGoLive }: CreatePostAreaProps) 
         <CardContent className="p-4">
           <div className="flex items-center gap-3 mb-4">
             <UserAvatar 
-              userId={session?.user?.id}
+              userId={user?.id}
               username={username}
               size="md"
             />
             <Button
               variant="ghost"
               className="flex-1 justify-start text-luxury-neutral/60 hover:text-luxury-neutral"
-              onClick={onCreatePost}
+              onClick={handleCreatePost}
             >
               What's on your mind?
             </Button>
@@ -56,7 +119,7 @@ export const CreatePostArea = ({ onCreatePost, onGoLive }: CreatePostAreaProps) 
                 variant="ghost"
                 size="sm"
                 className="text-luxury-neutral/60 hover:text-luxury-neutral"
-                onClick={onCreatePost}
+                onClick={handleCreatePost}
               >
                 <Image className="h-4 w-4 mr-2" />
                 Photo
@@ -66,7 +129,7 @@ export const CreatePostArea = ({ onCreatePost, onGoLive }: CreatePostAreaProps) 
                 variant="ghost"
                 size="sm"
                 className="text-luxury-neutral/60 hover:text-luxury-neutral"
-                onClick={onCreatePost}
+                onClick={handleCreatePost}
               >
                 <Video className="h-4 w-4 mr-2" />
                 Video
@@ -76,7 +139,7 @@ export const CreatePostArea = ({ onCreatePost, onGoLive }: CreatePostAreaProps) 
                 variant="ghost"
                 size="sm"
                 className="text-luxury-neutral/60 hover:text-luxury-neutral"
-                onClick={() => setIsAudioDialogOpen(true)}
+                onClick={handleAudioAction}
               >
                 <Mic className="h-4 w-4 mr-2" />
                 Audio
@@ -87,7 +150,7 @@ export const CreatePostArea = ({ onCreatePost, onGoLive }: CreatePostAreaProps) 
               variant="ghost"
               size="sm"
               className="text-luxury-primary hover:text-luxury-primary/80"
-              onClick={onGoLive}
+              onClick={handleGoLive}
             >
               <Camera className="h-4 w-4 mr-2" />
               Go Live
