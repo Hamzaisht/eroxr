@@ -1,12 +1,11 @@
 
-import { useSession } from "@supabase/auth-helpers-react";
+import { useAuth } from "@/contexts/AuthContext";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { Profile } from "@/integrations/supabase/types/profile";
 
 export const useCurrentUser = () => {
-  const session = useSession();
-  const user = session?.user;
+  const { user, session, loading: authLoading } = useAuth();
 
   const { data: profile, isLoading: profileLoading, error: profileError } = useQuery(
     ['current-user-profile', user?.id],
@@ -33,7 +32,7 @@ export const useCurrentUser = () => {
       return data as Profile;
     },
     {
-      enabled: !!user?.id,
+      enabled: !!user?.id && !authLoading,
       staleTime: 5 * 60 * 1000, // 5 minutes
       cacheTime: 10 * 60 * 1000, // 10 minutes
       refetchOnWindowFocus: false,
@@ -45,8 +44,8 @@ export const useCurrentUser = () => {
     user,
     session,
     profile,
-    isLoggedIn: !!user,
-    isLoading: profileLoading,
+    isLoggedIn: !!user && !!session,
+    isLoading: authLoading || (!!user && profileLoading),
     error: profileError,
   };
 };

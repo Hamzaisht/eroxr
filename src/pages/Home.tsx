@@ -12,31 +12,35 @@ import { useCreatePostDialog } from "@/hooks/useCreatePostDialog";
 import { useGoLiveDialog } from "@/hooks/useGoLiveDialog";
 import { CreatePostDialog } from "@/components/CreatePostDialog";
 import { useHomePosts } from "@/hooks/useHomePosts";
-import { useCurrentUser } from "@/hooks/useCurrentUser";
+import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 
 const Home = () => {
   console.log('Home component rendering');
   
-  const { user, profile, isLoggedIn, isLoading: userLoading } = useCurrentUser();
+  const { user, session, loading: authLoading } = useAuth();
   const { handleLike, handleDelete } = usePostActions();
   const { isOpen: isCreatePostOpen, openDialog: openCreatePost, closeDialog: closeCreatePost } = useCreatePostDialog();
   const { openDialog: openGoLive } = useGoLiveDialog();
   const [selectedFiles, setSelectedFiles] = useState<FileList | null>(null);
   const navigate = useNavigate();
 
-  const { data: posts, isLoading, error, refetch } = useHomePosts();
+  const { data: posts, isLoading: postsLoading, error, refetch } = useHomePosts();
+
+  const isLoggedIn = !!user && !!session;
+  const isLoading = postsLoading && isLoggedIn; // Only show loading for authenticated users fetching posts
 
   console.log('Home - Render state:', {
-    userLoading,
+    authLoading,
     isLoading,
     isLoggedIn,
     postsCount: posts?.length || 0,
     errorMessage: error instanceof Error ? error.message : 'Unknown error'
   });
 
-  if (userLoading) {
-    console.log('Home - Showing user loading');
+  // Show loading only for initial auth check
+  if (authLoading) {
+    console.log('Home - Showing auth loading');
     return (
       <div className="flex items-center justify-center min-h-screen bg-luxury-darker">
         <div className="text-center">
@@ -47,6 +51,7 @@ const Home = () => {
     );
   }
 
+  // Show posts loading only for authenticated users
   if (isLoading) {
     console.log('Home - Showing posts loading');
     return (
@@ -59,7 +64,7 @@ const Home = () => {
     );
   }
 
-  if (error) {
+  if (error && isLoggedIn) {
     console.log('Home - Showing error state');
     const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
     return (
@@ -189,7 +194,7 @@ const Home = () => {
               <div className="text-center space-y-6">
                 <div className="space-y-3">
                   <h1 className="text-4xl font-bold bg-gradient-to-r from-luxury-primary via-luxury-accent to-luxury-secondary bg-clip-text text-transparent">
-                    Welcome back{profile?.username ? `, ${profile.username}` : ''}
+                    Welcome back{user?.user_metadata?.username ? `, ${user.user_metadata.username}` : ''}
                   </h1>
                   <p className="text-luxury-muted text-lg">Discover amazing creators around the world</p>
                 </div>

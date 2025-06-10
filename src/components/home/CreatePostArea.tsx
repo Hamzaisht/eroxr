@@ -6,7 +6,7 @@ import { Image, Video, Mic, Camera, UserPlus } from "lucide-react";
 import { UserAvatar } from "@/components/avatar/UserAvatar";
 import { AudioRecordingDialog } from "./AudioRecordingDialog";
 import { useToast } from "@/hooks/use-toast";
-import { useCurrentUser } from "@/hooks/useCurrentUser";
+import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 
 interface CreatePostAreaProps {
@@ -15,10 +15,12 @@ interface CreatePostAreaProps {
 }
 
 export const CreatePostArea = ({ onCreatePost, onGoLive }: CreatePostAreaProps) => {
-  const { user, profile, isLoggedIn } = useCurrentUser();
+  const { user, session } = useAuth();
   const [isAudioDialogOpen, setIsAudioDialogOpen] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
+
+  const isLoggedIn = !!user && !!session;
 
   const handleAudioRecorded = (audioBlob: Blob) => {
     if (!isLoggedIn) {
@@ -92,7 +94,7 @@ export const CreatePostArea = ({ onCreatePost, onGoLive }: CreatePostAreaProps) 
     );
   }
 
-  const username = profile?.username || user?.user_metadata?.username || user?.email?.split('@')[0] || 'User';
+  const username = user?.user_metadata?.username || user?.email?.split('@')[0] || 'User';
 
   return (
     <>
