@@ -6,9 +6,9 @@ import { useAuth } from "@/contexts/AuthContext";
 export const useHomePosts = () => {
   const { session } = useAuth();
 
-  return useQuery({
-    queryKey: ['home-posts'],
-    queryFn: async () => {
+  return useQuery(
+    ['home-posts'],
+    async () => {
       console.log("Home - Fetching posts with proper media relationships...");
       
       try {
@@ -61,7 +61,7 @@ export const useHomePosts = () => {
           return [];
         }
         
-        // Transform and validate the data without complex filtering that might cause loops
+        // Transform and validate the data
         const transformedPosts = postsData.map((post) => {
           const creator = post.creator && !Array.isArray(post.creator) 
             ? post.creator 
@@ -69,7 +69,7 @@ export const useHomePosts = () => {
             ? post.creator[0]
             : null;
 
-          // Basic media asset validation - don't filter here, let MediaRenderer handle it
+          // Simple media asset validation
           const mediaAssets = Array.isArray(post.media_assets) 
             ? post.media_assets.filter(asset => asset && asset.id && asset.storage_path)
             : [];
@@ -97,11 +97,11 @@ export const useHomePosts = () => {
         throw error;
       }
     },
-    enabled: !!session,
-    retry: 2,
-    staleTime: 30000,
-    refetchInterval: false,
-    // Add error handling to prevent infinite loading
-    throwOnError: true
-  });
+    {
+      enabled: !!session,
+      retry: 2,
+      staleTime: 30000,
+      refetchInterval: false
+    }
+  );
 };
