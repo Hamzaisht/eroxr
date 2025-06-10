@@ -4,9 +4,8 @@ import { MediaGrid } from './MediaRenderer/MediaGrid';
 import { ImageRenderer } from './renderers/ImageRenderer';
 import { VideoRenderer } from './renderers/VideoRenderer';
 import { AudioRenderer } from './renderers/AudioRenderer';
-import { useValidMediaUrl } from '@/hooks/useValidMediaUrl';
-import { getMediaType, isValidMediaAsset } from '@/utils/media/mediaUtils';
-import { useState } from 'react';
+import { getMediaType, isValidMediaAsset, getValidMediaUrl } from '@/utils/media/mediaUtils';
+import { useState, useMemo } from 'react';
 import { Loader2 } from 'lucide-react';
 
 interface MediaAsset {
@@ -46,6 +45,12 @@ export const MediaRenderer = ({
   
   console.log("MediaRenderer - Processing media:", mediaArray);
 
+  // Memoize valid media to prevent recalculation
+  const validMediaArray = useMemo(() => 
+    mediaArray.filter(isValidMediaAsset), 
+    [mediaArray]
+  );
+
   const renderSingleMedia = (mediaItem: MediaAsset, index: number = 0) => {
     // Validate media asset
     if (!isValidMediaAsset(mediaItem)) {
@@ -53,25 +58,13 @@ export const MediaRenderer = ({
       return <MediaErrorPlaceholder mediaItem={mediaItem} error="Invalid media data" />;
     }
 
-    const { url: mediaUrl, isLoading, isError, error } = useValidMediaUrl(mediaItem.storage_path);
+    // Generate URL directly without hook to prevent infinite loops
+    const mediaUrl = getValidMediaUrl(mediaItem.storage_path);
 
-    // Show loading state
-    if (isLoading) {
-      return (
-        <div className={`flex items-center justify-center bg-gray-900 p-8 ${className}`}>
-          <div className="text-center">
-            <Loader2 className="h-8 w-8 animate-spin text-luxury-primary mx-auto mb-2" />
-            <p className="text-white text-sm">Loading media...</p>
-          </div>
-        </div>
-      );
-    }
-
-    // Show error state
-    if (isError || !mediaUrl) {
-      console.error("MediaRenderer - Media loading error:", error);
+    if (!mediaUrl) {
+      console.error("MediaRenderer - Media URL generation failed:", mediaItem.storage_path);
       onError?.();
-      return <MediaErrorPlaceholder mediaItem={mediaItem} error={error || "Failed to load media"} />;
+      return <MediaErrorPlaceholder mediaItem={mediaItem} error="Failed to generate media URL" />;
     }
 
     // Determine media type
@@ -109,9 +102,6 @@ export const MediaRenderer = ({
     }
   };
 
-  // Filter valid media
-  const validMediaArray = mediaArray.filter(isValidMediaAsset);
-  
   if (validMediaArray.length === 0) {
     console.log("MediaRenderer - No valid media items found");
     return (

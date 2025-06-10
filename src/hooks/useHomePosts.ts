@@ -61,7 +61,7 @@ export const useHomePosts = () => {
           return [];
         }
         
-        // Transform and validate the data
+        // Transform and validate the data without complex filtering that might cause loops
         const transformedPosts = postsData.map((post) => {
           const creator = post.creator && !Array.isArray(post.creator) 
             ? post.creator 
@@ -69,15 +69,9 @@ export const useHomePosts = () => {
             ? post.creator[0]
             : null;
 
-          // Filter and validate media assets
-          const validMediaAssets = Array.isArray(post.media_assets) 
-            ? post.media_assets.filter(asset => 
-                asset && 
-                asset.id && 
-                asset.storage_path && 
-                asset.media_type && 
-                asset.mime_type
-              )
+          // Basic media asset validation - don't filter here, let MediaRenderer handle it
+          const mediaAssets = Array.isArray(post.media_assets) 
+            ? post.media_assets.filter(asset => asset && asset.id && asset.storage_path)
             : [];
 
           const transformedPost = {
@@ -89,10 +83,10 @@ export const useHomePosts = () => {
               bio: creator?.bio || '',
               location: creator?.location || ''
             },
-            media_assets: validMediaAssets
+            media_assets: mediaAssets
           };
 
-          console.log(`Home - Post ${post.id} has ${validMediaAssets.length} valid media assets`);
+          console.log(`Home - Post ${post.id} has ${mediaAssets.length} media assets`);
           return transformedPost;
         });
 
@@ -106,6 +100,8 @@ export const useHomePosts = () => {
     enabled: !!session,
     retry: 2,
     staleTime: 30000,
-    refetchInterval: false
+    refetchInterval: false,
+    // Add error handling to prevent infinite loading
+    throwOnError: true
   });
 };
