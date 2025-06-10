@@ -6,9 +6,9 @@ import { useAuth } from "@/contexts/AuthContext";
 export const useHomePosts = () => {
   const { session } = useAuth();
 
-  return useQuery({
-    queryKey: ['home-posts'],
-    queryFn: async () => {
+  return useQuery(
+    ['home-posts'],
+    async () => {
       console.log("Home - Fetching posts...");
       
       const { data: postsData, error: postsError } = await supabase
@@ -92,12 +92,14 @@ export const useHomePosts = () => {
       console.log("Home - Posts transformed successfully:", transformedPosts.length);
       return transformedPosts;
     },
-    enabled: !!session,
-    retry: 1,
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    gcTime: 10 * 60 * 1000, // 10 minutes
-    refetchOnWindowFocus: false,
-    refetchOnReconnect: false,
-    refetchOnMount: false,
-  });
+    {
+      enabled: !!session,
+      retry: 1,
+      staleTime: 5 * 60 * 1000, // 5 minutes
+      cacheTime: 10 * 60 * 1000, // 10 minutes
+      refetchOnWindowFocus: false,
+      refetchOnReconnect: false,
+      refetchOnMount: false,
+    }
+  );
 };
