@@ -33,24 +33,28 @@ export const MediaRenderer = ({ assets, media, className = "" }: MediaRendererPr
   }
 
   const getMediaUrl = (storagePath: string) => {
-    // Try the 'media' bucket first, then fallback to 'uploads'
     console.log("MediaRenderer - Getting URL for path:", storagePath);
     
-    let publicUrl;
-    
-    // Try 'media' bucket first
-    const mediaResult = supabase.storage.from('media').getPublicUrl(storagePath);
-    if (mediaResult.data?.publicUrl) {
-      publicUrl = mediaResult.data.publicUrl;
-      console.log("MediaRenderer - Using media bucket URL:", publicUrl);
-    } else {
-      // Fallback to 'uploads' bucket
-      const uploadsResult = supabase.storage.from('uploads').getPublicUrl(storagePath);
-      publicUrl = uploadsResult.data?.publicUrl || storagePath;
-      console.log("MediaRenderer - Using uploads bucket URL:", publicUrl);
+    // Check if it's already a full URL
+    if (storagePath.startsWith('http')) {
+      console.log("MediaRenderer - Using full URL:", storagePath);
+      return storagePath;
     }
     
-    return publicUrl;
+    // Remove any leading slash and 'media/' prefix to normalize the path
+    const cleanPath = storagePath.replace(/^\/+/, '').replace(/^media\//, '');
+    
+    // Generate public URL from media bucket
+    const { data } = supabase.storage.from('media').getPublicUrl(cleanPath);
+    const publicUrl = data?.publicUrl;
+    
+    console.log("MediaRenderer - Generated public URL:", {
+      originalPath: storagePath,
+      cleanPath,
+      publicUrl
+    });
+    
+    return publicUrl || storagePath;
   };
 
   const handleImageLoad = (assetId: string) => {
@@ -72,8 +76,11 @@ export const MediaRenderer = ({ assets, media, className = "" }: MediaRendererPr
 
   const mediaUrl = getMediaUrl(currentAsset.storage_path);
 
-  console.log("MediaRenderer - Current asset:", currentAsset);
-  console.log("MediaRenderer - Media URL:", mediaUrl);
+  console.log("MediaRenderer - Rendering asset:", {
+    currentAsset,
+    mediaUrl,
+    mediaType: currentAsset.media_type
+  });
 
   return (
     <div className={`relative overflow-hidden rounded-lg ${className}`}>

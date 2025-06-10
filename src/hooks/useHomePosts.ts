@@ -73,11 +73,13 @@ export const useHomePosts = () => {
         creator: Array.isArray(post.creator) ? post.creator[0] : post.creator
       })) || [];
 
-      // Additional debug logging for media assets
+      // Debug logging for each post's media assets
       transformedData.forEach(post => {
-        if (post.media_assets && post.media_assets.length > 0) {
-          console.log(`Post ${post.id} has ${post.media_assets.length} media assets:`, post.media_assets);
-        }
+        console.log(`Post ${post.id} media assets:`, {
+          hasMedia: !!post.media_assets,
+          count: post.media_assets?.length || 0,
+          assets: post.media_assets
+        });
       });
 
       return transformedData;
