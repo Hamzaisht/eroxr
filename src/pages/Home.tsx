@@ -27,63 +27,10 @@ const Home = () => {
 
   const isLoggedIn = !!user && !!session;
   
-  // Only fetch posts for authenticated users
+  // Always fetch posts - the hook handles auth state internally
   const { data: posts, isLoading: postsLoading, error, refetch } = useHomePosts();
 
-  console.log('Home - Render state:', {
-    authLoading,
-    postsLoading,
-    isLoggedIn,
-    postsCount: posts?.length || 0,
-    errorMessage: error instanceof Error ? error.message : 'Unknown error'
-  });
-
-  // Show loading only for initial auth check
-  if (authLoading) {
-    console.log('Home - Showing auth loading');
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-luxury-darker">
-        <div className="text-center">
-          <Loader2 className="h-8 w-8 animate-spin text-luxury-primary mx-auto mb-4" />
-          <p className="text-white">Loading...</p>
-        </div>
-      </div>
-    );
-  }
-
-  // Show posts loading only for authenticated users
-  if (isLoggedIn && postsLoading) {
-    console.log('Home - Showing posts loading');
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-luxury-darker">
-        <div className="text-center">
-          <Loader2 className="h-8 w-8 animate-spin text-luxury-primary mx-auto mb-4" />
-          <p className="text-white">Loading your feed...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (error && isLoggedIn) {
-    console.log('Home - Showing error state');
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-luxury-darker">
-        <div className="text-center max-w-md">
-          <p className="text-red-400 mb-4">Error loading posts</p>
-          <p className="text-gray-400 text-sm mb-6">{errorMessage}</p>
-          <Button onClick={() => refetch()} variant="outline" className="mr-4">
-            <RefreshCw className="h-4 w-4 mr-2" />
-            Try Again
-          </Button>
-          <Button onClick={() => window.location.reload()}>
-            Refresh Page
-          </Button>
-        </div>
-      </div>
-    );
-  }
-
+  // Define callbacks at top level - not conditionally
   const onLike = useCallback((postId: string) => {
     if (!isLoggedIn) return;
     console.log('Home - Liking post:', postId);
@@ -107,6 +54,60 @@ const Home = () => {
   const handleAuthAction = useCallback(() => {
     navigate('/login');
   }, [navigate]);
+
+  console.log('Home - Render state:', {
+    authLoading,
+    postsLoading,
+    isLoggedIn,
+    postsCount: posts?.length || 0,
+    errorMessage: error instanceof Error ? error.message : 'Unknown error'
+  });
+
+  // Show loading only for initial auth check
+  if (authLoading) {
+    console.log('Home - Showing auth loading');
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-luxury-darker">
+        <div className="text-center">
+          <Loader2 className="h-8 w-8 animate-spin text-luxury-primary mx-auto mb-4" />
+          <p className="text-white">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show posts loading
+  if (postsLoading) {
+    console.log('Home - Showing posts loading');
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-luxury-darker">
+        <div className="text-center">
+          <Loader2 className="h-8 w-8 animate-spin text-luxury-primary mx-auto mb-4" />
+          <p className="text-white">Loading your feed...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    console.log('Home - Showing error state');
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-luxury-darker">
+        <div className="text-center max-w-md">
+          <p className="text-red-400 mb-4">Error loading posts</p>
+          <p className="text-gray-400 text-sm mb-6">{errorMessage}</p>
+          <Button onClick={() => refetch()} variant="outline" className="mr-4">
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Try Again
+          </Button>
+          <Button onClick={() => window.location.reload()}>
+            Refresh Page
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   console.log('Home - Rendering main content');
 

@@ -59,6 +59,91 @@ export const useCreatePost = () => {
     setUploadSuccess(false);
   };
 
+  const createPost = async (onSuccess?: () => void) => {
+    if (!session?.user?.id) {
+      toast({
+        title: "Authentication required",
+        description: "Please log in to create a post",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!content.trim() && uploadedAssetIds.length === 0) {
+      toast({
+        title: "Content required",
+        description: "Please add some content or media to your post",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      console.log("CreatePost - Creating post with asset IDs:", uploadedAssetIds);
+
+      // Create the post first
+      const { data: newPost, error: postError } = await supabase
+        .from('posts')
+        .insert({
+          content: content.trim(),
+          creator_id: session.user.id,
+          visibility,
+        })
+        .select()
+        .single();
+
+      if (postError) {
+        console.error("CreatePost - Error creating post:", postError);
+        throw new Error(postError.message);
+      }
+
+      console.log("CreatePost - Post created successfully:", newPost);
+
+      // If we have uploaded assets, link them to the post
+      if (uploadedAssetIds.length > 0) {
+        console.log("CreatePost - Linking media assets to post:", { postId: newPost.id, assetIds: uploadedAssetIds });
+        
+        const { error: linkError } = await supabase
+          .from('media_assets')
+          .update({ post_id: newPost.id })
+          .in('id', uploadedAssetIds);
+
+        if (linkError) {
+          console.error("CreatePost - Error linking media assets:", linkError);
+          // Don't fail the post creation, but log the error
+          toast({
+            title: "Warning",
+            description: "Post created but some media may not be linked properly",
+            variant: "destructive",
+          });
+        } else {
+          console.log("CreatePost - Media assets linked successfully");
+        }
+      }
+
+      toast({
+        title: "Success",
+        description: "Your post has been created!",
+      });
+
+      // Reset form
+      resetForm();
+      onSuccess?.();
+
+    } catch (error: any) {
+      console.error("CreatePost - Error:", error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to create post",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const resetForm = () => {
     setContent("");
     setVisibility("public");
@@ -91,6 +176,7 @@ export const useCreatePost = () => {
     handleMediaUploadComplete,
     handleMediaUploadStart,
     resetForm,
+    createPost,
     session,
     toast
   };

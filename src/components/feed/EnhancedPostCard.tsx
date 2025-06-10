@@ -73,8 +73,7 @@ export const EnhancedPostCard = ({ post, onLike, onDelete, currentUserId }: Enha
     hasMediaAssets: !!post.media_assets,
     mediaCount: post.media_assets?.length || 0,
     hasValidMedia,
-    validAssets: post.media_assets?.filter(asset => asset.storage_path && asset.id && asset.media_type && asset.mime_type).length || 0,
-    mediaAssets: post.media_assets
+    validAssets: post.media_assets?.filter(asset => asset.storage_path && asset.id && asset.media_type && asset.mime_type).length || 0
   });
 
   return (
@@ -119,16 +118,6 @@ export const EnhancedPostCard = ({ post, onLike, onDelete, currentUserId }: Enha
               showWatermark={false}
               onError={() => console.error(`EnhancedPostCard - Media render error for post ${post.id}`)}
             />
-          </div>
-        )}
-
-        {/* Media Debug Info */}
-        {post.media_assets && post.media_assets.length > 0 && !hasValidMedia && (
-          <div className="px-4 pb-3 bg-red-900/20 text-red-400 text-sm">
-            <p>Debug: Found {post.media_assets.length} media assets but none are valid</p>
-            <pre className="text-xs mt-1 overflow-x-auto">
-              {JSON.stringify(post.media_assets, null, 2)}
-            </pre>
           </div>
         )}
 
