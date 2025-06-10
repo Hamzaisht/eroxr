@@ -1,4 +1,3 @@
-
 import { useState, useCallback } from "react";
 import { CreatePostArea } from "@/components/home/CreatePostArea";
 import { RightSidebar } from "@/components/home/RightSidebar";
@@ -35,7 +34,7 @@ const Home = () => {
   const onLike = useCallback((postId: string) => {
     if (!isLoggedIn) return;
     console.log('Home - Liking post:', postId);
-    handleLike(postId, false);
+    handleLike(postId);
   }, [isLoggedIn, handleLike]);
 
   const onDelete = useCallback((postId: string, creatorId: string) => {
