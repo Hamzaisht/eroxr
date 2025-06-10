@@ -11,7 +11,12 @@ export const useCurrentUser = () => {
   const { data: profile, isLoading: profileLoading, error: profileError } = useQuery({
     queryKey: ['current-user-profile', user?.id],
     queryFn: async () => {
-      if (!user?.id) return null;
+      console.log('useCurrentUser - Fetching profile for user:', user?.id);
+      
+      if (!user?.id) {
+        console.log('useCurrentUser - No user ID, returning null');
+        return null;
+      }
       
       const { data, error } = await supabase
         .from('profiles')
@@ -20,10 +25,11 @@ export const useCurrentUser = () => {
         .single();
       
       if (error) {
-        console.error('Error fetching user profile:', error);
+        console.error('useCurrentUser - Error fetching profile:', error);
         throw error;
       }
       
+      console.log('useCurrentUser - Profile fetched successfully:', data);
       return data as Profile;
     },
     enabled: !!user?.id,

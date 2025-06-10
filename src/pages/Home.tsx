@@ -32,7 +32,7 @@ const Home = () => {
     isLoading,
     isLoggedIn,
     postsCount: posts?.length || 0,
-    error: error?.message
+    errorMessage: error instanceof Error ? error.message : 'Unknown error'
   });
 
   if (userLoading) {
