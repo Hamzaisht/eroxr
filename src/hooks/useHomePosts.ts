@@ -56,61 +56,19 @@ export const useHomePosts = () => {
         throw new Error(postsError.message || "Failed to fetch posts");
       }
 
-      console.log("Home - Posts fetched successfully:", postsData?.length || 0);
-      
-      if (!postsData || postsData.length === 0) {
-        console.log("Home - No posts found");
-        return [];
-      }
-      
-      // Transform and validate the data
-      const transformedPosts = postsData.map((post) => {
-        const creator = post.creator && !Array.isArray(post.creator) 
-          ? post.creator 
-          : Array.isArray(post.creator) && post.creator.length > 0
-          ? post.creator[0]
-          : null;
-
-        // Enhanced media assets filtering and validation
-        const mediaAssets = Array.isArray(post.media_assets) 
-          ? post.media_assets.filter(asset => 
-              asset && 
-              asset.id && 
-              asset.storage_path && 
-              asset.media_type && 
-              asset.mime_type &&
-              asset.post_id === post.id // Ensure asset is properly linked
-            )
-          : [];
-
-        const transformedPost = {
-          ...post,
-          creator: {
-            id: creator?.id || post.creator_id || '',
-            username: creator?.username || 'Anonymous',
-            avatar_url: creator?.avatar_url || null,
-            bio: creator?.bio || '',
-            location: creator?.location || ''
-          },
-          media_assets: mediaAssets
-        };
-
-        console.log(`Home - Post ${post.id} has ${mediaAssets.length} valid media assets:`, 
-          mediaAssets.map(a => ({ id: a.id, type: a.media_type, linked: a.post_id === post.id }))
-        );
-        
-        return transformedPost;
+      console.log("Home - Posts fetched successfully:", {
+        count: postsData?.length || 0,
+        sample: postsData?.[0] ? {
+          id: postsData[0].id,
+          hasMediaAssets: !!postsData[0].media_assets,
+          mediaCount: postsData[0].media_assets?.length || 0
+        } : null
       });
 
-      console.log("Home - Posts transformed successfully:", transformedPosts.length);
-      return transformedPosts;
+      return postsData || [];
     },
-    enabled: true, // Always enable, not dependent on session
-    retry: 1,
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    cacheTime: 10 * 60 * 1000, // 10 minutes
+    enabled: true,
+    staleTime: 30000, // 30 seconds
     refetchOnWindowFocus: false,
-    refetchOnReconnect: false,
-    refetchOnMount: false,
   });
 };

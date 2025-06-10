@@ -1,167 +1,242 @@
+import React, { useState, useCallback } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { 
+  Heart, 
+  MessageCircle, 
+  Share2, 
+  Bookmark, 
+  MoreVertical,
+  Eye,
+  Zap,
+  Star,
+  Crown,
+  Sparkles
+} from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { MediaRenderer } from '@/components/media/MediaRenderer';
+import { formatDistanceToNow } from 'date-fns';
 
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Heart, MessageCircle, Share, Bookmark, MoreVertical } from "lucide-react";
-import { MediaRenderer } from "@/components/media/MediaRenderer";
-import { useState } from "react";
+interface Creator {
+  id: string;
+  username?: string;
+  avatar_url?: string;
+  bio?: string;
+  location?: string;
+}
 
 interface MediaAsset {
   id: string;
   storage_path: string;
   media_type: string;
   mime_type: string;
+  original_name: string;
   alt_text?: string;
-  original_name?: string;
-  user_id?: string;
-  post_id?: string;
-  metadata?: {
-    post_id?: string;
-    [key: string]: any;
-  };
 }
 
-interface PostData {
+interface Post {
   id: string;
   content: string;
-  creator: {
-    id: string;
-    username: string;
-    avatar_url?: string | null;
-  };
+  creator_id: string;
   created_at: string;
+  updated_at: string;
   likes_count: number;
   comments_count: number;
-  has_liked?: boolean;
+  view_count?: number;
+  share_count?: number;
+  engagement_score?: number;
+  is_ppv?: boolean;
+  ppv_amount?: number;
+  visibility: string;
+  creator: Creator;
   media_assets?: MediaAsset[];
 }
 
 interface EnhancedPostCardProps {
-  post: PostData;
-  onLike: (postId: string) => void;
-  onDelete?: (postId: string, creatorId: string) => void;
+  post: Post;
   currentUserId?: string;
+  onLike: (postId: string) => void;
+  onDelete: (postId: string, creatorId: string) => void;
 }
 
-export const EnhancedPostCard = ({ post, onLike, onDelete, currentUserId }: EnhancedPostCardProps) => {
-  const [isLiked, setIsLiked] = useState(post.has_liked || false);
-
-  const handleLike = () => {
-    setIsLiked(!isLiked);
-    onLike(post.id);
-  };
-
-  const formatTimeAgo = (dateString: string) => {
-    const date = new Date(dateString);
-    const now = new Date();
-    const diffInMinutes = Math.floor((now.getTime() - date.getTime()) / (1000 * 60));
-    
-    if (diffInMinutes < 1) return 'Just now';
-    if (diffInMinutes < 60) return `${diffInMinutes}m ago`;
-    if (diffInMinutes < 1440) return `${Math.floor(diffInMinutes / 60)}h ago`;
-    return `${Math.floor(diffInMinutes / 1440)}d ago`;
-  };
-
-  const getInitials = (username: string) => {
-    return username.charAt(0).toUpperCase();
-  };
-
-  const hasValidMedia = post.media_assets && post.media_assets.length > 0 && 
-    post.media_assets.some(asset => asset.storage_path && asset.id && asset.media_type && asset.mime_type);
+export const EnhancedPostCard = ({ 
+  post, 
+  currentUserId, 
+  onLike, 
+  onDelete 
+}: EnhancedPostCardProps) => {
+  const [isLiked, setIsLiked] = useState(false);
+  const [isSaved, setIsSaved] = useState(false);
+  const [likesCount, setLikesCount] = useState(post.likes_count || 0);
 
   console.log(`EnhancedPostCard - Rendering post ${post.id} with media:`, {
     hasMediaAssets: !!post.media_assets,
     mediaCount: post.media_assets?.length || 0,
-    hasValidMedia,
-    validAssets: post.media_assets?.filter(asset => asset.storage_path && asset.id && asset.media_type && asset.mime_type).length || 0
+    hasValidMedia: post.media_assets && post.media_assets.length > 0,
+    validAssets: post.media_assets?.filter(asset => asset && asset.storage_path).length || 0
   });
 
+  const handleLike = useCallback(() => {
+    setIsLiked(!isLiked);
+    setLikesCount(prev => isLiked ? prev - 1 : prev + 1);
+    onLike(post.id);
+  }, [isLiked, onLike, post.id]);
+
+  const handleSave = useCallback(() => {
+    setIsSaved(!isSaved);
+  }, [isSaved]);
+
+  const canDelete = currentUserId === post.creator_id;
+
+  const formatTimeAgo = (date: string) => {
+    return formatDistanceToNow(new Date(date), { addSuffix: true });
+  };
+
+  const validMediaAssets = post.media_assets?.filter(asset => 
+    asset && asset.storage_path && asset.media_type
+  ) || [];
+
   return (
-    <Card className="bg-luxury-darker border-luxury-neutral/10 overflow-hidden">
-      <CardContent className="p-0">
-        {/* Header */}
-        <div className="flex items-center justify-between p-4">
-          <div className="flex items-center gap-3">
-            <Avatar className="h-10 w-10">
-              {post.creator.avatar_url ? (
-                <AvatarImage src={post.creator.avatar_url} alt={post.creator.username} />
-              ) : null}
-              <AvatarFallback className="bg-luxury-darker text-luxury-neutral">
-                {getInitials(post.creator.username)}
-              </AvatarFallback>
-            </Avatar>
-            <div>
-              <p className="text-white font-semibold">{post.creator.username}</p>
-              <p className="text-gray-400 text-sm">{formatTimeAgo(post.created_at)}</p>
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -20 }}
+      className="bg-gradient-to-br from-luxury-dark/80 to-luxury-darker/80 backdrop-blur-xl border border-luxury-primary/20 rounded-3xl overflow-hidden shadow-luxury hover:shadow-luxury-hover transition-all duration-500 hover:scale-[1.02] group"
+    >
+      {/* Header */}
+      <div className="p-6 pb-0">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-4">
+            <motion.div
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              <Avatar className="h-12 w-12 ring-2 ring-luxury-primary/30 hover:ring-luxury-primary/60 transition-all duration-300">
+                <AvatarImage 
+                  src={post.creator.avatar_url || undefined} 
+                  alt={post.creator.username || 'Creator'} 
+                />
+                <AvatarFallback className="bg-luxury-primary/20 text-luxury-primary font-semibold">
+                  {(post.creator.username || 'U').charAt(0).toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+            </motion.div>
+            
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2">
+                <h3 className="font-semibold text-luxury-neutral truncate hover:text-luxury-primary transition-colors duration-300 cursor-pointer">
+                  {post.creator.username || 'Anonymous'}
+                </h3>
+                <motion.div
+                  animate={{ rotate: [0, 360] }}
+                  transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
+                >
+                  <Crown className="h-4 w-4 text-luxury-accent" />
+                </motion.div>
+              </div>
+              <p className="text-sm text-luxury-muted">
+                {formatTimeAgo(post.created_at)}
+              </p>
             </div>
           </div>
-          <Button variant="ghost" size="sm">
-            <MoreVertical className="h-4 w-4 text-gray-400" />
-          </Button>
+
+          <motion.button
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
+            className="p-2 hover:bg-luxury-primary/10 rounded-full transition-colors duration-300"
+          >
+            <MoreVertical className="h-5 w-5 text-luxury-muted hover:text-luxury-neutral" />
+          </motion.button>
         </div>
+      </div>
 
-        {/* Content */}
-        {post.content && (
-          <div className="px-4 pb-3">
-            <p className="text-white whitespace-pre-wrap">{post.content}</p>
-          </div>
-        )}
+      {/* Content */}
+      <div className="p-6 pt-4">
+        <p className="text-luxury-neutral leading-relaxed mb-4 whitespace-pre-wrap">
+          {post.content}
+        </p>
 
-        {/* Media - Only render if we have valid media */}
-        {hasValidMedia && (
-          <div className="relative">
-            <MediaRenderer
-              media={post.media_assets!.filter(asset => asset.storage_path && asset.id && asset.media_type && asset.mime_type)}
-              className="w-full"
-              autoPlay={false}
-              controls={true}
-              showWatermark={false}
-              onError={() => console.error(`EnhancedPostCard - Media render error for post ${post.id}`)}
+        {/* Media Content */}
+        {validMediaAssets.length > 0 && (
+          <div className="mb-4">
+            <MediaRenderer 
+              assets={validMediaAssets}
+              className="w-full max-h-96"
             />
           </div>
         )}
 
-        {/* Actions */}
-        <div className="p-4">
-          <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center gap-4">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleLike}
-                className={`flex items-center gap-2 ${isLiked ? 'text-red-500' : 'text-gray-400'}`}
-              >
-                <Heart className={`h-5 w-5 ${isLiked ? 'fill-current' : ''}`} />
-                <span>{post.likes_count}</span>
-              </Button>
-              
-              <Button variant="ghost" size="sm" className="flex items-center gap-2 text-gray-400">
-                <MessageCircle className="h-5 w-5" />
-                <span>{post.comments_count}</span>
-              </Button>
-              
-              <Button variant="ghost" size="sm" className="text-gray-400">
-                <Share className="h-5 w-5" />
-              </Button>
-            </div>
-            
-            <Button variant="ghost" size="sm" className="text-gray-400">
-              <Bookmark className="h-5 w-5" />
-            </Button>
-          </div>
-          
-          {currentUserId === post.creator.id && onDelete && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => onDelete(post.id, post.creator.id)}
-              className="text-red-400 hover:text-red-300"
+        {/* PPV Badge */}
+        {post.is_ppv && post.ppv_amount && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="inline-flex items-center gap-2 px-3 py-1 bg-luxury-accent/20 border border-luxury-accent/30 rounded-full text-luxury-accent text-sm font-medium mb-4"
+          >
+            <Star className="h-3 w-3" />
+            Premium Content - ${post.ppv_amount}
+          </motion.div>
+        )}
+      </div>
+
+      {/* Actions */}
+      <div className="px-6 pb-6">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-6">
+            <motion.button
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
+              onClick={handleLike}
+              className={`flex items-center space-x-2 transition-all duration-300 ${
+                isLiked 
+                  ? 'text-red-500' 
+                  : 'text-luxury-muted hover:text-red-400'
+              }`}
             >
-              Delete
-            </Button>
-          )}
+              <Heart className={`h-5 w-5 ${isLiked ? 'fill-current' : ''}`} />
+              <span className="text-sm font-medium">{likesCount}</span>
+            </motion.button>
+
+            <motion.button
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
+              className="flex items-center space-x-2 text-luxury-muted hover:text-luxury-primary transition-colors duration-300"
+            >
+              <MessageCircle className="h-5 w-5" />
+              <span className="text-sm font-medium">{post.comments_count || 0}</span>
+            </motion.button>
+
+            <motion.button
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
+              className="flex items-center space-x-2 text-luxury-muted hover:text-luxury-accent transition-colors duration-300"
+            >
+              <Share2 className="h-5 w-5" />
+              <span className="text-sm font-medium">{post.share_count || 0}</span>
+            </motion.button>
+
+            {post.view_count && (
+              <div className="flex items-center space-x-2 text-luxury-muted">
+                <Eye className="h-4 w-4" />
+                <span className="text-sm">{post.view_count}</span>
+              </div>
+            )}
+          </div>
+
+          <motion.button
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
+            onClick={handleSave}
+            className={`transition-all duration-300 ${
+              isSaved 
+                ? 'text-luxury-accent' 
+                : 'text-luxury-muted hover:text-luxury-accent'
+            }`}
+          >
+            <Bookmark className={`h-5 w-5 ${isSaved ? 'fill-current' : ''}`} />
+          </motion.button>
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </motion.div>
   );
 };
