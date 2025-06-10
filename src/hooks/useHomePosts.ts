@@ -2,16 +2,25 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useRef } from "react";
 
 export const useHomePosts = () => {
   const { session } = useAuth();
+  const isFetching = useRef(false);
 
   return useQuery(
     ['home-posts'],
     async () => {
-      console.log("Home - Fetching posts with proper media relationships...");
+      // Prevent concurrent fetches
+      if (isFetching.current) {
+        throw new Error("Query already in progress");
+      }
+      
+      isFetching.current = true;
       
       try {
+        console.log("Home - Fetching posts with proper media relationships...");
+        
         const { data: postsData, error: postsError } = await supabase
           .from('posts')
           .select(`
@@ -95,13 +104,23 @@ export const useHomePosts = () => {
       } catch (error) {
         console.error("Home - Failed to fetch posts:", error);
         throw error;
+      } finally {
+        isFetching.current = false;
       }
     },
     {
       enabled: !!session,
       retry: 2,
-      staleTime: 30000,
-      refetchInterval: false
+      staleTime: 30000, // 30 seconds
+      cacheTime: 300000, // 5 minutes
+      refetchInterval: false,
+      refetchOnWindowFocus: false, // Prevent refetch on window focus
+      refetchOnReconnect: false, // Prevent refetch on reconnect
+      // Add error boundary to prevent infinite retries
+      onError: (error) => {
+        console.error("Home posts query error:", error);
+        isFetching.current = false;
+      }
     }
   );
 };

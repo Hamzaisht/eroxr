@@ -11,7 +11,6 @@ import { usePostActions } from "@/hooks/usePostActions";
 import { useCreatePostDialog } from "@/hooks/useCreatePostDialog";
 import { useGoLiveDialog } from "@/hooks/useGoLiveDialog";
 import { CreatePostDialog } from "@/components/CreatePostDialog";
-import { useRealtimeUpdates } from "@/hooks/useRealtimeUpdates";
 import { useHomePosts } from "@/hooks/useHomePosts";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { useNavigate } from "react-router-dom";
@@ -26,8 +25,9 @@ const Home = () => {
 
   const { data: posts, isLoading, error, refetch } = useHomePosts();
 
-  useRealtimeUpdates('posts', [], { column: 'visibility', value: 'public' });
-  useRealtimeUpdates('media_assets');
+  // REMOVED: Aggressive realtime updates that were causing infinite loading
+  // useRealtimeUpdates('posts', [], { column: 'visibility', value: 'public' });
+  // useRealtimeUpdates('media_assets');
 
   if (userLoading) {
     return (
@@ -71,19 +71,21 @@ const Home = () => {
   }
 
   const onLike = (postId: string) => {
-    if (!isLoggedIn) return;
+    if (!isLoggedIn || isLoading) return; // Added loading guard
     handleLike(postId, false);
-    setTimeout(() => refetch(), 100);
+    // Removed immediate refetch that could cause loops
   };
 
   const onDelete = (postId: string, creatorId: string) => {
-    if (!isLoggedIn) return;
+    if (!isLoggedIn || isLoading) return; // Added loading guard
     handleDelete(postId);
-    setTimeout(() => refetch(), 100);
+    // Removed immediate refetch that could cause loops
   };
 
   const handlePostCreated = () => {
-    refetch();
+    if (!isLoading) { // Only refetch if not already loading
+      refetch();
+    }
     closeCreatePost();
   };
 
