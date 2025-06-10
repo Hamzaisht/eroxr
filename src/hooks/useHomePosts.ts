@@ -6,9 +6,9 @@ import { useAuth } from "@/contexts/AuthContext";
 export const useHomePosts = () => {
   const { session } = useAuth();
 
-  return useQuery(
-    ['home-posts'],
-    async () => {
+  return useQuery({
+    queryKey: ['home-posts'],
+    queryFn: async () => {
       console.log("Home - Fetching posts...");
       
       const { data: postsData, error: postsError } = await supabase
@@ -35,13 +35,14 @@ export const useHomePosts = () => {
             bio,
             location
           ),
-          media_assets!media_assets_post_id_fkey(
+          media_assets(
             id,
             storage_path,
             media_type,
             mime_type,
             original_name,
-            alt_text
+            alt_text,
+            post_id
           )
         `)
         .eq('visibility', 'public')
@@ -68,9 +69,15 @@ export const useHomePosts = () => {
           ? post.creator[0]
           : null;
 
-        // Simple media asset validation
+        // Ensure media_assets is properly handled and filtered
         const mediaAssets = Array.isArray(post.media_assets) 
-          ? post.media_assets.filter(asset => asset && asset.id && asset.storage_path)
+          ? post.media_assets.filter(asset => 
+              asset && 
+              asset.id && 
+              asset.storage_path && 
+              asset.media_type && 
+              asset.mime_type
+            )
           : [];
 
         const transformedPost = {
@@ -85,21 +92,19 @@ export const useHomePosts = () => {
           media_assets: mediaAssets
         };
 
-        console.log(`Home - Post ${post.id} has ${mediaAssets.length} media assets`);
+        console.log(`Home - Post ${post.id} has ${mediaAssets.length} media assets:`, mediaAssets);
         return transformedPost;
       });
 
       console.log("Home - Posts transformed successfully:", transformedPosts.length);
       return transformedPosts;
     },
-    {
-      enabled: true, // Always enable, not dependent on session
-      retry: 1,
-      staleTime: 5 * 60 * 1000, // 5 minutes
-      cacheTime: 10 * 60 * 1000, // 10 minutes
-      refetchOnWindowFocus: false,
-      refetchOnReconnect: false,
-      refetchOnMount: false,
-    }
-  );
+    enabled: true, // Always enable, not dependent on session
+    retry: 1,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    cacheTime: 10 * 60 * 1000, // 10 minutes
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    refetchOnMount: false,
+  });
 };

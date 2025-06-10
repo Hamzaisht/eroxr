@@ -16,6 +16,7 @@ interface MediaAsset {
   alt_text?: string;
   original_name?: string;
   user_id?: string;
+  post_id?: string;
   metadata?: {
     post_id?: string;
     [key: string]: any;
@@ -51,6 +52,8 @@ export const MediaRenderer = ({
     [mediaArray]
   );
 
+  console.log("MediaRenderer - Valid media array:", validMediaArray);
+
   const renderSingleMedia = (mediaItem: MediaAsset, index: number = 0) => {
     // Validate media asset
     if (!isValidMediaAsset(mediaItem)) {
@@ -67,6 +70,8 @@ export const MediaRenderer = ({
       return <MediaErrorPlaceholder mediaItem={mediaItem} error="Failed to generate media URL" />;
     }
 
+    console.log("MediaRenderer - Generated URL for asset:", { id: mediaItem.id, url: mediaUrl });
+
     // Determine media type
     const mediaType = getMediaType(mediaItem.media_type || mediaItem.mime_type, mediaItem.original_name);
 
@@ -81,6 +86,8 @@ export const MediaRenderer = ({
         onError?.();
       }
     };
+
+    console.log("MediaRenderer - Rendering media type:", mediaType, "for asset:", mediaItem.id);
 
     switch (mediaType) {
       case 'image':
@@ -98,6 +105,7 @@ export const MediaRenderer = ({
       case 'audio':
         return <AudioRenderer {...commonProps} controls={controls} />;
       default:
+        console.warn("MediaRenderer - Unsupported media type:", mediaType);
         return <MediaErrorPlaceholder mediaItem={mediaItem} error={`Unsupported media type: ${mediaType}`} />;
     }
   };
@@ -105,11 +113,8 @@ export const MediaRenderer = ({
   if (validMediaArray.length === 0) {
     console.log("MediaRenderer - No valid media items found");
     return (
-      <div className={className}>
-        <MediaErrorPlaceholder 
-          mediaItem={{ id: 'invalid', storage_path: '', media_type: '', mime_type: '' }} 
-          error="No valid media items" 
-        />
+      <div className={`${className} p-4 bg-gray-800 rounded text-center`}>
+        <p className="text-gray-400">No media available</p>
       </div>
     );
   }
