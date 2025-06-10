@@ -27,27 +27,47 @@ export const MediaRenderer = ({ assets, media, className = "" }: MediaRendererPr
   // Use assets or fall back to media prop for backward compatibility
   const mediaAssets = assets || media || [];
 
+  console.log("MediaRenderer - Received assets:", mediaAssets);
+
   if (!mediaAssets || mediaAssets.length === 0) {
+    console.log("MediaRenderer - No media assets to render");
     return null;
   }
 
   const getMediaUrl = (storagePath: string) => {
-    const { data } = supabase.storage.from('media').getPublicUrl(storagePath);
-    return data.publicUrl;
+    // Try different bucket names and path combinations
+    let publicUrl;
+    
+    // First try 'media' bucket
+    const mediaResult = supabase.storage.from('media').getPublicUrl(storagePath);
+    if (mediaResult.data?.publicUrl) {
+      publicUrl = mediaResult.data.publicUrl;
+    } else {
+      // Fallback to other common bucket names
+      const fallbackResult = supabase.storage.from('uploads').getPublicUrl(storagePath);
+      publicUrl = fallbackResult.data?.publicUrl || storagePath;
+    }
+    
+    console.log("MediaRenderer - Generated URL:", publicUrl, "for path:", storagePath);
+    return publicUrl;
   };
 
   const handleImageLoad = (assetId: string) => {
+    console.log("MediaRenderer - Image loaded successfully:", assetId);
     setIsLoading(prev => ({ ...prev, [assetId]: false }));
   };
 
   const handleImageError = (assetId: string) => {
-    console.error(`Failed to load media asset: ${assetId}`);
+    console.error(`MediaRenderer - Failed to load media asset: ${assetId}`);
     setIsLoading(prev => ({ ...prev, [assetId]: false }));
     setHasError(prev => ({ ...prev, [assetId]: true }));
   };
 
   const currentAsset = mediaAssets[currentIndex];
   const mediaUrl = getMediaUrl(currentAsset.storage_path);
+
+  console.log("MediaRenderer - Current asset:", currentAsset);
+  console.log("MediaRenderer - Media URL:", mediaUrl);
 
   return (
     <div className={`relative overflow-hidden rounded-lg ${className}`}>
@@ -60,6 +80,10 @@ export const MediaRenderer = ({ assets, media, className = "" }: MediaRendererPr
             className="w-full h-full object-cover"
             onLoad={() => handleImageLoad(currentAsset.id)}
             onError={() => handleImageError(currentAsset.id)}
+            onLoadStart={() => {
+              console.log("MediaRenderer - Image load started for:", mediaUrl);
+              setIsLoading(prev => ({ ...prev, [currentAsset.id]: true }));
+            }}
           />
         ) : currentAsset.media_type === 'video' ? (
           <video
@@ -67,7 +91,10 @@ export const MediaRenderer = ({ assets, media, className = "" }: MediaRendererPr
             className="w-full h-full object-cover"
             controls
             preload="metadata"
-            onLoadStart={() => setIsLoading(prev => ({ ...prev, [currentAsset.id]: true }))}
+            onLoadStart={() => {
+              console.log("MediaRenderer - Video load started for:", mediaUrl);
+              setIsLoading(prev => ({ ...prev, [currentAsset.id]: true }));
+            }}
             onLoadedData={() => handleImageLoad(currentAsset.id)}
             onError={() => handleImageError(currentAsset.id)}
           >
@@ -75,7 +102,7 @@ export const MediaRenderer = ({ assets, media, className = "" }: MediaRendererPr
           </video>
         ) : (
           <div className="w-full h-full flex items-center justify-center bg-gray-800">
-            <p className="text-gray-400">Unsupported media type</p>
+            <p className="text-gray-400">Unsupported media type: {currentAsset.media_type}</p>
           </div>
         )}
 
@@ -89,7 +116,11 @@ export const MediaRenderer = ({ assets, media, className = "" }: MediaRendererPr
         {/* Error overlay */}
         {hasError[currentAsset.id] && (
           <div className="absolute inset-0 bg-black/70 flex items-center justify-center">
-            <p className="text-white text-sm">Failed to load media</p>
+            <div className="text-center">
+              <p className="text-white text-sm mb-2">Failed to load media</p>
+              <p className="text-gray-400 text-xs">Path: {currentAsset.storage_path}</p>
+              <p className="text-gray-400 text-xs">URL: {mediaUrl}</p>
+            </div>
           </div>
         )}
       </div>

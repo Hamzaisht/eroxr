@@ -62,7 +62,8 @@ export const useHomePosts = () => {
           id: postsData[0].id,
           hasMediaAssets: !!postsData[0].media_assets,
           mediaCount: postsData[0].media_assets?.length || 0,
-          creatorType: typeof postsData[0].creator
+          creatorType: typeof postsData[0].creator,
+          mediaAssets: postsData[0].media_assets
         } : null
       });
 
@@ -71,6 +72,13 @@ export const useHomePosts = () => {
         ...post,
         creator: Array.isArray(post.creator) ? post.creator[0] : post.creator
       })) || [];
+
+      // Additional debug logging for media assets
+      transformedData.forEach(post => {
+        if (post.media_assets && post.media_assets.length > 0) {
+          console.log(`Post ${post.id} has ${post.media_assets.length} media assets:`, post.media_assets);
+        }
+      });
 
       return transformedData;
     },

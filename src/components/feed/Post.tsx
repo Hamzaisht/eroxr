@@ -55,8 +55,12 @@ export const Post = ({ post, currentUser, onLike, onDelete }: PostProps) => {
     return username.charAt(0).toUpperCase();
   };
 
+  // Improved media validation - check for valid storage path and id
   const hasValidMedia = post.media_assets && post.media_assets.length > 0 && 
-    post.media_assets.some(asset => asset.storage_path && asset.id);
+    post.media_assets.some(asset => asset && asset.storage_path && asset.id && asset.media_type);
+
+  console.log("Post component - Media assets:", post.media_assets);
+  console.log("Post component - Has valid media:", hasValidMedia);
 
   return (
     <Card className="bg-luxury-darker border-luxury-neutral/10 overflow-hidden">
@@ -89,14 +93,29 @@ export const Post = ({ post, currentUser, onLike, onDelete }: PostProps) => {
           </div>
         )}
 
-        {/* Media - Only render if we have valid media */}
-        {hasValidMedia && (
+        {/* Media - Debug info and render */}
+        {hasValidMedia ? (
           <div className="relative">
             <MediaRenderer
               assets={post.media_assets}
               className="w-full"
             />
           </div>
+        ) : (
+          // Show debug info when there's supposed to be media but it's not valid
+          post.media_assets && post.media_assets.length > 0 && (
+            <div className="px-4 pb-3">
+              <div className="text-gray-400 text-sm p-2 bg-gray-800 rounded">
+                Debug: Found {post.media_assets.length} media assets but they're invalid.
+                <br />
+                Assets: {JSON.stringify(post.media_assets.map(a => ({ 
+                  id: a?.id, 
+                  storage_path: a?.storage_path,
+                  media_type: a?.media_type 
+                })), null, 2)}
+              </div>
+            </div>
+          )
         )}
 
         {/* Actions */}
