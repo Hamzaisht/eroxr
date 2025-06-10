@@ -16,14 +16,18 @@ interface MediaAsset {
 interface MediaRendererProps {
   assets: MediaAsset[];
   className?: string;
+  media?: MediaAsset[]; // Legacy prop for backward compatibility
 }
 
-export const MediaRenderer = ({ assets, className = "" }: MediaRendererProps) => {
+export const MediaRenderer = ({ assets, media, className = "" }: MediaRendererProps) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isLoading, setIsLoading] = useState<Record<string, boolean>>({});
   const [hasError, setHasError] = useState<Record<string, boolean>>({});
 
-  if (!assets || assets.length === 0) {
+  // Use assets or fall back to media prop for backward compatibility
+  const mediaAssets = assets || media || [];
+
+  if (!mediaAssets || mediaAssets.length === 0) {
     return null;
   }
 
@@ -42,7 +46,7 @@ export const MediaRenderer = ({ assets, className = "" }: MediaRendererProps) =>
     setHasError(prev => ({ ...prev, [assetId]: true }));
   };
 
-  const currentAsset = assets[currentIndex];
+  const currentAsset = mediaAssets[currentIndex];
   const mediaUrl = getMediaUrl(currentAsset.storage_path);
 
   return (
@@ -91,11 +95,11 @@ export const MediaRenderer = ({ assets, className = "" }: MediaRendererProps) =>
       </div>
 
       {/* Multiple media navigation */}
-      {assets.length > 1 && (
+      {mediaAssets.length > 1 && (
         <>
           {/* Dots indicator */}
           <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2">
-            {assets.map((_, index) => (
+            {mediaAssets.map((_, index) => (
               <button
                 key={index}
                 onClick={() => setCurrentIndex(index)}
@@ -120,7 +124,7 @@ export const MediaRenderer = ({ assets, className = "" }: MediaRendererProps) =>
             </button>
           )}
           
-          {currentIndex < assets.length - 1 && (
+          {currentIndex < mediaAssets.length - 1 && (
             <button
               onClick={() => setCurrentIndex(prev => prev + 1)}
               className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white rounded-full p-2 transition-all duration-200"

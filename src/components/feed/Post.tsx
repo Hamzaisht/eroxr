@@ -93,11 +93,8 @@ export const Post = ({ post, currentUser, onLike, onDelete }: PostProps) => {
         {hasValidMedia && (
           <div className="relative">
             <MediaRenderer
-              media={post.media_assets}
+              assets={post.media_assets}
               className="w-full"
-              autoPlay={false}
-              controls={true}
-              showWatermark={false}
             />
           </div>
         )}

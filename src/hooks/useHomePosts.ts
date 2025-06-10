@@ -61,11 +61,18 @@ export const useHomePosts = () => {
         sample: postsData?.[0] ? {
           id: postsData[0].id,
           hasMediaAssets: !!postsData[0].media_assets,
-          mediaCount: postsData[0].media_assets?.length || 0
+          mediaCount: postsData[0].media_assets?.length || 0,
+          creatorType: typeof postsData[0].creator
         } : null
       });
 
-      return postsData || [];
+      // Transform the data to ensure creator is always an object, not an array
+      const transformedData = postsData?.map(post => ({
+        ...post,
+        creator: Array.isArray(post.creator) ? post.creator[0] : post.creator
+      })) || [];
+
+      return transformedData;
     },
     enabled: true,
     staleTime: 30000, // 30 seconds
