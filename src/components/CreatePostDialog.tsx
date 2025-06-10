@@ -5,7 +5,8 @@ import { MediaUploadDisplay } from "./CreatePostDialog/MediaUploadDisplay";
 import { useCreatePost } from "./CreatePostDialog/hooks/useCreatePost";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
-import { Sparkles, X } from "lucide-react";
+import { Sparkles, X, Image, Video, Camera } from "lucide-react";
+import { useRef } from "react";
 
 interface CreatePostDialogProps {
   open: boolean;
@@ -20,6 +21,7 @@ export const CreatePostDialog = ({
   selectedFiles,
   onFileSelect 
 }: CreatePostDialogProps) => {
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const {
     content,
     setContent,
@@ -48,6 +50,17 @@ export const CreatePostDialog = ({
   const handleClose = () => {
     resetForm();
     onOpenChange(false);
+  };
+
+  const handleMediaSelect = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (files && onFileSelect) {
+      onFileSelect(files);
+    }
   };
 
   return (
@@ -98,6 +111,51 @@ export const CreatePostDialog = ({
               visibility={visibility}
               setVisibility={setVisibility}
               characterLimit={characterLimit}
+            />
+            
+            {/* Media Attachment Section */}
+            <div className="flex items-center gap-3 p-4 border border-luxury-primary/20 rounded-xl bg-luxury-darker/50">
+              <span className="text-sm text-luxury-muted">Add to your post:</span>
+              
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleMediaSelect}
+                className="text-luxury-accent hover:bg-luxury-accent/10"
+              >
+                <Image className="h-4 w-4 mr-2" />
+                Photo
+              </Button>
+              
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleMediaSelect}
+                className="text-luxury-secondary hover:bg-luxury-secondary/10"
+              >
+                <Video className="h-4 w-4 mr-2" />
+                Video
+              </Button>
+              
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleMediaSelect}
+                className="text-luxury-primary hover:bg-luxury-primary/10"
+              >
+                <Camera className="h-4 w-4 mr-2" />
+                Camera
+              </Button>
+            </div>
+
+            {/* Hidden file input */}
+            <input
+              ref={fileInputRef}
+              type="file"
+              multiple
+              accept="image/*,video/*"
+              onChange={handleFileChange}
+              className="hidden"
             />
             
             {selectedFiles && (
