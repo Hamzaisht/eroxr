@@ -7,9 +7,9 @@ import type { Profile } from "@/integrations/supabase/types/profile";
 export const useCurrentUser = () => {
   const { user, session, loading: authLoading } = useAuth();
 
-  const { data: profile, isLoading: profileLoading, error: profileError } = useQuery(
-    ['current-user-profile', user?.id],
-    async () => {
+  const { data: profile, isLoading: profileLoading, error: profileError } = useQuery({
+    queryKey: ['current-user-profile', user?.id],
+    queryFn: async () => {
       console.log('useCurrentUser - Fetching profile for user:', user?.id);
       
       if (!user?.id) {
@@ -31,14 +31,12 @@ export const useCurrentUser = () => {
       console.log('useCurrentUser - Profile fetched successfully:', data);
       return data as Profile;
     },
-    {
-      enabled: !!user?.id && !authLoading,
-      staleTime: 5 * 60 * 1000, // 5 minutes
-      cacheTime: 10 * 60 * 1000, // 10 minutes
-      refetchOnWindowFocus: false,
-      refetchOnReconnect: false,
-    }
-  );
+    enabled: !!user?.id && !authLoading,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    cacheTime: 10 * 60 * 1000, // 10 minutes
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+  });
 
   return {
     user,

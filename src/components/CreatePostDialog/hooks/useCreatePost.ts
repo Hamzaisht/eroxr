@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { useSession } from "@supabase/auth-helpers-react";
+import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
@@ -12,7 +12,7 @@ export const useCreatePost = () => {
   const [uploadInProgress, setUploadInProgress] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [uploadSuccess, setUploadSuccess] = useState(false);
-  const session = useSession();
+  const { session, user } = useAuth();
   const { toast } = useToast();
 
   const characterLimit = 2000;
