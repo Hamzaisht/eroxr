@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { CreatePostArea } from "@/components/home/CreatePostArea";
 import { RightSidebar } from "@/components/home/RightSidebar";
 import { StoryBar } from "@/components/stories/StoryBar";
@@ -16,6 +16,8 @@ import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { useNavigate } from "react-router-dom";
 
 const Home = () => {
+  console.log('Home component rendering');
+  
   const { user, profile, isLoggedIn, isLoading: userLoading } = useCurrentUser();
   const { handleLike, handleDelete } = usePostActions();
   const { isOpen: isCreatePostOpen, openDialog: openCreatePost, closeDialog: closeCreatePost } = useCreatePostDialog();
@@ -25,11 +27,16 @@ const Home = () => {
 
   const { data: posts, isLoading, error, refetch } = useHomePosts();
 
-  // REMOVED: Aggressive realtime updates that were causing infinite loading
-  // useRealtimeUpdates('posts', [], { column: 'visibility', value: 'public' });
-  // useRealtimeUpdates('media_assets');
+  console.log('Home - Render state:', {
+    userLoading,
+    isLoading,
+    isLoggedIn,
+    postsCount: posts?.length || 0,
+    error: error?.message
+  });
 
   if (userLoading) {
+    console.log('Home - Showing user loading');
     return (
       <div className="flex items-center justify-center min-h-screen bg-luxury-darker">
         <div className="text-center">
@@ -41,6 +48,7 @@ const Home = () => {
   }
 
   if (isLoading) {
+    console.log('Home - Showing posts loading');
     return (
       <div className="flex items-center justify-center min-h-screen bg-luxury-darker">
         <div className="text-center">
@@ -52,6 +60,7 @@ const Home = () => {
   }
 
   if (error) {
+    console.log('Home - Showing error state');
     const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
     return (
       <div className="flex items-center justify-center min-h-screen bg-luxury-darker">
@@ -70,28 +79,29 @@ const Home = () => {
     );
   }
 
-  const onLike = (postId: string) => {
-    if (!isLoggedIn || isLoading) return; // Added loading guard
+  const onLike = useCallback((postId: string) => {
+    if (!isLoggedIn) return;
+    console.log('Home - Liking post:', postId);
     handleLike(postId, false);
-    // Removed immediate refetch that could cause loops
-  };
+  }, [isLoggedIn, handleLike]);
 
-  const onDelete = (postId: string, creatorId: string) => {
-    if (!isLoggedIn || isLoading) return; // Added loading guard
+  const onDelete = useCallback((postId: string, creatorId: string) => {
+    if (!isLoggedIn) return;
+    console.log('Home - Deleting post:', postId);
     handleDelete(postId);
-    // Removed immediate refetch that could cause loops
-  };
+  }, [isLoggedIn, handleDelete]);
 
-  const handlePostCreated = () => {
-    if (!isLoading) { // Only refetch if not already loading
-      refetch();
-    }
+  const handlePostCreated = useCallback(() => {
+    console.log('Home - Post created, refreshing feed');
+    refetch();
     closeCreatePost();
-  };
+  }, [refetch, closeCreatePost]);
 
-  const handleAuthAction = () => {
+  const handleAuthAction = useCallback(() => {
     navigate('/login');
-  };
+  }, [navigate]);
+
+  console.log('Home - Rendering main content');
 
   // Guest view
   if (!isLoggedIn) {

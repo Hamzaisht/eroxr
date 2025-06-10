@@ -18,6 +18,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const [initialized, setInitialized] = useState(false);
 
   useEffect(() => {
     console.log('AuthProvider: Setting up auth listener');
@@ -32,8 +33,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setSession(initialSession);
           setUser(initialSession.user);
         }
+        setInitialized(true);
       } catch (error) {
         console.error('AuthProvider: Error getting initial session:', error);
+        setInitialized(true);
       } finally {
         setLoading(false);
       }
@@ -46,9 +49,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       async (event, newSession) => {
         console.log('AuthProvider: Auth state change:', event, newSession ? 'session exists' : 'no session');
         
-        setSession(newSession);
-        setUser(newSession?.user ?? null);
-        setLoading(false);
+        // Only update if we're initialized to prevent rapid cycling
+        if (initialized) {
+          setSession(newSession);
+          setUser(newSession?.user ?? null);
+          if (loading) {
+            setLoading(false);
+          }
+        }
       }
     );
 
@@ -56,11 +64,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.log('AuthProvider: Cleaning up auth listener');
       subscription.unsubscribe();
     };
-  }, []);
+  }, [initialized, loading]);
 
   const signUp = async (email: string, password: string, metadata?: any) => {
     console.log('AuthProvider: Attempting signup for:', email);
-    setLoading(true);
     
     try {
       const { data, error } = await supabase.auth.signUp({
@@ -77,14 +84,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } catch (error) {
       console.error('AuthProvider: Signup error:', error);
       return { error };
-    } finally {
-      setLoading(false);
     }
   };
 
   const signIn = async (email: string, password: string) => {
     console.log('AuthProvider: Attempting signin for:', email);
-    setLoading(true);
     
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
@@ -97,14 +101,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } catch (error) {
       console.error('AuthProvider: Signin error:', error);
       return { error };
-    } finally {
-      setLoading(false);
     }
   };
 
   const signOut = async () => {
     console.log('AuthProvider: Signing out');
-    setLoading(true);
     
     try {
       const { error } = await supabase.auth.signOut();
@@ -115,8 +116,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     } catch (error) {
       console.error('AuthProvider: Signout error:', error);
-    } finally {
-      setLoading(false);
     }
   };
 
