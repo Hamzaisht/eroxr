@@ -1,4 +1,13 @@
 
+export interface MediaAsset {
+  id: string;
+  storage_path: string;
+  media_type: string;
+  mime_type: string;
+  original_name: string;
+  alt_text?: string;
+}
+
 export interface Post {
   id: string;
   content: string;
@@ -16,10 +25,12 @@ export interface Post {
   screenshots_count: number;
   downloads_count: number;
   has_liked: boolean;
+  media_assets?: MediaAsset[];
   creator: {
     id: string;
     username: string;
     avatar_url: string;
+    isVerified?: boolean;
   };
 }
 

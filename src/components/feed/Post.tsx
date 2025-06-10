@@ -1,13 +1,11 @@
 
-import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
-import { PostContent } from "./PostContent";
-import { PostStats } from "./post-components/PostStats";
-import { PostComments } from "./post-components/PostComments";
-import { usePostActions } from "@/hooks/usePostActions";
-import { formatDistanceToNow } from "date-fns";
+import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Heart, MessageCircle, Share, Bookmark, MoreVertical } from "lucide-react";
+import { MediaRenderer } from "@/components/media/MediaRenderer";
+import { useState } from "react";
+import type { MediaAsset } from "./types";
 
 interface PostProps {
   post: {
@@ -16,6 +14,7 @@ interface PostProps {
     creator: {
       id: string;
       username: string;
+      avatar_url?: string | null;
       isVerified?: boolean;
     };
     createdAt: string;
@@ -23,96 +22,126 @@ interface PostProps {
     commentsCount: number;
     isLiked?: boolean;
     isSaved?: boolean;
+    media_assets?: MediaAsset[];
   };
   currentUser?: {
     id: string;
     username: string;
   };
+  onLike?: (postId: string) => void;
+  onDelete?: (postId: string, creatorId: string) => void;
 }
 
-export const Post = ({ post, currentUser }: PostProps) => {
-  const [showComments, setShowComments] = useState(false);
-  const [comments, setComments] = useState<any[]>([]);
+export const Post = ({ post, currentUser, onLike, onDelete }: PostProps) => {
   const [isLiked, setIsLiked] = useState(post.isLiked || false);
-  const { handleLike, handleDelete } = usePostActions();
 
-  const onLike = () => {
-    const newLikedState = !isLiked;
-    setIsLiked(newLikedState);
-    handleLike(post.id, isLiked);
-  };
-  
-  const onComment = () => setShowComments(!showComments);
-  const onShare = () => {
-    // Share functionality
-  };
-  const onSave = () => {
-    // Save functionality
+  const handleLike = () => {
+    setIsLiked(!isLiked);
+    onLike?.(post.id);
   };
 
-  const onAddComment = (content: string) => {
-    // Add comment functionality
-    const newComment = {
-      id: Date.now().toString(),
-      content,
-      author: {
-        username: currentUser?.username || "Anonymous"
-      },
-      createdAt: "just now"
-    };
-    setComments([...comments, newComment]);
+  const formatTimeAgo = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffInMinutes = Math.floor((now.getTime() - date.getTime()) / (1000 * 60));
+    
+    if (diffInMinutes < 1) return 'Just now';
+    if (diffInMinutes < 60) return `${diffInMinutes}m ago`;
+    if (diffInMinutes < 1440) return `${Math.floor(diffInMinutes / 60)}h ago`;
+    return `${Math.floor(diffInMinutes / 1440)}d ago`;
   };
+
+  const getInitials = (username: string) => {
+    return username.charAt(0).toUpperCase();
+  };
+
+  const hasValidMedia = post.media_assets && post.media_assets.length > 0 && 
+    post.media_assets.some(asset => asset.storage_path && asset.id);
 
   return (
-    <Card className="w-full">
+    <Card className="bg-luxury-darker border-luxury-neutral/10 overflow-hidden">
       <CardContent className="p-0">
-        {/* Post Header */}
-        <div className="flex items-center gap-3 p-4">
-          <Avatar className="h-10 w-10">
-            <AvatarImage src="" alt={post.creator.username} />
-            <AvatarFallback>{post.creator.username.slice(0, 2).toUpperCase()}</AvatarFallback>
-          </Avatar>
-          
-          <div className="flex-1">
-            <div className="flex items-center gap-2">
-              <span className="font-semibold">{post.creator.username}</span>
-              {post.creator.isVerified && (
-                <Badge variant="secondary" className="text-xs">Verified</Badge>
-              )}
-            </div>
-            <div className="text-sm text-gray-500">
-              {formatDistanceToNow(new Date(post.createdAt), { addSuffix: true })}
+        {/* Header */}
+        <div className="flex items-center justify-between p-4">
+          <div className="flex items-center gap-3">
+            <Avatar className="h-10 w-10">
+              {post.creator.avatar_url ? (
+                <AvatarImage src={post.creator.avatar_url} alt={post.creator.username} />
+              ) : null}
+              <AvatarFallback className="bg-luxury-darker text-luxury-neutral">
+                {getInitials(post.creator.username)}
+              </AvatarFallback>
+            </Avatar>
+            <div>
+              <p className="text-white font-semibold">{post.creator.username}</p>
+              <p className="text-gray-400 text-sm">{formatTimeAgo(post.createdAt)}</p>
             </div>
           </div>
+          <Button variant="ghost" size="sm">
+            <MoreVertical className="h-4 w-4 text-gray-400" />
+          </Button>
         </div>
 
-        {/* Post Content */}
-        <div className="px-4 pb-4">
-          <PostContent content={post.content} creatorId={post.creator.id} />
-        </div>
+        {/* Content */}
+        {post.content && (
+          <div className="px-4 pb-3">
+            <p className="text-white whitespace-pre-wrap">{post.content}</p>
+          </div>
+        )}
 
-        {/* Post Stats */}
-        <PostStats
-          likesCount={post.likesCount}
-          commentsCount={post.commentsCount}
-          isLiked={isLiked}
-          isSaved={post.isSaved || false}
-          onLike={onLike}
-          onComment={onComment}
-          onShare={onShare}
-          onSave={onSave}
-        />
-
-        {/* Comments Section */}
-        {showComments && (
-          <div className="px-4 pb-4 border-t border-gray-100">
-            <PostComments
-              postId={post.id}
-              comments={comments}
-              onAddComment={onAddComment}
+        {/* Media - Only render if we have valid media */}
+        {hasValidMedia && (
+          <div className="relative">
+            <MediaRenderer
+              media={post.media_assets}
+              className="w-full"
+              autoPlay={false}
+              controls={true}
+              showWatermark={false}
             />
           </div>
         )}
+
+        {/* Actions */}
+        <div className="p-4">
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-4">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleLike}
+                className={`flex items-center gap-2 ${isLiked ? 'text-red-500' : 'text-gray-400'}`}
+              >
+                <Heart className={`h-5 w-5 ${isLiked ? 'fill-current' : ''}`} />
+                <span>{post.likesCount}</span>
+              </Button>
+              
+              <Button variant="ghost" size="sm" className="flex items-center gap-2 text-gray-400">
+                <MessageCircle className="h-5 w-5" />
+                <span>{post.commentsCount}</span>
+              </Button>
+              
+              <Button variant="ghost" size="sm" className="text-gray-400">
+                <Share className="h-5 w-5" />
+              </Button>
+            </div>
+            
+            <Button variant="ghost" size="sm" className="text-gray-400">
+              <Bookmark className="h-5 w-5" />
+            </Button>
+          </div>
+          
+          {currentUser?.id === post.creator.id && onDelete && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => onDelete(post.id, post.creator.id)}
+              className="text-red-400 hover:text-red-300"
+            >
+              Delete
+            </Button>
+          )}
+        </div>
       </CardContent>
     </Card>
   );
