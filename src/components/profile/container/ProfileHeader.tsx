@@ -5,7 +5,7 @@ import { Edit3, MapPin, Calendar, Shield, Crown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ProfileAvatarImage } from "../avatar/AvatarImage";
 import { AvatarUploadModal } from "../avatar/AvatarUploadModal";
-import { MediaUploader } from "@/components/upload/MediaUploader";
+import { ProfileMediaUploader } from "../components/ProfileMediaUploader";
 import { useToast } from "@/hooks/use-toast";
 
 interface ProfileHeaderProps {
@@ -37,7 +37,7 @@ export const ProfileHeader = ({ profile, isOwnProfile, onMediaSuccess, onEditCli
     });
   };
 
-  const handleBannerUpload = async (urls: string[]) => {
+  const handleBannerUpload = async (urls: string[], assetIds: string[]) => {
     if (urls.length > 0) {
       await onMediaSuccess('banner', urls[0]);
     }
@@ -67,11 +67,10 @@ export const ProfileHeader = ({ profile, isOwnProfile, onMediaSuccess, onEditCli
         {/* Banner Upload Overlay for Own Profile */}
         {isOwnProfile && (
           <div className="absolute inset-0 bg-black/40 opacity-0 hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
-            <MediaUploader
+            <ProfileMediaUploader
               onUploadComplete={handleBannerUpload}
-              maxFiles={1}
-              acceptedTypes={['image/*']}
-              category="banners"
+              type="media"
+              className="flex items-center justify-center"
             >
               <Button
                 variant="ghost"
@@ -80,7 +79,7 @@ export const ProfileHeader = ({ profile, isOwnProfile, onMediaSuccess, onEditCli
                 <Edit3 className="w-4 h-4 mr-2" />
                 Change Banner
               </Button>
-            </MediaUploader>
+            </ProfileMediaUploader>
           </div>
         )}
         
