@@ -1,3 +1,4 @@
+
 import React, { useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
@@ -50,6 +51,8 @@ interface Post {
   visibility: string;
   creator: Creator;
   media_assets?: MediaAsset[];
+  isLiked?: boolean;
+  isSaved?: boolean;
 }
 
 interface EnhancedPostCardProps {
@@ -65,15 +68,17 @@ export const EnhancedPostCard = ({
   onLike, 
   onDelete 
 }: EnhancedPostCardProps) => {
-  const [isLiked, setIsLiked] = useState(false);
-  const [isSaved, setIsSaved] = useState(false);
+  const [isLiked, setIsLiked] = useState(post.isLiked || false);
+  const [isSaved, setIsSaved] = useState(post.isSaved || false);
   const [likesCount, setLikesCount] = useState(post.likes_count || 0);
 
   console.log(`EnhancedPostCard - Rendering post ${post.id} with media:`, {
     hasMediaAssets: !!post.media_assets,
     mediaCount: post.media_assets?.length || 0,
     hasValidMedia: post.media_assets && post.media_assets.length > 0,
-    validAssets: post.media_assets?.filter(asset => asset && asset.storage_path).length || 0
+    validAssets: post.media_assets?.filter(asset => asset && asset.storage_path).length || 0,
+    isLiked: post.isLiked,
+    likesCount: post.likes_count
   });
 
   const handleLike = useCallback(() => {

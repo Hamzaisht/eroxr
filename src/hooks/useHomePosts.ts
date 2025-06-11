@@ -64,7 +64,7 @@ export const useHomePosts = () => {
             file_size,
             access_level
           ),
-          post_likes!inner(
+          post_likes(
             user_id
           )
         `)
