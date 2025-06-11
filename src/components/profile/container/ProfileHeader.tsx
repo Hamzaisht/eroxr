@@ -44,62 +44,91 @@ export const ProfileHeader = ({ profile, isOwnProfile, onMediaSuccess, onEditCli
     });
   };
 
+  // Check if banner URL is a video
+  const isVideoUrl = (url: string) => {
+    if (!url) return false;
+    const videoExtensions = ['.mp4', '.webm', '.mov'];
+    return videoExtensions.some(ext => url.toLowerCase().includes(ext));
+  };
+
   return (
     <>
       <div className="relative">
-        {/* Banner Section */}
-        <div className="relative h-80 bg-gradient-to-br from-luxury-primary/20 via-luxury-accent/10 to-luxury-dark overflow-hidden">
+        {/* Banner Section with Video Support */}
+        <div className="relative h-80 bg-gradient-to-br from-luxury-primary/20 via-luxury-accent/10 to-luxury-dark overflow-hidden rounded-b-3xl">
           {profile.banner_url ? (
-            <img 
-              src={profile.banner_url} 
-              alt="Profile banner"
-              className="w-full h-full object-cover"
-            />
+            isVideoUrl(profile.banner_url) ? (
+              <video
+                src={profile.banner_url}
+                autoPlay
+                loop
+                muted
+                playsInline
+                className="w-full h-full object-cover"
+                style={{ filter: 'brightness(0.9)' }}
+              />
+            ) : (
+              <img 
+                src={profile.banner_url} 
+                alt="Profile banner"
+                className="w-full h-full object-cover"
+                style={{ filter: 'brightness(0.9)' }}
+              />
+            )
           ) : (
             <div className="w-full h-full bg-gradient-to-br from-luxury-primary/30 via-luxury-accent/20 to-luxury-dark" />
           )}
           
-          {/* Gradient Overlay */}
-          <div className="absolute inset-0 bg-gradient-to-t from-luxury-dark/80 via-transparent to-transparent" />
+          {/* Enhanced Gradient Overlay */}
+          <div className="absolute inset-0 bg-gradient-to-t from-luxury-dark/90 via-luxury-dark/30 to-transparent" />
+          
+          {/* Subtle animated overlay for videos */}
+          {profile.banner_url && isVideoUrl(profile.banner_url) && (
+            <div className="absolute inset-0 bg-gradient-to-r from-luxury-primary/5 via-transparent to-luxury-accent/5 animate-pulse" />
+          )}
         </div>
 
         {/* Profile Info Section */}
         <div className="relative px-8 pb-8">
-          {/* Avatar */}
+          {/* Enhanced Avatar with Shadow */}
           <div className="absolute -top-24 left-8">
-            <ProfileAvatarImage
-              src={profile.avatar_url}
-              username={profile.username}
-            />
+            <div className="relative">
+              <ProfileAvatarImage
+                src={profile.avatar_url}
+                username={profile.username}
+              />
+              {/* Avatar glow effect */}
+              <div className="absolute inset-0 rounded-full bg-gradient-to-br from-luxury-primary/20 to-luxury-accent/20 blur-xl -z-10 scale-110" />
+            </div>
           </div>
 
-          {/* Action Buttons - Positioned in top right */}
+          {/* Action Buttons - Enhanced Design */}
           <div className="absolute -top-16 right-8 flex items-center gap-3">
             {!isOwnProfile ? (
               <>
-                {/* Subscribe Button */}
+                {/* Enhanced Subscribe Button */}
                 <motion.div
-                  whileHover={{ scale: 1.05 }}
+                  whileHover={{ scale: 1.05, y: -2 }}
                   whileTap={{ scale: 0.95 }}
                 >
                   <Button
                     onClick={handleSubscribe}
-                    className="bg-luxury-primary hover:bg-luxury-primary/90 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-300 shadow-lg hover:shadow-xl"
+                    className="bg-gradient-to-r from-luxury-primary to-luxury-accent hover:from-luxury-primary/90 hover:to-luxury-accent/90 text-white px-8 py-3 rounded-2xl font-semibold transition-all duration-300 shadow-xl hover:shadow-2xl backdrop-blur-sm"
                   >
                     <UserPlus className="h-4 w-4 mr-2" />
                     Subscribe
                   </Button>
                 </motion.div>
 
-                {/* Tip Button */}
+                {/* Enhanced Tip Button */}
                 <motion.div
-                  whileHover={{ scale: 1.05 }}
+                  whileHover={{ scale: 1.05, y: -2 }}
                   whileTap={{ scale: 0.95 }}
                 >
                   <Button
                     onClick={handleTip}
                     variant="outline"
-                    className="border-luxury-primary/30 text-luxury-primary hover:bg-luxury-primary/10 px-6 py-3 rounded-xl font-semibold transition-all duration-300 backdrop-blur-sm"
+                    className="border-luxury-primary/40 bg-luxury-dark/60 text-luxury-primary hover:bg-luxury-primary/10 px-8 py-3 rounded-2xl font-semibold transition-all duration-300 backdrop-blur-xl shadow-lg hover:shadow-xl"
                   >
                     <DollarSign className="h-4 w-4 mr-2" />
                     Tip
@@ -107,14 +136,14 @@ export const ProfileHeader = ({ profile, isOwnProfile, onMediaSuccess, onEditCli
                 </motion.div>
               </>
             ) : (
-              /* Edit Button for Own Profile */
+              /* Enhanced Edit Button for Own Profile */
               <motion.div
-                whileHover={{ scale: 1.05 }}
+                whileHover={{ scale: 1.05, y: -2 }}
                 whileTap={{ scale: 0.95 }}
               >
                 <Button
                   onClick={() => setEditDialogOpen(true)}
-                  className="bg-luxury-primary/90 hover:bg-luxury-primary text-white border border-luxury-primary/30 hover:border-luxury-primary/50 px-6 py-3 rounded-xl font-semibold transition-all duration-300 backdrop-blur-sm shadow-lg hover:shadow-xl"
+                  className="bg-gradient-to-r from-luxury-primary/90 to-luxury-accent/90 hover:from-luxury-primary hover:to-luxury-accent text-white border border-luxury-primary/30 hover:border-luxury-primary/50 px-8 py-3 rounded-2xl font-semibold transition-all duration-300 backdrop-blur-xl shadow-xl hover:shadow-2xl"
                 >
                   <Edit3 className="h-4 w-4 mr-2" />
                   Edit Profile
@@ -123,58 +152,93 @@ export const ProfileHeader = ({ profile, isOwnProfile, onMediaSuccess, onEditCli
             )}
           </div>
 
-          {/* Profile Details */}
-          <div className="pt-28 space-y-6">
-            {/* Name and Verification */}
-            <div className="flex items-center gap-3 flex-wrap">
-              <h1 className="text-4xl font-bold text-luxury-neutral">
+          {/* Profile Details with Enhanced Spacing */}
+          <div className="pt-32 space-y-8">
+            {/* Name and Verification with Better Visual Hierarchy */}
+            <div className="flex items-center gap-4 flex-wrap">
+              <h1 className="text-5xl font-bold text-luxury-neutral tracking-tight">
                 {profile.username || 'Anonymous User'}
               </h1>
-              {profile.is_verified && (
-                <Shield className="h-6 w-6 text-luxury-primary" />
-              )}
-              {profile.is_paying_customer && (
-                <Crown className="h-6 w-6 text-yellow-500" />
-              )}
+              <div className="flex items-center gap-2">
+                {profile.is_verified && (
+                  <motion.div
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    transition={{ delay: 0.2, type: "spring" }}
+                  >
+                    <Shield className="h-7 w-7 text-luxury-primary drop-shadow-lg" />
+                  </motion.div>
+                )}
+                {profile.is_paying_customer && (
+                  <motion.div
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    transition={{ delay: 0.3, type: "spring" }}
+                  >
+                    <Crown className="h-7 w-7 text-yellow-500 drop-shadow-lg" />
+                  </motion.div>
+                )}
+              </div>
             </div>
 
-            {/* Bio */}
+            {/* Bio with Better Typography */}
             {profile.bio && (
-              <p className="text-lg text-luxury-muted leading-relaxed max-w-2xl">
+              <motion.p 
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 }}
+                className="text-xl text-luxury-muted leading-relaxed max-w-3xl"
+              >
                 {profile.bio}
-              </p>
+              </motion.p>
             )}
 
-            {/* Meta Information */}
-            <div className="flex items-center gap-6 text-luxury-muted">
+            {/* Meta Information with Enhanced Icons */}
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+              className="flex items-center gap-8 text-luxury-muted"
+            >
               {profile.location && (
-                <div className="flex items-center gap-2">
-                  <MapPin className="h-4 w-4 text-luxury-primary" />
-                  <span>{profile.location}</span>
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-luxury-primary/20 flex items-center justify-center">
+                    <MapPin className="h-4 w-4 text-luxury-primary" />
+                  </div>
+                  <span className="text-lg">{profile.location}</span>
                 </div>
               )}
               
-              <div className="flex items-center gap-2">
-                <Calendar className="h-4 w-4 text-luxury-primary" />
-                <span>Joined {formatDate(profile.created_at)}</span>
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-lg bg-luxury-accent/20 flex items-center justify-center">
+                  <Calendar className="h-4 w-4 text-luxury-accent" />
+                </div>
+                <span className="text-lg">Joined {formatDate(profile.created_at)}</span>
               </div>
-            </div>
+            </motion.div>
 
-            {/* Stats Row */}
-            <div className="flex items-center gap-8 pt-4">
-              <div className="text-center">
-                <div className="text-2xl font-bold text-luxury-neutral">0</div>
-                <div className="text-sm text-luxury-muted">Posts</div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-luxury-neutral">0</div>
-                <div className="text-sm text-luxury-muted">Followers</div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-luxury-neutral">0</div>
-                <div className="text-sm text-luxury-muted">Following</div>
-              </div>
-            </div>
+            {/* Enhanced Stats Row */}
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+              className="flex items-center gap-12 pt-6"
+            >
+              {[
+                { label: 'Posts', value: '0' },
+                { label: 'Followers', value: '0' },
+                { label: 'Following', value: '0' }
+              ].map((stat, index) => (
+                <motion.div 
+                  key={stat.label}
+                  whileHover={{ scale: 1.1 }}
+                  className="text-center cursor-pointer"
+                >
+                  <div className="text-3xl font-bold text-luxury-neutral">{stat.value}</div>
+                  <div className="text-sm text-luxury-muted uppercase tracking-wider">{stat.label}</div>
+                </motion.div>
+              ))}
+            </motion.div>
           </div>
         </div>
       </div>
