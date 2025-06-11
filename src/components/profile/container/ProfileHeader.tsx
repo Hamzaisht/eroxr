@@ -1,439 +1,136 @@
 
 import { motion } from "framer-motion";
-import { MapPin, Calendar, Edit, Camera, Users, Heart, MessageCircle, Crown, Verified, Star, Settings, Share2, MoreHorizontal } from "lucide-react";
-import { AvatarUpload } from "../upload/AvatarUpload";
-import { BannerUpload } from "../upload/BannerUpload";
-import { ProfileStats } from "../ProfileStats";
-import { FollowButton } from "../FollowButton";
-import { ProfileEditDialog } from "../ProfileEditDialog";
-import { useNavigate } from "react-router-dom";
-import { useToast } from "@/hooks/use-toast";
-import { useState } from "react";
-
-interface ProfileData {
-  id: string;
-  username: string;
-  bio?: string;
-  avatar_url?: string;
-  banner_url?: string;
-  location?: string;
-  created_at: string;
-  updated_at: string;
-}
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { MapPin, Calendar, Users, Heart } from "lucide-react";
+import { ProfileHeaderActions } from "../header/ProfileHeaderActions";
+import { formatDistanceToNow } from "date-fns";
 
 interface ProfileHeaderProps {
-  profile: ProfileData;
+  profile: any;
   isOwnProfile: boolean;
   onMediaSuccess: (type: 'avatar' | 'banner', newUrl: string) => void;
   onEditClick: () => void;
 }
 
-export const ProfileHeader = ({ profile, isOwnProfile, onMediaSuccess, onEditClick }: ProfileHeaderProps) => {
-  const navigate = useNavigate();
-  const { toast } = useToast();
-  const [isFollowing, setIsFollowing] = useState(false);
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'long'
-    });
-  };
-
-  const handleMessageClick = () => {
-    if (!isOwnProfile) {
-      navigate(`/messages?user=${profile.id}&username=${profile.username}`);
-      toast({
-        title: "Opening Messages",
-        description: `Starting conversation with @${profile.username}`,
-      });
-    }
-  };
-
-  const handleTipClick = () => {
-    if (!isOwnProfile) {
-      toast({
-        title: "Tip Feature",
-        description: "Tip functionality coming soon!",
-      });
-    }
-  };
-
-  const handleShareProfile = async () => {
-    try {
-      if (navigator.share) {
-        await navigator.share({
-          title: `@${profile.username} on the platform`,
-          text: `Check out @${profile.username}'s profile`,
-          url: window.location.href,
-        });
-      } else {
-        await navigator.clipboard.writeText(window.location.href);
-        toast({
-          title: "Link Copied",
-          description: "Profile link copied to clipboard!",
-        });
-      }
-    } catch (error) {
-      console.error('Error sharing:', error);
-      toast({
-        title: "Share Failed",
-        description: "Could not share profile. Please try again.",
-        variant: "destructive"
-      });
-    }
-  };
-
-  const handleSettingsClick = () => {
-    if (isOwnProfile) {
-      navigate('/settings');
-    }
-  };
-
-  const handleAnalyticsClick = () => {
-    if (isOwnProfile) {
-      toast({
-        title: "Analytics",
-        description: "Analytics dashboard coming soon!",
-      });
-    }
-  };
-
-  const handleEditProfileClick = () => {
-    setIsEditDialogOpen(true);
-  };
-
-  const handleEditSuccess = () => {
-    // Trigger a page refresh to show updated data
-    window.location.reload();
-  };
-
+export const ProfileHeader = ({ 
+  profile, 
+  isOwnProfile, 
+  onMediaSuccess, 
+  onEditClick 
+}: ProfileHeaderProps) => {
   return (
     <div className="relative">
       {/* Banner Section */}
-      <div className="relative h-[500px] overflow-hidden">
-        {isOwnProfile ? (
-          <BannerUpload
-            currentBannerUrl={profile.banner_url}
-            profileId={profile.id}
-            onSuccess={(url) => onMediaSuccess('banner', url)}
+      <div className="relative h-64 sm:h-80 lg:h-96 bg-gradient-to-br from-luxury-primary/20 to-luxury-accent/20 overflow-hidden">
+        {profile.banner_url ? (
+          <img 
+            src={profile.banner_url} 
+            alt="Profile Banner"
+            className="w-full h-full object-cover"
           />
         ) : (
-          <div className="w-full h-full bg-premium-gradient relative overflow-hidden">
-            {profile.banner_url ? (
-              profile.banner_url.includes('.mp4') || profile.banner_url.includes('.webm') ? (
-                <video
-                  src={profile.banner_url}
-                  autoPlay
-                  muted
-                  loop
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <img
-                  src={profile.banner_url}
-                  alt="Banner"
-                  className="w-full h-full object-cover"
-                />
-              )
-            ) : (
-              <div className="w-full h-full bg-premium-gradient flex items-center justify-center">
-                <motion.div
-                  animate={{ scale: [1, 1.1, 1], rotate: [0, 5, -5, 0] }}
-                  transition={{ duration: 6, repeat: Infinity }}
-                  className="w-32 h-32 bg-luxury-primary/20 rounded-full flex items-center justify-center backdrop-blur-xl border border-luxury-primary/30"
-                >
-                  <Camera className="w-16 h-16 text-luxury-primary" />
-                </motion.div>
+          <div className="w-full h-full bg-gradient-to-br from-luxury-primary/10 to-luxury-accent/10 flex items-center justify-center">
+            <div className="text-center">
+              <div className="w-24 h-24 mx-auto mb-4 bg-luxury-primary/20 rounded-full flex items-center justify-center">
+                <Users className="w-12 h-12 text-luxury-primary" />
               </div>
-            )}
-            
-            <div className="absolute inset-0 bg-gradient-to-t from-luxury-dark via-luxury-dark/50 to-transparent" />
-            <div className="absolute inset-0 bg-gradient-to-r from-luxury-dark/30 via-transparent to-luxury-dark/30" />
+              <p className="text-luxury-muted">Add a banner to personalize your profile</p>
+            </div>
           </div>
         )}
-
-        {/* Floating Action Buttons */}
-        {isOwnProfile && (
-          <div className="absolute top-6 right-6 flex gap-3">
-            <motion.button
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.5 }}
-              whileHover={{ scale: 1.1, y: -2 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={handleSettingsClick}
-              className="w-12 h-12 bg-luxury-dark/80 backdrop-blur-xl border border-luxury-primary/30 rounded-xl flex items-center justify-center text-luxury-primary hover:bg-luxury-primary/20 transition-all duration-300 hover:shadow-luxury group"
-            >
-              <Settings className="w-5 h-5 group-hover:rotate-90 transition-transform duration-300" />
-            </motion.button>
-            <motion.button
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.6 }}
-              whileHover={{ scale: 1.1, y: -2 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={handleShareProfile}
-              className="w-12 h-12 bg-luxury-dark/80 backdrop-blur-xl border border-luxury-primary/30 rounded-xl flex items-center justify-center text-luxury-primary hover:bg-luxury-primary/20 transition-all duration-300 hover:shadow-luxury group"
-            >
-              <Share2 className="w-5 h-5 group-hover:scale-110 transition-transform duration-300" />
-            </motion.button>
-          </div>
-        )}
-
-        {/* Premium Badge */}
-        <div className="absolute top-6 left-6">
-          <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.3 }}
-            className="flex items-center gap-2 px-4 py-2 bg-luxury-dark/80 backdrop-blur-xl border border-luxury-primary/30 rounded-xl"
-          >
-            <motion.div
-              animate={{ scale: [1, 1.1, 1] }}
-              transition={{ duration: 2, repeat: Infinity }}
-            >
-              <Crown className="w-5 h-5 text-yellow-500" />
-            </motion.div>
-            <span className="text-yellow-500 font-medium text-sm">PREMIUM CREATOR</span>
-            <motion.div
-              animate={{ scale: [1, 1.2, 1] }}
-              transition={{ duration: 1.5, repeat: Infinity, delay: 0.5 }}
-            >
-              <Verified className="w-4 h-4 text-luxury-primary" />
-            </motion.div>
-          </motion.div>
-        </div>
+        
+        {/* Gradient overlay */}
+        <div className="absolute inset-0 bg-gradient-to-t from-luxury-dark/60 via-transparent to-transparent" />
       </div>
 
       {/* Profile Info Section */}
-      <div className="relative -mt-32 z-10">
-        <div className="max-w-7xl mx-auto px-8">
-          <div className="flex flex-col lg:flex-row items-end gap-8 mb-8">
-            {/* Avatar */}
-            <motion.div
-              initial={{ scale: 0.8, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ delay: 0.2, type: "spring", stiffness: 100 }}
-              className="relative group"
-            >
-              <motion.div
-                animate={{ 
-                  scale: [1, 1.05, 1],
-                  rotate: [0, 1, -1, 0]
-                }}
-                transition={{ duration: 4, repeat: Infinity }}
-                className="absolute inset-0 bg-button-gradient rounded-full blur-xl opacity-50"
-              />
-              {isOwnProfile ? (
-                <AvatarUpload
-                  currentAvatarUrl={profile.avatar_url}
-                  profileId={profile.id}
-                  onSuccess={(url) => onMediaSuccess('avatar', url)}
-                  size={200}
+      <div className="relative -mt-20 px-6 pb-6">
+        <div className="flex flex-col sm:flex-row items-start sm:items-end gap-6">
+          {/* Avatar */}
+          <motion.div
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ duration: 0.5, ease: "easeOut" }}
+            className="relative"
+          >
+            <div className="w-32 h-32 p-1 bg-gradient-to-br from-luxury-primary to-luxury-accent rounded-full">
+              <Avatar className="w-full h-full border-4 border-luxury-dark">
+                <AvatarImage 
+                  src={profile.avatar_url || undefined} 
+                  alt={profile.username || 'Profile'} 
                 />
-              ) : (
-                <motion.div
-                  whileHover={{ scale: 1.05 }}
-                  transition={{ type: "spring", stiffness: 300 }}
-                  className="relative w-48 h-48 rounded-full bg-button-gradient p-2 shadow-luxury"
-                >
-                  <div className="w-full h-full rounded-full overflow-hidden bg-luxury-dark border-4 border-luxury-dark">
-                    {profile.avatar_url ? (
-                      <img 
-                        src={profile.avatar_url} 
-                        alt="Profile"
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <div className="w-full h-full bg-premium-gradient flex items-center justify-center">
-                        <span className="text-5xl font-bold text-white">
-                          {profile.username?.charAt(0)?.toUpperCase() || '?'}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                </motion.div>
-              )}
-              
-              <motion.div
-                animate={{ scale: [1, 1.2, 1] }}
-                transition={{ duration: 2, repeat: Infinity }}
-                className="absolute -bottom-2 -right-2 w-8 h-8 bg-luxury-success border-4 border-luxury-dark rounded-full shadow-lg"
-              />
-            </motion.div>
+                <AvatarFallback className="bg-luxury-primary/20 text-luxury-primary text-3xl font-bold">
+                  {(profile.username || 'U').charAt(0).toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+            </div>
+          </motion.div>
 
-            {/* Profile Details */}
+          {/* Profile Details */}
+          <div className="flex-1 min-w-0">
             <motion.div
-              initial={{ y: 30, opacity: 0 }}
+              initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.4 }}
-              className="flex-1 text-center lg:text-left"
+              transition={{ duration: 0.5, delay: 0.2 }}
+              className="space-y-3"
             >
-              <div className="bg-luxury-dark/80 backdrop-blur-xl rounded-3xl p-8 border border-luxury-primary/20 shadow-luxury">
-                {/* Username and Actions */}
-                <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-6">
-                  <div className="flex items-center gap-4 mb-4 lg:mb-0">
-                    <motion.h1
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: 0.5 }}
-                      className="text-5xl font-bold text-luxury-neutral tracking-tight"
-                    >
-                      @{profile.username}
-                    </motion.h1>
-                    <div className="flex items-center gap-2">
-                      <motion.div
-                        animate={{ rotate: [0, 10, -10, 0] }}
-                        transition={{ duration: 3, repeat: Infinity, delay: 1 }}
-                      >
-                        <Verified className="w-8 h-8 text-luxury-primary" />
-                      </motion.div>
-                      <motion.div
-                        animate={{ y: [0, -2, 0] }}
-                        transition={{ duration: 2, repeat: Infinity, delay: 0.5 }}
-                      >
-                        <Crown className="w-8 h-8 text-yellow-500" />
-                      </motion.div>
-                    </div>
-                  </div>
-                  
-                  {/* Action Buttons */}
-                  <div className="flex flex-wrap gap-3">
-                    {isOwnProfile ? (
-                      <>
-                        <motion.button
-                          initial={{ opacity: 0, y: 20 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: 0.6 }}
-                          whileHover={{ scale: 1.05, y: -2 }}
-                          whileTap={{ scale: 0.95 }}
-                          onClick={handleEditProfileClick}
-                          className="flex items-center gap-2 bg-button-gradient hover:bg-hover-gradient text-white px-6 py-3 rounded-xl font-semibold transition-all duration-300 shadow-button hover:shadow-button-hover group"
-                        >
-                          <Edit className="w-5 h-5 group-hover:rotate-12 transition-transform duration-300" />
-                          Edit Profile
-                        </motion.button>
-                        <motion.button
-                          initial={{ opacity: 0, y: 20 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: 0.7 }}
-                          whileHover={{ scale: 1.05, y: -2 }}
-                          whileTap={{ scale: 0.95 }}
-                          onClick={handleAnalyticsClick}
-                          className="flex items-center gap-2 bg-luxury-dark/50 hover:bg-luxury-primary/20 text-luxury-primary px-6 py-3 rounded-xl font-semibold transition-all duration-300 border border-luxury-primary/30 backdrop-blur-xl group"
-                        >
-                          <Star className="w-5 h-5 group-hover:rotate-180 transition-transform duration-500" />
-                          Analytics
-                        </motion.button>
-                      </>
-                    ) : (
-                      <>
-                        <FollowButton
-                          profileId={profile.id}
-                          initialIsFollowing={isFollowing}
-                          onFollowChange={setIsFollowing}
-                        />
-                        <motion.button
-                          initial={{ opacity: 0, y: 20 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: 0.7 }}
-                          whileHover={{ scale: 1.05, y: -2 }}
-                          whileTap={{ scale: 0.95 }}
-                          onClick={handleMessageClick}
-                          className="flex items-center gap-2 bg-luxury-dark/50 hover:bg-luxury-primary/20 text-luxury-primary px-6 py-3 rounded-xl font-semibold transition-all duration-300 border border-luxury-primary/30 backdrop-blur-xl group"
-                        >
-                          <MessageCircle className="w-5 h-5 group-hover:rotate-12 transition-transform duration-300" />
-                          Message
-                        </motion.button>
-                        <motion.button
-                          initial={{ opacity: 0, y: 20 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: 0.8 }}
-                          whileHover={{ scale: 1.05, y: -2 }}
-                          whileTap={{ scale: 0.95 }}
-                          onClick={handleTipClick}
-                          className="flex items-center gap-2 bg-luxury-accent/20 hover:bg-luxury-accent/30 text-luxury-accent px-6 py-3 rounded-xl font-semibold transition-all duration-300 border border-luxury-accent/30 backdrop-blur-xl group"
-                        >
-                          <Heart className="w-5 h-5 group-hover:scale-125 transition-transform duration-300" />
-                          Tip
-                        </motion.button>
-                        <motion.button
-                          initial={{ opacity: 0, y: 20 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: 0.9 }}
-                          whileHover={{ scale: 1.1, rotate: 90 }}
-                          whileTap={{ scale: 0.95 }}
-                          onClick={handleShareProfile}
-                          className="w-12 h-12 bg-luxury-dark/50 hover:bg-luxury-primary/20 text-luxury-primary rounded-xl transition-all duration-300 border border-luxury-primary/30 backdrop-blur-xl flex items-center justify-center"
-                        >
-                          <MoreHorizontal className="w-5 h-5" />
-                        </motion.button>
-                      </>
-                    )}
-                  </div>
-                </div>
-
-                {/* Bio */}
+              <div>
+                <h1 className="text-3xl sm:text-4xl font-bold text-luxury-neutral mb-2">
+                  {profile.username || 'Anonymous User'}
+                </h1>
                 {profile.bio && (
-                  <motion.p
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 0.6 }}
-                    className="text-luxury-muted text-lg mb-6 leading-relaxed max-w-3xl"
-                  >
+                  <p className="text-luxury-muted text-lg max-w-2xl leading-relaxed">
                     {profile.bio}
-                  </motion.p>
+                  </p>
                 )}
-                
-                {/* Metadata */}
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 0.7 }}
-                  className="flex flex-wrap items-center gap-6 text-luxury-muted mb-6"
-                >
-                  {profile.location && (
-                    <motion.div
-                      whileHover={{ scale: 1.05 }}
-                      className="flex items-center gap-2 group"
-                    >
-                      <MapPin className="w-5 h-5 text-luxury-primary group-hover:scale-110 transition-transform duration-300" />
-                      <span className="font-medium">{profile.location}</span>
-                    </motion.div>
-                  )}
-                  <motion.div
-                    whileHover={{ scale: 1.05 }}
-                    className="flex items-center gap-2 group"
-                  >
-                    <Calendar className="w-5 h-5 text-luxury-primary group-hover:scale-110 transition-transform duration-300" />
-                    <span className="font-medium">Joined {formatDate(profile.created_at)}</span>
-                  </motion.div>
-                  <motion.div
-                    whileHover={{ scale: 1.05 }}
-                    className="flex items-center gap-2 group"
-                  >
-                    <Star className="w-5 h-5 text-yellow-500 group-hover:rotate-180 transition-transform duration-500" />
-                    <span className="font-medium">Premium Creator</span>
-                  </motion.div>
-                </motion.div>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-4 text-sm text-luxury-muted">
+                {profile.location && (
+                  <div className="flex items-center gap-1">
+                    <MapPin className="w-4 h-4" />
+                    <span>{profile.location}</span>
+                  </div>
+                )}
+                <div className="flex items-center gap-1">
+                  <Calendar className="w-4 h-4" />
+                  <span>Joined {formatDistanceToNow(new Date(profile.created_at), { addSuffix: true })}</span>
+                </div>
+              </div>
+
+              {/* Stats */}
+              <div className="flex items-center gap-6 pt-2">
+                <div className="text-center">
+                  <div className="text-xl font-bold text-luxury-neutral">0</div>
+                  <div className="text-sm text-luxury-muted">Posts</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-xl font-bold text-luxury-neutral">0</div>
+                  <div className="text-sm text-luxury-muted">Followers</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-xl font-bold text-luxury-neutral">0</div>
+                  <div className="text-sm text-luxury-muted">Following</div>
+                </div>
               </div>
             </motion.div>
           </div>
 
-          {/* Stats Section */}
-          <ProfileStats profileId={profile.id} isOwnProfile={isOwnProfile} />
+          {/* Actions */}
+          <motion.div
+            initial={{ x: 20, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            transition={{ duration: 0.5, delay: 0.3 }}
+            className="shrink-0"
+          >
+            <ProfileHeaderActions
+              profile={profile}
+              isOwnProfile={isOwnProfile}
+              onEdit={onEditClick}
+            />
+          </motion.div>
         </div>
       </div>
-
-      {/* Edit Profile Dialog */}
-      <ProfileEditDialog
-        profile={profile}
-        isOpen={isEditDialogOpen}
-        onClose={() => setIsEditDialogOpen(false)}
-        onSuccess={handleEditSuccess}
-      />
     </div>
   );
 };

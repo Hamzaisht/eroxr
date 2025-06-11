@@ -128,122 +128,59 @@ const Home = () => {
   if (!isLoggedIn) {
     return (
       <HomeLayout>
-        <div className="w-full max-w-6xl mx-auto">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
-            <div className="lg:col-span-2 space-y-8">
-              {/* Welcome Header for Guests */}
-              <div className="text-center space-y-6 p-8 bg-gradient-to-r from-luxury-primary/10 to-luxury-accent/10 rounded-2xl border border-luxury-primary/20 backdrop-blur-sm">
-                <div className="space-y-3">
-                  <h1 className="text-5xl sm:text-6xl font-bold bg-gradient-to-r from-luxury-primary via-luxury-accent to-luxury-secondary bg-clip-text text-transparent font-display">
-                    Welcome to Eroxr
-                  </h1>
-                  <p className="text-luxury-muted text-xl">Join our exclusive creator community</p>
-                </div>
-                <div className="space-y-4">
-                  <Button 
-                    onClick={handleAuthAction}
-                    size="xl"
-                    className="bg-gradient-to-r from-luxury-primary to-luxury-accent hover:from-luxury-primary/90 hover:to-luxury-accent/90 text-white px-12 py-6 rounded-full font-semibold text-lg shadow-luxury hover:shadow-luxury-hover transform hover:scale-105 transition-all duration-300"
-                  >
-                    <UserPlus className="h-6 w-6 mr-3" />
-                    Join the Studio
-                  </Button>
-                  <p className="text-gray-400 text-sm">
-                    Already a member?{" "}
-                    <button 
-                      onClick={handleAuthAction}
-                      className="text-luxury-primary hover:text-luxury-accent transition-colors hover:underline"
-                    >
-                      Sign in here
-                    </button>
-                  </p>
-                </div>
-              </div>
-
-              {/* Public Posts for Guests */}
-              <div className="space-y-6">
-                {posts && posts.length > 0 ? (
-                  posts.slice(0, 5).map((post) => (
-                    <EnhancedPostCard
-                      key={post.id}
-                      post={post}
-                      currentUserId={undefined}
-                      onLike={onLike}
-                      onDelete={onDelete}
-                    />
-                  ))
-                ) : (
-                  <div className="text-center py-16 bg-gradient-to-br from-luxury-dark/50 to-luxury-darker/50 rounded-2xl border border-luxury-primary/10 backdrop-blur-sm">
-                    <p className="text-gray-400 mb-2 text-lg">No posts available</p>
-                    <p className="text-gray-500 text-sm mb-6">Join to see exclusive content!</p>
-                    <Button 
-                      onClick={handleAuthAction} 
-                      className="bg-luxury-primary hover:bg-luxury-primary/90 shadow-luxury"
-                      size="lg"
-                    >
-                      Sign Up Now
-                    </Button>
-                  </div>
-                )}
-              </div>
-            </div>
-            
-            <div className="lg:col-span-1">
-              <RightSidebar />
-            </div>
-          </div>
-        </div>
-      </HomeLayout>
-    );
-  }
-
-  // Logged-in user view
-  return (
-    <HomeLayout>
-      <div className="w-full max-w-6xl mx-auto">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
           <div className="lg:col-span-2 space-y-8">
-            {/* Auto-dismissing Welcome Banner */}
-            {showWelcomeBanner && (
-              <WelcomeBanner 
-                username={user?.user_metadata?.username}
-                onDismiss={handleWelcomeDismiss}
-              />
-            )}
-
-            {/* Stories Bar */}
-            <div className="w-full">
-              <StoryBar />
+            {/* Welcome Header for Guests */}
+            <div className="text-center space-y-6 p-8 bg-gradient-to-r from-luxury-primary/10 to-luxury-accent/10 rounded-2xl border border-luxury-primary/20 backdrop-blur-sm">
+              <div className="space-y-3">
+                <h1 className="text-5xl sm:text-6xl font-bold bg-gradient-to-r from-luxury-primary via-luxury-accent to-luxury-secondary bg-clip-text text-transparent font-display">
+                  Welcome to Eroxr
+                </h1>
+                <p className="text-luxury-muted text-xl">Join our exclusive creator community</p>
+              </div>
+              <div className="space-y-4">
+                <Button 
+                  onClick={handleAuthAction}
+                  size="xl"
+                  className="bg-gradient-to-r from-luxury-primary to-luxury-accent hover:from-luxury-primary/90 hover:to-luxury-accent/90 text-white px-12 py-6 rounded-full font-semibold text-lg shadow-luxury hover:shadow-luxury-hover transform hover:scale-105 transition-all duration-300"
+                >
+                  <UserPlus className="h-6 w-6 mr-3" />
+                  Join the Studio
+                </Button>
+                <p className="text-gray-400 text-sm">
+                  Already a member?{" "}
+                  <button 
+                    onClick={handleAuthAction}
+                    className="text-luxury-primary hover:text-luxury-accent transition-colors hover:underline"
+                  >
+                    Sign in here
+                  </button>
+                </p>
+              </div>
             </div>
-            
-            <LiveStreams />
-            
-            <CreatePostArea 
-              onCreatePost={openCreatePost}
-              onGoLive={openGoLive}
-            />
-            
+
+            {/* Public Posts for Guests */}
             <div className="space-y-6">
               {posts && posts.length > 0 ? (
-                posts.map((post) => (
+                posts.slice(0, 5).map((post) => (
                   <EnhancedPostCard
                     key={post.id}
                     post={post}
-                    currentUserId={user?.id}
+                    currentUserId={undefined}
                     onLike={onLike}
                     onDelete={onDelete}
                   />
                 ))
               ) : (
                 <div className="text-center py-16 bg-gradient-to-br from-luxury-dark/50 to-luxury-darker/50 rounded-2xl border border-luxury-primary/10 backdrop-blur-sm">
-                  <p className="text-gray-400 mb-2 text-lg">No posts found</p>
-                  <p className="text-gray-500 text-sm mb-6">Be the first to create a masterpiece!</p>
+                  <p className="text-gray-400 mb-2 text-lg">No posts available</p>
+                  <p className="text-gray-500 text-sm mb-6">Join to see exclusive content!</p>
                   <Button 
-                    onClick={openCreatePost} 
+                    onClick={handleAuthAction} 
                     className="bg-luxury-primary hover:bg-luxury-primary/90 shadow-luxury"
                     size="lg"
                   >
-                    Create First Post
+                    Sign Up Now
                   </Button>
                 </div>
               )}
@@ -254,19 +191,78 @@ const Home = () => {
             <RightSidebar />
           </div>
         </div>
+      </HomeLayout>
+    );
+  }
 
-        {isCreatePostOpen && (
-          <CreatePostDialog
-            open={isCreatePostOpen}
-            onOpenChange={(open) => {
-              if (!open) handlePostCreated();
-              else openCreatePost();
-            }}
-            selectedFiles={selectedFiles}
-            onFileSelect={setSelectedFiles}
+  // Logged-in user view
+  return (
+    <HomeLayout>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
+        <div className="lg:col-span-2 space-y-8">
+          {/* Auto-dismissing Welcome Banner */}
+          {showWelcomeBanner && (
+            <WelcomeBanner 
+              username={user?.user_metadata?.username}
+              onDismiss={handleWelcomeDismiss}
+            />
+          )}
+
+          {/* Stories Bar */}
+          <div className="w-full">
+            <StoryBar />
+          </div>
+          
+          <LiveStreams />
+          
+          <CreatePostArea 
+            onCreatePost={openCreatePost}
+            onGoLive={openGoLive}
           />
-        )}
+          
+          <div className="space-y-6">
+            {posts && posts.length > 0 ? (
+              posts.map((post) => (
+                <EnhancedPostCard
+                  key={post.id}
+                  post={post}
+                  currentUserId={user?.id}
+                  onLike={onLike}
+                  onDelete={onDelete}
+                />
+              ))
+            ) : (
+              <div className="text-center py-16 bg-gradient-to-br from-luxury-dark/50 to-luxury-darker/50 rounded-2xl border border-luxury-primary/10 backdrop-blur-sm">
+                <p className="text-gray-400 mb-2 text-lg">No posts found</p>
+                <p className="text-gray-500 text-sm mb-6">Be the first to create a masterpiece!</p>
+                <Button 
+                  onClick={openCreatePost} 
+                  className="bg-luxury-primary hover:bg-luxury-primary/90 shadow-luxury"
+                  size="lg"
+                >
+                  Create First Post
+                </Button>
+              </div>
+            )}
+          </div>
+        </div>
+        
+        <div className="lg:col-span-1">
+          <RightSidebar />
+        </div>
       </div>
+
+      {isCreatePostOpen && (
+        <CreatePostDialog
+          open={isCreatePostOpen}
+          onOpenChange={(open) => {
+            if (!open) handlePostCreated();
+            else openCreatePost();
+          }}
+          selectedFiles={selectedFiles}
+          onFileSelect={setSelectedFiles}
+        />
+      )}
     </HomeLayout>
   );
 };

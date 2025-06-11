@@ -70,7 +70,6 @@ export const FeedContent = () => {
               comments_count: post.comments_count || 0,
               visibility: post.visibility,
               view_count: post.view_count,
-              share_count: post.share_count,
               engagement_score: post.engagement_score,
               is_ppv: post.is_ppv,
               ppv_amount: post.ppv_amount,
