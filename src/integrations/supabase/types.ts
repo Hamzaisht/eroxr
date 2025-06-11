@@ -292,6 +292,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "comments_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "user_bookmarks"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "comments_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
@@ -1029,6 +1036,13 @@ export type Database = {
             referencedRelation: "posts"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "media_assets_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "user_bookmarks"
+            referencedColumns: ["id"]
+          },
         ]
       }
       nordic_cities: {
@@ -1181,6 +1195,13 @@ export type Database = {
             referencedRelation: "posts"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "post_likes_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "user_bookmarks"
+            referencedColumns: ["id"]
+          },
         ]
       }
       post_media_actions: {
@@ -1211,6 +1232,13 @@ export type Database = {
             columns: ["post_id"]
             isOneToOne: false
             referencedRelation: "posts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "post_media_actions_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "user_bookmarks"
             referencedColumns: ["id"]
           },
         ]
@@ -1245,6 +1273,13 @@ export type Database = {
             referencedRelation: "posts"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "post_purchases_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "user_bookmarks"
+            referencedColumns: ["id"]
+          },
         ]
       }
       post_saves: {
@@ -1272,6 +1307,13 @@ export type Database = {
             columns: ["post_id"]
             isOneToOne: false
             referencedRelation: "posts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "post_saves_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "user_bookmarks"
             referencedColumns: ["id"]
           },
         ]
@@ -1770,6 +1812,13 @@ export type Database = {
             referencedRelation: "posts"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "trending_content_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "user_bookmarks"
+            referencedColumns: ["id"]
+          },
         ]
       }
       user_roles: {
@@ -1972,6 +2021,13 @@ export type Database = {
             referencedRelation: "posts"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "video_processing_queue_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "user_bookmarks"
+            referencedColumns: ["id"]
+          },
         ]
       }
       video_reports: {
@@ -2144,7 +2200,52 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      user_bookmarks: {
+        Row: {
+          comments_count: number | null
+          content: string | null
+          content_extended: string | null
+          created_at: string | null
+          creator_avatar_url: string | null
+          creator_id: string | null
+          creator_username: string | null
+          downloads_count: number | null
+          engagement_score: number | null
+          id: string | null
+          is_featured: boolean | null
+          is_ppv: boolean | null
+          last_engagement_at: string | null
+          last_modified_by: string | null
+          likes_count: number | null
+          metadata: Json | null
+          ppv_amount: number | null
+          saved_at: string | null
+          screenshots_count: number | null
+          share_count: number | null
+          source_type: string | null
+          tags: string[] | null
+          updated_at: string | null
+          user_id: string | null
+          view_count: number | null
+          visibility: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_posts_creator_id"
+            columns: ["creator_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "posts_creator_id_fkey"
+            columns: ["creator_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       check_column_exists: {
@@ -2165,6 +2266,20 @@ export type Database = {
           tag: string
           count: number
           percentageincrease: number
+        }[]
+      }
+      get_user_bookmarks: {
+        Args: { p_user_id: string }
+        Returns: {
+          bookmark_type: string
+          post_id: string
+          content: string
+          creator_id: string
+          creator_username: string
+          creator_avatar_url: string
+          created_at: string
+          saved_at: string
+          media_count: number
         }[]
       }
       increment_counter: {
