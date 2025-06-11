@@ -3,7 +3,7 @@ import { useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { X, Upload, Camera, Image as ImageIcon, Loader2, Play, Video, CheckCircle } from "lucide-react";
+import { X, Upload, Camera, Image as ImageIcon, Play, Video, CheckCircle } from "lucide-react";
 import { useDropzone } from "react-dropzone";
 import { cn } from "@/lib/utils";
 
@@ -53,17 +53,23 @@ export const MediaUploadDialog = ({
   });
 
   const handleUpload = async () => {
-    if (selectedFile) {
-      await onUpload(selectedFile);
-      handleClose();
+    if (selectedFile && !isUploading) {
+      try {
+        await onUpload(selectedFile);
+        handleClose();
+      } catch (error) {
+        console.error('Upload failed:', error);
+      }
     }
   };
 
   const handleClose = () => {
-    setPreview(null);
-    setSelectedFile(null);
-    setFileType(null);
-    onClose();
+    if (!isUploading) {
+      setPreview(null);
+      setSelectedFile(null);
+      setFileType(null);
+      onClose();
+    }
   };
 
   const isAvatar = type === 'avatar';
@@ -71,9 +77,45 @@ export const MediaUploadDialog = ({
   // Extract dropzone props and remove conflicting drag events
   const { onClick, onKeyDown, onFocus, onBlur, ...otherDropzoneProps } = getRootProps();
 
+  // Futuristic loading animation variants
+  const quantumLoadingVariants = {
+    animate: {
+      scale: [1, 1.2, 1],
+      rotate: [0, 180, 360],
+      opacity: [0.7, 1, 0.7],
+      transition: {
+        duration: 2,
+        repeat: Infinity,
+        ease: "easeInOut"
+      }
+    }
+  };
+
+  const orbitalRingsVariants = {
+    animate: {
+      rotate: 360,
+      transition: {
+        duration: 3,
+        repeat: Infinity,
+        ease: "linear"
+      }
+    }
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-2xl bg-luxury-dark/98 backdrop-blur-2xl border border-luxury-primary/10 shadow-2xl rounded-3xl overflow-hidden">
+      <DialogContent 
+        className="sm:max-w-2xl bg-luxury-dark/98 backdrop-blur-2xl border border-luxury-primary/10 shadow-2xl rounded-3xl overflow-hidden"
+        style={{ 
+          position: 'fixed',
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
+          maxHeight: '90vh',
+          width: '90vw',
+          maxWidth: '42rem'
+        }}
+      >
         {/* Animated Header */}
         <motion.div 
           initial={{ opacity: 0, y: -20 }}
@@ -99,6 +141,7 @@ export const MediaUploadDialog = ({
               variant="ghost"
               size="sm"
               onClick={handleClose}
+              disabled={isUploading}
               className="text-luxury-muted hover:text-luxury-neutral rounded-xl"
             >
               <X className="w-5 h-5" />
@@ -180,19 +223,54 @@ export const MediaUploadDialog = ({
             {/* Animated Background */}
             <div className="absolute inset-0 bg-gradient-to-br from-luxury-primary/5 via-transparent to-luxury-accent/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
             
-            <motion.div
-              animate={{ 
-                scale: isDragActive ? 1.05 : 1,
-                rotate: isUploading ? 360 : 0
-              }}
-              transition={{ 
-                rotate: { duration: 2, repeat: isUploading ? Infinity : 0, ease: "linear" }
-              }}
-              className="relative space-y-6"
-            >
+            <div className="relative space-y-6">
               {isUploading ? (
-                <div className="w-16 h-16 mx-auto">
-                  <Loader2 className="w-full h-full text-luxury-primary animate-spin" />
+                <div className="relative w-16 h-16 mx-auto">
+                  {/* Futuristic Quantum Loading Animation */}
+                  <motion.div
+                    className="absolute inset-0 rounded-full border-4 border-luxury-primary/30"
+                    variants={quantumLoadingVariants}
+                    animate="animate"
+                  />
+                  <motion.div
+                    className="absolute inset-2 rounded-full border-2 border-luxury-accent/50"
+                    variants={orbitalRingsVariants}
+                    animate="animate"
+                  />
+                  <motion.div
+                    className="absolute inset-4 rounded-full bg-gradient-to-br from-luxury-primary to-luxury-accent"
+                    animate={{
+                      scale: [0.8, 1.2, 0.8],
+                      opacity: [0.5, 1, 0.5],
+                    }}
+                    transition={{
+                      duration: 1.5,
+                      repeat: Infinity,
+                      ease: "easeInOut"
+                    }}
+                  />
+                  {/* Particle effects */}
+                  {[...Array(6)].map((_, i) => (
+                    <motion.div
+                      key={i}
+                      className="absolute w-1 h-1 bg-luxury-primary rounded-full"
+                      style={{
+                        top: '50%',
+                        left: '50%',
+                      }}
+                      animate={{
+                        x: [0, Math.cos(i * 60 * Math.PI / 180) * 30],
+                        y: [0, Math.sin(i * 60 * Math.PI / 180) * 30],
+                        opacity: [0, 1, 0],
+                      }}
+                      transition={{
+                        duration: 2,
+                        repeat: Infinity,
+                        delay: i * 0.2,
+                        ease: "easeInOut"
+                      }}
+                    />
+                  ))}
                 </div>
               ) : (
                 <div className="flex justify-center gap-4">
@@ -215,13 +293,13 @@ export const MediaUploadDialog = ({
               
               <div className="space-y-3">
                 <h3 className="text-xl font-bold text-luxury-neutral">
-                  {isUploading ? 'Uploading your media...' : 
+                  {isUploading ? 'Quantum processing...' : 
                    isDragActive ? 'Drop it here!' : 
                    'Upload your media'}
                 </h3>
                 <p className="text-luxury-muted">
                   {isUploading 
-                    ? 'Please wait while we process your file'
+                    ? 'Your file is being processed in the digital realm'
                     : isDragActive 
                     ? 'Release to upload'
                     : 'Drag and drop or click to select'
@@ -261,7 +339,7 @@ export const MediaUploadDialog = ({
                   </Button>
                 </motion.div>
               )}
-            </motion.div>
+            </div>
           </motion.div>
 
           {/* Enhanced Format Info */}
@@ -304,25 +382,45 @@ export const MediaUploadDialog = ({
             >
               Cancel
             </Button>
-            <Button
-              onClick={handleUpload}
-              disabled={!selectedFile || isUploading}
-              className="flex-1 bg-gradient-to-r from-luxury-primary to-luxury-accent hover:from-luxury-primary/90 hover:to-luxury-accent/90 text-white rounded-2xl h-12 font-semibold shadow-lg hover:shadow-xl transition-all duration-300"
-            >
-              {isUploading ? (
-                <>
-                  <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                  Uploading...
-                </>
-              ) : selectedFile ? (
-                <>
-                  <CheckCircle className="w-5 h-5 mr-2" />
-                  Upload {fileType === 'video' ? 'Video' : 'Image'}
-                </>
-              ) : (
-                'Select Media'
-              )}
-            </Button>
+            <motion.div className="flex-1">
+              <Button
+                onClick={handleUpload}
+                disabled={!selectedFile || isUploading}
+                className={cn(
+                  "w-full bg-gradient-to-r from-luxury-primary to-luxury-accent hover:from-luxury-primary/90 hover:to-luxury-accent/90 text-white rounded-2xl h-12 font-semibold shadow-lg hover:shadow-xl transition-all duration-300",
+                  isUploading && "animate-none"
+                )}
+              >
+                {isUploading ? (
+                  <motion.div 
+                    className="flex items-center"
+                    animate={{ opacity: [0.5, 1, 0.5] }}
+                    transition={{ duration: 1.5, repeat: Infinity }}
+                  >
+                    <div className="w-5 h-5 mr-2 relative">
+                      <motion.div
+                        className="absolute inset-0 border-2 border-white/30 rounded-full"
+                        animate={{ rotate: 360 }}
+                        transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                      />
+                      <motion.div
+                        className="absolute inset-1 border-t-2 border-white rounded-full"
+                        animate={{ rotate: -360 }}
+                        transition={{ duration: 0.8, repeat: Infinity, ease: "linear" }}
+                      />
+                    </div>
+                    Processing...
+                  </motion.div>
+                ) : selectedFile ? (
+                  <>
+                    <CheckCircle className="w-5 h-5 mr-2" />
+                    Upload {fileType === 'video' ? 'Video' : 'Image'}
+                  </>
+                ) : (
+                  'Select Media'
+                )}
+              </Button>
+            </motion.div>
           </motion.div>
         </div>
       </DialogContent>

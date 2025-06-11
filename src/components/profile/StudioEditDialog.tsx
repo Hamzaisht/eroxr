@@ -57,6 +57,8 @@ export const StudioEditDialog = ({ profile, isOpen, onClose, onSuccess }: Studio
   }, [profile]);
 
   const handleSubmit = async () => {
+    if (isLoading) return;
+    
     setIsLoading(true);
     try {
       const { error } = await supabase
@@ -89,12 +91,16 @@ export const StudioEditDialog = ({ profile, isOpen, onClose, onSuccess }: Studio
   };
 
   const handleMediaUpload = async (file: File) => {
-    const result = mediaType === 'avatar' 
-      ? await uploadAvatar(file, profile.id)
-      : await uploadBanner(file, profile.id);
-    
-    if (result.success) {
-      onSuccess(); // Refresh profile data
+    try {
+      const result = mediaType === 'avatar' 
+        ? await uploadAvatar(file, profile.id)
+        : await uploadBanner(file, profile.id);
+      
+      if (result.success) {
+        onSuccess(); // Refresh profile data
+      }
+    } catch (error) {
+      console.error('Media upload error:', error);
     }
   };
 
@@ -107,17 +113,34 @@ export const StudioEditDialog = ({ profile, isOpen, onClose, onSuccess }: Studio
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
+  const handleClose = () => {
+    if (!isLoading && !isUploading) {
+      onClose();
+    }
+  };
+
   return (
     <>
-      <Dialog open={isOpen} onOpenChange={onClose}>
-        <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-hidden bg-luxury-dark/95 backdrop-blur-xl border border-luxury-primary/20 shadow-2xl">
+      <Dialog open={isOpen} onOpenChange={handleClose}>
+        <DialogContent 
+          className="sm:max-w-2xl max-h-[90vh] overflow-hidden bg-luxury-dark/95 backdrop-blur-xl border border-luxury-primary/20 shadow-2xl"
+          style={{ 
+            position: 'fixed',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            width: '90vw',
+            maxWidth: '42rem'
+          }}
+        >
           {/* Header */}
           <div className="flex items-center justify-between p-6 pb-0 border-b border-luxury-primary/10">
             <h2 className="text-2xl font-bold text-luxury-neutral">Edit Profile</h2>
             <Button
               variant="ghost"
               size="sm"
-              onClick={onClose}
+              onClick={handleClose}
+              disabled={isLoading || isUploading}
               className="text-luxury-muted hover:text-luxury-neutral"
             >
               <X className="w-5 h-5" />
@@ -127,7 +150,18 @@ export const StudioEditDialog = ({ profile, isOpen, onClose, onSuccess }: Studio
           {/* Media Banner */}
           <div className="relative h-32 mx-6 mt-4 rounded-lg overflow-hidden group">
             {profile.banner_url ? (
-              <img src={profile.banner_url} alt="Banner" className="w-full h-full object-cover" />
+              profile.banner_url.includes('.mp4') || profile.banner_url.includes('.webm') || profile.banner_url.includes('.mov') ? (
+                <video 
+                  src={profile.banner_url} 
+                  autoPlay 
+                  loop 
+                  muted 
+                  playsInline
+                  className="w-full h-full object-cover" 
+                />
+              ) : (
+                <img src={profile.banner_url} alt="Banner" className="w-full h-full object-cover" />
+              )
             ) : (
               <div className="w-full h-full bg-gradient-to-br from-luxury-primary/20 to-luxury-accent/20" />
             )}
@@ -135,6 +169,7 @@ export const StudioEditDialog = ({ profile, isOpen, onClose, onSuccess }: Studio
               <Button
                 variant="ghost"
                 onClick={() => openMediaDialog('banner')}
+                disabled={isUploading}
                 className="text-white hover:bg-white/20"
               >
                 <Camera className="w-5 h-5 mr-2" />
@@ -194,6 +229,7 @@ export const StudioEditDialog = ({ profile, isOpen, onClose, onSuccess }: Studio
                         onChange={(e) => handleInputChange('username', e.target.value)}
                         className="bg-luxury-darker/50 border-luxury-primary/20 text-luxury-neutral"
                         placeholder="Enter your username"
+                        disabled={isLoading}
                       />
                     </div>
 
@@ -208,6 +244,7 @@ export const StudioEditDialog = ({ profile, isOpen, onClose, onSuccess }: Studio
                         onChange={(e) => handleInputChange('location', e.target.value)}
                         className="bg-luxury-darker/50 border-luxury-primary/20 text-luxury-neutral"
                         placeholder="Where are you located?"
+                        disabled={isLoading}
                       />
                     </div>
 
@@ -223,6 +260,7 @@ export const StudioEditDialog = ({ profile, isOpen, onClose, onSuccess }: Studio
                         className="bg-luxury-darker/50 border-luxury-primary/20 text-luxury-neutral min-h-[100px]"
                         placeholder="Tell your audience about yourself..."
                         maxLength={500}
+                        disabled={isLoading}
                       />
                       <div className="text-xs text-luxury-muted text-right mt-1">
                         {formData.bio.length}/500
@@ -235,7 +273,8 @@ export const StudioEditDialog = ({ profile, isOpen, onClose, onSuccess }: Studio
                   <div className="grid grid-cols-2 gap-4">
                     <button
                       onClick={() => openMediaDialog('avatar')}
-                      className="p-4 rounded-lg border border-luxury-primary/20 hover:border-luxury-primary/40 transition-colors text-left"
+                      disabled={isUploading}
+                      className="p-4 rounded-lg border border-luxury-primary/20 hover:border-luxury-primary/40 transition-colors text-left disabled:opacity-50"
                     >
                       <div className="flex items-center gap-3 mb-2">
                         <User className="w-5 h-5 text-luxury-primary" />
@@ -246,13 +285,14 @@ export const StudioEditDialog = ({ profile, isOpen, onClose, onSuccess }: Studio
 
                     <button
                       onClick={() => openMediaDialog('banner')}
-                      className="p-4 rounded-lg border border-luxury-primary/20 hover:border-luxury-primary/40 transition-colors text-left"
+                      disabled={isUploading}
+                      className="p-4 rounded-lg border border-luxury-primary/20 hover:border-luxury-primary/40 transition-colors text-left disabled:opacity-50"
                     >
                       <div className="flex items-center gap-3 mb-2">
                         <ImageIcon className="w-5 h-5 text-luxury-primary" />
                         <span className="font-medium text-luxury-neutral">Banner</span>
                       </div>
-                      <p className="text-sm text-luxury-muted">Update your cover image</p>
+                      <p className="text-sm text-luxury-muted">Update your cover image or video</p>
                     </button>
                   </div>
                 </TabsContent>
@@ -270,15 +310,15 @@ export const StudioEditDialog = ({ profile, isOpen, onClose, onSuccess }: Studio
           <div className="flex justify-end gap-3 p-6 pt-4 border-t border-luxury-primary/10">
             <Button
               variant="outline"
-              onClick={onClose}
-              disabled={isLoading}
+              onClick={handleClose}
+              disabled={isLoading || isUploading}
               className="border-luxury-neutral/30 text-luxury-neutral"
             >
               Cancel
             </Button>
             <Button
               onClick={handleSubmit}
-              disabled={isLoading}
+              disabled={isLoading || isUploading}
               className="bg-luxury-primary hover:bg-luxury-primary/90 text-white"
             >
               {isLoading ? (
