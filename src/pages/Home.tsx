@@ -1,9 +1,11 @@
+
 import { useState, useCallback } from "react";
 import { CreatePostArea } from "@/components/home/CreatePostArea";
 import { RightSidebar } from "@/components/home/RightSidebar";
 import { StoryBar } from "@/components/stories/StoryBar";
 import { LiveStreams } from "@/components/home/LiveStreams";
 import { EnhancedPostCard } from "@/components/feed/EnhancedPostCard";
+import { WelcomeBanner } from "@/components/home/WelcomeBanner";
 import { Loader2, RefreshCw, UserPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { usePostActions } from "@/hooks/usePostActions";
@@ -23,6 +25,7 @@ const Home = () => {
   const { isOpen: isCreatePostOpen, openDialog: openCreatePost, closeDialog: closeCreatePost } = useCreatePostDialog();
   const { openDialog: openGoLive } = useGoLiveDialog();
   const [selectedFiles, setSelectedFiles] = useState<FileList | null>(null);
+  const [showWelcomeBanner, setShowWelcomeBanner] = useState(true);
   const navigate = useNavigate();
 
   const isLoggedIn = !!user && !!session;
@@ -54,6 +57,10 @@ const Home = () => {
   const handleAuthAction = useCallback(() => {
     navigate('/login');
   }, [navigate]);
+
+  const handleWelcomeDismiss = useCallback(() => {
+    setShowWelcomeBanner(false);
+  }, []);
 
   console.log('Home - Render state:', {
     authLoading,
@@ -196,21 +203,19 @@ const Home = () => {
       <div className="w-full max-w-6xl mx-auto">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
           <div className="lg:col-span-2 space-y-8">
+            {/* Auto-dismissing Welcome Banner */}
+            {showWelcomeBanner && (
+              <WelcomeBanner 
+                username={user?.user_metadata?.username}
+                onDismiss={handleWelcomeDismiss}
+              />
+            )}
+
             {/* Stories Bar */}
             <div className="w-full">
               <StoryBar />
             </div>
             
-            {/* Welcome Header */}
-            <div className="text-center space-y-6 p-8 bg-gradient-to-r from-luxury-primary/10 to-luxury-accent/10 rounded-2xl border border-luxury-primary/20 backdrop-blur-sm">
-              <div className="space-y-3">
-                <h1 className="text-4xl sm:text-5xl font-bold bg-gradient-to-r from-luxury-primary via-luxury-accent to-luxury-secondary bg-clip-text text-transparent font-display">
-                  Welcome back{user?.user_metadata?.username ? `, ${user.user_metadata.username}` : ''}
-                </h1>
-                <p className="text-luxury-muted text-lg">Create and discover amazing content in the studio</p>
-              </div>
-            </div>
-
             <LiveStreams />
             
             <CreatePostArea 
