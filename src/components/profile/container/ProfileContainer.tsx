@@ -2,12 +2,13 @@
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useSession } from "@supabase/auth-helpers-react";
+import { useAuth } from "@/contexts/AuthContext";
 import { motion } from "framer-motion";
 import { Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { ProfileHeader } from "./ProfileHeader";
 import { ProfileTabs } from "./ProfileTabs";
+import { ProfileEditDialog } from "../ProfileEditDialog";
 
 interface ProfileContainerProps {
   id: string;
@@ -16,22 +17,35 @@ interface ProfileContainerProps {
 }
 
 export const ProfileContainer = ({ id, isEditing, setIsEditing }: ProfileContainerProps) => {
-  const session = useSession();
+  const { user } = useAuth();
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState("posts");
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
 
-  const isOwnProfile = session?.user?.id === id;
+  const isOwnProfile = user?.id === id;
+
+  console.log('ProfileContainer Debug:', {
+    currentUserId: user?.id,
+    profileId: id,
+    isOwnProfile,
+    userExists: !!user
+  });
 
   const { data: profile, isLoading, error, refetch } = useQuery({
     queryKey: ['profile', id],
     queryFn: async () => {
+      console.log('Fetching profile for ID:', id);
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', id)
         .single();
       
-      if (error) throw error;
+      if (error) {
+        console.error('Profile fetch error:', error);
+        throw error;
+      }
+      console.log('Profile fetched:', data);
       return data;
     }
   });
@@ -61,6 +75,17 @@ export const ProfileContainer = ({ id, isEditing, setIsEditing }: ProfileContain
         variant: "destructive",
       });
     }
+  };
+
+  const handleEditClick = () => {
+    console.log('Edit button clicked, opening dialog');
+    setEditDialogOpen(true);
+  };
+
+  const handleEditSuccess = async () => {
+    console.log('Edit success, refetching profile');
+    await refetch();
+    setEditDialogOpen(false);
   };
 
   if (isLoading) {
@@ -112,7 +137,7 @@ export const ProfileContainer = ({ id, isEditing, setIsEditing }: ProfileContain
           profile={profile}
           isOwnProfile={isOwnProfile}
           onMediaSuccess={handleMediaSuccess}
-          onEditClick={() => setIsEditing(true)}
+          onEditClick={handleEditClick}
         />
         
         <ProfileTabs
@@ -122,6 +147,14 @@ export const ProfileContainer = ({ id, isEditing, setIsEditing }: ProfileContain
           setActiveTab={setActiveTab}
         />
       </div>
+
+      {/* Edit Dialog */}
+      <ProfileEditDialog
+        profile={profile}
+        isOpen={editDialogOpen}
+        onClose={() => setEditDialogOpen(false)}
+        onSuccess={handleEditSuccess}
+      />
     </div>
   );
 };

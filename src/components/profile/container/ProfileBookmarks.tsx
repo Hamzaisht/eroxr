@@ -16,6 +16,7 @@ export const ProfileBookmarks = ({ userId }: ProfileBookmarksProps) => {
   const { data: bookmarks, isLoading, error } = useQuery({
     queryKey: ['user-bookmarks', userId],
     queryFn: async () => {
+      console.log('Fetching bookmarks for user:', userId);
       const { data, error } = await supabase
         .from('post_saves')
         .select(`
@@ -48,7 +49,12 @@ export const ProfileBookmarks = ({ userId }: ProfileBookmarksProps) => {
         .eq('user_id', userId)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Bookmarks fetch error:', error);
+        throw error;
+      }
+
+      console.log('Bookmarks fetched:', data?.length || 0);
 
       // Transform the data to match expected format
       return data?.map(bookmark => {
@@ -80,6 +86,7 @@ export const ProfileBookmarks = ({ userId }: ProfileBookmarksProps) => {
   }
 
   if (error) {
+    console.error('ProfileBookmarks error:', error);
     return (
       <div className="text-center p-8">
         <p className="text-red-400 mb-2">Failed to load bookmarks</p>

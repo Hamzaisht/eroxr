@@ -1,7 +1,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useSession } from "@supabase/auth-helpers-react";
+import { useAuth } from "@/contexts/AuthContext";
 import { motion } from "framer-motion";
 import { Loader2, Plus } from "lucide-react";
 import { EnhancedPostCard } from "@/components/feed/EnhancedPostCard";
@@ -12,12 +12,13 @@ interface ProfilePostsProps {
 }
 
 export const ProfilePosts = ({ profileId }: ProfilePostsProps) => {
-  const session = useSession();
+  const { user } = useAuth();
   const { handleLike, handleDelete } = usePostActions();
 
   const { data: posts, isLoading, error } = useQuery({
     queryKey: ['profile-posts', profileId],
     queryFn: async () => {
+      console.log('Fetching posts for profile:', profileId);
       const { data, error } = await supabase
         .from('posts')
         .select(`
@@ -48,11 +49,16 @@ export const ProfilePosts = ({ profileId }: ProfilePostsProps) => {
         .eq('visibility', 'public')
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Posts fetch error:', error);
+        throw error;
+      }
+
+      console.log('Posts fetched:', data?.length || 0);
 
       // Transform the data to match expected format
       return data?.map(post => {
-        const isLiked = session?.user?.id ? post.post_likes?.some((like: any) => like.user_id === session.user.id) : false;
+        const isLiked = user?.id ? post.post_likes?.some((like: any) => like.user_id === user.id) : false;
         
         return {
           ...post,
@@ -78,6 +84,7 @@ export const ProfilePosts = ({ profileId }: ProfilePostsProps) => {
   }
 
   if (error) {
+    console.error('ProfilePosts error:', error);
     return (
       <div className="text-center p-8">
         <p className="text-red-400 mb-2">Failed to load posts</p>
@@ -94,7 +101,7 @@ export const ProfilePosts = ({ profileId }: ProfilePostsProps) => {
         </div>
         <h3 className="text-xl font-semibold text-luxury-neutral mb-2">No posts yet</h3>
         <p className="text-luxury-muted">
-          {session?.user?.id === profileId ? "Share your first masterpiece!" : "This user hasn't posted anything yet."}
+          {user?.id === profileId ? "Share your first masterpiece!" : "This user hasn't posted anything yet."}
         </p>
       </div>
     );
@@ -106,7 +113,7 @@ export const ProfilePosts = ({ profileId }: ProfilePostsProps) => {
         <EnhancedPostCard
           key={post.id}
           post={post}
-          currentUserId={session?.user?.id}
+          currentUserId={user?.id}
           onLike={handleLike}
           onDelete={handleDelete}
         />

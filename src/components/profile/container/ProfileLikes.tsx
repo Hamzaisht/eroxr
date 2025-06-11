@@ -16,6 +16,7 @@ export const ProfileLikes = ({ userId }: ProfileLikesProps) => {
   const { data: likedPosts, isLoading, error } = useQuery({
     queryKey: ['user-likes', userId],
     queryFn: async () => {
+      console.log('Fetching likes for user:', userId);
       const { data, error } = await supabase
         .from('post_likes')
         .select(`
@@ -45,7 +46,12 @@ export const ProfileLikes = ({ userId }: ProfileLikesProps) => {
         .eq('user_id', userId)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Likes fetch error:', error);
+        throw error;
+      }
+
+      console.log('Likes fetched:', data?.length || 0);
 
       // Transform the data to match expected format
       return data?.map(like => {
@@ -76,6 +82,7 @@ export const ProfileLikes = ({ userId }: ProfileLikesProps) => {
   }
 
   if (error) {
+    console.error('ProfileLikes error:', error);
     return (
       <div className="text-center p-8">
         <p className="text-red-400 mb-2">Failed to load liked posts</p>
