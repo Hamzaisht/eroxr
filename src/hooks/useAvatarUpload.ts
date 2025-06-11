@@ -1,140 +1,129 @@
 
 import { useState } from 'react';
-import { useSession } from '@supabase/auth-helpers-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
-interface AvatarUploadState {
-  isUploading: boolean;
-  progress: number;
-  error: string | null;
-}
-
 export const useAvatarUpload = () => {
-  const [state, setState] = useState<AvatarUploadState>({
-    isUploading: false,
-    progress: 0,
-    error: null
-  });
-  
-  const session = useSession();
+  const [isUploading, setIsUploading] = useState(false);
   const { toast } = useToast();
 
-  const uploadAvatar = async (file: File): Promise<{ success: boolean; error?: string }> => {
-    if (!session?.user?.id) {
-      const error = "You must be logged in to upload an avatar";
-      setState(prev => ({ ...prev, error }));
-      return { success: false, error };
-    }
+  const uploadAvatar = async (file: File, userId: string): Promise<string | null> => {
+    if (!file || !userId) return null;
 
-    if (!file.type.startsWith('image/')) {
-      const error = "Please upload an image file";
-      setState(prev => ({ ...prev, error }));
-      return { success: false, error };
-    }
-
-    if (file.size > 5 * 1024 * 1024) {
-      const error = "Image must be smaller than 5MB";
-      setState(prev => ({ ...prev, error }));
-      return { success: false, error };
-    }
-
-    setState({
-      isUploading: true,
-      progress: 0,
-      error: null
-    });
-
+    setIsUploading(true);
+    
     try {
-      // Create file path: avatars/{userId}-{timestamp}.{extension}
-      const timestamp = Date.now();
-      const fileExt = file.name.split('.').pop() || 'jpg';
-      const fileName = `avatars/${session.user.id}-${timestamp}.${fileExt}`;
+      // Create unique filename
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${userId}/avatar-${Date.now()}.${fileExt}`;
 
-      // Simulate progress
-      setState(prev => ({ ...prev, progress: 25 }));
-
-      // Upload to storage
+      // Upload to Supabase Storage
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from('media')
         .upload(fileName, file, {
           cacheControl: '3600',
-          contentType: file.type,
           upsert: false
         });
 
       if (uploadError) {
-        throw new Error(uploadError.message);
+        throw uploadError;
       }
-
-      setState(prev => ({ ...prev, progress: 75 }));
 
       // Get public URL
       const { data: { publicUrl } } = supabase.storage
         .from('media')
-        .getPublicUrl(uploadData.path);
+        .getPublicUrl(fileName);
 
-      // Deactivate old avatars by updating their metadata
-      await supabase
-        .from('media_assets')
-        .update({ 
-          metadata: { usage: 'avatar_old' },
-          updated_at: new Date().toISOString()
-        })
-        .eq('user_id', session.user.id)
-        .eq('metadata->usage', 'avatar');
+      // Update profile with new avatar URL
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({ avatar_url: publicUrl })
+        .eq('id', userId);
 
-      // Create media asset record
-      const { error: assetError } = await supabase
-        .from('media_assets')
-        .insert({
-          user_id: session.user.id,
-          storage_path: uploadData.path,
-          original_name: file.name,
-          file_size: file.size,
-          mime_type: file.type,
-          media_type: 'image',
-          access_level: 'private',
-          metadata: { usage: 'avatar' }
-        });
-
-      if (assetError) {
-        // Clean up uploaded file if asset creation fails
-        await supabase.storage.from('media').remove([uploadData.path]);
-        throw new Error(assetError.message);
+      if (updateError) {
+        throw updateError;
       }
-
-      setState({
-        isUploading: false,
-        progress: 100,
-        error: null
-      });
 
       toast({
         title: "Success",
-        description: "Avatar updated successfully"
+        description: "Profile picture updated successfully!",
       });
 
-      return { success: true };
+      return publicUrl;
+
     } catch (error: any) {
-      setState({
-        isUploading: false,
-        progress: 0,
-        error: error.message
+      console.error('Avatar upload error:', error);
+      toast({
+        title: "Upload Failed",
+        description: error.message || "Failed to upload avatar. Please try again.",
+        variant: "destructive",
       });
+      return null;
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const uploadBanner = async (file: File, userId: string): Promise<string | null> => {
+    if (!file || !userId) return null;
+
+    setIsUploading(true);
+    
+    try {
+      // Create unique filename
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${userId}/banner-${Date.now()}.${fileExt}`;
+
+      // Upload to Supabase Storage
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('media')
+        .upload(fileName, file, {
+          cacheControl: '3600',
+          upsert: false
+        });
+
+      if (uploadError) {
+        throw uploadError;
+      }
+
+      // Get public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('media')
+        .getPublicUrl(fileName);
+
+      // Update profile with new banner URL
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({ banner_url: publicUrl })
+        .eq('id', userId);
+
+      if (updateError) {
+        throw updateError;
+      }
 
       toast({
-        variant: "destructive",
-        title: "Upload failed",
-        description: error.message
+        title: "Success",
+        description: "Banner updated successfully!",
       });
 
-      return { success: false, error: error.message };
+      return publicUrl;
+
+    } catch (error: any) {
+      console.error('Banner upload error:', error);
+      toast({
+        title: "Upload Failed",
+        description: error.message || "Failed to upload banner. Please try again.",
+        variant: "destructive",
+      });
+      return null;
+    } finally {
+      setIsUploading(false);
     }
   };
 
   return {
     uploadAvatar,
-    ...state
+    uploadBanner,
+    isUploading
   };
 };

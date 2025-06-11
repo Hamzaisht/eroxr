@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { ProfileAvatarImage } from "../avatar/AvatarImage";
 import { AvatarUploadModal } from "../avatar/AvatarUploadModal";
 import { BannerUploadDialog } from "../banner/BannerUploadDialog";
+import { useAvatarUpload } from "@/hooks/useAvatarUpload";
 import { useToast } from "@/hooks/use-toast";
 
 interface ProfileHeaderProps {
@@ -18,8 +19,7 @@ interface ProfileHeaderProps {
 export const ProfileHeader = ({ profile, isOwnProfile, onMediaSuccess, onEditClick }: ProfileHeaderProps) => {
   const [avatarModalOpen, setAvatarModalOpen] = useState(false);
   const [bannerModalOpen, setBannerModalOpen] = useState(false);
-  const [bannerUploading, setBannerUploading] = useState(false);
-  const [avatarUploading, setAvatarUploading] = useState(false);
+  const { uploadAvatar, uploadBanner, isUploading } = useAvatarUpload();
   const { toast } = useToast();
 
   console.log('ProfileHeader Debug:', {
@@ -32,44 +32,22 @@ export const ProfileHeader = ({ profile, isOwnProfile, onMediaSuccess, onEditCli
     const file = e.target.files?.[0];
     if (!file) return;
 
-    setAvatarUploading(true);
-    // Handle avatar upload logic here
-    toast({
-      title: "Upload started",
-      description: "Your avatar is being uploaded...",
-    });
-    
-    // Simulate upload completion
-    setTimeout(() => {
-      setAvatarUploading(false);
+    const result = await uploadAvatar(file, profile.id);
+    if (result) {
       setAvatarModalOpen(false);
-      toast({
-        title: "Success",
-        description: "Avatar updated successfully!",
-      });
-    }, 2000);
+      onMediaSuccess('avatar', result);
+    }
   };
 
   const handleBannerUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    setBannerUploading(true);
-    // Handle banner upload logic here
-    toast({
-      title: "Upload started",
-      description: "Your banner is being uploaded...",
-    });
-    
-    // Simulate upload completion
-    setTimeout(() => {
-      setBannerUploading(false);
+    const result = await uploadBanner(file, profile.id);
+    if (result) {
       setBannerModalOpen(false);
-      toast({
-        title: "Success",
-        description: "Banner updated successfully!",
-      });
-    }, 2000);
+      onMediaSuccess('banner', result);
+    }
   };
 
   const handleTip = () => {
@@ -132,8 +110,7 @@ export const ProfileHeader = ({ profile, isOwnProfile, onMediaSuccess, onEditCli
           <ProfileAvatarImage
             src={profile.avatar_url}
             username={profile.username}
-            onImageClick={() => setAvatarModalOpen(true)}
-            onFileSelect={isOwnProfile ? handleAvatarUpload : undefined}
+            onImageClick={isOwnProfile ? () => setAvatarModalOpen(true) : undefined}
           />
         </div>
 
@@ -242,19 +219,18 @@ export const ProfileHeader = ({ profile, isOwnProfile, onMediaSuccess, onEditCli
         </div>
       </div>
 
-      {/* Avatar Upload Modal */}
+      {/* Upload Modals */}
       <AvatarUploadModal
         isOpen={avatarModalOpen}
         onOpenChange={setAvatarModalOpen}
-        isUploading={avatarUploading}
+        isUploading={isUploading}
         onFileChange={handleAvatarUpload}
       />
 
-      {/* Banner Upload Modal */}
       <BannerUploadDialog
         isOpen={bannerModalOpen}
         onOpenChange={setBannerModalOpen}
-        isUploading={bannerUploading}
+        isUploading={isUploading}
         onFileChange={handleBannerUpload}
       />
     </div>

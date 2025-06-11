@@ -1,5 +1,9 @@
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { PencilIcon } from "lucide-react";
+
+import { useState } from "react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Upload, Image, Loader2 } from "lucide-react";
+import { motion } from "framer-motion";
 
 interface AvatarUploadModalProps {
   isOpen: boolean;
@@ -8,45 +12,113 @@ interface AvatarUploadModalProps {
   onFileChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
 }
 
-export const AvatarUploadModal = ({
-  isOpen,
-  onOpenChange,
+export const AvatarUploadModal = ({ 
+  isOpen, 
+  onOpenChange, 
   isUploading,
-  onFileChange,
+  onFileChange 
 }: AvatarUploadModalProps) => {
+  const [dragActive, setDragActive] = useState(false);
+
+  const handleDrag = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.type === "dragenter" || e.type === "dragover") {
+      setDragActive(true);
+    } else if (e.type === "dragleave") {
+      setDragActive(false);
+    }
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
+    
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      const syntheticEvent = {
+        target: { files: e.dataTransfer.files }
+      } as React.ChangeEvent<HTMLInputElement>;
+      onFileChange(syntheticEvent);
+    }
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md bg-luxury-dark border border-luxury-primary/20">
         <DialogHeader>
-          <DialogTitle>Update Profile Picture</DialogTitle>
-          <DialogDescription>
-            Upload a new profile picture. For best results:
-            <ul className="list-disc pl-4 mt-2 space-y-1">
-              <li>Use a square image</li>
-              <li>Maximum file size: 5MB</li>
-              <li>Supported formats: JPG, PNG, GIF</li>
-            </ul>
-          </DialogDescription>
+          <DialogTitle className="text-luxury-neutral text-center">Update Profile Picture</DialogTitle>
         </DialogHeader>
-        <div className="grid gap-4 py-4">
-          <div className="flex items-center gap-4">
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="space-y-6 p-6"
+        >
+          {/* Upload Area */}
+          <div
+            className={`relative border-2 border-dashed rounded-xl p-8 text-center transition-all duration-300 ${
+              dragActive
+                ? 'border-luxury-primary bg-luxury-primary/10'
+                : 'border-luxury-primary/30 hover:border-luxury-primary/50'
+            }`}
+            onDragEnter={handleDrag}
+            onDragLeave={handleDrag}
+            onDragOver={handleDrag}
+            onDrop={handleDrop}
+          >
             <input
               type="file"
-              id="avatar-upload"
-              className="hidden"
               accept="image/*"
               onChange={onFileChange}
+              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
               disabled={isUploading}
             />
-            <label
-              htmlFor="avatar-upload"
-              className="cursor-pointer bg-luxury-primary/10 hover:bg-luxury-primary/20 text-luxury-primary px-4 py-2 rounded-md flex items-center gap-2 transition-colors"
-            >
-              <PencilIcon className="w-4 h-4" />
-              <span>{isUploading ? "Uploading..." : "Choose File"}</span>
-            </label>
+
+            <div className="space-y-4">
+              {isUploading ? (
+                <motion.div
+                  animate={{ rotate: 360 }}
+                  transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                  className="mx-auto w-12 h-12 text-luxury-primary"
+                >
+                  <Loader2 className="w-full h-full" />
+                </motion.div>
+              ) : (
+                <div className="mx-auto w-12 h-12 text-luxury-primary/60">
+                  <Image className="w-full h-full" />
+                </div>
+              )}
+
+              <div>
+                <h3 className="text-lg font-semibold text-luxury-neutral mb-2">
+                  {isUploading ? 'Uploading...' : 'Choose your profile picture'}
+                </h3>
+                <p className="text-sm text-luxury-muted">
+                  {isUploading 
+                    ? 'Please wait while we upload your image'
+                    : 'Drag and drop an image here, or click to select'
+                  }
+                </p>
+              </div>
+
+              {!isUploading && (
+                <Button
+                  variant="outline"
+                  className="border-luxury-primary/30 text-luxury-primary hover:bg-luxury-primary/10"
+                >
+                  <Upload className="w-4 h-4 mr-2" />
+                  Select Image
+                </Button>
+              )}
+            </div>
           </div>
-        </div>
+
+          {/* Format Info */}
+          <div className="text-xs text-luxury-muted text-center">
+            Supported formats: JPG, PNG, GIF, WebP (Max 50MB)
+          </div>
+        </motion.div>
       </DialogContent>
     </Dialog>
   );
