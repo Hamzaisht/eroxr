@@ -1,7 +1,6 @@
-
 import { useSession } from "@supabase/auth-helpers-react";
 import { ScrollArea } from "./ui/scroll-area";
-import { PostCard } from "./feed/PostCard";
+import { EnhancedPostCard } from "./feed/EnhancedPostCard";
 import { EmptyFeed } from "./feed/EmptyFeed";
 import { useFeedQuery } from "./feed/useFeedQuery";
 import { usePostActions } from "./feed/usePostActions";
@@ -19,7 +18,7 @@ interface CreatorsFeedProps {
   feedType?: 'feed' | 'popular' | 'recent';
 }
 
-const MemoizedPostCard = memo(PostCard);
+const MemoizedPostCard = memo(EnhancedPostCard);
 
 export const CreatorsFeed = memo(({ feedType = 'feed' }: CreatorsFeedProps) => {
   const session = useSession();
@@ -171,3 +170,5 @@ export const CreatorsFeed = memo(({ feedType = 'feed' }: CreatorsFeedProps) => {
 });
 
 CreatorsFeed.displayName = "CreatorsFeed";
+
+export default CreatorsFeed;

@@ -2,7 +2,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2 } from "lucide-react";
-import { Post } from "@/components/feed/Post";
+import { EnhancedPostCard } from "@/components/feed/EnhancedPostCard";
 import { useSession } from "@supabase/auth-helpers-react";
 import { usePostActions } from "@/hooks/usePostActions";
 
@@ -58,27 +58,34 @@ export const FeedContent = () => {
         const creator = post.creator || { id: post.creator_id, username: "Unknown" };
         
         return (
-          <Post
+          <EnhancedPostCard
             key={post.id}
             post={{
               id: post.id,
               content: post.content,
+              creator_id: post.creator_id,
+              created_at: post.created_at,
+              updated_at: post.updated_at,
+              likes_count: post.likes_count || 0,
+              comments_count: post.comments_count || 0,
+              visibility: post.visibility,
+              view_count: post.view_count,
+              share_count: post.share_count,
+              engagement_score: post.engagement_score,
+              is_ppv: post.is_ppv,
+              ppv_amount: post.ppv_amount,
               creator: {
                 id: creator.id,
                 username: creator.username,
-                isVerified: false
+                avatar_url: creator.avatar_url
               },
-              createdAt: post.created_at,
-              likesCount: post.likes_count || 0,
-              commentsCount: post.comments_count || 0,
+              media_assets: Array.isArray(post.media_assets) ? post.media_assets : [],
               isLiked: false,
-              isSaved: false,
-              media_assets: Array.isArray(post.media_assets) ? post.media_assets : []
+              isSaved: false
             }}
-            currentUser={session?.user ? {
-              id: session.user.id,
-              username: "You"
-            } : undefined}
+            currentUserId={session?.user?.id}
+            onLike={handleLike}
+            onDelete={handleDelete}
           />
         );
       })}

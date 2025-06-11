@@ -1,5 +1,5 @@
 
-import { PostCard } from '@/components/feed/PostCard';
+import { EnhancedPostCard } from '@/components/feed/EnhancedPostCard';
 
 interface FeedContainerProps {
   posts: any[];
@@ -12,7 +12,7 @@ export const FeedContainer = ({ posts, onLike, onDelete, currentUserId }: FeedCo
   return (
     <div className="space-y-4">
       {posts.map((post) => (
-        <PostCard
+        <EnhancedPostCard
           key={post.id}
           post={post}
           onLike={onLike}
