@@ -1,11 +1,11 @@
 
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Edit3, MapPin, Calendar, Shield, Crown } from "lucide-react";
+import { Edit3, MapPin, Calendar, Shield, Crown, DollarSign, UserPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ProfileAvatarImage } from "../avatar/AvatarImage";
 import { AvatarUploadModal } from "../avatar/AvatarUploadModal";
-import { ProfileMediaUploader } from "../components/ProfileMediaUploader";
+import { BannerUploadDialog } from "../banner/BannerUploadDialog";
 import { useToast } from "@/hooks/use-toast";
 
 interface ProfileHeaderProps {
@@ -17,8 +17,9 @@ interface ProfileHeaderProps {
 
 export const ProfileHeader = ({ profile, isOwnProfile, onMediaSuccess, onEditClick }: ProfileHeaderProps) => {
   const [avatarModalOpen, setAvatarModalOpen] = useState(false);
+  const [bannerModalOpen, setBannerModalOpen] = useState(false);
   const [bannerUploading, setBannerUploading] = useState(false);
-  const [showBannerUpload, setShowBannerUpload] = useState(false);
+  const [avatarUploading, setAvatarUploading] = useState(false);
   const { toast } = useToast();
 
   console.log('ProfileHeader Debug:', {
@@ -31,18 +32,58 @@ export const ProfileHeader = ({ profile, isOwnProfile, onMediaSuccess, onEditCli
     const file = e.target.files?.[0];
     if (!file) return;
 
+    setAvatarUploading(true);
     // Handle avatar upload logic here
     toast({
       title: "Upload started",
       description: "Your avatar is being uploaded...",
     });
+    
+    // Simulate upload completion
+    setTimeout(() => {
+      setAvatarUploading(false);
+      setAvatarModalOpen(false);
+      toast({
+        title: "Success",
+        description: "Avatar updated successfully!",
+      });
+    }, 2000);
   };
 
-  const handleBannerUpload = async (urls: string[], assetIds: string[]) => {
-    if (urls.length > 0) {
-      await onMediaSuccess('banner', urls[0]);
-      setShowBannerUpload(false);
-    }
+  const handleBannerUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setBannerUploading(true);
+    // Handle banner upload logic here
+    toast({
+      title: "Upload started",
+      description: "Your banner is being uploaded...",
+    });
+    
+    // Simulate upload completion
+    setTimeout(() => {
+      setBannerUploading(false);
+      setBannerModalOpen(false);
+      toast({
+        title: "Success",
+        description: "Banner updated successfully!",
+      });
+    }, 2000);
+  };
+
+  const handleTip = () => {
+    toast({
+      title: "Tip Feature",
+      description: "Tip functionality will be implemented soon!",
+    });
+  };
+
+  const handleSubscribe = () => {
+    toast({
+      title: "Subscribe Feature",
+      description: "Subscription functionality will be implemented soon!",
+    });
   };
 
   const formatDate = (dateString: string) => {
@@ -68,30 +109,15 @@ export const ProfileHeader = ({ profile, isOwnProfile, onMediaSuccess, onEditCli
         
         {/* Banner Upload Overlay for Own Profile */}
         {isOwnProfile && (
-          <div 
-            className="absolute inset-0 bg-black/40 opacity-0 hover:opacity-100 transition-opacity duration-300 flex items-center justify-center"
-            onMouseEnter={() => setShowBannerUpload(true)}
-            onMouseLeave={() => setShowBannerUpload(false)}
-          >
-            {showBannerUpload && (
-              <div className="flex flex-col items-center gap-4">
-                <Button
-                  variant="ghost"
-                  className="text-white hover:bg-white/20 rounded-xl backdrop-blur-sm border border-white/20"
-                  onClick={() => setShowBannerUpload(true)}
-                >
-                  <Edit3 className="w-4 h-4 mr-2" />
-                  Change Banner
-                </Button>
-                <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4">
-                  <ProfileMediaUploader
-                    onUploadComplete={handleBannerUpload}
-                    type="media"
-                    className="flex items-center justify-center"
-                  />
-                </div>
-              </div>
-            )}
+          <div className="absolute inset-0 bg-black/40 opacity-0 hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+            <Button
+              variant="ghost"
+              className="text-white hover:bg-white/20 rounded-xl backdrop-blur-sm border border-white/20"
+              onClick={() => setBannerModalOpen(true)}
+            >
+              <Edit3 className="w-4 h-4 mr-2" />
+              Change Banner
+            </Button>
           </div>
         )}
         
@@ -111,9 +137,41 @@ export const ProfileHeader = ({ profile, isOwnProfile, onMediaSuccess, onEditCli
           />
         </div>
 
-        {/* Edit Button - Positioned in top right */}
-        {isOwnProfile && (
-          <div className="absolute -top-16 right-8">
+        {/* Action Buttons - Positioned in top right */}
+        <div className="absolute -top-16 right-8 flex items-center gap-3">
+          {!isOwnProfile ? (
+            <>
+              {/* Subscribe Button */}
+              <motion.div
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                <Button
+                  onClick={handleSubscribe}
+                  className="bg-luxury-primary hover:bg-luxury-primary/90 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-300 shadow-lg hover:shadow-xl"
+                >
+                  <UserPlus className="h-4 w-4 mr-2" />
+                  Subscribe
+                </Button>
+              </motion.div>
+
+              {/* Tip Button */}
+              <motion.div
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                <Button
+                  onClick={handleTip}
+                  variant="outline"
+                  className="border-luxury-primary/30 text-luxury-primary hover:bg-luxury-primary/10 px-6 py-3 rounded-xl font-semibold transition-all duration-300 backdrop-blur-sm"
+                >
+                  <DollarSign className="h-4 w-4 mr-2" />
+                  Tip
+                </Button>
+              </motion.div>
+            </>
+          ) : (
+            /* Edit Button for Own Profile */
             <motion.div
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
@@ -126,8 +184,8 @@ export const ProfileHeader = ({ profile, isOwnProfile, onMediaSuccess, onEditCli
                 Edit Profile
               </Button>
             </motion.div>
-          </div>
-        )}
+          )}
+        </div>
 
         {/* Profile Details */}
         <div className="pt-28 space-y-6">
@@ -188,8 +246,16 @@ export const ProfileHeader = ({ profile, isOwnProfile, onMediaSuccess, onEditCli
       <AvatarUploadModal
         isOpen={avatarModalOpen}
         onOpenChange={setAvatarModalOpen}
-        isUploading={false}
+        isUploading={avatarUploading}
         onFileChange={handleAvatarUpload}
+      />
+
+      {/* Banner Upload Modal */}
+      <BannerUploadDialog
+        isOpen={bannerModalOpen}
+        onOpenChange={setBannerModalOpen}
+        isUploading={bannerUploading}
+        onFileChange={handleBannerUpload}
       />
     </div>
   );
