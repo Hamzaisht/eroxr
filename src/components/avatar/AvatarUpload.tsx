@@ -1,9 +1,8 @@
 
 import { useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { Camera, Upload } from "lucide-react";
+import { Camera, Upload, Loader2 } from "lucide-react";
 import { useAvatarUpload } from "@/hooks/useAvatarUpload";
-import { Progress } from "@/components/ui/progress";
 import { UserAvatar } from "./UserAvatar";
 import { useSession } from "@supabase/auth-helpers-react";
 
@@ -21,17 +20,16 @@ export const AvatarUpload = ({
   size = 'lg'
 }: AvatarUploadProps) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const { uploadAvatar, isUploading, progress, error } = useAvatarUpload();
+  const { uploadAvatar, isUploading } = useAvatarUpload();
   const session = useSession();
 
-  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (file) {
-      uploadAvatar(file).then((result) => {
-        if (result.success && onSuccess) {
-          onSuccess();
-        }
-      });
+    if (file && session?.user?.id) {
+      const result = await uploadAvatar(file, session.user.id);
+      if (result && onSuccess) {
+        onSuccess();
+      }
     }
   };
 
@@ -51,7 +49,7 @@ export const AvatarUpload = ({
         >
           {isUploading ? (
             <>
-              <Upload className="w-4 h-4 mr-2 animate-spin" />
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
               Uploading...
             </>
           ) : (
@@ -61,19 +59,6 @@ export const AvatarUpload = ({
             </>
           )}
         </Button>
-        
-        {showProgress && isUploading && (
-          <div className="space-y-1">
-            <Progress value={progress} className="w-full h-2" />
-            <p className="text-xs text-muted-foreground text-center">
-              {progress}%
-            </p>
-          </div>
-        )}
-        
-        {error && (
-          <p className="text-xs text-destructive">{error}</p>
-        )}
         
         <input
           ref={fileInputRef}
@@ -100,20 +85,12 @@ export const AvatarUpload = ({
         className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity rounded-full flex items-center justify-center cursor-pointer"
         onClick={handleClick}
       >
-        <Camera className="w-6 h-6 text-white" />
+        {isUploading ? (
+          <Loader2 className="w-6 h-6 text-white animate-spin" />
+        ) : (
+          <Camera className="w-6 h-6 text-white" />
+        )}
       </div>
-
-      {showProgress && isUploading && (
-        <div className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 w-full">
-          <Progress value={progress} className="w-full h-1" />
-        </div>
-      )}
-
-      {error && (
-        <div className="absolute -bottom-6 left-1/2 transform -translate-x-1/2 text-xs text-destructive whitespace-nowrap">
-          {error}
-        </div>
-      )}
 
       <input
         ref={fileInputRef}
