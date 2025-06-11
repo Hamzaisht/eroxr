@@ -1,7 +1,7 @@
 
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { CheckCircle, Loader2 } from "lucide-react";
+import { CheckCircle, Loader2, Upload } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface ActionButtonsProps {
@@ -34,10 +34,10 @@ export const ActionButtons = ({ selectedFile, isUploading, fileType, onClose, on
           disabled={!selectedFile || isUploading}
           className={cn(
             "w-full bg-gradient-to-r from-luxury-primary via-luxury-accent to-luxury-primary hover:from-luxury-primary/90 hover:via-luxury-accent/90 hover:to-luxury-primary/90 text-white rounded-2xl h-14 font-bold text-lg shadow-xl hover:shadow-2xl transition-all duration-500 relative overflow-hidden",
-            isUploading && "animate-none"
+            isUploading && "animate-pulse"
           )}
         >
-          {!isUploading && (
+          {!isUploading && !selectedFile && (
             <motion.div
               className="absolute inset-0 bg-gradient-to-r from-luxury-primary/20 via-luxury-accent/20 to-luxury-primary/20"
               animate={{
@@ -62,11 +62,14 @@ export const ActionButtons = ({ selectedFile, isUploading, fileType, onClose, on
               </>
             ) : selectedFile ? (
               <>
-                <CheckCircle className="w-6 h-6 mr-3" />
+                <Upload className="w-6 h-6 mr-3" />
                 Bless {fileType === 'video' ? 'Sacred Video' : 'Divine Image'}
               </>
             ) : (
-              'Select Divine Media'
+              <>
+                <CheckCircle className="w-6 h-6 mr-3" />
+                Select Divine Media
+              </>
             )}
           </span>
         </Button>

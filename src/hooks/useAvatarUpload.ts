@@ -13,7 +13,17 @@ export const useAvatarUpload = () => {
     setIsUploading(true);
     
     try {
-      // Create unique filename
+      // Validate file
+      if (file.size > 10 * 1024 * 1024) { // 10MB limit
+        throw new Error('File size must be less than 10MB');
+      }
+
+      const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+      if (!allowedTypes.includes(file.type)) {
+        throw new Error('Please upload a valid image file (JPG, PNG, GIF, or WebP)');
+      }
+
+      // Create unique filename with timestamp
       const fileExt = file.name.split('.').pop();
       const fileName = `${userId}/avatar-${Date.now()}.${fileExt}`;
 
@@ -26,7 +36,8 @@ export const useAvatarUpload = () => {
         });
 
       if (uploadError) {
-        throw uploadError;
+        console.error('Upload error:', uploadError);
+        throw new Error(`Upload failed: ${uploadError.message}`);
       }
 
       // Get public URL
@@ -34,22 +45,33 @@ export const useAvatarUpload = () => {
         .from('media')
         .getPublicUrl(fileName);
 
-      // Update profile with new avatar URL
-      const { error: updateError } = await supabase
-        .from('profiles')
-        .update({ 
-          avatar_url: publicUrl,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', userId);
+      // Update profile with retry logic
+      let retries = 3;
+      while (retries > 0) {
+        try {
+          const { error: updateError } = await supabase
+            .from('profiles')
+            .update({ 
+              avatar_url: publicUrl,
+              updated_at: new Date().toISOString()
+            })
+            .eq('id', userId);
 
-      if (updateError) {
-        throw updateError;
+          if (updateError) {
+            throw updateError;
+          }
+          break; // Success, exit retry loop
+        } catch (error: any) {
+          retries--;
+          if (retries === 0) throw error;
+          // Wait 500ms before retry
+          await new Promise(resolve => setTimeout(resolve, 500));
+        }
       }
 
       toast({
-        title: "Success",
-        description: "Profile picture updated successfully!",
+        title: "Divine Success",
+        description: "Your sacred avatar has been blessed and updated!",
       });
 
       return { success: true, url: publicUrl };
@@ -57,8 +79,8 @@ export const useAvatarUpload = () => {
     } catch (error: any) {
       console.error('Avatar upload error:', error);
       toast({
-        title: "Upload Failed",
-        description: error.message || "Failed to upload avatar. Please try again.",
+        title: "Upload Faltered",
+        description: error.message || "Failed to upload avatar. The gods are displeased - try again.",
         variant: "destructive",
       });
       return { success: false };
@@ -73,7 +95,20 @@ export const useAvatarUpload = () => {
     setIsUploading(true);
     
     try {
-      // Create unique filename
+      // Validate file
+      if (file.size > 50 * 1024 * 1024) { // 50MB limit for banners (can include videos)
+        throw new Error('File size must be less than 50MB');
+      }
+
+      const allowedTypes = [
+        'image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp',
+        'video/mp4', 'video/webm', 'video/mov'
+      ];
+      if (!allowedTypes.includes(file.type)) {
+        throw new Error('Please upload a valid image or video file');
+      }
+
+      // Create unique filename with timestamp
       const fileExt = file.name.split('.').pop();
       const fileName = `${userId}/banner-${Date.now()}.${fileExt}`;
 
@@ -86,7 +121,8 @@ export const useAvatarUpload = () => {
         });
 
       if (uploadError) {
-        throw uploadError;
+        console.error('Upload error:', uploadError);
+        throw new Error(`Upload failed: ${uploadError.message}`);
       }
 
       // Get public URL
@@ -94,22 +130,33 @@ export const useAvatarUpload = () => {
         .from('media')
         .getPublicUrl(fileName);
 
-      // Update profile with new banner URL
-      const { error: updateError } = await supabase
-        .from('profiles')
-        .update({ 
-          banner_url: publicUrl,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', userId);
+      // Update profile with retry logic
+      let retries = 3;
+      while (retries > 0) {
+        try {
+          const { error: updateError } = await supabase
+            .from('profiles')
+            .update({ 
+              banner_url: publicUrl,
+              updated_at: new Date().toISOString()
+            })
+            .eq('id', userId);
 
-      if (updateError) {
-        throw updateError;
+          if (updateError) {
+            throw updateError;
+          }
+          break; // Success, exit retry loop
+        } catch (error: any) {
+          retries--;
+          if (retries === 0) throw error;
+          // Wait 500ms before retry
+          await new Promise(resolve => setTimeout(resolve, 500));
+        }
       }
 
       toast({
-        title: "Success",
-        description: "Banner updated successfully!",
+        title: "Divine Success",
+        description: "Your sacred banner has been blessed and updated!",
       });
 
       return { success: true, url: publicUrl };
@@ -117,8 +164,8 @@ export const useAvatarUpload = () => {
     } catch (error: any) {
       console.error('Banner upload error:', error);
       toast({
-        title: "Upload Failed",
-        description: error.message || "Failed to upload banner. Please try again.",
+        title: "Upload Faltered",
+        description: error.message || "Failed to upload banner. The gods are displeased - try again.",
         variant: "destructive",
       });
       return { success: false };

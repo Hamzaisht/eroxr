@@ -33,12 +33,19 @@ export const MediaUploadDialog = ({
   const onDrop = useCallback((acceptedFiles: File[]) => {
     const file = acceptedFiles[0];
     if (file) {
+      console.log('File selected:', file.name, file.type, file.size);
       setSelectedFile(file);
+      
+      // Clean up previous preview URL
+      if (preview) {
+        URL.revokeObjectURL(preview);
+      }
+      
       const url = URL.createObjectURL(file);
       setPreview(url);
       setFileType(file.type.startsWith('video/') ? 'video' : 'image');
     }
-  }, []);
+  }, [preview]);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
@@ -51,22 +58,28 @@ export const MediaUploadDialog = ({
           'image/*': ['.jpeg', '.jpg', '.png', '.gif', '.webp']
         },
     maxFiles: 1,
-    disabled: isUploading
+    disabled: isUploading,
+    maxSize: type === 'banner' ? 50 * 1024 * 1024 : 10 * 1024 * 1024 // 50MB for banner, 10MB for avatar
   });
 
   const handleUpload = async () => {
     if (selectedFile && !isUploading) {
       try {
+        console.log('Starting upload for:', selectedFile.name);
         await onUpload(selectedFile);
         handleClose();
       } catch (error) {
-        console.error('Upload failed:', error);
+        console.error('Upload failed in dialog:', error);
       }
     }
   };
 
   const handleClose = () => {
     if (!isUploading) {
+      // Clean up preview URL
+      if (preview) {
+        URL.revokeObjectURL(preview);
+      }
       setPreview(null);
       setSelectedFile(null);
       setFileType(null);
