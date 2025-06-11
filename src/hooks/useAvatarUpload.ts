@@ -7,8 +7,8 @@ export const useAvatarUpload = () => {
   const [isUploading, setIsUploading] = useState(false);
   const { toast } = useToast();
 
-  const uploadAvatar = async (file: File, userId: string): Promise<string | null> => {
-    if (!file || !userId) return null;
+  const uploadAvatar = async (file: File, userId: string): Promise<{ success: boolean; url?: string }> => {
+    if (!file || !userId) return { success: false };
 
     setIsUploading(true);
     
@@ -37,7 +37,10 @@ export const useAvatarUpload = () => {
       // Update profile with new avatar URL
       const { error: updateError } = await supabase
         .from('profiles')
-        .update({ avatar_url: publicUrl })
+        .update({ 
+          avatar_url: publicUrl,
+          updated_at: new Date().toISOString()
+        })
         .eq('id', userId);
 
       if (updateError) {
@@ -49,7 +52,7 @@ export const useAvatarUpload = () => {
         description: "Profile picture updated successfully!",
       });
 
-      return publicUrl;
+      return { success: true, url: publicUrl };
 
     } catch (error: any) {
       console.error('Avatar upload error:', error);
@@ -58,14 +61,14 @@ export const useAvatarUpload = () => {
         description: error.message || "Failed to upload avatar. Please try again.",
         variant: "destructive",
       });
-      return null;
+      return { success: false };
     } finally {
       setIsUploading(false);
     }
   };
 
-  const uploadBanner = async (file: File, userId: string): Promise<string | null> => {
-    if (!file || !userId) return null;
+  const uploadBanner = async (file: File, userId: string): Promise<{ success: boolean; url?: string }> => {
+    if (!file || !userId) return { success: false };
 
     setIsUploading(true);
     
@@ -94,7 +97,10 @@ export const useAvatarUpload = () => {
       // Update profile with new banner URL
       const { error: updateError } = await supabase
         .from('profiles')
-        .update({ banner_url: publicUrl })
+        .update({ 
+          banner_url: publicUrl,
+          updated_at: new Date().toISOString()
+        })
         .eq('id', userId);
 
       if (updateError) {
@@ -106,7 +112,7 @@ export const useAvatarUpload = () => {
         description: "Banner updated successfully!",
       });
 
-      return publicUrl;
+      return { success: true, url: publicUrl };
 
     } catch (error: any) {
       console.error('Banner upload error:', error);
@@ -115,7 +121,7 @@ export const useAvatarUpload = () => {
         description: error.message || "Failed to upload banner. Please try again.",
         variant: "destructive",
       });
-      return null;
+      return { success: false };
     } finally {
       setIsUploading(false);
     }
