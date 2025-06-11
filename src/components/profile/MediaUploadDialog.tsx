@@ -68,6 +68,9 @@ export const MediaUploadDialog = ({
 
   const isAvatar = type === 'avatar';
 
+  // Extract dropzone props and remove conflicting drag events
+  const { onClick, onKeyDown, onFocus, onBlur, ...otherDropzoneProps } = getRootProps();
+
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-2xl bg-luxury-dark/98 backdrop-blur-2xl border border-luxury-primary/10 shadow-2xl rounded-3xl overflow-hidden">
@@ -157,7 +160,13 @@ export const MediaUploadDialog = ({
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            {...getRootProps()}
+            onClick={onClick}
+            onKeyDown={onKeyDown}
+            onFocus={onFocus}
+            onBlur={onBlur}
+            tabIndex={0}
+            role="button"
+            aria-label="Upload files"
             className={cn(
               "relative border-2 border-dashed rounded-3xl p-12 text-center cursor-pointer transition-all duration-300 group overflow-hidden",
               isDragActive
