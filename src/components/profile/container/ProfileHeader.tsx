@@ -18,6 +18,7 @@ interface ProfileHeaderProps {
 export const ProfileHeader = ({ profile, isOwnProfile, onMediaSuccess, onEditClick }: ProfileHeaderProps) => {
   const [avatarModalOpen, setAvatarModalOpen] = useState(false);
   const [bannerUploading, setBannerUploading] = useState(false);
+  const [showBannerUpload, setShowBannerUpload] = useState(false);
   const { toast } = useToast();
 
   console.log('ProfileHeader Debug:', {
@@ -40,6 +41,7 @@ export const ProfileHeader = ({ profile, isOwnProfile, onMediaSuccess, onEditCli
   const handleBannerUpload = async (urls: string[], assetIds: string[]) => {
     if (urls.length > 0) {
       await onMediaSuccess('banner', urls[0]);
+      setShowBannerUpload(false);
     }
   };
 
@@ -66,20 +68,30 @@ export const ProfileHeader = ({ profile, isOwnProfile, onMediaSuccess, onEditCli
         
         {/* Banner Upload Overlay for Own Profile */}
         {isOwnProfile && (
-          <div className="absolute inset-0 bg-black/40 opacity-0 hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
-            <ProfileMediaUploader
-              onUploadComplete={handleBannerUpload}
-              type="media"
-              className="flex items-center justify-center"
-            >
-              <Button
-                variant="ghost"
-                className="text-white hover:bg-white/20 rounded-xl backdrop-blur-sm border border-white/20"
-              >
-                <Edit3 className="w-4 h-4 mr-2" />
-                Change Banner
-              </Button>
-            </ProfileMediaUploader>
+          <div 
+            className="absolute inset-0 bg-black/40 opacity-0 hover:opacity-100 transition-opacity duration-300 flex items-center justify-center"
+            onMouseEnter={() => setShowBannerUpload(true)}
+            onMouseLeave={() => setShowBannerUpload(false)}
+          >
+            {showBannerUpload && (
+              <div className="flex flex-col items-center gap-4">
+                <Button
+                  variant="ghost"
+                  className="text-white hover:bg-white/20 rounded-xl backdrop-blur-sm border border-white/20"
+                  onClick={() => setShowBannerUpload(true)}
+                >
+                  <Edit3 className="w-4 h-4 mr-2" />
+                  Change Banner
+                </Button>
+                <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4">
+                  <ProfileMediaUploader
+                    onUploadComplete={handleBannerUpload}
+                    type="media"
+                    className="flex items-center justify-center"
+                  />
+                </div>
+              </div>
+            )}
           </div>
         )}
         
