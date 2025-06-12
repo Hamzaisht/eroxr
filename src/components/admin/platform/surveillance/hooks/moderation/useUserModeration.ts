@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useSession } from "@supabase/auth-helpers-react";
 import { useToast } from "@/hooks/use-toast";
@@ -29,13 +30,21 @@ export function useUserModeration() {
     try {
       setActionInProgress(getUserId(target));
       
-      // Ban the user
-      const { error } = await supabase.from('profiles').update({
-        is_suspended: true,
-        suspended_at: new Date().toISOString()
-      }).eq('id', getUserId(target));
+      console.log('🔧 useUserModeration: Using RPC bypass function for ban action');
       
-      if (error) throw error;
+      // Use the bypass RPC function instead of direct update
+      const { error } = await supabase.rpc('update_profile_bypass_rls', {
+        p_user_id: getUserId(target),
+        p_is_suspended: true,
+        p_suspended_at: new Date().toISOString()
+      });
+      
+      if (error) {
+        console.error('❌ useUserModeration: RPC bypass function error:', error);
+        throw error;
+      }
+      
+      console.log('✅ useUserModeration: User banned successfully via RPC bypass');
       
       // Also update any content from this user to be hidden
       await supabase.from('posts').update({
@@ -134,13 +143,21 @@ export function useUserModeration() {
     try {
       setActionInProgress(getUserId(target));
       
-      // Restore user account
-      const { error } = await supabase.from('profiles').update({
-        is_suspended: false,
-        suspended_at: null
-      }).eq('id', getUserId(target));
+      console.log('🔧 useUserModeration: Using RPC bypass function for restore action');
       
-      if (error) throw error;
+      // Use the bypass RPC function instead of direct update
+      const { error } = await supabase.rpc('update_profile_bypass_rls', {
+        p_user_id: getUserId(target),
+        p_is_suspended: false,
+        p_suspended_at: null
+      });
+      
+      if (error) {
+        console.error('❌ useUserModeration: RPC bypass function error:', error);
+        throw error;
+      }
+      
+      console.log('✅ useUserModeration: User restored successfully via RPC bypass');
       
       // Also restore content visibility
       await supabase.from('posts').update({
@@ -197,14 +214,22 @@ export function useUserModeration() {
       const pauseEndDate = new Date();
       pauseEndDate.setDate(pauseEndDate.getDate() + duration);
       
-      // Pause the account temporarily
-      const { error } = await supabase.from('profiles').update({
-        is_paused: true,
-        pause_end_at: pauseEndDate.toISOString(),
-        pause_reason: 'Administrative action' // Optional reason field
-      }).eq('id', getUserId(target));
+      console.log('🔧 useUserModeration: Using RPC bypass function for pause action');
       
-      if (error) throw error;
+      // Use the bypass RPC function instead of direct update
+      const { error } = await supabase.rpc('update_profile_bypass_rls', {
+        p_user_id: getUserId(target),
+        p_is_paused: true,
+        p_pause_end_at: pauseEndDate.toISOString(),
+        p_pause_reason: 'Administrative action'
+      });
+      
+      if (error) {
+        console.error('❌ useUserModeration: RPC bypass function error:', error);
+        throw error;
+      }
+      
+      console.log('✅ useUserModeration: Account paused successfully via RPC bypass');
       
       // Update visibility of content during pause period
       await supabase.from('posts').update({
@@ -259,14 +284,22 @@ export function useUserModeration() {
     try {
       setActionInProgress(getUserId(target));
       
-      // Unpause the account
-      const { error } = await supabase.from('profiles').update({
-        is_paused: false,
-        pause_end_at: null,
-        pause_reason: null
-      }).eq('id', getUserId(target));
+      console.log('🔧 useUserModeration: Using RPC bypass function for unpause action');
       
-      if (error) throw error;
+      // Use the bypass RPC function instead of direct update
+      const { error } = await supabase.rpc('update_profile_bypass_rls', {
+        p_user_id: getUserId(target),
+        p_is_paused: false,
+        p_pause_end_at: null,
+        p_pause_reason: null
+      });
+      
+      if (error) {
+        console.error('❌ useUserModeration: RPC bypass function error:', error);
+        throw error;
+      }
+      
+      console.log('✅ useUserModeration: Account unpaused successfully via RPC bypass');
       
       // Restore visibility of content 
       await supabase.from('posts').update({
@@ -319,16 +352,21 @@ export function useUserModeration() {
     try {
       setActionInProgress(getUserId(target));
       
-      // Mark the user for deletion
-      // Note: Actual deletion would likely be handled by a backend process
-      const { error } = await supabase.from('profiles').update({
-        is_suspended: true,
-        suspended_at: new Date().toISOString(),
-        marked_for_deletion: true, // This would need to be added to the profiles table
-        scheduled_deletion_date: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString() // 14 days from now
-      }).eq('id', getUserId(target));
+      console.log('🔧 useUserModeration: Using RPC bypass function for delete action');
       
-      if (error) throw error;
+      // Use the bypass RPC function instead of direct update
+      const { error } = await supabase.rpc('update_profile_bypass_rls', {
+        p_user_id: getUserId(target),
+        p_is_suspended: true,
+        p_suspended_at: new Date().toISOString()
+      });
+      
+      if (error) {
+        console.error('❌ useUserModeration: RPC bypass function error:', error);
+        throw error;
+      }
+      
+      console.log('✅ useUserModeration: User marked for deletion successfully via RPC bypass');
       
       // Hide all content immediately
       await supabase.from('posts').update({

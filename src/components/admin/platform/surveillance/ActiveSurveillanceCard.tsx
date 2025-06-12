@@ -60,12 +60,22 @@ export const ActiveSurveillanceCard = ({
         }
       });
       
-      // For ban action, we'd update the user profile
+      // For ban action, use the bypass RPC function
       if (action === 'ban') {
-        await supabase.from('profiles').update({
-          is_suspended: true,
-          suspended_at: new Date().toISOString()
-        }).eq('id', session.user_id);
+        console.log('🔧 ActiveSurveillanceCard: Using RPC bypass function for ban action');
+        
+        const { error } = await supabase.rpc('update_profile_bypass_rls', {
+          p_user_id: session.user_id,
+          p_is_suspended: true,
+          p_suspended_at: new Date().toISOString()
+        });
+        
+        if (error) {
+          console.error('❌ ActiveSurveillanceCard: RPC bypass function error:', error);
+          throw error;
+        }
+        
+        console.log('✅ ActiveSurveillanceCard: User banned successfully via RPC bypass');
       }
       
       toast({

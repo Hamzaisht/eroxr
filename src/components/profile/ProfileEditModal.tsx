@@ -40,19 +40,24 @@ export const ProfileEditModal = ({ profile, isOpen, onClose, onSuccess }: Profil
     setIsLoading(true);
 
     try {
-      const { error } = await supabase
-        .from('profiles')
-        .update({
-          username: formData.username,
-          bio: formData.bio || null,
-          location: formData.location || null,
-          avatar_url: formData.avatar_url || null,
-          banner_url: formData.banner_url || null,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', profile.id);
+      console.log('🔧 ProfileEditModal: Using RPC bypass function for profile update');
+      
+      // Use the bypass RPC function instead of direct update
+      const { error } = await supabase.rpc('update_profile_bypass_rls', {
+        p_user_id: profile.id,
+        p_username: formData.username,
+        p_bio: formData.bio || null,
+        p_location: formData.location || null,
+        p_avatar_url: formData.avatar_url || null,
+        p_banner_url: formData.banner_url || null
+      });
 
-      if (error) throw error;
+      if (error) {
+        console.error('❌ ProfileEditModal: RPC bypass function error:', error);
+        throw error;
+      }
+
+      console.log('✅ ProfileEditModal: Profile updated successfully via RPC bypass');
 
       toast({
         title: "Success",
@@ -60,7 +65,7 @@ export const ProfileEditModal = ({ profile, isOpen, onClose, onSuccess }: Profil
       });
       onSuccess();
     } catch (error: any) {
-      console.error('Error updating profile:', error);
+      console.error('💥 ProfileEditModal: Profile update error:', error);
       toast({
         title: "Error",
         description: error.message || "Failed to update profile",
