@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import { ProfileAvatarImage } from "../avatar/AvatarImage";
 import { StudioEditDialog } from "../StudioEditDialog";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
 
 interface ProfileHeaderProps {
   profile: any;
@@ -34,23 +33,11 @@ export const ProfileHeader = ({ profile, isOwnProfile, onMediaSuccess, onEditCli
   };
 
   const handleEditSuccess = async () => {
-    // Use the bypass function to ensure no RLS conflicts
-    try {
-      const { error } = await supabase.rpc('update_profile_bypass_rls', {
-        p_user_id: profile.id,
-        p_avatar_url: profile.avatar_url,
-        p_banner_url: profile.banner_url
-      });
-      
-      if (error) {
-        console.error('Profile refresh error:', error);
-      }
-      
-      await onMediaSuccess('avatar', ''); // Trigger refresh
-    } catch (error) {
-      console.error('Edit success handler error:', error);
-    }
+    console.log('🎯 ProfileHeader: Edit success - closing dialog and triggering refresh');
+    
+    // Simply close the dialog and trigger a refresh - no need for redundant RPC call
     setEditDialogOpen(false);
+    await onMediaSuccess('avatar', ''); // Trigger refresh
   };
 
   const formatDate = (dateString: string) => {
