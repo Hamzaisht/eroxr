@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { Edit3, MapPin, Calendar, Shield, Crown, DollarSign, UserPlus } from "lucide-react";
@@ -32,12 +31,14 @@ export const ProfileHeader = ({ profile, isOwnProfile, onMediaSuccess, onEditCli
     });
   };
 
-  const handleEditSuccess = async () => {
-    console.log('🎯 ProfileHeader: Edit success - closing dialog and triggering refresh');
+  const handleEditSuccess = () => {
+    console.log('🎯 ProfileHeader: Edit success - closing dialog');
     
-    // Simply close the dialog and trigger a refresh - no need for redundant RPC call
+    // Simply close the dialog - let the parent component handle any refreshes
     setEditDialogOpen(false);
-    await onMediaSuccess('avatar', ''); // Trigger refresh
+    
+    // Don't call onMediaSuccess here to avoid potential loops
+    // The StudioEditDialog should handle its own success callbacks
   };
 
   const formatDate = (dateString: string) => {
