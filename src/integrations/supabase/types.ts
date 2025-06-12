@@ -2286,6 +2286,19 @@ export type Database = {
         Args: { row_id: string; counter_name: string; table_name?: string }
         Returns: undefined
       }
+      update_profile_bypass_rls: {
+        Args: {
+          p_user_id: string
+          p_username?: string
+          p_bio?: string
+          p_location?: string
+          p_avatar_url?: string
+          p_banner_url?: string
+          p_interests?: string[]
+          p_profile_visibility?: boolean
+        }
+        Returns: undefined
+      }
       update_trending_score: {
         Args: { p_post_id: string }
         Returns: undefined

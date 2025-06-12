@@ -53,23 +53,20 @@ export const useAvatarUpload = () => {
 
       console.log('🔗 Generated public URL:', publicUrl);
 
-      // Update profile with direct approach to avoid RLS conflicts
-      console.log('💾 Updating profile avatar_url...');
+      // Update profile using the new bypass function
+      console.log('💾 Updating profile avatar_url using bypass function...');
       
-      const { error: updateError } = await supabase
-        .from('profiles')
-        .update({ 
-          avatar_url: publicUrl,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', userId);
+      const { error: updateError } = await supabase.rpc('update_profile_bypass_rls', {
+        p_user_id: userId,
+        p_avatar_url: publicUrl
+      });
 
       if (updateError) {
         console.error('❌ Profile update error:', updateError);
         throw new Error(`Profile update failed: ${updateError.message}`);
       }
 
-      console.log('✅ Profile updated successfully');
+      console.log('✅ Profile updated successfully using bypass function');
 
       toast({
         title: "Divine Success",
@@ -140,23 +137,20 @@ export const useAvatarUpload = () => {
 
       console.log('🔗 Generated public URL:', publicUrl);
 
-      // Update profile with direct approach to avoid RLS conflicts
-      console.log('💾 Updating profile banner_url...');
+      // Update profile using the new bypass function
+      console.log('💾 Updating profile banner_url using bypass function...');
       
-      const { error: updateError } = await supabase
-        .from('profiles')
-        .update({ 
-          banner_url: publicUrl,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', userId);
+      const { error: updateError } = await supabase.rpc('update_profile_bypass_rls', {
+        p_user_id: userId,
+        p_banner_url: publicUrl
+      });
 
       if (updateError) {
         console.error('❌ Profile update error:', updateError);
         throw new Error(`Profile update failed: ${updateError.message}`);
       }
 
-      console.log('✅ Profile updated successfully');
+      console.log('✅ Profile updated successfully using bypass function');
 
       toast({
         title: "Divine Success",

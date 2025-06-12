@@ -78,25 +78,15 @@ export const ProfileForm = ({ profile, onSuccess }: ProfileFormProps) => {
     console.log("Submitting form values:", values);
 
     try {
-      const updates = {
-        id: session.user.id,
-        username: values.username,
-        bio: values.bio,
-        location: values.location,
-        interests: values.interests,
-        profile_visibility: values.profile_visibility,
-        ...(values.username !== currentUsername && {
-          last_username_change: new Date().toISOString(),
-        }),
-        updated_at: new Date().toISOString(),
-      };
-
-      console.log("Sending update to Supabase:", updates);
-
-      const { error } = await supabase
-        .from("profiles")
-        .update(updates)
-        .eq("id", session.user.id);
+      // Use the new bypass function for profile updates
+      const { error } = await supabase.rpc('update_profile_bypass_rls', {
+        p_user_id: session.user.id,
+        p_username: values.username,
+        p_bio: values.bio,
+        p_location: values.location,
+        p_interests: values.interests,
+        p_profile_visibility: values.profile_visibility
+      });
 
       if (error) throw error;
 
