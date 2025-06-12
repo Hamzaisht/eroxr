@@ -13,8 +13,10 @@ export const useAvatarUpload = () => {
     setIsUploading(true);
     
     try {
+      console.log('🎯 Starting avatar upload:', { fileName: file.name, size: file.size, userId });
+
       // Validate file
-      if (file.size > 10 * 1024 * 1024) { // 10MB limit
+      if (file.size > 10 * 1024 * 1024) {
         throw new Error('File size must be less than 10MB');
       }
 
@@ -27,6 +29,8 @@ export const useAvatarUpload = () => {
       const fileExt = file.name.split('.').pop();
       const fileName = `${userId}/avatar-${Date.now()}.${fileExt}`;
 
+      console.log('📁 Generated filename:', fileName);
+
       // Upload to Supabase Storage
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from('media')
@@ -36,38 +40,36 @@ export const useAvatarUpload = () => {
         });
 
       if (uploadError) {
-        console.error('Upload error:', uploadError);
+        console.error('❌ Storage upload error:', uploadError);
         throw new Error(`Upload failed: ${uploadError.message}`);
       }
+
+      console.log('✅ File uploaded successfully:', uploadData);
 
       // Get public URL
       const { data: { publicUrl } } = supabase.storage
         .from('media')
         .getPublicUrl(fileName);
 
-      // Update profile with retry logic
-      let retries = 3;
-      while (retries > 0) {
-        try {
-          const { error: updateError } = await supabase
-            .from('profiles')
-            .update({ 
-              avatar_url: publicUrl,
-              updated_at: new Date().toISOString()
-            })
-            .eq('id', userId);
+      console.log('🔗 Generated public URL:', publicUrl);
 
-          if (updateError) {
-            throw updateError;
-          }
-          break; // Success, exit retry loop
-        } catch (error: any) {
-          retries--;
-          if (retries === 0) throw error;
-          // Wait 500ms before retry
-          await new Promise(resolve => setTimeout(resolve, 500));
-        }
+      // Update profile with direct approach to avoid RLS conflicts
+      console.log('💾 Updating profile avatar_url...');
+      
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({ 
+          avatar_url: publicUrl,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', userId);
+
+      if (updateError) {
+        console.error('❌ Profile update error:', updateError);
+        throw new Error(`Profile update failed: ${updateError.message}`);
       }
+
+      console.log('✅ Profile updated successfully');
 
       toast({
         title: "Divine Success",
@@ -77,7 +79,7 @@ export const useAvatarUpload = () => {
       return { success: true, url: publicUrl };
 
     } catch (error: any) {
-      console.error('Avatar upload error:', error);
+      console.error('💥 Avatar upload error:', error);
       toast({
         title: "Upload Faltered",
         description: error.message || "Failed to upload avatar. The gods are displeased - try again.",
@@ -95,8 +97,10 @@ export const useAvatarUpload = () => {
     setIsUploading(true);
     
     try {
+      console.log('🎯 Starting banner upload:', { fileName: file.name, size: file.size, userId });
+
       // Validate file
-      if (file.size > 50 * 1024 * 1024) { // 50MB limit for banners (can include videos)
+      if (file.size > 50 * 1024 * 1024) {
         throw new Error('File size must be less than 50MB');
       }
 
@@ -112,6 +116,8 @@ export const useAvatarUpload = () => {
       const fileExt = file.name.split('.').pop();
       const fileName = `${userId}/banner-${Date.now()}.${fileExt}`;
 
+      console.log('📁 Generated filename:', fileName);
+
       // Upload to Supabase Storage
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from('media')
@@ -121,38 +127,36 @@ export const useAvatarUpload = () => {
         });
 
       if (uploadError) {
-        console.error('Upload error:', uploadError);
+        console.error('❌ Storage upload error:', uploadError);
         throw new Error(`Upload failed: ${uploadError.message}`);
       }
+
+      console.log('✅ File uploaded successfully:', uploadData);
 
       // Get public URL
       const { data: { publicUrl } } = supabase.storage
         .from('media')
         .getPublicUrl(fileName);
 
-      // Update profile with retry logic
-      let retries = 3;
-      while (retries > 0) {
-        try {
-          const { error: updateError } = await supabase
-            .from('profiles')
-            .update({ 
-              banner_url: publicUrl,
-              updated_at: new Date().toISOString()
-            })
-            .eq('id', userId);
+      console.log('🔗 Generated public URL:', publicUrl);
 
-          if (updateError) {
-            throw updateError;
-          }
-          break; // Success, exit retry loop
-        } catch (error: any) {
-          retries--;
-          if (retries === 0) throw error;
-          // Wait 500ms before retry
-          await new Promise(resolve => setTimeout(resolve, 500));
-        }
+      // Update profile with direct approach to avoid RLS conflicts
+      console.log('💾 Updating profile banner_url...');
+      
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({ 
+          banner_url: publicUrl,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', userId);
+
+      if (updateError) {
+        console.error('❌ Profile update error:', updateError);
+        throw new Error(`Profile update failed: ${updateError.message}`);
       }
+
+      console.log('✅ Profile updated successfully');
 
       toast({
         title: "Divine Success",
@@ -162,7 +166,7 @@ export const useAvatarUpload = () => {
       return { success: true, url: publicUrl };
 
     } catch (error: any) {
-      console.error('Banner upload error:', error);
+      console.error('💥 Banner upload error:', error);
       toast({
         title: "Upload Faltered",
         description: error.message || "Failed to upload banner. The gods are displeased - try again.",

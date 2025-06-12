@@ -12,13 +12,10 @@ export interface UploadResult {
 export interface UploadOptions {
   accessLevel?: 'private' | 'public' | 'subscribers_only';
   category?: string;
-  contentCategory?: string; // Add this for compatibility
+  contentCategory?: string;
   metadata?: Record<string, any>;
 }
 
-/**
- * Upload file to Supabase Storage and create media_assets record
- */
 export const uploadMediaToSupabase = async (
   file: File,
   options: UploadOptions = {}
@@ -61,7 +58,7 @@ export const uploadMediaToSupabase = async (
     
     console.log("📁 Generated file path:", fileName);
 
-    // Upload to Supabase Storage (removed bucket check to avoid recursion)
+    // Upload to Supabase Storage
     console.log("📤 Uploading to storage bucket 'media'...");
     const { data: uploadData, error: uploadError } = await supabase.storage
       .from('media')
@@ -85,7 +82,7 @@ export const uploadMediaToSupabase = async (
 
     console.log("🔗 Generated public URL:", publicUrl);
 
-    // Create media_assets record
+    // Create media_assets record with simplified approach
     const mediaType = getMediaType(file.type);
     const assetData = {
       user_id: user.id,
@@ -139,9 +136,6 @@ export const uploadMediaToSupabase = async (
   }
 };
 
-/**
- * Determine media type from MIME type
- */
 function getMediaType(mimeType: string): 'image' | 'video' | 'audio' | 'document' {
   if (mimeType.startsWith('image/')) return 'image';
   if (mimeType.startsWith('video/')) return 'video';
@@ -149,9 +143,6 @@ function getMediaType(mimeType: string): 'image' | 'video' | 'audio' | 'document
   return 'document';
 }
 
-/**
- * Upload multiple files
- */
 export const uploadMultipleMedia = async (
   files: File[],
   options: UploadOptions = {}
