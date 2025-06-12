@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -13,6 +14,7 @@ export const useBannerUpload = (profile: Profile, onSuccess: (url: string) => vo
 
     try {
       setIsUploading(true);
+      console.log('🎯 Starting banner upload via RPC bypass function');
       
       // First, delete the existing banner if it exists
       if (profile.banner_url) {
@@ -45,13 +47,20 @@ export const useBannerUpload = (profile: Profile, onSuccess: (url: string) => vo
         .from('banners')
         .getPublicUrl(filePath);
 
-      const { error: updateError } = await supabase
-        .from('profiles')
-        .update({ banner_url: publicUrl })
-        .eq('id', profile.id);
+      console.log('📞 Updating profile banner using RPC bypass function');
+      
+      // Use the bypass RPC function instead of direct update
+      const { error: updateError } = await supabase.rpc('update_profile_bypass_rls', {
+        p_user_id: profile.id,
+        p_banner_url: publicUrl
+      });
 
-      if (updateError) throw updateError;
+      if (updateError) {
+        console.error('❌ RPC bypass function error:', updateError);
+        throw updateError;
+      }
 
+      console.log('✅ Banner updated successfully via RPC bypass');
       onSuccess(publicUrl);
       
       toast({
@@ -60,7 +69,7 @@ export const useBannerUpload = (profile: Profile, onSuccess: (url: string) => vo
       });
 
     } catch (error) {
-      console.error('Error uploading banner:', error);
+      console.error('💥 Banner upload error:', error);
       toast({
         variant: "destructive",
         title: "Error",

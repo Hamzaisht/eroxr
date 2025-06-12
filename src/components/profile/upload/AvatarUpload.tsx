@@ -44,6 +44,8 @@ export const AvatarUpload = ({ currentAvatarUrl, profileId, onSuccess, size = 20
     setIsUploading(true);
 
     try {
+      console.log('🎯 Starting avatar upload via RPC bypass function');
+      
       const fileExt = file.name.split('.').pop();
       const fileName = `${profileId}/avatar.${fileExt}`;
 
@@ -57,6 +59,20 @@ export const AvatarUpload = ({ currentAvatarUrl, profileId, onSuccess, size = 20
         .from('avatars')
         .getPublicUrl(fileName);
 
+      console.log('📞 Updating profile avatar using RPC bypass function');
+
+      // Use the bypass RPC function instead of direct update
+      const { error: updateError } = await supabase.rpc('update_profile_bypass_rls', {
+        p_user_id: profileId,
+        p_avatar_url: publicUrl
+      });
+
+      if (updateError) {
+        console.error('❌ RPC bypass function error:', updateError);
+        throw updateError;
+      }
+
+      console.log('✅ Avatar updated successfully via RPC bypass');
       onSuccess(publicUrl);
       
       toast({
@@ -64,7 +80,7 @@ export const AvatarUpload = ({ currentAvatarUrl, profileId, onSuccess, size = 20
         description: "Avatar updated successfully!",
       });
     } catch (error: any) {
-      console.error('Error uploading avatar:', error);
+      console.error('💥 Avatar upload error:', error);
       toast({
         title: "Upload failed",
         description: error.message || "Failed to upload avatar",

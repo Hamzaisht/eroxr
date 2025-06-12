@@ -44,6 +44,8 @@ export const BannerUpload = ({ currentBannerUrl, profileId, onSuccess }: BannerU
     setIsUploading(true);
 
     try {
+      console.log('🎯 Starting banner upload via RPC bypass function');
+      
       const fileExt = file.name.split('.').pop();
       const fileName = `${profileId}/banner.${fileExt}`;
 
@@ -57,6 +59,20 @@ export const BannerUpload = ({ currentBannerUrl, profileId, onSuccess }: BannerU
         .from('banners')
         .getPublicUrl(fileName);
 
+      console.log('📞 Updating profile banner using RPC bypass function');
+
+      // Use the bypass RPC function instead of direct update
+      const { error: updateError } = await supabase.rpc('update_profile_bypass_rls', {
+        p_user_id: profileId,
+        p_banner_url: publicUrl
+      });
+
+      if (updateError) {
+        console.error('❌ RPC bypass function error:', updateError);
+        throw updateError;
+      }
+
+      console.log('✅ Banner updated successfully via RPC bypass');
       onSuccess(publicUrl);
       
       toast({
@@ -64,7 +80,7 @@ export const BannerUpload = ({ currentBannerUrl, profileId, onSuccess }: BannerU
         description: "Banner updated successfully!",
       });
     } catch (error: any) {
-      console.error('Error uploading banner:', error);
+      console.error('💥 Banner upload error:', error);
       toast({
         title: "Upload failed",
         description: error.message || "Failed to upload banner",
