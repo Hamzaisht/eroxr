@@ -58,7 +58,7 @@ export const ProfileContainer = ({ id, isEditing, setIsEditing }: ProfileContain
         ? { p_avatar_url: newUrl }
         : { p_banner_url: newUrl };
 
-      // Use the bypass RPC function instead of direct update
+      // Use the bypass RPC function instead of direct update to avoid RLS recursion
       const { error } = await supabase.rpc('update_profile_bypass_rls', {
         p_user_id: id,
         ...updateData

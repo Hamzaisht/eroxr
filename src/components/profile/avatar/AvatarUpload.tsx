@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -34,6 +35,8 @@ export const useAvatarUpload = ({ profile, onSuccess }: AvatarUploadProps) => {
 
   const handleCropComplete = async (croppedImageBlob: Blob) => {
     try {
+      console.log('🎯 Starting avatar upload via RPC bypass function');
+      
       const file = new File([croppedImageBlob], selectedFile?.name || 'avatar.jpg', {
         type: 'image/jpeg'
       });
@@ -54,15 +57,20 @@ export const useAvatarUpload = ({ profile, onSuccess }: AvatarUploadProps) => {
         .from('avatars')
         .getPublicUrl(filePath);
 
-      const { error: updateError } = await supabase
-        .from('profiles')
-        .update({ 
-          avatar_url: publicUrl,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', profile.id);
+      console.log('📞 Updating profile avatar using RPC bypass function');
 
-      if (updateError) throw updateError;
+      // Use the RPC bypass function instead of direct update to avoid RLS recursion
+      const { error: updateError } = await supabase.rpc('update_profile_bypass_rls', {
+        p_user_id: profile.id,
+        p_avatar_url: publicUrl
+      });
+
+      if (updateError) {
+        console.error('❌ RPC bypass function error:', updateError);
+        throw updateError;
+      }
+
+      console.log('✅ Avatar updated successfully via RPC bypass');
 
       toast({
         title: "Success",
@@ -72,7 +80,7 @@ export const useAvatarUpload = ({ profile, onSuccess }: AvatarUploadProps) => {
       onSuccess?.();
 
     } catch (error) {
-      console.error('Error uploading avatar:', error);
+      console.error('💥 Avatar upload error:', error);
       toast({
         variant: "destructive",
         title: "Error",

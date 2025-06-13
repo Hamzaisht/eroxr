@@ -56,7 +56,7 @@ export const useAvatarUpload = (profile: any) => {
 
       console.log('📞 Updating profile avatar using RPC bypass function');
 
-      // Use the bypass RPC function instead of direct update
+      // Use the bypass RPC function instead of direct update to avoid RLS recursion
       const { error: updateError } = await supabase.rpc('update_profile_bypass_rls', {
         p_user_id: profile.id,
         p_avatar_url: publicUrl

@@ -95,7 +95,7 @@ export const ProfileForm = ({ profile, onSuccess }: ProfileFormProps) => {
         throw error;
       }
 
-      console.log('✅ ProfileForm: Profile updated successfully');
+      console.log('✅ ProfileForm: Profile updated successfully via RPC bypass');
 
       await queryClient.invalidateQueries({ queryKey: ["profile"] });
       await queryClient.invalidateQueries({ queryKey: ["profileStats"] });

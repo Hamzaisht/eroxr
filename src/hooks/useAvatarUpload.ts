@@ -53,7 +53,7 @@ export const useAvatarUpload = () => {
 
       console.log('🔗 Generated public URL:', publicUrl);
 
-      // Update profile using the RPC bypass function
+      // Update profile using the RPC bypass function to avoid RLS recursion
       console.log('💾 Updating profile avatar_url using RPC bypass function...');
       
       const { error: updateError } = await supabase.rpc('update_profile_bypass_rls', {
@@ -137,7 +137,7 @@ export const useAvatarUpload = () => {
 
       console.log('🔗 Generated public URL:', publicUrl);
 
-      // Update profile using the RPC bypass function
+      // Update profile using the RPC bypass function to avoid RLS recursion
       console.log('💾 Updating profile banner_url using RPC bypass function...');
       
       const { error: updateError } = await supabase.rpc('update_profile_bypass_rls', {
@@ -162,7 +162,7 @@ export const useAvatarUpload = () => {
     } catch (error: any) {
       console.error('💥 Banner upload error:', error);
       toast({
-        title: "Upload Faltered",
+        title: "Upload Faltered", 
         description: error.message || "Failed to upload banner. The gods are displeased - try again.",
         variant: "destructive",
       });
