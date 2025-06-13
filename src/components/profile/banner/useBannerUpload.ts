@@ -14,7 +14,7 @@ export const useBannerUpload = (profile: Profile, onSuccess: (url: string) => vo
 
     try {
       setIsUploading(true);
-      console.log('🎯 Starting banner upload via RPC bypass function');
+      console.log('🎯 Starting banner upload via updated RPC function');
       
       // First, delete the existing banner if it exists
       if (profile.banner_url) {
@@ -47,20 +47,20 @@ export const useBannerUpload = (profile: Profile, onSuccess: (url: string) => vo
         .from('banners')
         .getPublicUrl(filePath);
 
-      console.log('📞 Updating profile banner using RPC bypass function');
+      console.log('📞 Updating profile banner using updated RPC function');
       
-      // Use the bypass RPC function instead of direct update
+      // Use the updated RPC function
       const { error: updateError } = await supabase.rpc('update_profile_bypass_rls', {
         p_user_id: profile.id,
         p_banner_url: publicUrl
       });
 
       if (updateError) {
-        console.error('❌ RPC bypass function error:', updateError);
+        console.error('❌ RPC function error:', updateError);
         throw updateError;
       }
 
-      console.log('✅ Banner updated successfully via RPC bypass');
+      console.log('✅ Banner updated successfully via updated RPC function');
       onSuccess(publicUrl);
       
       toast({

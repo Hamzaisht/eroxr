@@ -2287,16 +2287,29 @@ export type Database = {
         Returns: undefined
       }
       update_profile_bypass_rls: {
-        Args: {
-          p_user_id: string
-          p_username?: string
-          p_bio?: string
-          p_location?: string
-          p_avatar_url?: string
-          p_banner_url?: string
-          p_interests?: string[]
-          p_profile_visibility?: boolean
-        }
+        Args:
+          | {
+              p_user_id: string
+              p_username?: string
+              p_bio?: string
+              p_location?: string
+              p_avatar_url?: string
+              p_banner_url?: string
+              p_interests?: string[]
+              p_profile_visibility?: boolean
+            }
+          | {
+              p_user_id: string
+              p_username?: string
+              p_bio?: string
+              p_location?: string
+              p_avatar_url?: string
+              p_banner_url?: string
+              p_interests?: string[]
+              p_profile_visibility?: boolean
+              p_is_suspended?: boolean
+              p_suspended_at?: string
+            }
         Returns: undefined
       }
       update_trending_score: {
