@@ -3,22 +3,23 @@ import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { ProfileContainer } from "@/components/profile/container/ProfileContainer";
+import { ProfileViewer } from "@/components/studio/ProfileViewer";
+import { ProfileStudio } from "@/components/studio/ProfileStudio";
 import { useSession } from "@supabase/auth-helpers-react";
 import { motion } from "framer-motion";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 
 export default function ProfilePage() {
   const { username } = useParams<{ username: string }>();
   const navigate = useNavigate();
   const [profileId, setProfileId] = useState<string | null>(null);
-  const [isEditing, setIsEditing] = useState(false);
+  const [isStudioOpen, setIsStudioOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
   const session = useSession();
 
   useEffect(() => {
     if (!username) {
-      // If no username provided and user is logged in, redirect to their profile
       if (session?.user) {
         redirectToUserProfile();
       } else {
@@ -90,16 +91,14 @@ export default function ProfilePage() {
 
     try {
       setLoading(true);
-      console.log('Fetching profile for username:', username);
+      console.log('🎨 Studio: Fetching profile for username:', username);
       
-      // First try to find by username
       let { data: profileData, error } = await supabase
         .from('profiles')
         .select('id, username')
         .eq('username', username)
         .single();
 
-      // If not found by username, try by ID (fallback)
       if (error && error.code === 'PGRST116') {
         const { data: profileByIdData, error: idError } = await supabase
           .from('profiles')
@@ -112,16 +111,16 @@ export default function ProfilePage() {
       }
 
       if (error) {
-        console.error('Profile not found:', error);
+        console.error('🎨 Studio: Profile not found:', error);
         setProfileId(null);
         setLoading(false);
         return;
       }
 
-      console.log('Profile found:', profileData);
+      console.log('🎨 Studio: Profile found:', profileData);
       setProfileId(profileData.id);
     } catch (error: any) {
-      console.error('Error fetching profile:', error);
+      console.error('🎨 Studio: Error fetching profile:', error);
       toast({
         title: "Error",
         description: "Failed to load profile",
@@ -154,7 +153,7 @@ export default function ProfilePage() {
           className="text-center px-8"
         >
           <h1 className="text-4xl font-bold text-luxury-neutral mb-4">Profile Not Found</h1>
-          <p className="text-luxury-muted text-xl mb-8">The user you're looking for doesn't exist.</p>
+          <p className="text-luxury-muted text-xl mb-8">The artist you're looking for doesn't exist.</p>
           <div className="space-y-4">
             {session?.user && (
               <motion.button
@@ -163,7 +162,7 @@ export default function ProfilePage() {
                 onClick={() => redirectToUserProfile()}
                 className="px-8 py-4 bg-button-gradient text-white rounded-2xl font-semibold hover:shadow-button-hover transition-all duration-300 mr-4 text-lg"
               >
-                Go to My Profile
+                Go to My Studio
               </motion.button>
             )}
             <motion.button
@@ -181,10 +180,20 @@ export default function ProfilePage() {
   }
 
   return (
-    <ProfileContainer 
-      id={profileId} 
-      isEditing={isEditing} 
-      setIsEditing={setIsEditing} 
-    />
+    <>
+      <ProfileViewer 
+        profileId={profileId}
+        onEditClick={() => setIsStudioOpen(true)}
+      />
+
+      <Dialog open={isStudioOpen} onOpenChange={setIsStudioOpen}>
+        <DialogContent className="max-w-7xl max-h-[90vh] p-0 border-none bg-transparent overflow-hidden">
+          <ProfileStudio
+            profileId={profileId}
+            onClose={() => setIsStudioOpen(false)}
+          />
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
