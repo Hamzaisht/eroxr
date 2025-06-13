@@ -53,7 +53,10 @@ export const AvatarUpload = ({ currentAvatarUrl, profileId, onSuccess, size = 20
         .from('avatars')
         .upload(fileName, file, { upsert: true });
 
-      if (uploadError) throw uploadError;
+      if (uploadError) {
+        console.error('Storage upload error:', uploadError);
+        throw uploadError;
+      }
 
       const { data: { publicUrl } } = supabase.storage
         .from('avatars')
