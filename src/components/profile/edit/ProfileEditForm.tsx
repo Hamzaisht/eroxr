@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { User, FileText, MapPin } from "lucide-react";
+import type { Profile } from "@/integrations/supabase/types/profile";
 
 const profileEditSchema = z.object({
   username: z.string().min(1, "Username is required"),
@@ -20,12 +21,7 @@ const profileEditSchema = z.object({
 type ProfileEditFormData = z.infer<typeof profileEditSchema>;
 
 interface ProfileEditFormProps {
-  profile: {
-    id: string;
-    username: string;
-    bio?: string;
-    location?: string;
-  };
+  profile: Profile;
   onSuccess: () => void;
   onCancel: () => void;
 }
