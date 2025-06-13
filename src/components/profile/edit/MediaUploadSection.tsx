@@ -60,7 +60,10 @@ export const MediaUploadSection = ({
         .from(bucket)
         .upload(fileName, file, { upsert: true });
 
-      if (uploadError) throw uploadError;
+      if (uploadError) {
+        console.error(`❌ Storage upload error for ${type}:`, uploadError);
+        throw uploadError;
+      }
 
       // Get public URL
       const { data: { publicUrl } } = supabase.storage
