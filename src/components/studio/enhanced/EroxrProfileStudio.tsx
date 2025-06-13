@@ -48,7 +48,12 @@ export const EroxrProfileStudio = ({ profileId, onClose }: EroxrProfileStudioPro
     >
       {/* Greek Pattern Overlay */}
       <div className="absolute inset-0 opacity-5">
-        <div className="absolute inset-0 bg-[url('data:image/svg+xml,<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 100 100\"><path d=\"M50 0L60 40L100 50L60 60L50 100L40 60L0 50L40 40Z\" fill=\"%23D4AF37\"/></svg>')] bg-repeat bg-[length:40px_40px]" />
+        <div 
+          className="absolute inset-0 bg-repeat bg-[length:40px_40px]" 
+          style={{
+            backgroundImage: `url("data:image/svg+xml,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><path d="M50 0L60 40L100 50L60 60L50 100L40 60L0 50L40 40Z" fill="#D4AF37"/></svg>')}")`
+          }}
+        />
       </div>
 
       {/* Divine Header */}
