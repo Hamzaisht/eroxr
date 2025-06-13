@@ -6,16 +6,10 @@ import { MediaUploadSection } from "./MediaUploadSection";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { User, Camera } from "lucide-react";
 import { motion } from "framer-motion";
+import type { Profile } from "@/integrations/supabase/types/profile";
 
 interface ProfileEditDialogProps {
-  profile: {
-    id: string;
-    username: string;
-    bio?: string;
-    location?: string;
-    avatar_url?: string;
-    banner_url?: string;
-  };
+  profile: Profile;
   isOpen: boolean;
   onClose: () => void;
   onSuccess: () => void;
