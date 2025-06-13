@@ -17,7 +17,7 @@ CREATE POLICY "profiles_owner_write" ON profiles
 -- Ensure RLS is enabled
 ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
 
--- Verify the RPC function exists with correct signature
+-- Verify the RPC function exists with correct signature including status parameter
 CREATE OR REPLACE FUNCTION public.update_profile_bypass_rls(
   p_user_id UUID,
   p_username TEXT DEFAULT NULL,
@@ -28,7 +28,8 @@ CREATE OR REPLACE FUNCTION public.update_profile_bypass_rls(
   p_interests TEXT[] DEFAULT NULL,
   p_profile_visibility BOOLEAN DEFAULT NULL,
   p_is_suspended BOOLEAN DEFAULT NULL,
-  p_suspended_at TIMESTAMP WITH TIME ZONE DEFAULT NULL
+  p_suspended_at TIMESTAMP WITH TIME ZONE DEFAULT NULL,
+  p_status TEXT DEFAULT NULL
 )
 RETURNS void
 LANGUAGE plpgsql
@@ -47,6 +48,7 @@ BEGIN
     profile_visibility = COALESCE(p_profile_visibility, profile_visibility),
     is_suspended = COALESCE(p_is_suspended, is_suspended),
     suspended_at = COALESCE(p_suspended_at, suspended_at),
+    status = COALESCE(p_status, status),
     updated_at = NOW()
   WHERE id = p_user_id;
 END;

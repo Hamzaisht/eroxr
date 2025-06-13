@@ -28,7 +28,7 @@ export async function createPost(
 }
 
 /**
- * Updates a user's profile status
+ * Updates a user's profile status using RPC bypass function to avoid RLS issues
  * @param userId The user ID whose profile status to update
  * @param status The new status value
  * @returns Result object with data and error
@@ -38,18 +38,24 @@ export async function updateProfileStatus(
   status: Database['public']['Tables']['profiles']['Row']['status']
 ): Promise<{ data: any; error: any }> {
   try {
-    const { data, error } = await supabase
-      .from('profiles')
-      .update({ status })
-      .eq('id', userId)
-      .select()
-      .single();
+    console.log('🔧 updateProfileStatus: Using RPC bypass function for status update');
     
-    if (error) throw error;
+    // Use the RPC bypass function to avoid RLS recursion issues
+    const { error } = await supabase.rpc('update_profile_bypass_rls', {
+      p_user_id: userId,
+      p_status: status
+    });
     
-    return { data, error: null };
+    if (error) {
+      console.error('❌ updateProfileStatus: RPC bypass function error:', error);
+      throw error;
+    }
+    
+    console.log('✅ updateProfileStatus: Profile status updated successfully via RPC bypass');
+    
+    return { data: { status }, error: null };
   } catch (error) {
-    console.error('Error updating profile status:', error);
+    console.error('💥 updateProfileStatus: Profile status update error:', error);
     return { data: null, error };
   }
 }

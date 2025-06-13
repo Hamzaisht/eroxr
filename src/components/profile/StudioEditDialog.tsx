@@ -59,10 +59,10 @@ export const StudioEditDialog = ({ profile, isOpen, onClose, onSuccess }: Studio
     try {
       console.log('🔧 StudioEditDialog: Using RPC bypass function for profile update');
       
-      // Use the bypass RPC function instead of direct update
+      // Use the RPC bypass function instead of direct update to avoid RLS recursion
       const { error } = await supabase.rpc('update_profile_bypass_rls', {
         p_user_id: profile.id,
-        p_username: formData.username,
+        p_username: formData.username || null,
         p_bio: formData.bio || null,
         p_location: formData.location || null
       });

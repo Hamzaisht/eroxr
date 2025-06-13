@@ -40,9 +40,9 @@ export const ProfileEditModal = ({ profile, isOpen, onClose, onSuccess }: Profil
     setIsLoading(true);
 
     try {
-      console.log('🔧 ProfileEditModal: Using updated RPC function for profile update');
+      console.log('🔧 ProfileEditModal: Using RPC bypass function for profile update');
       
-      // Use the updated RPC function with proper parameter handling
+      // Use the RPC bypass function with proper parameter handling
       const { error } = await supabase.rpc('update_profile_bypass_rls', {
         p_user_id: profile.id,
         p_username: formData.username || null,
@@ -53,11 +53,11 @@ export const ProfileEditModal = ({ profile, isOpen, onClose, onSuccess }: Profil
       });
 
       if (error) {
-        console.error('❌ ProfileEditModal: RPC function error:', error);
+        console.error('❌ ProfileEditModal: RPC bypass function error:', error);
         throw error;
       }
 
-      console.log('✅ ProfileEditModal: Profile updated successfully');
+      console.log('✅ ProfileEditModal: Profile updated successfully via RPC bypass');
 
       toast({
         title: "Success",
