@@ -52,16 +52,24 @@ export const ProfileContainer = ({ id, isEditing, setIsEditing }: ProfileContain
 
   const handleMediaSuccess = async (type: 'avatar' | 'banner', newUrl: string) => {
     try {
+      console.log('🔧 ProfileContainer: Using RPC bypass function for media update');
+      
       const updateData = type === 'avatar' 
-        ? { avatar_url: newUrl }
-        : { banner_url: newUrl };
+        ? { p_avatar_url: newUrl }
+        : { p_banner_url: newUrl };
 
-      const { error } = await supabase
-        .from('profiles')
-        .update(updateData)
-        .eq('id', id);
+      // Use the bypass RPC function instead of direct update
+      const { error } = await supabase.rpc('update_profile_bypass_rls', {
+        p_user_id: id,
+        ...updateData
+      });
 
-      if (error) throw error;
+      if (error) {
+        console.error('❌ ProfileContainer: RPC bypass function error:', error);
+        throw error;
+      }
+
+      console.log('✅ ProfileContainer: Media updated successfully via RPC bypass');
 
       await refetch();
       toast({
@@ -69,6 +77,7 @@ export const ProfileContainer = ({ id, isEditing, setIsEditing }: ProfileContain
         description: `${type === 'avatar' ? 'Profile picture' : 'Banner'} updated successfully`,
       });
     } catch (error: any) {
+      console.error('💥 ProfileContainer: Media update error:', error);
       toast({
         title: "Error",
         description: error.message,
