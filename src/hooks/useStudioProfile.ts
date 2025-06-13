@@ -29,7 +29,7 @@ export const useStudioProfile = (profileId: string) => {
       return data as StudioProfile;
     },
     staleTime: 5 * 60 * 1000,
-    gcTime: 10 * 60 * 1000,
+    cacheTime: 10 * 60 * 1000,
   });
 
   const updateProfileMutation = useMutation({
@@ -95,6 +95,6 @@ export const useStudioProfile = (profileId: string) => {
     isLoading,
     error,
     updateProfile: updateProfileMutation.mutate,
-    isUpdating: updateProfileMutation.isPending,
+    isUpdating: updateProfileMutation.isLoading,
   };
 };
