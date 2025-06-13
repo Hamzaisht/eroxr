@@ -17,10 +17,11 @@ export const ProfilePosts = ({ profileId }: ProfilePostsProps) => {
   const { handleLike, handleDelete } = usePostActions();
   const isOwnProfile = user?.id === profileId;
 
-  const { data: posts, isLoading, error } = useQuery({
+  const { data: posts, isLoading, error, refetch } = useQuery({
     queryKey: ['profile-posts', profileId],
     queryFn: async () => {
       console.log('🎨 Fetching divine creations for profile:', profileId);
+      
       const { data, error } = await supabase
         .from('posts')
         .select(`
@@ -48,7 +49,6 @@ export const ProfilePosts = ({ profileId }: ProfilePostsProps) => {
           )
         `)
         .eq('creator_id', profileId)
-        .eq('visibility', 'public')
         .order('created_at', { ascending: false });
 
       if (error) {
@@ -56,21 +56,37 @@ export const ProfilePosts = ({ profileId }: ProfilePostsProps) => {
         throw error;
       }
 
-      console.log('✨ Divine creations fetched:', data?.length || 0);
+      console.log('✨ Raw posts data fetched:', data);
 
       return data?.map(post => {
         const isLiked = user?.id ? post.post_likes?.some((like: any) => like.user_id === user.id) : false;
         
-        return {
+        // Transform the post data to match expected structure
+        const transformedPost = {
           ...post,
           creator: Array.isArray(post.creator) ? post.creator[0] : post.creator,
           isLiked,
-          isSaved: false
+          isSaved: false,
+          // Transform media_assets to match expected structure
+          media_url: post.media_assets?.map((asset: any) => {
+            const { data: publicUrl } = supabase.storage
+              .from('media')
+              .getPublicUrl(asset.storage_path);
+            return publicUrl.publicUrl;
+          }) || []
         };
+
+        console.log('✨ Transformed post:', transformedPost);
+        return transformedPost;
       }) || [];
     },
     staleTime: 30000,
   });
+
+  const handleCreatePost = () => {
+    // Navigate to create post or open dialog
+    console.log('Create new divine post');
+  };
 
   if (isLoading) {
     return (
@@ -87,11 +103,21 @@ export const ProfilePosts = ({ profileId }: ProfilePostsProps) => {
   if (error) {
     console.error('ProfilePosts error:', error);
     return (
-      <div className="text-center p-12">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="text-center p-12"
+      >
         <Crown className="w-16 h-16 mx-auto text-red-400 mb-4" />
         <p className="text-red-400 mb-2 text-xl">Failed to load divine creations</p>
-        <p className="text-luxury-muted">The gods seem to be busy. Please try again.</p>
-      </div>
+        <p className="text-luxury-muted mb-6">The gods seem to be busy. Please try again.</p>
+        <Button 
+          onClick={() => refetch()}
+          className="bg-gradient-to-r from-yellow-400 to-yellow-600 hover:from-yellow-500 hover:to-yellow-700 text-black px-6 py-3 rounded-2xl font-semibold"
+        >
+          Try Again
+        </Button>
+      </motion.div>
     );
   }
 
@@ -129,7 +155,10 @@ export const ProfilePosts = ({ profileId }: ProfilePostsProps) => {
             whileHover={{ scale: 1.05, y: -2 }}
             whileTap={{ scale: 0.95 }}
           >
-            <Button className="bg-gradient-to-r from-yellow-400 to-yellow-600 hover:from-yellow-500 hover:to-yellow-700 text-black px-8 py-4 rounded-2xl font-semibold text-lg shadow-luxury">
+            <Button 
+              onClick={handleCreatePost}
+              className="bg-gradient-to-r from-yellow-400 to-yellow-600 hover:from-yellow-500 hover:to-yellow-700 text-black px-8 py-4 rounded-2xl font-semibold text-lg shadow-luxury"
+            >
               <Plus className="w-5 h-5 mr-2" />
               Create Divine Post
             </Button>
@@ -155,6 +184,17 @@ export const ProfilePosts = ({ profileId }: ProfilePostsProps) => {
         <p className="text-luxury-muted text-lg">
           Behold the masterpieces crafted by divine hands
         </p>
+        {isOwnProfile && (
+          <motion.div className="mt-6">
+            <Button 
+              onClick={handleCreatePost}
+              className="bg-gradient-to-r from-yellow-400 to-yellow-600 hover:from-yellow-500 hover:to-yellow-700 text-black px-6 py-3 rounded-2xl font-semibold"
+            >
+              <Plus className="w-5 h-5 mr-2" />
+              Create New Post
+            </Button>
+          </motion.div>
+        )}
       </motion.div>
 
       {/* Posts Grid */}
@@ -193,6 +233,21 @@ export const ProfilePosts = ({ profileId }: ProfilePostsProps) => {
           ))}
         </AnimatePresence>
       </motion.div>
+
+      {/* Debug Info (only in development) */}
+      {process.env.NODE_ENV === 'development' && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="mt-8 p-4 bg-gray-800/50 rounded-lg text-sm text-gray-400"
+        >
+          <p>Debug Info:</p>
+          <p>Profile ID: {profileId}</p>
+          <p>User ID: {user?.id}</p>
+          <p>Is Own Profile: {isOwnProfile.toString()}</p>
+          <p>Posts Count: {posts?.length || 0}</p>
+        </motion.div>
+      )}
     </div>
   );
 };
