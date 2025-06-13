@@ -30,12 +30,11 @@ export const BannerUpload = ({ currentBannerUrl, profileId, onSuccess }: BannerU
       return;
     }
 
-    // Validate file size (100MB max for videos, 50MB for images)
-    const maxSize = file.type.startsWith('video/') ? 100 * 1024 * 1024 : 50 * 1024 * 1024;
-    if (file.size > maxSize) {
+    // Validate file size (100MB max for all media)
+    if (file.size > 100 * 1024 * 1024) {
       toast({
         title: "File too large",
-        description: `Please select a file smaller than ${file.type.startsWith('video/') ? '100MB' : '50MB'}`,
+        description: "Please select a file smaller than 100MB",
         variant: "destructive"
       });
       return;
@@ -59,9 +58,9 @@ export const BannerUpload = ({ currentBannerUrl, profileId, onSuccess }: BannerU
         .from('banners')
         .getPublicUrl(fileName);
 
-      console.log('📞 Updating profile banner using direct update');
+      console.log('📞 Updating profile banner using direct table update');
 
-      // Use direct table update instead of RPC
+      // Use direct table update with the cleaned RLS policies
       const { error: updateError } = await supabase
         .from('profiles')
         .update({ banner_url: publicUrl })
@@ -100,7 +99,7 @@ export const BannerUpload = ({ currentBannerUrl, profileId, onSuccess }: BannerU
   return (
     <div className="w-full h-full bg-premium-gradient relative overflow-hidden group cursor-pointer" onClick={handleClick}>
       {currentBannerUrl ? (
-        currentBannerUrl.includes('.mp4') || currentBannerUrl.includes('.webm') || currentBannerUrl.includes('.mov') ? (
+        currentBannerUrl.includes('.mp4') || currentBannerUrl.includes('.webm') || currentBannerUrl.includes('.mov') || currentBannerUrl.includes('.avi') || currentBannerUrl.includes('.mkv') ? (
           <video
             src={currentBannerUrl}
             autoPlay
@@ -145,7 +144,7 @@ export const BannerUpload = ({ currentBannerUrl, profileId, onSuccess }: BannerU
             </div>
             <div className="text-center">
               <div className="text-white font-medium mb-1">Change Banner</div>
-              <div className="text-white/70 text-sm">Upload image or video</div>
+              <div className="text-white/70 text-sm">Upload image or video (up to 100MB)</div>
             </div>
           </div>
         )}

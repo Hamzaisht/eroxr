@@ -59,9 +59,9 @@ export const AvatarUpload = ({ currentAvatarUrl, profileId, onSuccess, size = 20
         .from('avatars')
         .getPublicUrl(fileName);
 
-      console.log('📞 Updating profile avatar using direct update');
+      console.log('📞 Updating profile avatar using direct table update');
 
-      // Use direct table update instead of RPC
+      // Use direct table update with the cleaned RLS policies
       const { error: updateError } = await supabase
         .from('profiles')
         .update({ avatar_url: publicUrl })

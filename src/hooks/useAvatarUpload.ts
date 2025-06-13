@@ -53,7 +53,7 @@ export const useAvatarUpload = () => {
 
       console.log('🔗 Generated public URL:', publicUrl);
 
-      // Update profile using direct table update
+      // Update profile using direct table update with cleaned RLS policies
       console.log('💾 Updating profile avatar_url using direct table update...');
       
       const { error: updateError } = await supabase
@@ -69,8 +69,8 @@ export const useAvatarUpload = () => {
       console.log('✅ Profile updated successfully with direct table update');
 
       toast({
-        title: "Divine Success",
-        description: "Your sacred avatar has been blessed and updated!",
+        title: "Success",
+        description: "Your avatar has been updated successfully!",
       });
 
       return { success: true, url: publicUrl };
@@ -78,8 +78,8 @@ export const useAvatarUpload = () => {
     } catch (error: any) {
       console.error('💥 Avatar upload error:', error);
       toast({
-        title: "Upload Faltered",
-        description: error.message || "Failed to upload avatar. The gods are displeased - try again.",
+        title: "Upload Failed",
+        description: error.message || "Failed to upload avatar. Please try again.",
         variant: "destructive",
       });
       return { success: false };
@@ -137,7 +137,7 @@ export const useAvatarUpload = () => {
 
       console.log('🔗 Generated public URL:', publicUrl);
 
-      // Update profile using direct table update
+      // Update profile using direct table update with cleaned RLS policies
       console.log('💾 Updating profile banner_url using direct table update...');
       
       const { error: updateError } = await supabase
@@ -153,8 +153,8 @@ export const useAvatarUpload = () => {
       console.log('✅ Profile updated successfully with direct table update');
 
       toast({
-        title: "Divine Success",
-        description: "Your sacred banner has been blessed and updated!",
+        title: "Success",
+        description: "Your banner has been updated successfully!",
       });
 
       return { success: true, url: publicUrl };
@@ -162,8 +162,8 @@ export const useAvatarUpload = () => {
     } catch (error: any) {
       console.error('💥 Banner upload error:', error);
       toast({
-        title: "Upload Faltered", 
-        description: error.message || "Failed to upload banner. The gods are displeased - try again.",
+        title: "Upload Failed", 
+        description: error.message || "Failed to upload banner. Please try again.",
         variant: "destructive",
       });
       return { success: false };
