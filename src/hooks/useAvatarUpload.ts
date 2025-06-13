@@ -53,19 +53,20 @@ export const useAvatarUpload = () => {
 
       console.log('🔗 Generated public URL:', publicUrl);
 
-      // Update profile using the new clean RPC function
-      console.log('💾 Updating profile avatar_url using new clean RPC function...');
+      // Update profile using direct table update
+      console.log('💾 Updating profile avatar_url using direct table update...');
       
-      const { error: updateError } = await supabase.rpc('update_user_profile', {
-        p_avatar_url: publicUrl
-      });
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({ avatar_url: publicUrl })
+        .eq('id', userId);
 
       if (updateError) {
         console.error('❌ Profile update error:', updateError);
         throw new Error(`Profile update failed: ${updateError.message}`);
       }
 
-      console.log('✅ Profile updated successfully using new clean RPC function');
+      console.log('✅ Profile updated successfully with direct table update');
 
       toast({
         title: "Divine Success",
@@ -95,14 +96,14 @@ export const useAvatarUpload = () => {
     try {
       console.log('🎯 Starting banner upload to banners bucket:', { fileName: file.name, size: file.size, userId });
 
-      // Validate file
-      if (file.size > 50 * 1024 * 1024) {
-        throw new Error('File size must be less than 50MB');
+      // Validate file - support all media types for banner
+      if (file.size > 100 * 1024 * 1024) {
+        throw new Error('File size must be less than 100MB');
       }
 
       const allowedTypes = [
         'image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp',
-        'video/mp4', 'video/webm', 'video/mov'
+        'video/mp4', 'video/webm', 'video/mov', 'video/avi', 'video/mkv'
       ];
       if (!allowedTypes.includes(file.type)) {
         throw new Error('Please upload a valid image or video file');
@@ -136,19 +137,20 @@ export const useAvatarUpload = () => {
 
       console.log('🔗 Generated public URL:', publicUrl);
 
-      // Update profile using the new clean RPC function
-      console.log('💾 Updating profile banner_url using new clean RPC function...');
+      // Update profile using direct table update
+      console.log('💾 Updating profile banner_url using direct table update...');
       
-      const { error: updateError } = await supabase.rpc('update_user_profile', {
-        p_banner_url: publicUrl
-      });
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({ banner_url: publicUrl })
+        .eq('id', userId);
 
       if (updateError) {
         console.error('❌ Profile update error:', updateError);
         throw new Error(`Profile update failed: ${updateError.message}`);
       }
 
-      console.log('✅ Profile updated successfully using new clean RPC function');
+      console.log('✅ Profile updated successfully with direct table update');
 
       toast({
         title: "Divine Success",

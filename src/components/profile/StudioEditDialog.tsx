@@ -58,21 +58,25 @@ export const StudioEditDialog = ({ profile, isOpen, onClose, onSuccess }: Studio
     
     setIsLoading(true);
     try {
-      console.log('🔧 StudioEditDialog: Using new clean RPC function for profile update');
+      console.log('🔧 StudioEditDialog: Using direct table update for profile');
       
-      // Use the new clean RPC function
-      const { error } = await supabase.rpc('update_user_profile', {
-        p_username: formData.username || null,
-        p_bio: formData.bio || null,
-        p_location: formData.location || null
-      });
+      // Use direct table update instead of RPC
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          username: formData.username || null,
+          bio: formData.bio || null,
+          location: formData.location || null,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', profile.id);
 
       if (error) {
-        console.error('❌ StudioEditDialog: Clean RPC function error:', error);
+        console.error('❌ StudioEditDialog: Direct update error:', error);
         throw error;
       }
 
-      console.log('✅ StudioEditDialog: Profile updated successfully with clean function');
+      console.log('✅ StudioEditDialog: Profile updated successfully with direct update');
 
       toast({
         title: "Divine Profile Updated",
@@ -207,7 +211,7 @@ export const StudioEditDialog = ({ profile, isOpen, onClose, onSuccess }: Studio
                           </div>
                           <span className="font-semibold text-luxury-neutral">Divine Banner</span>
                         </div>
-                        <p className="text-sm text-luxury-muted">Your realm's eternal backdrop of beauty</p>
+                        <p className="text-sm text-luxury-muted">Your realm's eternal backdrop - supports images & videos</p>
                       </motion.button>
                     </motion.div>
                   </TabsContent>

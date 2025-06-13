@@ -32,15 +32,19 @@ export const MediaUploadSection = ({
     setLoading: (loading: boolean) => void
   ) => {
     setLoading(true);
-    console.log(`🎯 Starting ${type} upload to new ${bucket} bucket`);
+    console.log(`🎯 Starting ${type} upload to ${bucket} bucket`);
 
     try {
       // Validate file
-      if (!file.type.startsWith('image/')) {
-        throw new Error('Please select an image file');
+      if (type === 'avatar' && !file.type.startsWith('image/')) {
+        throw new Error('Please select an image file for avatar');
+      }
+      
+      if (type === 'banner' && !file.type.startsWith('image/') && !file.type.startsWith('video/')) {
+        throw new Error('Please select an image or video file for banner');
       }
 
-      const maxSize = type === 'avatar' ? 10 * 1024 * 1024 : 50 * 1024 * 1024; // 10MB for avatar, 50MB for banner
+      const maxSize = type === 'avatar' ? 10 * 1024 * 1024 : 100 * 1024 * 1024; // 10MB for avatar, 100MB for banner
       if (file.size > maxSize) {
         throw new Error(`File too large. Maximum size: ${maxSize / (1024 * 1024)}MB`);
       }
@@ -65,21 +69,24 @@ export const MediaUploadSection = ({
 
       console.log(`🔗 Generated public URL: ${publicUrl}`);
 
-      // Update profile using the new clean RPC function
+      // Update profile using direct table update
       const updateData = type === 'avatar' 
-        ? { p_avatar_url: publicUrl }
-        : { p_banner_url: publicUrl };
+        ? { avatar_url: publicUrl }
+        : { banner_url: publicUrl };
 
-      console.log(`📞 Updating profile ${type} using new clean RPC function`);
+      console.log(`📞 Updating profile ${type} using direct table update`);
 
-      const { error: updateError } = await supabase.rpc('update_user_profile', updateData);
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update(updateData)
+        .eq('id', profileId);
 
       if (updateError) {
-        console.error(`❌ Clean RPC function error for ${type}:`, updateError);
+        console.error(`❌ Direct update error for ${type}:`, updateError);
         throw updateError;
       }
 
-      console.log(`✅ ${type} updated successfully with clean function`);
+      console.log(`✅ ${type} updated successfully with direct table update`);
 
       toast({
         title: "Success",
@@ -188,7 +195,11 @@ export const MediaUploadSection = ({
             onClick={() => bannerInputRef.current?.click()}
           >
             {currentBannerUrl ? (
-              <img src={currentBannerUrl} alt="Banner" className="w-full h-full object-cover" />
+              currentBannerUrl.includes('.mp4') || currentBannerUrl.includes('.webm') || currentBannerUrl.includes('.mov') ? (
+                <video src={currentBannerUrl} className="w-full h-full object-cover" muted loop autoPlay />
+              ) : (
+                <img src={currentBannerUrl} alt="Banner" className="w-full h-full object-cover" />
+              )
             ) : (
               <div className="w-full h-full bg-luxury-primary/20 flex items-center justify-center">
                 <Camera className="w-12 h-12 text-luxury-primary" />
@@ -226,7 +237,7 @@ export const MediaUploadSection = ({
         <input
           ref={bannerInputRef}
           type="file"
-          accept="image/*"
+          accept="image/*,video/*"
           onChange={handleBannerSelect}
           className="hidden"
           disabled={isUploadingBanner}

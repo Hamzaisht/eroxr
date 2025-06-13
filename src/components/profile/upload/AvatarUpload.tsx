@@ -59,19 +59,20 @@ export const AvatarUpload = ({ currentAvatarUrl, profileId, onSuccess, size = 20
         .from('avatars')
         .getPublicUrl(fileName);
 
-      console.log('📞 Updating profile avatar using new clean RPC function');
+      console.log('📞 Updating profile avatar using direct update');
 
-      // Use the new clean RPC function
-      const { error: updateError } = await supabase.rpc('update_user_profile', {
-        p_avatar_url: publicUrl
-      });
+      // Use direct table update instead of RPC
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({ avatar_url: publicUrl })
+        .eq('id', profileId);
 
       if (updateError) {
-        console.error('❌ Clean RPC function error:', updateError);
+        console.error('❌ Profile update error:', updateError);
         throw updateError;
       }
 
-      console.log('✅ Avatar updated successfully with clean function');
+      console.log('✅ Avatar updated successfully');
       onSuccess(publicUrl);
       
       toast({

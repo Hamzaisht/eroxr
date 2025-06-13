@@ -41,22 +41,26 @@ export const ProfileEditForm = ({ profile, onSuccess, onCancel }: ProfileEditFor
 
   const onSubmit = async (data: ProfileEditFormData) => {
     setIsLoading(true);
-    console.log('🔧 ProfileEditForm: Starting profile update with new clean function');
+    console.log('🔧 ProfileEditForm: Starting profile update with direct table update');
 
     try {
-      // Use the new clean RPC function
-      const { error } = await supabase.rpc('update_user_profile', {
-        p_username: data.username || null,
-        p_bio: data.bio || null,
-        p_location: data.location || null
-      });
+      // Use direct table update instead of RPC
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          username: data.username || null,
+          bio: data.bio || null,
+          location: data.location || null,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', profile.id);
 
       if (error) {
-        console.error('❌ ProfileEditForm: Clean RPC function error:', error);
+        console.error('❌ ProfileEditForm: Direct update error:', error);
         throw error;
       }
 
-      console.log('✅ ProfileEditForm: Profile updated successfully with clean function');
+      console.log('✅ ProfileEditForm: Profile updated successfully with direct update');
 
       toast({
         title: "Success",

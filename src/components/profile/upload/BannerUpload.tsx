@@ -20,7 +20,7 @@ export const BannerUpload = ({ currentBannerUrl, profileId, onSuccess }: BannerU
     const file = event.target.files?.[0];
     if (!file) return;
 
-    // Validate file type
+    // Validate file type - support all image and video types
     if (!file.type.startsWith('image/') && !file.type.startsWith('video/')) {
       toast({
         title: "Invalid file type",
@@ -30,12 +30,12 @@ export const BannerUpload = ({ currentBannerUrl, profileId, onSuccess }: BannerU
       return;
     }
 
-    // Validate file size (50MB max for videos, 10MB for images)
-    const maxSize = file.type.startsWith('video/') ? 50 * 1024 * 1024 : 10 * 1024 * 1024;
+    // Validate file size (100MB max for videos, 50MB for images)
+    const maxSize = file.type.startsWith('video/') ? 100 * 1024 * 1024 : 50 * 1024 * 1024;
     if (file.size > maxSize) {
       toast({
         title: "File too large",
-        description: `Please select a file smaller than ${file.type.startsWith('video/') ? '50MB' : '10MB'}`,
+        description: `Please select a file smaller than ${file.type.startsWith('video/') ? '100MB' : '50MB'}`,
         variant: "destructive"
       });
       return;
@@ -59,19 +59,20 @@ export const BannerUpload = ({ currentBannerUrl, profileId, onSuccess }: BannerU
         .from('banners')
         .getPublicUrl(fileName);
 
-      console.log('📞 Updating profile banner using new clean RPC function');
+      console.log('📞 Updating profile banner using direct update');
 
-      // Use the new clean RPC function
-      const { error: updateError } = await supabase.rpc('update_user_profile', {
-        p_banner_url: publicUrl
-      });
+      // Use direct table update instead of RPC
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({ banner_url: publicUrl })
+        .eq('id', profileId);
 
       if (updateError) {
-        console.error('❌ Clean RPC function error:', updateError);
+        console.error('❌ Profile update error:', updateError);
         throw updateError;
       }
 
-      console.log('✅ Banner updated successfully with clean function');
+      console.log('✅ Banner updated successfully');
       onSuccess(publicUrl);
       
       toast({
@@ -99,7 +100,7 @@ export const BannerUpload = ({ currentBannerUrl, profileId, onSuccess }: BannerU
   return (
     <div className="w-full h-full bg-premium-gradient relative overflow-hidden group cursor-pointer" onClick={handleClick}>
       {currentBannerUrl ? (
-        currentBannerUrl.includes('.mp4') || currentBannerUrl.includes('.webm') ? (
+        currentBannerUrl.includes('.mp4') || currentBannerUrl.includes('.webm') || currentBannerUrl.includes('.mov') ? (
           <video
             src={currentBannerUrl}
             autoPlay
