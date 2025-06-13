@@ -61,7 +61,7 @@ export const BannerUpload = ({ currentBannerUrl, profileId, onSuccess }: BannerU
 
       console.log('📞 Updating profile banner using RPC bypass function');
 
-      // Use the bypass RPC function instead of direct update
+      // Use the RPC bypass function instead of direct update
       const { error: updateError } = await supabase.rpc('update_profile_bypass_rls', {
         p_user_id: profileId,
         p_banner_url: publicUrl

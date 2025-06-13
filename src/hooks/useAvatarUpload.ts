@@ -53,8 +53,8 @@ export const useAvatarUpload = () => {
 
       console.log('🔗 Generated public URL:', publicUrl);
 
-      // Update profile using the new bypass function
-      console.log('💾 Updating profile avatar_url using bypass function...');
+      // Update profile using the RPC bypass function
+      console.log('💾 Updating profile avatar_url using RPC bypass function...');
       
       const { error: updateError } = await supabase.rpc('update_profile_bypass_rls', {
         p_user_id: userId,
@@ -66,7 +66,7 @@ export const useAvatarUpload = () => {
         throw new Error(`Profile update failed: ${updateError.message}`);
       }
 
-      console.log('✅ Profile updated successfully using bypass function');
+      console.log('✅ Profile updated successfully using RPC bypass function');
 
       toast({
         title: "Divine Success",
@@ -137,8 +137,8 @@ export const useAvatarUpload = () => {
 
       console.log('🔗 Generated public URL:', publicUrl);
 
-      // Update profile using the new bypass function
-      console.log('💾 Updating profile banner_url using bypass function...');
+      // Update profile using the RPC bypass function
+      console.log('💾 Updating profile banner_url using RPC bypass function...');
       
       const { error: updateError } = await supabase.rpc('update_profile_bypass_rls', {
         p_user_id: userId,
@@ -150,7 +150,7 @@ export const useAvatarUpload = () => {
         throw new Error(`Profile update failed: ${updateError.message}`);
       }
 
-      console.log('✅ Profile updated successfully using bypass function');
+      console.log('✅ Profile updated successfully using RPC bypass function');
 
       toast({
         title: "Divine Success",
