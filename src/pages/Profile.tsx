@@ -1,8 +1,8 @@
 
 import { useState } from "react";
 import { useParams } from "react-router-dom";
-import { ProfileViewer } from "@/components/studio/ProfileViewer";
-import { ProfileStudio } from "@/components/studio/ProfileStudio";
+import { EroxrProfileViewer } from "@/components/studio/enhanced/EroxrProfileViewer";
+import { EroxrProfileStudio } from "@/components/studio/enhanced/EroxrProfileStudio";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 
 export default function Profile() {
@@ -12,21 +12,21 @@ export default function Profile() {
   if (!id) {
     return (
       <div className="min-h-screen bg-luxury-gradient flex items-center justify-center">
-        <p className="text-luxury-muted text-xl">Profile not found</p>
+        <p className="text-luxury-muted text-xl">Divine profile not found</p>
       </div>
     );
   }
 
   return (
     <>
-      <ProfileViewer 
+      <EroxrProfileViewer 
         profileId={id}
         onEditClick={() => setIsStudioOpen(true)}
       />
 
       <Dialog open={isStudioOpen} onOpenChange={setIsStudioOpen}>
         <DialogContent className="max-w-7xl max-h-[90vh] p-0 border-none bg-transparent overflow-hidden">
-          <ProfileStudio
+          <EroxrProfileStudio
             profileId={id}
             onClose={() => setIsStudioOpen(false)}
           />

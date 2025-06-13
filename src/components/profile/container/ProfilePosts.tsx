@@ -2,10 +2,11 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { motion } from "framer-motion";
-import { Loader2, Plus } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Plus, Crown, Star, Sparkles } from "lucide-react";
 import { EnhancedPostCard } from "@/components/feed/EnhancedPostCard";
 import { usePostActions } from "@/hooks/usePostActions";
+import { Button } from "@/components/ui/button";
 
 interface ProfilePostsProps {
   profileId: string;
@@ -14,11 +15,12 @@ interface ProfilePostsProps {
 export const ProfilePosts = ({ profileId }: ProfilePostsProps) => {
   const { user } = useAuth();
   const { handleLike, handleDelete } = usePostActions();
+  const isOwnProfile = user?.id === profileId;
 
   const { data: posts, isLoading, error } = useQuery({
     queryKey: ['profile-posts', profileId],
     queryFn: async () => {
-      console.log('Fetching posts for profile:', profileId);
+      console.log('🎨 Fetching divine creations for profile:', profileId);
       const { data, error } = await supabase
         .from('posts')
         .select(`
@@ -50,13 +52,12 @@ export const ProfilePosts = ({ profileId }: ProfilePostsProps) => {
         .order('created_at', { ascending: false });
 
       if (error) {
-        console.error('Posts fetch error:', error);
+        console.error('❌ Divine creations fetch error:', error);
         throw error;
       }
 
-      console.log('Posts fetched:', data?.length || 0);
+      console.log('✨ Divine creations fetched:', data?.length || 0);
 
-      // Transform the data to match expected format
       return data?.map(post => {
         const isLiked = user?.id ? post.post_likes?.some((like: any) => like.user_id === user.id) : false;
         
@@ -73,11 +74,11 @@ export const ProfilePosts = ({ profileId }: ProfilePostsProps) => {
 
   if (isLoading) {
     return (
-      <div className="flex justify-center p-8">
+      <div className="flex justify-center p-12">
         <motion.div
           animate={{ rotate: 360 }}
-          transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-          className="w-8 h-8 border-2 border-luxury-primary border-t-transparent rounded-full"
+          transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+          className="w-12 h-12 border-4 border-yellow-400 border-t-transparent rounded-full"
         />
       </div>
     );
@@ -86,38 +87,112 @@ export const ProfilePosts = ({ profileId }: ProfilePostsProps) => {
   if (error) {
     console.error('ProfilePosts error:', error);
     return (
-      <div className="text-center p-8">
-        <p className="text-red-400 mb-2">Failed to load posts</p>
-        <p className="text-gray-500 text-sm">Please try refreshing the page</p>
+      <div className="text-center p-12">
+        <Crown className="w-16 h-16 mx-auto text-red-400 mb-4" />
+        <p className="text-red-400 mb-2 text-xl">Failed to load divine creations</p>
+        <p className="text-luxury-muted">The gods seem to be busy. Please try again.</p>
       </div>
     );
   }
 
   if (!posts?.length) {
     return (
-      <div className="text-center py-16">
-        <div className="w-24 h-24 mx-auto mb-6 bg-luxury-primary/10 rounded-full flex items-center justify-center">
-          <Plus className="w-12 h-12 text-luxury-primary" />
-        </div>
-        <h3 className="text-xl font-semibold text-luxury-neutral mb-2">No posts yet</h3>
-        <p className="text-luxury-muted">
-          {user?.id === profileId ? "Share your first masterpiece!" : "This user hasn't posted anything yet."}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="text-center py-20"
+      >
+        <motion.div
+          animate={{ 
+            scale: [1, 1.1, 1],
+            rotate: [0, 5, -5, 0]
+          }}
+          transition={{ duration: 6, repeat: Infinity }}
+          className="w-32 h-32 mx-auto mb-8 bg-gradient-to-br from-yellow-400/20 to-luxury-primary/20 rounded-full flex items-center justify-center border-2 border-yellow-400/30"
+        >
+          <Crown className="w-16 h-16 text-yellow-400" />
+        </motion.div>
+        
+        <h3 className="text-3xl font-bold text-luxury-neutral mb-4">
+          {isOwnProfile ? "Create Your First Divine Masterpiece" : "No Divine Creations Yet"}
+        </h3>
+        
+        <p className="text-luxury-muted text-lg mb-8 max-w-md mx-auto">
+          {isOwnProfile 
+            ? "Share your divine inspiration with mortals across the realm"
+            : "This divine creator hasn't blessed us with their creations yet"
+          }
         </p>
-      </div>
+        
+        {isOwnProfile && (
+          <motion.div
+            whileHover={{ scale: 1.05, y: -2 }}
+            whileTap={{ scale: 0.95 }}
+          >
+            <Button className="bg-gradient-to-r from-yellow-400 to-yellow-600 hover:from-yellow-500 hover:to-yellow-700 text-black px-8 py-4 rounded-2xl font-semibold text-lg shadow-luxury">
+              <Plus className="w-5 h-5 mr-2" />
+              Create Divine Post
+            </Button>
+          </motion.div>
+        )}
+      </motion.div>
     );
   }
 
   return (
-    <div className="space-y-6 max-w-4xl mx-auto">
-      {posts.map((post) => (
-        <EnhancedPostCard
-          key={post.id}
-          post={post}
-          currentUserId={user?.id}
-          onLike={handleLike}
-          onDelete={handleDelete}
-        />
-      ))}
+    <div className="space-y-8">
+      {/* Header */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="text-center mb-12"
+      >
+        <div className="flex items-center justify-center gap-3 mb-4">
+          <Star className="w-8 h-8 text-yellow-400" />
+          <h2 className="text-4xl font-bold text-luxury-neutral">Divine Creations</h2>
+          <Star className="w-8 h-8 text-yellow-400" />
+        </div>
+        <p className="text-luxury-muted text-lg">
+          Behold the masterpieces crafted by divine hands
+        </p>
+      </motion.div>
+
+      {/* Posts Grid */}
+      <motion.div 
+        className="grid gap-8 max-w-4xl mx-auto"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+      >
+        <AnimatePresence>
+          {posts.map((post, index) => (
+            <motion.div
+              key={post.id}
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: index * 0.1 }}
+              whileHover={{ y: -5 }}
+              className="relative group"
+            >
+              {/* Divine Glow Effect */}
+              <div className="absolute -inset-4 bg-gradient-to-r from-yellow-400/10 via-luxury-primary/10 to-yellow-400/10 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 blur-xl" />
+              
+              <div className="relative">
+                <EnhancedPostCard
+                  post={post}
+                  currentUserId={user?.id}
+                  onLike={handleLike}
+                  onDelete={handleDelete}
+                />
+              </div>
+              
+              {/* Sparkling Effect on Hover */}
+              <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                <Sparkles className="w-6 h-6 text-yellow-400 animate-pulse" />
+              </div>
+            </motion.div>
+          ))}
+        </AnimatePresence>
+      </motion.div>
     </div>
   );
 };
