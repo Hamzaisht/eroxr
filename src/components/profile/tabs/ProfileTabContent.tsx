@@ -1,5 +1,5 @@
 
-import { ProfileForm } from "../ProfileForm";
+import { ProfileEditForm } from "../edit/ProfileEditForm";
 import type { Profile } from "@/integrations/supabase/types/profile";
 
 interface ProfileTabContentProps {
@@ -10,7 +10,11 @@ interface ProfileTabContentProps {
 export const ProfileTabContent = ({ profile, onSuccess }: ProfileTabContentProps) => {
   return (
     <div className="w-full max-w-2xl mx-auto py-6">
-      <ProfileForm profile={profile} onSuccess={onSuccess} />
+      <ProfileEditForm 
+        profile={profile} 
+        onSuccess={onSuccess}
+        onCancel={() => {}} // This component doesn't need cancel functionality in tab context
+      />
     </div>
   );
 };
