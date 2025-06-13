@@ -40,33 +40,23 @@ export const ProfileEditForm = ({ profile, onSuccess, onCancel }: ProfileEditFor
   });
 
   const onSubmit = async (data: ProfileEditFormData) => {
-    if (!profile.id) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Profile ID is missing",
-      });
-      return;
-    }
-
     setIsLoading(true);
-    console.log('🔧 ProfileEditForm: Starting profile update via RPC bypass');
+    console.log('🔧 ProfileEditForm: Starting profile update with new clean function');
 
     try {
-      // Use the RPC bypass function to avoid RLS recursion
-      const { error } = await supabase.rpc('update_profile_bypass_rls', {
-        p_user_id: profile.id,
+      // Use the new clean RPC function
+      const { error } = await supabase.rpc('update_user_profile', {
         p_username: data.username || null,
         p_bio: data.bio || null,
         p_location: data.location || null
       });
 
       if (error) {
-        console.error('❌ ProfileEditForm: RPC bypass function error:', error);
+        console.error('❌ ProfileEditForm: Clean RPC function error:', error);
         throw error;
       }
 
-      console.log('✅ ProfileEditForm: Profile updated successfully via RPC bypass');
+      console.log('✅ ProfileEditForm: Profile updated successfully with clean function');
 
       toast({
         title: "Success",

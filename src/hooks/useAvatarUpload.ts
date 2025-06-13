@@ -13,7 +13,7 @@ export const useAvatarUpload = () => {
     setIsUploading(true);
     
     try {
-      console.log('🎯 Starting avatar upload:', { fileName: file.name, size: file.size, userId });
+      console.log('🎯 Starting avatar upload to avatars bucket:', { fileName: file.name, size: file.size, userId });
 
       // Validate file
       if (file.size > 10 * 1024 * 1024) {
@@ -25,15 +25,15 @@ export const useAvatarUpload = () => {
         throw new Error('Please upload a valid image file (JPG, PNG, GIF, or WebP)');
       }
 
-      // Create unique filename with timestamp
+      // Create unique filename with user ID folder structure
       const fileExt = file.name.split('.').pop();
-      const fileName = `${userId}/avatar-${Date.now()}.${fileExt}`;
+      const fileName = `${userId}/avatar_${Date.now()}.${fileExt}`;
 
       console.log('📁 Generated filename:', fileName);
 
-      // Upload to Supabase Storage
+      // Upload to avatars bucket
       const { data: uploadData, error: uploadError } = await supabase.storage
-        .from('media')
+        .from('avatars')
         .upload(fileName, file, {
           cacheControl: '3600',
           upsert: false
@@ -48,16 +48,15 @@ export const useAvatarUpload = () => {
 
       // Get public URL
       const { data: { publicUrl } } = supabase.storage
-        .from('media')
+        .from('avatars')
         .getPublicUrl(fileName);
 
       console.log('🔗 Generated public URL:', publicUrl);
 
-      // Update profile using the RPC bypass function to avoid RLS recursion
-      console.log('💾 Updating profile avatar_url using RPC bypass function...');
+      // Update profile using the new clean RPC function
+      console.log('💾 Updating profile avatar_url using new clean RPC function...');
       
-      const { error: updateError } = await supabase.rpc('update_profile_bypass_rls', {
-        p_user_id: userId,
+      const { error: updateError } = await supabase.rpc('update_user_profile', {
         p_avatar_url: publicUrl
       });
 
@@ -66,7 +65,7 @@ export const useAvatarUpload = () => {
         throw new Error(`Profile update failed: ${updateError.message}`);
       }
 
-      console.log('✅ Profile updated successfully using RPC bypass function');
+      console.log('✅ Profile updated successfully using new clean RPC function');
 
       toast({
         title: "Divine Success",
@@ -94,7 +93,7 @@ export const useAvatarUpload = () => {
     setIsUploading(true);
     
     try {
-      console.log('🎯 Starting banner upload:', { fileName: file.name, size: file.size, userId });
+      console.log('🎯 Starting banner upload to banners bucket:', { fileName: file.name, size: file.size, userId });
 
       // Validate file
       if (file.size > 50 * 1024 * 1024) {
@@ -109,15 +108,15 @@ export const useAvatarUpload = () => {
         throw new Error('Please upload a valid image or video file');
       }
 
-      // Create unique filename with timestamp
+      // Create unique filename with user ID folder structure
       const fileExt = file.name.split('.').pop();
-      const fileName = `${userId}/banner-${Date.now()}.${fileExt}`;
+      const fileName = `${userId}/banner_${Date.now()}.${fileExt}`;
 
       console.log('📁 Generated filename:', fileName);
 
-      // Upload to Supabase Storage
+      // Upload to banners bucket
       const { data: uploadData, error: uploadError } = await supabase.storage
-        .from('media')
+        .from('banners')
         .upload(fileName, file, {
           cacheControl: '3600',
           upsert: false
@@ -132,16 +131,15 @@ export const useAvatarUpload = () => {
 
       // Get public URL
       const { data: { publicUrl } } = supabase.storage
-        .from('media')
+        .from('banners')
         .getPublicUrl(fileName);
 
       console.log('🔗 Generated public URL:', publicUrl);
 
-      // Update profile using the RPC bypass function to avoid RLS recursion
-      console.log('💾 Updating profile banner_url using RPC bypass function...');
+      // Update profile using the new clean RPC function
+      console.log('💾 Updating profile banner_url using new clean RPC function...');
       
-      const { error: updateError } = await supabase.rpc('update_profile_bypass_rls', {
-        p_user_id: userId,
+      const { error: updateError } = await supabase.rpc('update_user_profile', {
         p_banner_url: publicUrl
       });
 
@@ -150,7 +148,7 @@ export const useAvatarUpload = () => {
         throw new Error(`Profile update failed: ${updateError.message}`);
       }
 
-      console.log('✅ Profile updated successfully using RPC bypass function');
+      console.log('✅ Profile updated successfully using new clean RPC function');
 
       toast({
         title: "Divine Success",

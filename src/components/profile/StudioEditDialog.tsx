@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
@@ -57,22 +58,21 @@ export const StudioEditDialog = ({ profile, isOpen, onClose, onSuccess }: Studio
     
     setIsLoading(true);
     try {
-      console.log('🔧 StudioEditDialog: Using RPC bypass function for profile update');
+      console.log('🔧 StudioEditDialog: Using new clean RPC function for profile update');
       
-      // Use the RPC bypass function instead of direct update to avoid RLS recursion
-      const { error } = await supabase.rpc('update_profile_bypass_rls', {
-        p_user_id: profile.id,
+      // Use the new clean RPC function
+      const { error } = await supabase.rpc('update_user_profile', {
         p_username: formData.username || null,
         p_bio: formData.bio || null,
         p_location: formData.location || null
       });
 
       if (error) {
-        console.error('❌ StudioEditDialog: RPC bypass function error:', error);
+        console.error('❌ StudioEditDialog: Clean RPC function error:', error);
         throw error;
       }
 
-      console.log('✅ StudioEditDialog: Profile updated successfully via RPC bypass');
+      console.log('✅ StudioEditDialog: Profile updated successfully with clean function');
 
       toast({
         title: "Divine Profile Updated",

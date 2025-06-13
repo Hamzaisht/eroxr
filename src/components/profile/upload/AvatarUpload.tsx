@@ -31,11 +31,11 @@ export const AvatarUpload = ({ currentAvatarUrl, profileId, onSuccess, size = 20
       return;
     }
 
-    // Validate file size (5MB max)
-    if (file.size > 5 * 1024 * 1024) {
+    // Validate file size (10MB max)
+    if (file.size > 10 * 1024 * 1024) {
       toast({
         title: "File too large",
-        description: "Please select an image smaller than 5MB",
+        description: "Please select an image smaller than 10MB",
         variant: "destructive"
       });
       return;
@@ -44,10 +44,10 @@ export const AvatarUpload = ({ currentAvatarUrl, profileId, onSuccess, size = 20
     setIsUploading(true);
 
     try {
-      console.log('🎯 Starting avatar upload via RPC bypass function');
+      console.log('🎯 Starting avatar upload to avatars bucket');
       
       const fileExt = file.name.split('.').pop();
-      const fileName = `${profileId}/avatar.${fileExt}`;
+      const fileName = `${profileId}/avatar_${Date.now()}.${fileExt}`;
 
       const { error: uploadError } = await supabase.storage
         .from('avatars')
@@ -59,20 +59,19 @@ export const AvatarUpload = ({ currentAvatarUrl, profileId, onSuccess, size = 20
         .from('avatars')
         .getPublicUrl(fileName);
 
-      console.log('📞 Updating profile avatar using RPC bypass function');
+      console.log('📞 Updating profile avatar using new clean RPC function');
 
-      // Use the RPC bypass function instead of direct update
-      const { error: updateError } = await supabase.rpc('update_profile_bypass_rls', {
-        p_user_id: profileId,
+      // Use the new clean RPC function
+      const { error: updateError } = await supabase.rpc('update_user_profile', {
         p_avatar_url: publicUrl
       });
 
       if (updateError) {
-        console.error('❌ RPC bypass function error:', updateError);
+        console.error('❌ Clean RPC function error:', updateError);
         throw updateError;
       }
 
-      console.log('✅ Avatar updated successfully via RPC bypass');
+      console.log('✅ Avatar updated successfully with clean function');
       onSuccess(publicUrl);
       
       toast({

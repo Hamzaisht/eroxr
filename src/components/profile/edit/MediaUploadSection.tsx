@@ -32,7 +32,7 @@ export const MediaUploadSection = ({
     setLoading: (loading: boolean) => void
   ) => {
     setLoading(true);
-    console.log(`🎯 Starting ${type} upload via RPC bypass function`);
+    console.log(`🎯 Starting ${type} upload to new ${bucket} bucket`);
 
     try {
       // Validate file
@@ -40,16 +40,18 @@ export const MediaUploadSection = ({
         throw new Error('Please select an image file');
       }
 
-      const maxSize = type === 'avatar' ? 5 * 1024 * 1024 : 10 * 1024 * 1024; // 5MB for avatar, 10MB for banner
+      const maxSize = type === 'avatar' ? 10 * 1024 * 1024 : 50 * 1024 * 1024; // 10MB for avatar, 50MB for banner
       if (file.size > maxSize) {
         throw new Error(`File too large. Maximum size: ${maxSize / (1024 * 1024)}MB`);
       }
 
-      // Create filename
+      // Create filename with user ID folder structure
       const fileExt = file.name.split('.').pop();
-      const fileName = `${profileId}/${type}.${fileExt}`;
+      const fileName = `${profileId}/${type}_${Date.now()}.${fileExt}`;
 
-      // Upload to storage
+      console.log(`📁 Uploading to ${bucket}/${fileName}`);
+
+      // Upload to the correct storage bucket
       const { error: uploadError } = await supabase.storage
         .from(bucket)
         .upload(fileName, file, { upsert: true });
@@ -61,24 +63,23 @@ export const MediaUploadSection = ({
         .from(bucket)
         .getPublicUrl(fileName);
 
-      console.log(`📞 Updating profile ${type} using RPC bypass function`);
+      console.log(`🔗 Generated public URL: ${publicUrl}`);
 
-      // Update profile using RPC bypass
+      // Update profile using the new clean RPC function
       const updateData = type === 'avatar' 
         ? { p_avatar_url: publicUrl }
         : { p_banner_url: publicUrl };
 
-      const { error: updateError } = await supabase.rpc('update_profile_bypass_rls', {
-        p_user_id: profileId,
-        ...updateData
-      });
+      console.log(`📞 Updating profile ${type} using new clean RPC function`);
+
+      const { error: updateError } = await supabase.rpc('update_user_profile', updateData);
 
       if (updateError) {
-        console.error(`❌ RPC bypass function error for ${type}:`, updateError);
+        console.error(`❌ Clean RPC function error for ${type}:`, updateError);
         throw updateError;
       }
 
-      console.log(`✅ ${type} updated successfully via RPC bypass`);
+      console.log(`✅ ${type} updated successfully with clean function`);
 
       toast({
         title: "Success",

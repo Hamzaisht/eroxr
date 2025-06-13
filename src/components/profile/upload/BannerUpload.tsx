@@ -30,12 +30,12 @@ export const BannerUpload = ({ currentBannerUrl, profileId, onSuccess }: BannerU
       return;
     }
 
-    // Validate file size (20MB max for videos, 10MB for images)
-    const maxSize = file.type.startsWith('video/') ? 20 * 1024 * 1024 : 10 * 1024 * 1024;
+    // Validate file size (50MB max for videos, 10MB for images)
+    const maxSize = file.type.startsWith('video/') ? 50 * 1024 * 1024 : 10 * 1024 * 1024;
     if (file.size > maxSize) {
       toast({
         title: "File too large",
-        description: `Please select a file smaller than ${file.type.startsWith('video/') ? '20MB' : '10MB'}`,
+        description: `Please select a file smaller than ${file.type.startsWith('video/') ? '50MB' : '10MB'}`,
         variant: "destructive"
       });
       return;
@@ -44,10 +44,10 @@ export const BannerUpload = ({ currentBannerUrl, profileId, onSuccess }: BannerU
     setIsUploading(true);
 
     try {
-      console.log('🎯 Starting banner upload via RPC bypass function');
+      console.log('🎯 Starting banner upload to banners bucket');
       
       const fileExt = file.name.split('.').pop();
-      const fileName = `${profileId}/banner.${fileExt}`;
+      const fileName = `${profileId}/banner_${Date.now()}.${fileExt}`;
 
       const { error: uploadError } = await supabase.storage
         .from('banners')
@@ -59,20 +59,19 @@ export const BannerUpload = ({ currentBannerUrl, profileId, onSuccess }: BannerU
         .from('banners')
         .getPublicUrl(fileName);
 
-      console.log('📞 Updating profile banner using RPC bypass function');
+      console.log('📞 Updating profile banner using new clean RPC function');
 
-      // Use the RPC bypass function instead of direct update
-      const { error: updateError } = await supabase.rpc('update_profile_bypass_rls', {
-        p_user_id: profileId,
+      // Use the new clean RPC function
+      const { error: updateError } = await supabase.rpc('update_user_profile', {
         p_banner_url: publicUrl
       });
 
       if (updateError) {
-        console.error('❌ RPC bypass function error:', updateError);
+        console.error('❌ Clean RPC function error:', updateError);
         throw updateError;
       }
 
-      console.log('✅ Banner updated successfully via RPC bypass');
+      console.log('✅ Banner updated successfully with clean function');
       onSuccess(publicUrl);
       
       toast({
