@@ -78,17 +78,24 @@ export const ProfileForm = ({ profile, onSuccess }: ProfileFormProps) => {
     console.log("Submitting form values:", values);
 
     try {
-      // Use the new bypass function for profile updates
+      console.log('🔧 ProfileForm: Using RPC bypass function for profile update');
+      
+      // Use the RPC bypass function for profile updates to avoid RLS issues
       const { error } = await supabase.rpc('update_profile_bypass_rls', {
         p_user_id: session.user.id,
-        p_username: values.username,
-        p_bio: values.bio,
-        p_location: values.location,
-        p_interests: values.interests,
+        p_username: values.username || null,
+        p_bio: values.bio || null,
+        p_location: values.location || null,
+        p_interests: values.interests || null,
         p_profile_visibility: values.profile_visibility
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('❌ ProfileForm: RPC function error:', error);
+        throw error;
+      }
+
+      console.log('✅ ProfileForm: Profile updated successfully');
 
       await queryClient.invalidateQueries({ queryKey: ["profile"] });
       await queryClient.invalidateQueries({ queryKey: ["profileStats"] });

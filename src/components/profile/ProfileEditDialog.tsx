@@ -51,16 +51,22 @@ export const ProfileEditDialog = ({ profile, isOpen, onClose, onSuccess }: Profi
     setIsLoading(true);
 
     try {
-      const { error } = await supabase
-        .from('profiles')
-        .update({
-          username: formData.username,
-          bio: formData.bio,
-          location: formData.location,
-        })
-        .eq('id', profile.id);
+      console.log('🔧 ProfileEditDialog: Using RPC bypass function for profile update');
+      
+      // Use the RPC function instead of direct update to avoid RLS issues
+      const { error } = await supabase.rpc('update_profile_bypass_rls', {
+        p_user_id: profile.id,
+        p_username: formData.username || null,
+        p_bio: formData.bio || null,
+        p_location: formData.location || null
+      });
 
-      if (error) throw error;
+      if (error) {
+        console.error('❌ ProfileEditDialog: RPC function error:', error);
+        throw error;
+      }
+
+      console.log('✅ ProfileEditDialog: Profile updated successfully');
 
       toast({
         title: "Success",
@@ -70,6 +76,7 @@ export const ProfileEditDialog = ({ profile, isOpen, onClose, onSuccess }: Profi
 
       onSuccess();
     } catch (error: any) {
+      console.error('💥 ProfileEditDialog: Profile update error:', error);
       toast({
         title: "Error",
         description: error.message || "Failed to update profile",
