@@ -8,7 +8,7 @@ import { Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { ProfileHeader } from "./ProfileHeader";
 import { ProfileTabs } from "./ProfileTabs";
-import { ProfileEditDialog } from "../ProfileEditDialog";
+import { ProfileEditDialog } from "../edit/ProfileEditDialog";
 
 interface ProfileContainerProps {
   id: string;
@@ -50,42 +50,6 @@ export const ProfileContainer = ({ id, isEditing, setIsEditing }: ProfileContain
     }
   });
 
-  const handleMediaSuccess = async (type: 'avatar' | 'banner', newUrl: string) => {
-    try {
-      console.log('🔧 ProfileContainer: Using RPC bypass function for media update');
-      
-      const updateData = type === 'avatar' 
-        ? { p_avatar_url: newUrl }
-        : { p_banner_url: newUrl };
-
-      // Use the bypass RPC function instead of direct update to avoid RLS recursion
-      const { error } = await supabase.rpc('update_profile_bypass_rls', {
-        p_user_id: id,
-        ...updateData
-      });
-
-      if (error) {
-        console.error('❌ ProfileContainer: RPC bypass function error:', error);
-        throw error;
-      }
-
-      console.log('✅ ProfileContainer: Media updated successfully via RPC bypass');
-
-      await refetch();
-      toast({
-        title: "Success",
-        description: `${type === 'avatar' ? 'Profile picture' : 'Banner'} updated successfully`,
-      });
-    } catch (error: any) {
-      console.error('💥 ProfileContainer: Media update error:', error);
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
-    }
-  };
-
   const handleEditClick = () => {
     console.log('Edit button clicked, opening dialog');
     setEditDialogOpen(true);
@@ -94,7 +58,10 @@ export const ProfileContainer = ({ id, isEditing, setIsEditing }: ProfileContain
   const handleEditSuccess = async () => {
     console.log('Edit success, refetching profile');
     await refetch();
-    setEditDialogOpen(false);
+    toast({
+      title: "Profile Updated",
+      description: "Your profile has been successfully updated!",
+    });
   };
 
   if (isLoading) {
@@ -145,7 +112,6 @@ export const ProfileContainer = ({ id, isEditing, setIsEditing }: ProfileContain
         <ProfileHeader
           profile={profile}
           isOwnProfile={isOwnProfile}
-          onMediaSuccess={handleMediaSuccess}
           onEditClick={handleEditClick}
         />
         
