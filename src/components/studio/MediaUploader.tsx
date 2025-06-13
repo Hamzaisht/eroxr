@@ -78,7 +78,7 @@ export const MediaUploader = ({
 
   return (
     <div className={`relative ${className}`}>
-      <motion.div
+      <div
         {...getRootProps()}
         className={`
           relative overflow-hidden cursor-pointer transition-all duration-300
@@ -86,8 +86,6 @@ export const MediaUploader = ({
           ${isDragActive ? 'scale-105' : 'hover:scale-102'}
           ${isUploading ? 'pointer-events-none' : ''}
         `}
-        whileHover={{ scale: type === 'avatar' ? 1.05 : 1.02 }}
-        whileTap={{ scale: 0.98 }}
       >
         <input {...getInputProps()} disabled={isUploading} />
         
@@ -118,30 +116,19 @@ export const MediaUploader = ({
           flex items-center justify-center transition-opacity duration-300
           ${isDragActive ? 'opacity-100' : currentUrl || preview ? 'opacity-0 hover:opacity-100' : 'opacity-100'}
         `}>
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="text-center text-white"
-          >
+          <div className="text-center text-white">
             {isUploading ? (
               <div className="space-y-2">
-                <motion.div
-                  animate={{ rotate: 360 }}
-                  transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-                >
+                <div className="animate-spin">
                   <Upload className="w-8 h-8 mx-auto" />
-                </motion.div>
+                </div>
                 <p className="text-sm font-medium">{progress.message}</p>
               </div>
             ) : isSuccess ? (
-              <motion.div
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                className="space-y-2"
-              >
+              <div className="space-y-2">
                 <CheckCircle className="w-8 h-8 mx-auto text-green-400" />
                 <p className="text-sm font-medium">Upload Complete!</p>
-              </motion.div>
+              </div>
             ) : isError ? (
               <div className="space-y-2">
                 <AlertCircle className="w-8 h-8 mx-auto text-red-400" />
@@ -167,7 +154,7 @@ export const MediaUploader = ({
                 </div>
               </div>
             )}
-          </motion.div>
+          </div>
         </div>
 
         {/* Progress Overlay */}
@@ -185,7 +172,7 @@ export const MediaUploader = ({
             </motion.div>
           )}
         </AnimatePresence>
-      </motion.div>
+      </div>
 
       {/* Clear button for preview */}
       {preview && !isUploading && (

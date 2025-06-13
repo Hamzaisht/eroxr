@@ -1,130 +1,55 @@
 
-import { uploadMediaToSupabase } from './supabaseUpload';
-import { setupStorage } from './setupStorage';
+import { supabase } from '@/integrations/supabase/client';
 
-/**
- * Comprehensive test function to verify entire upload system
- */
-export const testUpload = async () => {
-  console.log("🧪 Starting comprehensive upload test...");
-  
+export const testUpload = async (file: File, bucket: string = 'test-uploads') => {
   try {
-    // First, ensure storage is properly set up
-    console.log("🔧 Setting up storage...");
-    const setupResult = await setupStorage();
+    console.log('🧪 Testing upload:', { fileName: file.name, size: file.size, bucket });
     
-    if (!setupResult.success) {
-      console.error("❌ Storage setup failed:", setupResult.error);
-      return { success: false, error: setupResult.error };
+    const fileName = `test_${Date.now()}_${file.name}`;
+    
+    const { data, error } = await supabase.storage
+      .from(bucket)
+      .upload(fileName, file);
+    
+    if (error) {
+      console.error('❌ Test upload failed:', error);
+      return { success: false, error: error.message };
     }
     
-    // Create a test image file
-    const canvas = document.createElement('canvas');
-    canvas.width = 100;
-    canvas.height = 100;
-    const ctx = canvas.getContext('2d');
-    if (ctx) {
-      ctx.fillStyle = '#ff0000';
-      ctx.fillRect(0, 0, 100, 100);
-      ctx.fillStyle = '#ffffff';
-      ctx.font = '16px Arial';
-      ctx.fillText('TEST', 30, 55);
-    }
+    console.log('✅ Test upload successful:', data);
     
-    const blob = await new Promise<Blob>((resolve) => {
-      canvas.toBlob((blob) => resolve(blob!), 'image/png');
-    });
+    // Get public URL
+    const { data: { publicUrl } } = supabase.storage
+      .from(bucket)
+      .getPublicUrl(fileName);
     
-    const testFile = new File([blob], 'test-upload.png', { type: 'image/png' });
-    console.log("📁 Created test file:", {
-      name: testFile.name,
-      type: testFile.type,
-      size: testFile.size
-    });
-    
-    // Test upload
-    console.log("📤 Starting upload test...");
-    const result = await uploadMediaToSupabase(testFile, {
-      category: 'test',
-      metadata: { 
-        test: true, 
-        timestamp: new Date().toISOString(),
-        usage: 'test'
-      }
-    });
-    
-    console.log("📊 Upload test result:", result);
-    
-    if (result.success) {
-      console.log("✅ UPLOAD TEST PASSED!");
-      console.log("🔗 File URL:", result.url);
-      console.log("🆔 Asset ID:", result.assetId);
-      
-      // Test if we can fetch the uploaded asset from database
-      if (result.assetId) {
-        const { supabase } = await import("@/integrations/supabase/client");
-        const { data: assetData, error: fetchError } = await supabase
-          .from('media_assets')
-          .select('*')
-          .eq('id', result.assetId)
-          .single();
-          
-        if (fetchError) {
-          console.error("❌ Error fetching uploaded asset:", fetchError);
-        } else {
-          console.log("✅ Asset verified in database:", assetData);
-        }
-      }
-      
-      return result;
-    } else {
-      console.error("❌ UPLOAD TEST FAILED:", result.error);
-      return result;
-    }
-    
+    return { 
+      success: true, 
+      data,
+      publicUrl,
+      fileName 
+    };
   } catch (error: any) {
-    console.error("💥 Test upload error:", error);
+    console.error('💥 Test upload exception:', error);
     return { success: false, error: error.message };
   }
 };
 
-/**
- * Simple storage connectivity test
- */
-export const testStorageConnection = async () => {
-  console.log("🔗 Testing storage connection...");
-  
+export const cleanupTestUpload = async (fileName: string, bucket: string = 'test-uploads') => {
   try {
-    const { supabase } = await import("@/integrations/supabase/client");
+    const { error } = await supabase.storage
+      .from(bucket)
+      .remove([fileName]);
     
-    // Test bucket listing
-    const { data: buckets, error: bucketsError } = await supabase.storage.listBuckets();
-    
-    if (bucketsError) {
-      console.error("❌ Storage connection failed:", bucketsError);
-      return { success: false, error: bucketsError.message };
+    if (error) {
+      console.error('❌ Cleanup failed:', error);
+      return false;
     }
     
-    console.log("✅ Storage connection successful. Buckets:", buckets?.map(b => b.name));
-    
-    // Check if media bucket exists
-    const mediaBucket = buckets?.find(b => b.id === 'media');
-    if (mediaBucket) {
-      console.log("✅ Media bucket found:", mediaBucket);
-    } else {
-      console.warn("⚠️ Media bucket not found");
-    }
-    
-    return { success: true, buckets };
-    
-  } catch (error: any) {
-    console.error("💥 Storage connection error:", error);
-    return { success: false, error: error.message };
+    console.log('🧹 Test file cleaned up:', fileName);
+    return true;
+  } catch (error) {
+    console.error('💥 Cleanup exception:', error);
+    return false;
   }
 };
-
-// Make test functions available globally for debugging
-if (typeof window !== 'undefined') {
-  (window as any).testUpload = testUpload;
-  (window as any).testStorageConnection = testStorageConnection;
-}

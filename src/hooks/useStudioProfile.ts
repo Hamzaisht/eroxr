@@ -29,31 +29,52 @@ export const useStudioProfile = (profileId: string) => {
       return data as StudioProfile;
     },
     staleTime: 5 * 60 * 1000,
-    cacheTime: 10 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
   });
 
   const updateProfileMutation = useMutation({
     mutationFn: async (updates: Partial<StudioProfile>) => {
       console.log('🎨 Studio: Updating profile with:', updates);
       
-      const { error } = await supabase.rpc('studio_update_profile', {
-        p_username: updates.username || null,
-        p_bio: updates.bio || null,
-        p_location: updates.location || null,
-        p_avatar_url: updates.avatar_url || null,
-        p_banner_url: updates.banner_url || null,
-        p_interests: updates.interests || null,
-      });
+      // Try using the RPC function first, fallback to direct update
+      try {
+        const { error } = await supabase.rpc('studio_update_profile', {
+          p_username: updates.username || null,
+          p_bio: updates.bio || null,
+          p_location: updates.location || null,
+          p_avatar_url: updates.avatar_url || null,
+          p_banner_url: updates.banner_url || null,
+          p_interests: updates.interests || null,
+        });
 
-      if (error) {
-        console.error('❌ Studio: Profile update error:', error);
-        throw error;
+        if (error) throw error;
+      } catch (rpcError) {
+        console.warn('⚠️ Studio: RPC update failed, trying direct update:', rpcError);
+        
+        // Fallback to direct update
+        const { error } = await supabase
+          .from('profiles')
+          .update({
+            username: updates.username,
+            bio: updates.bio,
+            location: updates.location,
+            avatar_url: updates.avatar_url,
+            banner_url: updates.banner_url,
+            interests: updates.interests,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', profileId);
+
+        if (error) {
+          console.error('❌ Studio: Direct update error:', error);
+          throw error;
+        }
       }
 
       console.log('✅ Studio: Profile updated successfully');
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(['studio-profile', profileId]);
+      queryClient.invalidateQueries({ queryKey: ['studio-profile', profileId] });
       toast({
         title: "Studio Profile Updated",
         description: "Your profile has been updated successfully!",
@@ -74,6 +95,6 @@ export const useStudioProfile = (profileId: string) => {
     isLoading,
     error,
     updateProfile: updateProfileMutation.mutate,
-    isUpdating: updateProfileMutation.isLoading,
+    isUpdating: updateProfileMutation.isPending,
   };
 };

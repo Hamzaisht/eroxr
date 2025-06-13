@@ -9,6 +9,8 @@ export interface Profile {
   interests?: string[] | null;
   profile_visibility?: boolean;
   is_verified?: boolean;
+  id_verification_status?: string | null;
+  is_paying_customer?: boolean;
   created_at: string;
   updated_at: string;
 }
