@@ -2,6 +2,7 @@
 import { Database } from "@/integrations/supabase/types/database.types";
 
 export type StoryData = Database["public"]["Tables"]["stories"]["Row"] & {
+  content_type: string;
   profiles?: {
     username?: string | null;
     avatar_url?: string | null;
@@ -17,6 +18,7 @@ export interface Story {
   created_at: string;
   expires_at: string;
   is_active: boolean;
+  duration?: number | null;
   creator: {
     id: string;
     username: string | null;

@@ -3,6 +3,7 @@ import { ImmersiveStoryViewer } from "./stories/ImmersiveStoryViewer";
 import { StoryUploadModal } from "./stories/StoryUploadModal";
 import { StoryAvatar } from "./story/StoryAvatar";
 import { useStoryReel } from "./story/useStoryReel";
+import { useEffect } from "react";
 
 export const StoryReel = () => {
   const {
@@ -20,6 +21,22 @@ export const StoryReel = () => {
     getUserDisplayName,
     getUserAvatar,
   } = useStoryReel();
+
+  // Listen for story updates
+  useEffect(() => {
+    const handleStoryUpdate = () => {
+      // Refresh stories when uploaded or deleted
+      window.location.reload();
+    };
+
+    window.addEventListener('story-uploaded', handleStoryUpdate);
+    window.addEventListener('story-deleted', handleStoryUpdate);
+
+    return () => {
+      window.removeEventListener('story-uploaded', handleStoryUpdate);
+      window.removeEventListener('story-deleted', handleStoryUpdate);
+    };
+  }, []);
 
   if (isLoading) {
     return (

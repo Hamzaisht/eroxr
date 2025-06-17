@@ -26,12 +26,14 @@ export const useStoryReel = () => {
           media_url,
           video_url,
           content_type,
+          duration,
           created_at,
           expires_at,
           is_active,
           profiles:creator_id(username, avatar_url)
         `)
         .eq("is_active", true)
+        .gt("expires_at", new Date().toISOString())
         .order("created_at", { ascending: false });
 
       if (error) throw error;
@@ -42,13 +44,14 @@ export const useStoryReel = () => {
   // Ensure stories is a safe array to map over
   const safeStories = safeDataAccess(stories, []);
 
-  // Convert to the format expected by ImmersiveStoryViewer
+  // Convert to the format expected by StoryViewer
   const formattedStories: Story[] = safeStories.map((story) => ({
     id: story.id,
     creator_id: story.creator_id,
     media_url: story.media_url,
     video_url: story.video_url,
     content_type: story.content_type || 'image',
+    duration: story.duration,
     created_at: story.created_at,
     expires_at: story.expires_at,
     is_active: story.is_active || false,
