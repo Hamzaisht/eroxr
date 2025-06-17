@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSession } from "@supabase/auth-helpers-react";
@@ -17,7 +16,7 @@ interface EnhancedStoryViewerProps {
   onClose: () => void;
 }
 
-// Group stories by user
+// Group stories by user while maintaining chronological order
 const groupStoriesByUser = (stories: Story[]) => {
   const grouped = stories.reduce((acc, story) => {
     const userId = story.creator_id;
@@ -28,11 +27,7 @@ const groupStoriesByUser = (stories: Story[]) => {
     return acc;
   }, {} as Record<string, Story[]>);
 
-  // Sort stories within each user group by creation date (oldest first) for chronological viewing
-  Object.keys(grouped).forEach(userId => {
-    grouped[userId].sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
-  });
-
+  // Keep stories in their original order (already chronological from the query)
   return grouped;
 };
 

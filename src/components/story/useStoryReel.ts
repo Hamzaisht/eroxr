@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -35,7 +34,7 @@ export const useStoryReel = () => {
         `)
         .eq("is_active", true)
         .gt("expires_at", new Date().toISOString())
-        .order("created_at", { ascending: false });
+        .order("created_at", { ascending: true }); // Changed to ascending for chronological order
 
       if (error) throw error;
       return safeCast<StoryData[]>(data);
@@ -115,8 +114,9 @@ export const useStoryReel = () => {
 
   const handleUserStoryClick = () => {
     if (userStory) {
-      // View user's own story
-      setSelectedStoryIndex(0);
+      // Find the actual index of user's story in the combined array
+      const userStoryIndex = formattedStories.findIndex(story => story.creator_id === user?.id);
+      setSelectedStoryIndex(userStoryIndex >= 0 ? userStoryIndex : 0);
       setShowViewer(true);
     } else {
       // Create new story
@@ -124,8 +124,8 @@ export const useStoryReel = () => {
     }
   };
 
-  // Combine user story with other stories for viewer
-  const allStories = userStory ? [userStory, ...otherStories] : otherStories;
+  // Use all stories in chronological order for viewer
+  const allStories = formattedStories;
 
   // Get user display info with fallbacks
   const getUserDisplayName = () => {

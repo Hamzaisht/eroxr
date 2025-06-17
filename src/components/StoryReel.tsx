@@ -1,4 +1,3 @@
-
 import { memo, useCallback, useEffect } from "react";
 import { AnimatePresence } from "framer-motion";
 import { EnhancedStoryViewer } from "./stories/EnhancedStoryViewer";
@@ -41,6 +40,15 @@ export const StoryReel = memo(() => {
     return () => window.removeEventListener('open-story-upload', handleOpenUpload);
   }, [setShowUploadModal]);
 
+  // Handle clicking on other users' stories
+  const handleOtherStoryClick = useCallback((storyToFind: any) => {
+    // Find the index of this story in the allStories array
+    const storyIndex = allStories.findIndex(story => story.id === storyToFind.id);
+    if (storyIndex >= 0) {
+      handleStoryClick(storyIndex);
+    }
+  }, [allStories, handleStoryClick]);
+
   if (isLoading) {
     return (
       <div className="relative z-10 flex items-center justify-start w-full gap-4 px-4 py-6 overflow-x-auto">
@@ -66,12 +74,12 @@ export const StoryReel = memo(() => {
         />
 
         {/* Other Users' Stories */}
-        {otherStories.map((story, index) => (
+        {otherStories.map((story) => (
           <StoryAvatar
             key={story.id}
             story={story}
             displayName={story.creator.username || 'User'}
-            onClick={() => handleStoryClick(userStory ? index + 1 : index)}
+            onClick={() => handleOtherStoryClick(story)}
           />
         ))}
       </div>
