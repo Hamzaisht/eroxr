@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, ChevronLeft, ChevronRight, Trash2, Plus, Eye, Share2, Download } from "lucide-react";
@@ -242,7 +241,7 @@ export const ImmersiveStoryViewer = ({
         className="fixed inset-0 z-[100] bg-black flex items-center justify-center"
       >
         {/* Progress bars */}
-        <div className="absolute top-4 left-4 right-4 z-50 flex space-x-1">
+        <div className="absolute top-2 left-4 right-4 z-[110] flex space-x-1">
           {stories.map((_, index) => (
             <div
               key={index}
@@ -259,8 +258,8 @@ export const ImmersiveStoryViewer = ({
           ))}
         </div>
 
-        {/* Header */}
-        <div className="absolute top-8 left-4 right-4 z-50 flex items-center justify-between text-white">
+        {/* Header with fixed positioning and higher z-index */}
+        <div className="absolute top-6 left-4 right-4 z-[120] flex items-center justify-between text-white">
           <div className="flex items-center space-x-3">
             <div className="w-10 h-10 rounded-full overflow-hidden bg-white/20">
               {currentStory.creator.avatar_url ? (
@@ -287,12 +286,12 @@ export const ImmersiveStoryViewer = ({
           </div>
 
           <div className="flex items-center space-x-2">
-            {/* Add Story Button - always visible */}
+            {/* Add Story Button - always visible with better styling */}
             <Button
               variant="ghost"
               size="icon"
               onClick={handleAddStory}
-              className="text-white hover:text-amber-300 hover:bg-white/10"
+              className="w-10 h-10 text-white hover:text-amber-300 hover:bg-white/20 bg-black/30 backdrop-blur-sm border border-white/20"
             >
               <Plus className="w-5 h-5" />
             </Button>
@@ -303,18 +302,18 @@ export const ImmersiveStoryViewer = ({
                 variant="ghost"
                 size="icon"
                 onClick={handleDelete}
-                className="text-white hover:text-red-400 hover:bg-red-400/10"
+                className="w-10 h-10 text-white hover:text-red-400 hover:bg-red-400/20 bg-black/30 backdrop-blur-sm border border-white/20"
               >
                 <Trash2 className="w-5 h-5" />
               </Button>
             )}
 
-            {/* Close Button */}
+            {/* Close Button with better styling */}
             <Button
               variant="ghost"
               size="icon"
               onClick={onClose}
-              className="text-white hover:text-white/80"
+              className="w-10 h-10 text-white hover:text-white/80 hover:bg-white/20 bg-black/30 backdrop-blur-sm border border-white/20"
             >
               <X className="w-5 h-5" />
             </Button>
@@ -379,7 +378,7 @@ export const ImmersiveStoryViewer = ({
         </div>
 
         {/* Snapchat-like Stats Panel */}
-        <div className="absolute bottom-20 right-4 z-50 flex flex-col items-center space-y-4">
+        <div className="absolute bottom-20 right-4 z-[110] flex flex-col items-center space-y-4">
           {/* Views */}
           <div className="flex flex-col items-center">
             <Button
@@ -421,7 +420,7 @@ export const ImmersiveStoryViewer = ({
 
         {/* Loading indicator */}
         {isLoading && (
-          <div className="absolute inset-0 flex items-center justify-center bg-black/50">
+          <div className="absolute inset-0 flex items-center justify-center bg-black/50 z-[105]">
             <div className="w-8 h-8 border-2 border-white border-t-transparent rounded-full animate-spin" />
           </div>
         )}
