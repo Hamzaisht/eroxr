@@ -1,6 +1,6 @@
 
 import { motion } from "framer-motion";
-import { ImageIcon, Video } from "lucide-react";
+import { ImageIcon, Video, Crown } from "lucide-react";
 
 interface FormatInfoProps {
   type: 'avatar' | 'banner';
@@ -11,31 +11,46 @@ export const FormatInfo = ({ type }: FormatInfoProps) => {
 
   return (
     <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.2 }}
-      className="grid grid-cols-2 gap-6 text-sm"
+      className="space-y-4"
     >
-      <div className="text-center p-6 rounded-3xl bg-gradient-to-br from-luxury-darker/40 to-luxury-dark/40 border border-luxury-primary/20 backdrop-blur-sm">
-        <div className="w-12 h-12 mx-auto mb-4 bg-luxury-primary/20 rounded-2xl flex items-center justify-center">
-          <ImageIcon className="w-6 h-6 text-luxury-primary" />
-        </div>
-        <div className="font-bold text-luxury-neutral mb-2 text-lg">Sacred Images</div>
-        <div className="text-luxury-muted mb-2">JPG, PNG, GIF, WebP</div>
-        <div className="text-luxury-muted/70 text-xs">
-          {isAvatar ? '🔮 Perfect circles honor divine symmetry' : '🏛️ Recommended: 1500x500px for optimal viewing'}
-        </div>
+      <div className="flex items-center gap-2 mb-4">
+        <Crown className="w-5 h-5 text-purple-400" />
+        <h3 className="text-lg font-semibold text-slate-200">Divine Format Requirements</h3>
       </div>
-      {!isAvatar && (
-        <div className="text-center p-6 rounded-3xl bg-gradient-to-br from-luxury-darker/40 to-luxury-dark/40 border border-luxury-accent/20 backdrop-blur-sm">
-          <div className="w-12 h-12 mx-auto mb-4 bg-luxury-accent/20 rounded-2xl flex items-center justify-center">
-            <Video className="w-6 h-6 text-luxury-accent" />
+      
+      <div className={`grid gap-4 ${isAvatar ? 'grid-cols-1' : 'grid-cols-2'}`}>
+        <div className="flex items-center gap-3 p-4 rounded-xl bg-gradient-to-r from-purple-500/10 to-cyan-500/10 border border-purple-500/20">
+          <ImageIcon className="w-6 h-6 text-cyan-400" />
+          <div>
+            <div className="font-semibold text-slate-200">Sacred Images</div>
+            <div className="text-sm text-slate-400">JPG, PNG, WebP, GIF</div>
+            <div className="text-xs text-slate-500">Max: {isAvatar ? '10MB' : '50MB'}</div>
           </div>
-          <div className="font-bold text-luxury-neutral mb-2 text-lg">Living Art</div>
-          <div className="text-luxury-muted mb-2">MP4, WebM, MOV</div>
-          <div className="text-luxury-muted/70 text-xs">⚡ Eternal loops of divine beauty</div>
         </div>
-      )}
+        
+        {!isAvatar && (
+          <div className="flex items-center gap-3 p-4 rounded-xl bg-gradient-to-r from-cyan-500/10 to-purple-500/10 border border-cyan-500/20">
+            <Video className="w-6 h-6 text-purple-400" />
+            <div>
+              <div className="font-semibold text-slate-200">Divine Videos</div>
+              <div className="text-sm text-slate-400">MP4, WebM, MOV</div>
+              <div className="text-xs text-slate-500">Max: 50MB</div>
+            </div>
+          </div>
+        )}
+      </div>
+      
+      <div className="text-center p-4 rounded-xl bg-gradient-to-r from-slate-800/30 to-gray-800/30 border border-slate-600/20">
+        <p className="text-sm text-slate-400">
+          {isAvatar 
+            ? 'Recommended: 400x400px square format for optimal divine presentation'
+            : 'Recommended: 1500x500px for maximum divine impact across all realms'
+          }
+        </p>
+      </div>
     </motion.div>
   );
 };

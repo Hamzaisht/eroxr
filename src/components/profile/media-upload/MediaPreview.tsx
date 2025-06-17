@@ -1,7 +1,6 @@
 
-import { motion, AnimatePresence } from "framer-motion";
-import { Play } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { motion } from "framer-motion";
+import { Crown, Sparkles } from "lucide-react";
 
 interface MediaPreviewProps {
   currentUrl?: string;
@@ -11,55 +10,47 @@ interface MediaPreviewProps {
 }
 
 export const MediaPreview = ({ currentUrl, preview, fileType, type }: MediaPreviewProps) => {
-  const isAvatar = type === 'avatar';
+  const displayUrl = preview || currentUrl;
+  
+  if (!displayUrl) return null;
 
   return (
-    <AnimatePresence mode="wait">
-      {(currentUrl || preview) && (
-        <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          exit={{ opacity: 0, scale: 0.9 }}
-          className="text-center"
-        >
-          <div className={cn(
-            "mx-auto overflow-hidden border-2 border-luxury-primary/30 bg-luxury-darker/50 relative group backdrop-blur-sm",
-            isAvatar ? "w-40 h-40 rounded-full" : "w-full h-56 rounded-3xl"
-          )}>
-            {preview && fileType === 'video' ? (
-              <video
-                src={preview}
-                autoPlay
-                loop
-                muted
-                playsInline
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              <img
-                src={preview || currentUrl}
-                alt={isAvatar ? "Avatar preview" : "Banner preview"}
-                className="w-full h-full object-cover"
-              />
-            )}
-            {fileType === 'video' && (
-              <div className="absolute top-3 right-3 bg-black/70 rounded-xl px-3 py-1 flex items-center gap-2">
-                <Play className="w-3 h-3 text-white" />
-                <span className="text-xs text-white font-medium">ETERNAL LOOP</span>
-              </div>
-            )}
-            <div className="absolute inset-0 bg-gradient-to-t from-luxury-primary/10 via-transparent to-luxury-accent/10 opacity-50" />
-          </div>
-          <motion.p 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="text-sm text-luxury-muted mt-4 font-medium"
-          >
-            {preview ? '✨ New divine essence awaits' : '🏛️ Current sacred media'}
-            {fileType === 'video' && ' • Eternal video loop'}
-          </motion.p>
-        </motion.div>
-      )}
-    </AnimatePresence>
+    <motion.div
+      initial={{ opacity: 0, scale: 0.9 }}
+      animate={{ opacity: 1, scale: 1 }}
+      className="relative"
+    >
+      <div className="flex items-center gap-2 mb-4">
+        <Crown className="w-5 h-5 text-purple-400" />
+        <h3 className="text-lg font-semibold text-slate-200">
+          {preview ? 'Divine Preview' : 'Current Divine Media'}
+        </h3>
+        <Sparkles className="w-4 h-4 text-cyan-400" />
+      </div>
+      
+      <div className={`relative overflow-hidden rounded-2xl border-2 border-purple-500/30 bg-gradient-to-br from-slate-800/50 to-gray-900/50 backdrop-blur-sm ${
+        type === 'avatar' ? 'w-48 h-48 mx-auto rounded-full' : 'w-full h-64'
+      }`}>
+        {fileType === 'video' || (displayUrl.includes('.mp4') || displayUrl.includes('.webm')) ? (
+          <video
+            src={displayUrl}
+            className="w-full h-full object-cover"
+            controls={false}
+            muted
+            loop
+            autoPlay
+          />
+        ) : (
+          <img
+            src={displayUrl}
+            alt={`${type} preview`}
+            className="w-full h-full object-cover"
+          />
+        )}
+        
+        {/* Divine overlay effect */}
+        <div className="absolute inset-0 bg-gradient-to-t from-purple-900/20 via-transparent to-cyan-900/20 pointer-events-none" />
+      </div>
+    </motion.div>
   );
 };

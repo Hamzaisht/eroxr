@@ -1,6 +1,5 @@
-
 import { motion } from 'framer-motion';
-import { Users, Heart, Eye, Star, Crown, Zap } from 'lucide-react';
+import { Crown, Heart, Eye, Users, Star, Zap } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -12,119 +11,74 @@ export const EroxrProfileStats = ({ profileId }: EroxrProfileStatsProps) => {
   const { data: stats } = useQuery({
     queryKey: ['profile-stats', profileId],
     queryFn: async () => {
-      // Fetch follower count
-      const { count: followersCount } = await supabase
-        .from('followers')
-        .select('*', { count: 'exact', head: true })
-        .eq('following_id', profileId);
+      // Get basic stats
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', profileId)
+        .single();
 
-      // Fetch posts count
-      const { count: postsCount } = await supabase
+      // Get post count
+      const { count: postCount } = await supabase
         .from('posts')
         .select('*', { count: 'exact', head: true })
-        .eq('creator_id', profileId);
-
-      // Fetch total likes across all posts
-      const { data: likesData } = await supabase
-        .from('posts')
-        .select('likes_count')
-        .eq('creator_id', profileId);
-
-      const totalLikes = likesData?.reduce((sum, post) => sum + (post.likes_count || 0), 0) || 0;
+        .eq('creator_id', profileId)
+        .eq('visibility', 'public');
 
       return {
-        followers: followersCount || 0,
-        posts: postsCount || 0,
-        likes: totalLikes,
-        views: Math.floor(Math.random() * 50000) + 10000, // Placeholder
+        followers: 0, // Placeholder - implement when followers table exists
+        following: 0, // Placeholder - implement when followers table exists
+        posts: postCount || 0,
+        likes: 0, // Placeholder - aggregate from posts
+        views: 0, // Placeholder - aggregate from posts
       };
     },
     staleTime: 60000,
   });
 
   const statItems = [
-    {
-      icon: Users,
-      label: 'Followers',
-      value: stats?.followers || 0,
-      color: 'from-slate-500 to-gray-500'
-    },
-    {
-      icon: Star,
-      label: 'Posts',
-      value: stats?.posts || 0,
-      color: 'from-slate-600 to-gray-600'
-    },
-    {
-      icon: Heart,
-      label: 'Likes',
-      value: stats?.likes || 0,
-      color: 'from-slate-500 to-gray-500'
-    },
-    {
-      icon: Eye,
-      label: 'Views',
-      value: stats?.views || 0,
-      color: 'from-slate-600 to-gray-600'
-    }
+    { icon: Users, label: 'Followers', value: stats?.followers || 0, color: 'from-blue-400 to-cyan-400' },
+    { icon: Heart, label: 'Following', value: stats?.following || 0, color: 'from-pink-400 to-rose-400' },
+    { icon: Star, label: 'Posts', value: stats?.posts || 0, color: 'from-yellow-400 to-amber-400' },
+    { icon: Eye, label: 'Total Views', value: stats?.views || 0, color: 'from-purple-400 to-violet-400' },
+    { icon: Zap, label: 'Total Likes', value: stats?.likes || 0, color: 'from-green-400 to-emerald-400' },
   ];
 
-  const formatNumber = (num: number) => {
-    if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M`;
-    if (num >= 1000) return `${(num / 1000).toFixed(1)}K`;
-    return num.toString();
-  };
-
   return (
-    <motion.div
-      initial={{ y: 20, opacity: 0 }}
-      animate={{ y: 0, opacity: 1 }}
-      className="px-8 py-12 bg-slate-800/30 backdrop-blur-xl border-y border-slate-700/20"
-    >
+    <div className="px-8 py-12 bg-slate-800/20 backdrop-blur-xl border-y border-slate-700/30">
       <div className="max-w-7xl mx-auto">
-        <motion.div
+        <motion.h3
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="text-center mb-12"
+          className="text-3xl font-bold text-slate-100 mb-8 text-center flex items-center justify-center gap-3"
         >
-          <div className="flex items-center justify-center gap-3 mb-4">
-            <Crown className="w-8 h-8 text-slate-300" />
-            <h2 className="text-4xl font-bold text-slate-200">Divine Metrics</h2>
-            <Crown className="w-8 h-8 text-slate-300" />
-          </div>
-          <p className="text-slate-400 text-lg">
-            Witness the power of divine creation
-          </p>
-        </motion.div>
-
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-          {statItems.map((stat, index) => {
-            const Icon = stat.icon;
-            return (
-              <motion.div
-                key={stat.label}
-                initial={{ opacity: 0, y: 30 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.1 }}
-                whileHover={{ y: -5, scale: 1.02 }}
-                className="bg-slate-800/40 backdrop-blur-xl rounded-2xl p-6 border border-slate-700/30 text-center group"
-              >
-                <div className={`w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-r ${stat.color} flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300`}>
-                  <Icon className="w-8 h-8 text-white" />
-                </div>
-                
-                <div className="text-3xl font-bold text-slate-200 mb-2">
-                  {formatNumber(stat.value)}
-                </div>
-                
-                <div className="text-slate-400 font-medium">
-                  {stat.label}
-                </div>
-              </motion.div>
-            );
-          })}
+          <Crown className="w-8 h-8 text-yellow-400" />
+          Divine Statistics
+        </motion.h3>
+        
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-6">
+          {statItems.map((stat, index) => (
+            <motion.div
+              key={stat.label}
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: index * 0.1 }}
+              whileHover={{ y: -5, scale: 1.05 }}
+              className="bg-slate-800/40 backdrop-blur-xl rounded-2xl p-6 border border-slate-700/30 text-center group"
+            >
+              <div className={`w-12 h-12 mx-auto mb-4 rounded-full bg-gradient-to-r ${stat.color} p-3 group-hover:scale-110 transition-transform duration-300`}>
+                <stat.icon className="w-full h-full text-white" />
+              </div>
+              <div className="text-3xl font-bold text-slate-100 mb-2">
+                {stat.value.toLocaleString()}
+              </div>
+              <div className="text-slate-400 text-sm font-medium">
+                {stat.label}
+              </div>
+            </motion.div>
+          ))}
         </div>
       </div>
-    </motion.div>
+    </div>
   );
 };

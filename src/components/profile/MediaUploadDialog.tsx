@@ -94,8 +94,31 @@ export const MediaUploadDialog = ({
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0, scale: 0.95 }}
-          className="relative w-full h-full bg-gradient-to-br from-luxury-dark via-luxury-darker to-luxury-dark backdrop-blur-xl border border-luxury-primary/30 shadow-2xl rounded-3xl overflow-hidden"
+          className="relative w-full h-full bg-gradient-to-br from-slate-900 via-purple-900/20 to-slate-900 backdrop-blur-xl border border-purple-500/30 shadow-2xl rounded-3xl overflow-hidden"
         >
+          {/* Cosmic background effects */}
+          <div className="absolute inset-0 overflow-hidden">
+            {[...Array(20)].map((_, i) => (
+              <motion.div
+                key={i}
+                className="absolute w-1 h-1 bg-cyan-400 rounded-full"
+                style={{
+                  left: `${Math.random() * 100}%`,
+                  top: `${Math.random() * 100}%`,
+                }}
+                animate={{
+                  scale: [0, 1.5, 0],
+                  opacity: [0, 1, 0],
+                }}
+                transition={{
+                  duration: 3 + Math.random() * 2,
+                  repeat: Infinity,
+                  delay: Math.random() * 2,
+                }}
+              />
+            ))}
+          </div>
+
           <MediaUploadHeader
             type={type}
             onClose={handleClose}
