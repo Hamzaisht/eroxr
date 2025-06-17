@@ -1407,11 +1407,18 @@ export type Database = {
       }
       profiles: {
         Row: {
+          allow_custom_requests: boolean | null
+          allow_direct_messages: boolean | null
+          allow_tips: boolean | null
+          auto_renew_subscriptions: boolean | null
           avatar_url: string | null
           banner_url: string | null
           bio: string | null
+          content_privacy_default: string | null
+          content_warning_enabled: boolean | null
           created_at: string
           date_of_birth: string | null
+          email_notifications: boolean | null
           first_name: string | null
           id: string
           id_verification_status: string | null
@@ -1424,21 +1431,33 @@ export type Database = {
           last_name: string | null
           last_username_change: string | null
           location: string | null
+          marketing_emails: boolean | null
           pause_end_at: string | null
           pause_reason: string | null
           profile_visibility: boolean | null
+          push_notifications: boolean | null
+          show_online_status: boolean | null
           social_links: Json | null
           status: string | null
+          subscription_price: number | null
           suspended_at: string | null
+          two_factor_enabled: boolean | null
           updated_at: string
           username: string | null
         }
         Insert: {
+          allow_custom_requests?: boolean | null
+          allow_direct_messages?: boolean | null
+          allow_tips?: boolean | null
+          auto_renew_subscriptions?: boolean | null
           avatar_url?: string | null
           banner_url?: string | null
           bio?: string | null
+          content_privacy_default?: string | null
+          content_warning_enabled?: boolean | null
           created_at?: string
           date_of_birth?: string | null
+          email_notifications?: boolean | null
           first_name?: string | null
           id: string
           id_verification_status?: string | null
@@ -1451,21 +1470,33 @@ export type Database = {
           last_name?: string | null
           last_username_change?: string | null
           location?: string | null
+          marketing_emails?: boolean | null
           pause_end_at?: string | null
           pause_reason?: string | null
           profile_visibility?: boolean | null
+          push_notifications?: boolean | null
+          show_online_status?: boolean | null
           social_links?: Json | null
           status?: string | null
+          subscription_price?: number | null
           suspended_at?: string | null
+          two_factor_enabled?: boolean | null
           updated_at?: string
           username?: string | null
         }
         Update: {
+          allow_custom_requests?: boolean | null
+          allow_direct_messages?: boolean | null
+          allow_tips?: boolean | null
+          auto_renew_subscriptions?: boolean | null
           avatar_url?: string | null
           banner_url?: string | null
           bio?: string | null
+          content_privacy_default?: string | null
+          content_warning_enabled?: boolean | null
           created_at?: string
           date_of_birth?: string | null
+          email_notifications?: boolean | null
           first_name?: string | null
           id?: string
           id_verification_status?: string | null
@@ -1478,12 +1509,17 @@ export type Database = {
           last_name?: string | null
           last_username_change?: string | null
           location?: string | null
+          marketing_emails?: boolean | null
           pause_end_at?: string | null
           pause_reason?: string | null
           profile_visibility?: boolean | null
+          push_notifications?: boolean | null
+          show_online_status?: boolean | null
           social_links?: Json | null
           status?: string | null
+          subscription_price?: number | null
           suspended_at?: string | null
+          two_factor_enabled?: boolean | null
           updated_at?: string
           username?: string | null
         }
@@ -2284,6 +2320,17 @@ export type Database = {
       }
       increment_counter: {
         Args: { row_id: string; counter_name: string; table_name?: string }
+        Returns: undefined
+      }
+      studio_update_profile: {
+        Args: {
+          p_username?: string
+          p_bio?: string
+          p_location?: string
+          p_avatar_url?: string
+          p_banner_url?: string
+          p_interests?: string[]
+        }
         Returns: undefined
       }
       update_profile_bypass_rls: {

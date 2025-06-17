@@ -10,7 +10,6 @@ import { ProfilePosts } from '@/components/profile/container/ProfilePosts';
 import { ProfileStudioButton } from './ProfileStudioButton';
 import { EroxrProfileStats } from './EroxrProfileStats';
 import { EroxrSubscriptionTier } from './EroxrSubscriptionTier';
-import type { StudioProfile } from '../types';
 
 interface EroxrProfileViewerProps {
   profileId: string;
@@ -25,11 +24,11 @@ export const EroxrProfileViewer = ({ profileId, onEditClick }: EroxrProfileViewe
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-luxury-gradient flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-gray-900 to-slate-800 flex items-center justify-center">
         <motion.div
           animate={{ rotate: 360 }}
           transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-          className="w-12 h-12 border-4 border-luxury-primary border-t-transparent rounded-full"
+          className="w-12 h-12 border-4 border-slate-400 border-t-transparent rounded-full"
         />
       </div>
     );
@@ -37,28 +36,28 @@ export const EroxrProfileViewer = ({ profileId, onEditClick }: EroxrProfileViewe
 
   if (!profile) {
     return (
-      <div className="min-h-screen bg-luxury-gradient flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-gray-900 to-slate-800 flex items-center justify-center">
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           className="text-center"
         >
-          <Crown className="w-16 h-16 mx-auto text-luxury-muted mb-4" />
-          <h2 className="text-2xl font-bold text-luxury-neutral mb-2">Profile Not Found</h2>
-          <p className="text-luxury-muted">This divine creator doesn't exist in our realm</p>
+          <Crown className="w-16 h-16 mx-auto text-slate-400 mb-4" />
+          <h2 className="text-2xl font-bold text-slate-200 mb-2">Profile Not Found</h2>
+          <p className="text-slate-400">This divine creator doesn't exist in our realm</p>
         </motion.div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-luxury-gradient relative overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-gray-900 to-slate-800 relative overflow-hidden">
       {/* Greek Pattern Background */}
       <div className="absolute inset-0 opacity-5">
         <div 
           className="absolute inset-0 bg-repeat bg-[length:60px_60px]" 
           style={{
-            backgroundImage: `url("data:image/svg+xml,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><path d="M50 0L60 40L100 50L60 60L50 100L40 60L0 50L40 40Z" fill="#D4AF37"/></svg>')}")`
+            backgroundImage: `url("data:image/svg+xml,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><path d="M50 0L60 40L100 50L60 60L50 100L40 60L0 50L40 40Z" fill="#E5E7EB"/></svg>')}")`
           }}
         />
       </div>
@@ -84,7 +83,7 @@ export const EroxrProfileViewer = ({ profileId, onEditClick }: EroxrProfileViewe
               />
             )
           ) : (
-            <div className="w-full h-full bg-gradient-to-br from-luxury-primary/30 via-yellow-500/20 to-luxury-accent/30" />
+            <div className="w-full h-full bg-gradient-to-br from-slate-700/50 via-gray-600/30 to-slate-800/50" />
           )}
         </div>
         
@@ -96,7 +95,7 @@ export const EroxrProfileViewer = ({ profileId, onEditClick }: EroxrProfileViewe
           {[...Array(12)].map((_, i) => (
             <motion.div
               key={i}
-              className="absolute w-2 h-2 bg-yellow-400 rounded-full"
+              className="absolute w-2 h-2 bg-slate-300 rounded-full"
               style={{
                 left: `${20 + (i * 7)}%`,
                 top: `${20 + (i % 3) * 20}%`,
@@ -123,7 +122,7 @@ export const EroxrProfileViewer = ({ profileId, onEditClick }: EroxrProfileViewe
               animate={{ scale: 1, opacity: 1 }}
               className="relative group"
             >
-              <div className="w-40 h-40 rounded-full overflow-hidden border-4 border-yellow-400/60 bg-luxury-darker shadow-2xl relative">
+              <div className="w-40 h-40 rounded-full overflow-hidden border-4 border-slate-400/60 bg-slate-800 shadow-2xl relative">
                 {profile.avatar_url ? (
                   <img
                     src={profile.avatar_url}
@@ -131,20 +130,20 @@ export const EroxrProfileViewer = ({ profileId, onEditClick }: EroxrProfileViewe
                     className="w-full h-full object-cover"
                   />
                 ) : (
-                  <div className="w-full h-full bg-gradient-to-br from-luxury-primary/30 to-yellow-500/30 flex items-center justify-center">
-                    <Crown className="w-16 h-16 text-yellow-400" />
+                  <div className="w-full h-full bg-gradient-to-br from-slate-600/30 to-gray-500/30 flex items-center justify-center">
+                    <Crown className="w-16 h-16 text-slate-300" />
                   </div>
                 )}
                 
                 {/* Divine Glow Effect */}
-                <div className="absolute inset-0 bg-gradient-to-t from-yellow-400/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                <div className="absolute inset-0 bg-gradient-to-t from-slate-400/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
               </div>
               
               {profile.is_verified && (
                 <motion.div
                   initial={{ scale: 0 }}
                   animate={{ scale: 1 }}
-                  className="absolute -bottom-2 -right-2 w-10 h-10 bg-gradient-to-r from-yellow-400 to-yellow-600 rounded-full flex items-center justify-center border-2 border-white shadow-lg"
+                  className="absolute -bottom-2 -right-2 w-10 h-10 bg-gradient-to-r from-slate-500 to-gray-500 rounded-full flex items-center justify-center border-2 border-white shadow-lg"
                 >
                   <Crown className="w-5 h-5 text-white" />
                 </motion.div>
@@ -159,7 +158,7 @@ export const EroxrProfileViewer = ({ profileId, onEditClick }: EroxrProfileViewe
             >
               <div className="flex items-center justify-between mb-4">
                 <div>
-                  <h1 className="text-5xl font-bold mb-2 bg-gradient-to-r from-white via-yellow-200 to-yellow-400 bg-clip-text text-transparent">
+                  <h1 className="text-5xl font-bold mb-2 bg-gradient-to-r from-white via-slate-200 to-slate-300 bg-clip-text text-transparent">
                     {profile.username || 'Divine Creator'}
                   </h1>
                   
@@ -190,7 +189,7 @@ export const EroxrProfileViewer = ({ profileId, onEditClick }: EroxrProfileViewe
                   ) : (
                     <>
                       <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                        <Button className="bg-gradient-to-r from-luxury-primary to-luxury-accent hover:from-luxury-primary/90 hover:to-luxury-accent/90 text-white px-8 py-3 rounded-2xl font-semibold text-lg shadow-luxury">
+                        <Button className="bg-gradient-to-r from-slate-600 to-gray-600 hover:from-slate-500 hover:to-gray-500 text-white px-8 py-3 rounded-2xl font-semibold text-lg shadow-2xl">
                           <Heart className="w-5 h-5 mr-2" />
                           Follow
                         </Button>
@@ -198,7 +197,7 @@ export const EroxrProfileViewer = ({ profileId, onEditClick }: EroxrProfileViewe
                       <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                         <Button 
                           variant="outline" 
-                          className="border-yellow-400/50 text-yellow-400 hover:bg-yellow-400/10 px-8 py-3 rounded-2xl font-semibold text-lg backdrop-blur-sm"
+                          className="border-slate-400/50 text-slate-300 hover:bg-slate-400/10 px-8 py-3 rounded-2xl font-semibold text-lg backdrop-blur-sm"
                         >
                           <Zap className="w-5 h-5 mr-2" />
                           Tip
@@ -221,11 +220,11 @@ export const EroxrProfileViewer = ({ profileId, onEditClick }: EroxrProfileViewe
         <motion.div
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
-          className="px-8 py-8 bg-luxury-darker/30 backdrop-blur-xl border-y border-yellow-400/20"
+          className="px-8 py-8 bg-slate-800/30 backdrop-blur-xl border-y border-slate-700/20"
         >
           <div className="max-w-7xl mx-auto">
-            <h3 className="text-luxury-neutral font-semibold mb-6 text-xl flex items-center gap-2">
-              <Sparkles className="w-6 h-6 text-yellow-400" />
+            <h3 className="text-slate-200 font-semibold mb-6 text-xl flex items-center gap-2">
+              <Sparkles className="w-6 h-6 text-slate-300" />
               Divine Skills & Interests
             </h3>
             <div className="flex flex-wrap gap-3">
@@ -239,7 +238,7 @@ export const EroxrProfileViewer = ({ profileId, onEditClick }: EroxrProfileViewe
                 >
                   <Badge
                     variant="secondary"
-                    className="bg-gradient-to-r from-yellow-400/10 to-luxury-primary/10 text-yellow-400 border-yellow-400/30 px-4 py-2 text-sm font-medium rounded-xl"
+                    className="bg-gradient-to-r from-slate-600/20 to-gray-600/20 text-slate-300 border-slate-500/30 px-4 py-2 text-sm font-medium rounded-xl"
                   >
                     {interest}
                   </Badge>
@@ -258,17 +257,17 @@ export const EroxrProfileViewer = ({ profileId, onEditClick }: EroxrProfileViewe
         <div className="max-w-7xl mx-auto">
           <Tabs defaultValue="posts" className="w-full">
             <div className="flex justify-center mb-12">
-              <TabsList className="bg-luxury-darker/50 backdrop-blur-xl rounded-2xl p-2 border border-yellow-400/20">
+              <TabsList className="bg-slate-800/50 backdrop-blur-xl rounded-2xl p-2 border border-slate-700/20">
                 <TabsTrigger 
                   value="posts" 
-                  className="flex items-center gap-2 rounded-xl px-6 py-3 data-[state=active]:bg-gradient-to-r data-[state=active]:from-yellow-400/20 data-[state=active]:to-luxury-primary/20 data-[state=active]:text-yellow-400"
+                  className="flex items-center gap-2 rounded-xl px-6 py-3 data-[state=active]:bg-gradient-to-r data-[state=active]:from-slate-600/20 data-[state=active]:to-gray-600/20 data-[state=active]:text-slate-300"
                 >
                   <Star className="w-4 h-4" />
                   Divine Creations
                 </TabsTrigger>
                 <TabsTrigger 
                   value="about" 
-                  className="flex items-center gap-2 rounded-xl px-6 py-3 data-[state=active]:bg-gradient-to-r data-[state=active]:from-yellow-400/20 data-[state=active]:to-luxury-primary/20 data-[state=active]:text-yellow-400"
+                  className="flex items-center gap-2 rounded-xl px-6 py-3 data-[state=active]:bg-gradient-to-r data-[state=active]:from-slate-600/20 data-[state=active]:to-gray-600/20 data-[state=active]:text-slate-300"
                 >
                   <Crown className="w-4 h-4" />
                   About
@@ -284,12 +283,12 @@ export const EroxrProfileViewer = ({ profileId, onEditClick }: EroxrProfileViewe
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="bg-luxury-darker/30 backdrop-blur-xl rounded-3xl p-12 border border-yellow-400/20"
+                className="bg-slate-800/30 backdrop-blur-xl rounded-3xl p-12 border border-slate-700/20"
               >
                 <div className="text-center">
-                  <Crown className="w-16 h-16 mx-auto text-yellow-400 mb-6" />
-                  <h3 className="text-3xl font-bold text-luxury-neutral mb-4">About {profile.username}</h3>
-                  <p className="text-luxury-muted text-lg max-w-2xl mx-auto leading-relaxed">
+                  <Crown className="w-16 h-16 mx-auto text-slate-300 mb-6" />
+                  <h3 className="text-3xl font-bold text-slate-200 mb-4">About {profile.username}</h3>
+                  <p className="text-slate-400 text-lg max-w-2xl mx-auto leading-relaxed">
                     {profile.bio || "This divine creator hasn't shared their story yet..."}
                   </p>
                 </div>
