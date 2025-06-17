@@ -53,7 +53,7 @@ export const PostContent = ({ content, mediaAssets, className = "" }: PostConten
                   <img
                     src={getMediaUrl(asset.storage_path)}
                     alt={asset.alt_text || 'Post image'}
-                    className="w-full max-h-96 object-cover rounded-lg cursor-pointer"
+                    className="w-full aspect-auto max-h-[500px] object-contain rounded-lg cursor-pointer"
                     onClick={() => openFullscreen(asset)}
                   />
                   <Button
@@ -69,7 +69,7 @@ export const PostContent = ({ content, mediaAssets, className = "" }: PostConten
                 <div className="relative">
                   <video
                     src={getMediaUrl(asset.storage_path)}
-                    className="w-full max-h-96 object-cover rounded-lg cursor-pointer"
+                    className="w-full aspect-auto max-h-[500px] object-contain rounded-lg cursor-pointer"
                     controls
                     onClick={() => openFullscreen(asset)}
                   />

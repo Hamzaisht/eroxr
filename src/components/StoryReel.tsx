@@ -1,11 +1,11 @@
+import { memo, useCallback } from "react";
 import { AnimatePresence } from "framer-motion";
 import { ImmersiveStoryViewer } from "./stories/ImmersiveStoryViewer";
 import { StoryUploadModal } from "./stories/StoryUploadModal";
 import { StoryAvatar } from "./story/StoryAvatar";
 import { useStoryReel } from "./story/useStoryReel";
-import { useEffect } from "react";
 
-export const StoryReel = () => {
+export const StoryReel = memo(() => {
   const {
     userStory,
     otherStories,
@@ -22,21 +22,13 @@ export const StoryReel = () => {
     getUserAvatar,
   } = useStoryReel();
 
-  // Listen for story updates
-  useEffect(() => {
-    const handleStoryUpdate = () => {
-      // Refresh stories when uploaded or deleted
-      window.location.reload();
-    };
+  const handleCloseViewer = useCallback(() => {
+    setShowViewer(false);
+  }, [setShowViewer]);
 
-    window.addEventListener('story-uploaded', handleStoryUpdate);
-    window.addEventListener('story-deleted', handleStoryUpdate);
-
-    return () => {
-      window.removeEventListener('story-uploaded', handleStoryUpdate);
-      window.removeEventListener('story-deleted', handleStoryUpdate);
-    };
-  }, []);
+  const handleCloseUpload = useCallback((open: boolean) => {
+    setShowUploadModal(open);
+  }, [setShowUploadModal]);
 
   if (isLoading) {
     return (
@@ -76,7 +68,7 @@ export const StoryReel = () => {
       {/* Story Upload Modal */}
       <StoryUploadModal 
         open={showUploadModal} 
-        onOpenChange={setShowUploadModal} 
+        onOpenChange={handleCloseUpload} 
       />
 
       {/* Immersive Story Viewer */}
@@ -85,10 +77,12 @@ export const StoryReel = () => {
           <ImmersiveStoryViewer
             stories={allStories}
             initialStoryIndex={selectedStoryIndex}
-            onClose={() => setShowViewer(false)}
+            onClose={handleCloseViewer}
           />
         )}
       </AnimatePresence>
     </>
   );
-};
+});
+
+StoryReel.displayName = "StoryReel";
