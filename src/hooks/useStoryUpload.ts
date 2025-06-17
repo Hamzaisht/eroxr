@@ -12,7 +12,7 @@ export const useStoryUpload = () => {
   const { toast } = useToast();
   const { refetch } = useStoriesFeed();
 
-  const uploadStory = async (file: File, caption?: string) => {
+  const uploadStory = async (file: File, duration: number = 10, caption?: string) => {
     if (!user?.id) {
       toast({
         title: 'Authentication required',
@@ -46,7 +46,7 @@ export const useStoryUpload = () => {
       const fileExtension = file.name.split('.').pop()?.toLowerCase() || 'bin';
       const fileName = `${user.id}-${Date.now()}.${fileExtension}`;
 
-      console.log('Uploading story file:', fileName, 'Size:', file.size, 'Type:', file.type);
+      console.log('Uploading story file:', fileName, 'Size:', file.size, 'Type:', file.type, 'Duration:', duration);
 
       // Upload to Supabase Storage
       const { data: uploadData, error: uploadError } = await supabase.storage
@@ -75,10 +75,11 @@ export const useStoryUpload = () => {
         throw new Error('Failed to generate valid public URL');
       }
 
-      // Create story record with proper media URL assignment
+      // Create story record with duration
       const storyData = {
         creator_id: user.id,
         content_type: file.type.startsWith('video/') ? 'video' : 'image',
+        duration: duration, // Store the selected duration
         is_active: true,
         expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // 24 hours from now
       };
@@ -112,7 +113,7 @@ export const useStoryUpload = () => {
 
       toast({
         title: 'Story uploaded',
-        description: 'Your story has been shared successfully!',
+        description: `Your ${duration}-second story has been shared successfully!`,
       });
 
       // Refresh stories feed

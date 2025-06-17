@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, ChevronLeft, ChevronRight, Trash2, Plus, Eye, Share2, Download } from "lucide-react";
@@ -24,6 +25,7 @@ export const ImmersiveStoryViewer = ({
   const [isMuted, setIsMuted] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [storyStats, setStoryStats] = useState({ views: 0, shares: 0, screenshots: 0 });
+  const [currentBlock, setCurrentBlock] = useState(0);
   
   const progressInterval = useRef<NodeJS.Timeout>();
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -34,7 +36,28 @@ export const ImmersiveStoryViewer = ({
   const isVideo = currentStory?.content_type === 'video' || !!currentStory?.video_url;
   const mediaUrl = isVideo ? currentStory?.video_url : currentStory?.media_url;
   const isOwner = session?.user?.id === currentStory?.creator_id;
-  const duration = isVideo ? 0 : (currentStory?.duration || 5) * 1000;
+  
+  // Calculate story blocks and duration (Snapchat-like system)
+  const getStoryDuration = useCallback(() => {
+    if (isVideo && videoRef.current?.duration) {
+      return Math.ceil(videoRef.current.duration * 1000); // Convert to milliseconds
+    }
+    // Use database duration or default to 10 seconds
+    return (currentStory?.duration || 10) * 1000;
+  }, [currentStory, isVideo]);
+
+  const getStoryBlocks = useCallback(() => {
+    const duration = getStoryDuration();
+    if (isVideo) {
+      // For videos, create 30-second blocks
+      return Math.ceil(duration / 30000);
+    }
+    // For images, use single block based on selected duration
+    return 1;
+  }, [getStoryDuration, isVideo]);
+
+  const totalBlocks = getStoryBlocks();
+  const blockDuration = isVideo ? 30000 : getStoryDuration(); // 30s for video blocks, full duration for images
 
   // Fetch story stats
   const fetchStoryStats = useCallback(async () => {
@@ -80,22 +103,39 @@ export const ImmersiveStoryViewer = ({
   }, [currentStory?.id, session?.user?.id, fetchStoryStats]);
 
   const handleNext = useCallback(() => {
-    if (currentIndex < stories.length - 1) {
+    if (currentBlock < totalBlocks - 1) {
+      // Move to next block of same story
+      setCurrentBlock(prev => prev + 1);
+      setProgress(0);
+    } else if (currentIndex < stories.length - 1) {
+      // Move to next story
       setCurrentIndex(prev => prev + 1);
+      setCurrentBlock(0);
       setProgress(0);
       setIsLoading(true);
     } else {
       onClose();
     }
-  }, [currentIndex, stories.length, onClose]);
+  }, [currentIndex, currentBlock, totalBlocks, stories.length, onClose]);
 
   const handlePrevious = useCallback(() => {
-    if (currentIndex > 0) {
-      setCurrentIndex(prev => prev - 1);
+    if (currentBlock > 0) {
+      // Move to previous block of same story
+      setCurrentBlock(prev => prev - 1);
+      setProgress(0);
+    } else if (currentIndex > 0) {
+      // Move to previous story
+      const prevStoryIndex = currentIndex - 1;
+      const prevStory = stories[prevStoryIndex];
+      const prevIsVideo = prevStory?.content_type === 'video' || !!prevStory?.video_url;
+      const prevTotalBlocks = prevIsVideo ? Math.ceil((prevStory?.duration || 30) / 30) : 1;
+      
+      setCurrentIndex(prevStoryIndex);
+      setCurrentBlock(prevTotalBlocks - 1); // Start at last block of previous story
       setProgress(0);
       setIsLoading(true);
     }
-  }, [currentIndex]);
+  }, [currentIndex, currentBlock, stories]);
 
   const handleDelete = async () => {
     if (!isOwner || !currentStory) return;
@@ -127,7 +167,6 @@ export const ImmersiveStoryViewer = ({
 
   const handleAddStory = () => {
     onClose();
-    // Trigger story upload modal
     window.dispatchEvent(new CustomEvent('open-story-upload'));
   };
 
@@ -146,7 +185,6 @@ export const ImmersiveStoryViewer = ({
         });
       }
 
-      // Register share action
       if (currentStory?.id && session?.user?.id) {
         await supabase
           .from('post_media_actions')
@@ -163,7 +201,6 @@ export const ImmersiveStoryViewer = ({
   };
 
   const handleScreenshot = async () => {
-    // Register screenshot action
     if (currentStory?.id && session?.user?.id) {
       try {
         await supabase
@@ -180,16 +217,16 @@ export const ImmersiveStoryViewer = ({
     }
   };
 
-  // Progress bar logic for images
+  // Progress bar logic for images and video blocks
   useEffect(() => {
-    if (!isVideo && !isPaused && !isLoading) {
+    if (!isPaused && !isLoading) {
       progressInterval.current = setInterval(() => {
         setProgress((prev) => {
           if (prev >= 100) {
             handleNext();
             return 0;
           }
-          return prev + (100 / duration) * 100;
+          return prev + (100 / blockDuration) * 100;
         });
       }, 100);
     }
@@ -199,12 +236,13 @@ export const ImmersiveStoryViewer = ({
         clearInterval(progressInterval.current);
       }
     };
-  }, [currentIndex, isPaused, isVideo, isLoading, duration, handleNext]);
+  }, [currentIndex, currentBlock, isPaused, isLoading, blockDuration, handleNext]);
 
   // Reset states when story changes
   useEffect(() => {
     setIsLoading(true);
     setProgress(0);
+    setCurrentBlock(0);
     fetchStoryStats();
   }, [currentIndex, fetchStoryStats]);
 
@@ -238,30 +276,30 @@ export const ImmersiveStoryViewer = ({
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 z-[100] bg-black flex items-center justify-center"
+        className="fixed inset-0 z-[200] bg-black flex items-center justify-center"
       >
-        {/* Progress bars */}
-        <div className="absolute top-2 left-4 right-4 z-[110] flex space-x-1">
-          {stories.map((_, index) => (
+        {/* Progress bars - Enhanced for blocks */}
+        <div className="absolute top-2 left-4 right-4 z-[220] flex space-x-1">
+          {Array.from({ length: totalBlocks }, (_, blockIndex) => (
             <div
-              key={index}
+              key={`${currentIndex}-${blockIndex}`}
               className="flex-1 h-1 bg-white/20 rounded-full overflow-hidden"
             >
               <div
                 className="h-full bg-white transition-all duration-100 ease-linear"
                 style={{
-                  width: index < currentIndex ? '100%' : 
-                         index === currentIndex ? `${progress}%` : '0%'
+                  width: blockIndex < currentBlock ? '100%' : 
+                         blockIndex === currentBlock ? `${progress}%` : '0%'
                 }}
               />
             </div>
           ))}
         </div>
 
-        {/* Header with fixed positioning and higher z-index */}
-        <div className="absolute top-6 left-4 right-4 z-[120] flex items-center justify-between text-white">
+        {/* Header with maximum visibility */}
+        <div className="absolute top-6 left-4 right-4 z-[230] flex items-center justify-between text-white">
           <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 rounded-full overflow-hidden bg-white/20">
+            <div className="w-10 h-10 rounded-full overflow-hidden bg-white/20 border border-white/30">
               {currentStory.creator.avatar_url ? (
                 <img
                   src={currentStory.creator.avatar_url}
@@ -286,14 +324,14 @@ export const ImmersiveStoryViewer = ({
           </div>
 
           <div className="flex items-center space-x-2">
-            {/* Add Story Button - always visible with better styling */}
+            {/* Add Story Button - Maximum visibility */}
             <Button
               variant="ghost"
               size="icon"
               onClick={handleAddStory}
-              className="w-10 h-10 text-white hover:text-amber-300 hover:bg-white/20 bg-black/30 backdrop-blur-sm border border-white/20"
+              className="w-12 h-12 text-white hover:text-amber-300 hover:bg-white/30 bg-black/50 backdrop-blur-sm border-2 border-white/40 shadow-lg"
             >
-              <Plus className="w-5 h-5" />
+              <Plus className="w-6 h-6" />
             </Button>
 
             {/* Owner Controls */}
@@ -302,20 +340,20 @@ export const ImmersiveStoryViewer = ({
                 variant="ghost"
                 size="icon"
                 onClick={handleDelete}
-                className="w-10 h-10 text-white hover:text-red-400 hover:bg-red-400/20 bg-black/30 backdrop-blur-sm border border-white/20"
+                className="w-12 h-12 text-white hover:text-red-400 hover:bg-red-400/30 bg-black/50 backdrop-blur-sm border-2 border-white/40 shadow-lg"
               >
-                <Trash2 className="w-5 h-5" />
+                <Trash2 className="w-6 h-6" />
               </Button>
             )}
 
-            {/* Close Button with better styling */}
+            {/* Close Button - Maximum visibility */}
             <Button
               variant="ghost"
               size="icon"
               onClick={onClose}
-              className="w-10 h-10 text-white hover:text-white/80 hover:bg-white/20 bg-black/30 backdrop-blur-sm border border-white/20"
+              className="w-12 h-12 text-white hover:text-white/80 hover:bg-white/30 bg-black/50 backdrop-blur-sm border-2 border-white/40 shadow-lg"
             >
-              <X className="w-5 h-5" />
+              <X className="w-6 h-6" />
             </Button>
           </div>
         </div>
@@ -345,7 +383,7 @@ export const ImmersiveStoryViewer = ({
 
           {/* Navigation arrows */}
           <div className="absolute inset-y-0 left-4 flex items-center">
-            {currentIndex > 0 && (
+            {(currentIndex > 0 || currentBlock > 0) && (
               <Button
                 variant="ghost"
                 size="icon"
@@ -358,7 +396,7 @@ export const ImmersiveStoryViewer = ({
           </div>
 
           <div className="absolute inset-y-0 right-4 flex items-center">
-            {currentIndex < stories.length - 1 && (
+            {(currentIndex < stories.length - 1 || currentBlock < totalBlocks - 1) && (
               <Button
                 variant="ghost"
                 size="icon"
@@ -378,17 +416,19 @@ export const ImmersiveStoryViewer = ({
         </div>
 
         {/* Snapchat-like Stats Panel */}
-        <div className="absolute bottom-20 right-4 z-[110] flex flex-col items-center space-y-4">
+        <div className="absolute bottom-20 right-4 z-[220] flex flex-col items-center space-y-4">
           {/* Views */}
           <div className="flex flex-col items-center">
             <Button
               variant="ghost"
               size="icon"
-              className="w-12 h-12 rounded-full bg-black/30 backdrop-blur-sm text-white hover:bg-white/20"
+              className="w-12 h-12 rounded-full bg-black/50 backdrop-blur-sm text-white hover:bg-white/20 border border-white/30"
             >
               <Eye className="w-6 h-6" />
             </Button>
-            <span className="text-white text-xs mt-1 font-medium">{storyStats.views}</span>
+            <span className="text-white text-xs mt-1 font-medium bg-black/30 px-2 py-1 rounded-full">
+              {storyStats.views}
+            </span>
           </div>
 
           {/* Shares */}
@@ -397,11 +437,13 @@ export const ImmersiveStoryViewer = ({
               variant="ghost"
               size="icon"
               onClick={handleShare}
-              className="w-12 h-12 rounded-full bg-black/30 backdrop-blur-sm text-white hover:bg-white/20"
+              className="w-12 h-12 rounded-full bg-black/50 backdrop-blur-sm text-white hover:bg-white/20 border border-white/30"
             >
               <Share2 className="w-6 h-6" />
             </Button>
-            <span className="text-white text-xs mt-1 font-medium">{storyStats.shares}</span>
+            <span className="text-white text-xs mt-1 font-medium bg-black/30 px-2 py-1 rounded-full">
+              {storyStats.shares}
+            </span>
           </div>
 
           {/* Screenshots */}
@@ -410,18 +452,30 @@ export const ImmersiveStoryViewer = ({
               variant="ghost"
               size="icon"
               onClick={handleScreenshot}
-              className="w-12 h-12 rounded-full bg-black/30 backdrop-blur-sm text-white hover:bg-white/20"
+              className="w-12 h-12 rounded-full bg-black/50 backdrop-blur-sm text-white hover:bg-white/20 border border-white/30"
             >
               <Download className="w-6 h-6" />
             </Button>
-            <span className="text-white text-xs mt-1 font-medium">{storyStats.screenshots}</span>
+            <span className="text-white text-xs mt-1 font-medium bg-black/30 px-2 py-1 rounded-full">
+              {storyStats.screenshots}
+            </span>
           </div>
         </div>
 
         {/* Loading indicator */}
         {isLoading && (
-          <div className="absolute inset-0 flex items-center justify-center bg-black/50 z-[105]">
+          <div className="absolute inset-0 flex items-center justify-center bg-black/50 z-[210]">
             <div className="w-8 h-8 border-2 border-white border-t-transparent rounded-full animate-spin" />
+          </div>
+        )}
+
+        {/* Duration indicator */}
+        {!isLoading && (
+          <div className="absolute bottom-4 left-4 z-[220] text-white text-sm bg-black/50 backdrop-blur-sm px-3 py-1 rounded-full border border-white/30">
+            {isVideo ? 
+              `Block ${currentBlock + 1}/${totalBlocks}` : 
+              `${(currentStory?.duration || 10)}s`
+            }
           </div>
         )}
       </motion.div>

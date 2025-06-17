@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Upload, X, Image, Video, Crown, Sparkles } from "lucide-react";
+import { Upload, X, Image, Video, Crown, Sparkles, Clock } from "lucide-react";
 import { useStoryUpload } from "@/hooks/useStoryUpload";
 import { Progress } from "@/components/ui/progress";
 
@@ -14,7 +14,14 @@ interface StoryUploadModalProps {
 export const StoryUploadModal = ({ open, onOpenChange }: StoryUploadModalProps) => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [selectedDuration, setSelectedDuration] = useState<number>(10); // Default 10 seconds
   const { uploadStory, uploading, uploadProgress } = useStoryUpload();
+
+  const durationOptions = [
+    { value: 5, label: "5 seconds", description: "Quick moment" },
+    { value: 10, label: "10 seconds", description: "Standard story" },
+    { value: 30, label: "30 seconds", description: "Extended story" }
+  ];
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -40,12 +47,22 @@ export const StoryUploadModal = ({ open, onOpenChange }: StoryUploadModalProps) 
     // Create preview URL
     const url = URL.createObjectURL(file);
     setPreviewUrl(url);
+
+    // For videos, duration selection is not needed as it uses the video's natural duration
+    if (isVideo) {
+      const video = document.createElement('video');
+      video.src = url;
+      video.onloadedmetadata = () => {
+        const videoDuration = Math.ceil(video.duration);
+        setSelectedDuration(videoDuration);
+      };
+    }
   };
 
   const handleUpload = async () => {
     if (!selectedFile) return;
 
-    const result = await uploadStory(selectedFile);
+    const result = await uploadStory(selectedFile, selectedDuration);
     
     if (result.success) {
       // Close modal and refresh stories
@@ -56,6 +73,7 @@ export const StoryUploadModal = ({ open, onOpenChange }: StoryUploadModalProps) 
 
   const handleClose = () => {
     setSelectedFile(null);
+    setSelectedDuration(10); // Reset to default
     if (previewUrl) {
       URL.revokeObjectURL(previewUrl);
       setPreviewUrl(null);
@@ -157,6 +175,45 @@ export const StoryUploadModal = ({ open, onOpenChange }: StoryUploadModalProps) 
                   <X className="w-4 h-4" />
                 </Button>
               </div>
+
+              {/* Duration Selection for Images */}
+              {!isVideo && (
+                <div className="space-y-3 bg-black/30 p-4 rounded-lg border border-amber-500/20">
+                  <div className="flex items-center gap-2 text-amber-200">
+                    <Clock className="w-4 h-4" />
+                    <span className="text-sm font-medium">Story Duration</span>
+                  </div>
+                  <div className="grid grid-cols-3 gap-2">
+                    {durationOptions.map((option) => (
+                      <button
+                        key={option.value}
+                        onClick={() => setSelectedDuration(option.value)}
+                        className={`p-3 rounded-lg border transition-all duration-200 ${
+                          selectedDuration === option.value
+                            ? 'bg-amber-500/20 border-amber-400 text-amber-200'
+                            : 'bg-black/20 border-white/20 text-white/70 hover:bg-white/10'
+                        }`}
+                      >
+                        <div className="text-sm font-medium">{option.label}</div>
+                        <div className="text-xs opacity-70">{option.description}</div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Video Duration Info */}
+              {isVideo && (
+                <div className="bg-black/30 p-4 rounded-lg border border-blue-500/20">
+                  <div className="flex items-center gap-2 text-blue-200">
+                    <Video className="w-4 h-4" />
+                    <span className="text-sm font-medium">Video Duration</span>
+                  </div>
+                  <p className="text-xs text-blue-100 mt-1">
+                    Videos longer than 30 seconds will be split into 30-second blocks
+                  </p>
+                </div>
+              )}
 
               {/* Upload Progress */}
               {uploading && (
