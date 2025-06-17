@@ -1,7 +1,7 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, ChevronLeft, ChevronRight, Trash2, Edit, Pause, Play, Volume2, VolumeX } from "lucide-react";
+import { X, ChevronLeft, ChevronRight, Trash2, Plus, Eye, Share2, Download } from "lucide-react";
 import { useSession } from "@supabase/auth-helpers-react";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
@@ -24,6 +24,7 @@ export const ImmersiveStoryViewer = ({
   const [isPaused, setIsPaused] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [storyStats, setStoryStats] = useState({ views: 0, shares: 0, screenshots: 0 });
   
   const progressInterval = useRef<NodeJS.Timeout>();
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -35,6 +36,49 @@ export const ImmersiveStoryViewer = ({
   const mediaUrl = isVideo ? currentStory?.video_url : currentStory?.media_url;
   const isOwner = session?.user?.id === currentStory?.creator_id;
   const duration = isVideo ? 0 : (currentStory?.duration || 5) * 1000;
+
+  // Fetch story stats
+  const fetchStoryStats = useCallback(async () => {
+    if (!currentStory?.id) return;
+
+    try {
+      const { data } = await supabase
+        .from('post_media_actions')
+        .select('action_type')
+        .eq('post_id', currentStory.id);
+
+      if (data) {
+        setStoryStats({
+          views: data.filter(d => d.action_type === 'view').length,
+          shares: data.filter(d => d.action_type === 'share').length,
+          screenshots: data.filter(d => d.action_type === 'screenshot').length
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching story stats:', error);
+    }
+  }, [currentStory?.id]);
+
+  // Register view when story loads
+  useEffect(() => {
+    if (currentStory?.id && session?.user?.id) {
+      const registerView = async () => {
+        try {
+          await supabase
+            .from('post_media_actions')
+            .insert({
+              post_id: currentStory.id,
+              user_id: session.user.id,
+              action_type: 'view'
+            });
+          fetchStoryStats();
+        } catch (error) {
+          console.error('Error registering view:', error);
+        }
+      };
+      registerView();
+    }
+  }, [currentStory?.id, session?.user?.id, fetchStoryStats]);
 
   const handleNext = useCallback(() => {
     if (currentIndex < stories.length - 1) {
@@ -70,7 +114,6 @@ export const ImmersiveStoryViewer = ({
         description: "Your story has been removed successfully",
       });
 
-      // Trigger refresh and close viewer
       window.dispatchEvent(new CustomEvent('story-deleted'));
       onClose();
     } catch (error) {
@@ -80,6 +123,61 @@ export const ImmersiveStoryViewer = ({
         description: "Failed to delete story",
         variant: "destructive",
       });
+    }
+  };
+
+  const handleAddStory = () => {
+    onClose();
+    // Trigger story upload modal
+    window.dispatchEvent(new CustomEvent('open-story-upload'));
+  };
+
+  const handleShare = async () => {
+    try {
+      if (navigator.share && mediaUrl) {
+        await navigator.share({
+          title: `Story by ${currentStory.creator.username}`,
+          url: mediaUrl,
+        });
+      } else if (mediaUrl) {
+        await navigator.clipboard.writeText(mediaUrl);
+        toast({
+          title: "Link copied",
+          description: "Story link copied to clipboard",
+        });
+      }
+
+      // Register share action
+      if (currentStory?.id && session?.user?.id) {
+        await supabase
+          .from('post_media_actions')
+          .insert({
+            post_id: currentStory.id,
+            user_id: session.user.id,
+            action_type: 'share'
+          });
+        fetchStoryStats();
+      }
+    } catch (error) {
+      console.error('Error sharing:', error);
+    }
+  };
+
+  const handleScreenshot = async () => {
+    // Register screenshot action
+    if (currentStory?.id && session?.user?.id) {
+      try {
+        await supabase
+          .from('post_media_actions')
+          .insert({
+            post_id: currentStory.id,
+            user_id: session.user.id,
+            action_type: 'screenshot'
+          });
+        fetchStoryStats();
+      } catch (error) {
+        console.error('Error registering screenshot:', error);
+      }
     }
   };
 
@@ -108,7 +206,8 @@ export const ImmersiveStoryViewer = ({
   useEffect(() => {
     setIsLoading(true);
     setProgress(0);
-  }, [currentIndex]);
+    fetchStoryStats();
+  }, [currentIndex, fetchStoryStats]);
 
   // Video event handlers
   const handleVideoLoad = () => {
@@ -119,33 +218,18 @@ export const ImmersiveStoryViewer = ({
     handleNext();
   };
 
-  const togglePlayPause = () => {
-    if (isVideo && videoRef.current) {
-      if (isPaused) {
-        videoRef.current.play();
-        setIsPaused(false);
-      } else {
-        videoRef.current.pause();
-        setIsPaused(true);
+  // Listen for screenshot events
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'S') {
+        e.preventDefault();
+        handleScreenshot();
       }
-    } else {
-      setIsPaused(!isPaused);
-    }
-  };
+    };
 
-  const toggleMute = () => {
-    if (videoRef.current) {
-      videoRef.current.muted = !isMuted;
-      setIsMuted(!isMuted);
-    }
-  };
-
-  // Calculate time remaining for display
-  const getTimeRemaining = () => {
-    if (isVideo) return "Video";
-    const remaining = Math.ceil((duration - (progress / 100) * duration) / 1000);
-    return `${remaining}s`;
-  };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   if (!currentStory) return null;
 
@@ -194,7 +278,7 @@ export const ImmersiveStoryViewer = ({
             <div>
               <p className="text-sm font-medium">{currentStory.creator.username || 'User'}</p>
               <p className="text-xs text-white/60">
-                {getTimeRemaining()} • {new Date(currentStory.created_at).toLocaleTimeString([], { 
+                {new Date(currentStory.created_at).toLocaleTimeString([], { 
                   hour: '2-digit', 
                   minute: '2-digit' 
                 })}
@@ -203,18 +287,29 @@ export const ImmersiveStoryViewer = ({
           </div>
 
           <div className="flex items-center space-x-2">
+            {/* Add Story Button - always visible */}
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleAddStory}
+              className="text-white hover:text-amber-300 hover:bg-white/10"
+            >
+              <Plus className="w-5 h-5" />
+            </Button>
+
+            {/* Owner Controls */}
             {isOwner && (
-              <>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={handleDelete}
-                  className="text-white hover:text-red-400 hover:bg-red-400/10"
-                >
-                  <Trash2 className="w-5 h-5" />
-                </Button>
-              </>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={handleDelete}
+                className="text-white hover:text-red-400 hover:bg-red-400/10"
+              >
+                <Trash2 className="w-5 h-5" />
+              </Button>
             )}
+
+            {/* Close Button */}
             <Button
               variant="ghost"
               size="icon"
@@ -249,30 +344,6 @@ export const ImmersiveStoryViewer = ({
             />
           )}
 
-          {/* Control overlay */}
-          <div className="absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
-            <div className="flex items-center space-x-4">
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={togglePlayPause}
-                className="text-white bg-black/50 hover:bg-black/70"
-              >
-                {isPaused ? <Play className="w-6 h-6" /> : <Pause className="w-6 h-6" />}
-              </Button>
-              {isVideo && (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={toggleMute}
-                  className="text-white bg-black/50 hover:bg-black/70"
-                >
-                  {isMuted ? <VolumeX className="w-6 h-6" /> : <Volume2 className="w-6 h-6" />}
-                </Button>
-              )}
-            </div>
-          </div>
-
           {/* Navigation arrows */}
           <div className="absolute inset-y-0 left-4 flex items-center">
             {currentIndex > 0 && (
@@ -304,6 +375,47 @@ export const ImmersiveStoryViewer = ({
           <div className="absolute inset-0 flex md:hidden">
             <div className="flex-1" onClick={handlePrevious} />
             <div className="flex-1" onClick={handleNext} />
+          </div>
+        </div>
+
+        {/* Snapchat-like Stats Panel */}
+        <div className="absolute bottom-20 right-4 z-50 flex flex-col items-center space-y-4">
+          {/* Views */}
+          <div className="flex flex-col items-center">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="w-12 h-12 rounded-full bg-black/30 backdrop-blur-sm text-white hover:bg-white/20"
+            >
+              <Eye className="w-6 h-6" />
+            </Button>
+            <span className="text-white text-xs mt-1 font-medium">{storyStats.views}</span>
+          </div>
+
+          {/* Shares */}
+          <div className="flex flex-col items-center">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleShare}
+              className="w-12 h-12 rounded-full bg-black/30 backdrop-blur-sm text-white hover:bg-white/20"
+            >
+              <Share2 className="w-6 h-6" />
+            </Button>
+            <span className="text-white text-xs mt-1 font-medium">{storyStats.shares}</span>
+          </div>
+
+          {/* Screenshots */}
+          <div className="flex flex-col items-center">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleScreenshot}
+              className="w-12 h-12 rounded-full bg-black/30 backdrop-blur-sm text-white hover:bg-white/20"
+            >
+              <Download className="w-6 h-6" />
+            </Button>
+            <span className="text-white text-xs mt-1 font-medium">{storyStats.screenshots}</span>
           </div>
         </div>
 

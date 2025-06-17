@@ -1,4 +1,5 @@
-import { memo, useCallback } from "react";
+
+import { memo, useCallback, useEffect } from "react";
 import { AnimatePresence } from "framer-motion";
 import { ImmersiveStoryViewer } from "./stories/ImmersiveStoryViewer";
 import { StoryUploadModal } from "./stories/StoryUploadModal";
@@ -28,6 +29,16 @@ export const StoryReel = memo(() => {
 
   const handleCloseUpload = useCallback((open: boolean) => {
     setShowUploadModal(open);
+  }, [setShowUploadModal]);
+
+  // Listen for story upload events from the viewer
+  useEffect(() => {
+    const handleOpenUpload = () => {
+      setShowUploadModal(true);
+    };
+
+    window.addEventListener('open-story-upload', handleOpenUpload);
+    return () => window.removeEventListener('open-story-upload', handleOpenUpload);
   }, [setShowUploadModal]);
 
   if (isLoading) {
