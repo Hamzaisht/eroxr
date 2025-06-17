@@ -5,6 +5,7 @@ import { ToastProvider } from "@/hooks/use-toast";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { ErrorBoundary } from "@/components/ui/ErrorBoundary";
 import ProfilePage from "@/pages/ProfilePage";
+import Profile from "@/pages/Profile";
 import Home from "@/pages/Home";
 import SearchPage from "@/pages/Search";
 import Index from "@/pages/Index";
@@ -44,6 +45,9 @@ function App() {
                   </Route>
                   <Route path="/profile/:username" element={<MainLayout />}>
                     <Route index element={<ProfilePage />} />
+                  </Route>
+                  <Route path="/profile" element={<MainLayout />}>
+                    <Route index element={<Profile />} />
                   </Route>
                 </Routes>
               </ErrorBoundary>

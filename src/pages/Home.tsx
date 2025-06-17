@@ -1,269 +1,152 @@
 
-import { useState, useCallback } from "react";
-import { CreatePostArea } from "@/components/home/CreatePostArea";
-import { RightSidebar } from "@/components/home/RightSidebar";
-import { StoryBar } from "@/components/stories/StoryBar";
-import { LiveStreams } from "@/components/home/LiveStreams";
-import { EnhancedPostCard } from "@/components/feed/EnhancedPostCard";
-import { WelcomeBanner } from "@/components/home/WelcomeBanner";
-import { Loader2, RefreshCw, UserPlus } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { usePostActions } from "@/hooks/usePostActions";
-import { useCreatePostDialog } from "@/hooks/useCreatePostDialog";
-import { useGoLiveDialog } from "@/hooks/useGoLiveDialog";
+import { useState, useEffect } from "react";
+import { motion } from "framer-motion";
 import { CreatePostDialog } from "@/components/CreatePostDialog";
-import { useHomePosts } from "@/hooks/useHomePosts";
-import { useAuth } from "@/contexts/AuthContext";
+import { NewPostCreator } from "@/components/NewPostCreator";
+import { CreatorsFeed } from "@/components/CreatorsFeed";
+import { FeaturedCreators } from "@/components/FeaturedCreators";
+import { StoryReel } from "@/components/StoryReel";
+import { TrendingCreators } from "@/components/TrendingCreators";
+import { PromotedAds } from "@/components/PromotedAds";
+import { SubscribedCreators } from "@/components/SubscribedCreators";
+import { useCurrentUser } from "@/hooks/useCurrentUser";
+import { Crown, Sparkles, Users, Heart } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { HomeLayout } from "@/components/home/HomeLayout";
 
 const Home = () => {
-  console.log('Home component rendering');
-  
-  const { user, session, loading: authLoading } = useAuth();
-  const { handleLike, handleDelete } = usePostActions();
-  const { isOpen: isCreatePostOpen, openDialog: openCreatePost, closeDialog: closeCreatePost } = useCreatePostDialog();
-  const { openDialog: openGoLive } = useGoLiveDialog();
-  const [selectedFiles, setSelectedFiles] = useState<FileList | null>(null);
-  const [showWelcomeBanner, setShowWelcomeBanner] = useState(true);
+  const { user, profile, isLoading } = useCurrentUser();
+  const [isCreatePostOpen, setIsCreatePostOpen] = useState(false);
   const navigate = useNavigate();
 
-  const isLoggedIn = !!user && !!session;
-  
-  // Always fetch posts - the hook handles auth state internally
-  const { data: posts, isLoading: postsLoading, error, refetch } = useHomePosts();
+  const goToProfile = () => {
+    navigate("/profile");
+  };
 
-  // Define callbacks at top level - not conditionally
-  const onLike = useCallback((postId: string) => {
-    if (!isLoggedIn) return;
-    console.log('Home - Liking post:', postId);
-    handleLike(postId);
-  }, [isLoggedIn, handleLike]);
-
-  const onDelete = useCallback((postId: string, creatorId: string) => {
-    if (!isLoggedIn) return;
-    console.log('Home - Deleting post:', postId);
-    handleDelete(postId);
-  }, [isLoggedIn, handleDelete]);
-
-  const handlePostCreated = useCallback(() => {
-    console.log('Home - Post created, refreshing feed');
-    if (refetch) {
-      refetch();
-    }
-    closeCreatePost();
-  }, [refetch, closeCreatePost]);
-
-  const handleAuthAction = useCallback(() => {
-    navigate('/login');
-  }, [navigate]);
-
-  const handleWelcomeDismiss = useCallback(() => {
-    setShowWelcomeBanner(false);
-  }, []);
-
-  console.log('Home - Render state:', {
-    authLoading,
-    postsLoading,
-    isLoggedIn,
-    postsCount: posts?.length || 0,
-    errorMessage: error instanceof Error ? error.message : 'Unknown error'
-  });
-
-  // Show loading only for initial auth check
-  if (authLoading) {
-    console.log('Home - Showing auth loading');
+  if (isLoading) {
     return (
-      <HomeLayout>
-        <div className="flex items-center justify-center min-h-screen">
-          <div className="text-center">
-            <Loader2 className="h-8 w-8 animate-spin text-luxury-primary mx-auto mb-4" />
-            <p className="text-white">Loading...</p>
-          </div>
-        </div>
-      </HomeLayout>
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-gray-900 to-slate-800 flex items-center justify-center">
+        <motion.div
+          animate={{ rotate: 360 }}
+          transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+          className="w-12 h-12 border-4 border-slate-400 border-t-transparent rounded-full"
+        />
+      </div>
     );
   }
 
-  // Show posts loading
-  if (postsLoading) {
-    console.log('Home - Showing posts loading');
-    return (
-      <HomeLayout>
-        <div className="flex items-center justify-center min-h-screen">
-          <div className="text-center">
-            <Loader2 className="h-8 w-8 animate-spin text-luxury-primary mx-auto mb-4" />
-            <p className="text-white">Loading your feed...</p>
-          </div>
-        </div>
-      </HomeLayout>
-    );
-  }
-
-  if (error) {
-    console.log('Home - Showing error state');
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-    return (
-      <HomeLayout>
-        <div className="flex items-center justify-center min-h-screen">
-          <div className="text-center max-w-md">
-            <p className="text-red-400 mb-4">Error loading posts</p>
-            <p className="text-gray-400 text-sm mb-6">{errorMessage}</p>
-            <Button onClick={() => refetch()} variant="outline" className="mr-4">
-              <RefreshCw className="h-4 w-4 mr-2" />
-              Try Again
-            </Button>
-            <Button onClick={() => window.location.reload()}>
-              Refresh Page
-            </Button>
-          </div>
-        </div>
-      </HomeLayout>
-    );
-  }
-
-  console.log('Home - Rendering main content');
-
-  // Guest view
-  if (!isLoggedIn) {
-    return (
-      <HomeLayout>
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
-          <div className="lg:col-span-2 space-y-8">
-            {/* Welcome Header for Guests */}
-            <div className="text-center space-y-6 p-8 bg-gradient-to-r from-luxury-primary/10 to-luxury-accent/10 rounded-2xl border border-luxury-primary/20 backdrop-blur-sm">
-              <div className="space-y-3">
-                <h1 className="text-5xl sm:text-6xl font-bold bg-gradient-to-r from-luxury-primary via-luxury-accent to-luxury-secondary bg-clip-text text-transparent font-display">
-                  Welcome to Eroxr
-                </h1>
-                <p className="text-luxury-muted text-xl">Join our exclusive creator community</p>
-              </div>
-              <div className="space-y-4">
-                <Button 
-                  onClick={handleAuthAction}
-                  size="xl"
-                  className="bg-gradient-to-r from-luxury-primary to-luxury-accent hover:from-luxury-primary/90 hover:to-luxury-accent/90 text-white px-12 py-6 rounded-full font-semibold text-lg shadow-luxury hover:shadow-luxury-hover transform hover:scale-105 transition-all duration-300"
-                >
-                  <UserPlus className="h-6 w-6 mr-3" />
-                  Join the Studio
-                </Button>
-                <p className="text-gray-400 text-sm">
-                  Already a member?{" "}
-                  <button 
-                    onClick={handleAuthAction}
-                    className="text-luxury-primary hover:text-luxury-accent transition-colors hover:underline"
-                  >
-                    Sign in here
-                  </button>
-                </p>
-              </div>
-            </div>
-
-            {/* Public Posts for Guests */}
-            <div className="space-y-6">
-              {posts && posts.length > 0 ? (
-                posts.slice(0, 5).map((post) => (
-                  <EnhancedPostCard
-                    key={post.id}
-                    post={post}
-                    currentUserId={undefined}
-                    onLike={onLike}
-                    onDelete={onDelete}
-                  />
-                ))
-              ) : (
-                <div className="text-center py-16 bg-gradient-to-br from-luxury-dark/50 to-luxury-darker/50 rounded-2xl border border-luxury-primary/10 backdrop-blur-sm">
-                  <p className="text-gray-400 mb-2 text-lg">No posts available</p>
-                  <p className="text-gray-500 text-sm mb-6">Join to see exclusive content!</p>
-                  <Button 
-                    onClick={handleAuthAction} 
-                    className="bg-luxury-primary hover:bg-luxury-primary/90 shadow-luxury"
-                    size="lg"
-                  >
-                    Sign Up Now
-                  </Button>
-                </div>
-              )}
-            </div>
-          </div>
-          
-          <div className="lg:col-span-1">
-            <RightSidebar />
-          </div>
-        </div>
-      </HomeLayout>
-    );
-  }
-
-  // Logged-in user view
   return (
-    <HomeLayout>
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
-        <div className="lg:col-span-2 space-y-8">
-          {/* Auto-dismissing Welcome Banner */}
-          {showWelcomeBanner && (
-            <WelcomeBanner 
-              username={user?.user_metadata?.username}
-              onDismiss={handleWelcomeDismiss}
-            />
-          )}
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-gray-900 to-slate-800 relative">
+      {/* Greek Pattern Background */}
+      <div className="absolute inset-0 opacity-5">
+        <div 
+          className="absolute inset-0 bg-repeat bg-[length:80px_80px]" 
+          style={{
+            backgroundImage: `url("data:image/svg+xml,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><path d="M50 0L65 35L100 35L72.5 57.5L80 92.5L50 75L20 92.5L27.5 57.5L0 35L35 35Z" fill="#E5E7EB" opacity="0.3"/></svg>')}")`
+          }}
+        />
+      </div>
 
-          {/* Stories Bar */}
-          <div className="w-full">
-            <StoryBar />
-          </div>
-          
-          <LiveStreams />
-          
-          <CreatePostArea 
-            onCreatePost={openCreatePost}
-            onGoLive={openGoLive}
-          />
-          
-          <div className="space-y-6">
-            {posts && posts.length > 0 ? (
-              posts.map((post) => (
-                <EnhancedPostCard
-                  key={post.id}
-                  post={post}
-                  currentUserId={user?.id}
-                  onLike={onLike}
-                  onDelete={onDelete}
-                />
-              ))
-            ) : (
-              <div className="text-center py-16 bg-gradient-to-br from-luxury-dark/50 to-luxury-darker/50 rounded-2xl border border-luxury-primary/10 backdrop-blur-sm">
-                <p className="text-gray-400 mb-2 text-lg">No posts found</p>
-                <p className="text-gray-500 text-sm mb-6">Be the first to create a masterpiece!</p>
-                <Button 
-                  onClick={openCreatePost} 
-                  className="bg-luxury-primary hover:bg-luxury-primary/90 shadow-luxury"
-                  size="lg"
-                >
-                  Create First Post
-                </Button>
+      <div className="relative z-10">
+        {/* Welcome Header */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="px-4 py-8 sm:px-6 lg:px-8"
+        >
+          <div className="max-w-7xl mx-auto">
+            <div className="flex items-center justify-between mb-8">
+              <div className="flex items-center gap-4">
+                <Crown className="w-10 h-10 text-slate-300" />
+                <div>
+                  <h1 className="text-3xl font-bold text-slate-100">
+                    Welcome to the Divine Realm, {profile?.username || 'Creator'}
+                  </h1>
+                  <p className="text-slate-400 text-lg">
+                    Your celestial content awaits
+                  </p>
+                </div>
               </div>
-            )}
+              
+              <Button
+                onClick={goToProfile}
+                className="bg-gradient-to-r from-slate-600 to-gray-600 hover:from-slate-500 hover:to-gray-500 text-white px-6 py-3 rounded-2xl font-semibold shadow-2xl"
+              >
+                <Crown className="w-5 h-5 mr-2" />
+                Visit Divine Studio
+              </Button>
+            </div>
+
+            {/* Quick Stats */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+              {[
+                { icon: Users, label: 'Followers', value: '2.4K', color: 'from-slate-500 to-gray-500' },
+                { icon: Heart, label: 'Likes', value: '18.7K', color: 'from-slate-600 to-gray-600' },
+                { icon: Sparkles, label: 'Posts', value: '127', color: 'from-slate-500 to-gray-500' },
+                { icon: Crown, label: 'Divine Score', value: '98%', color: 'from-slate-600 to-gray-600' }
+              ].map((stat, index) => {
+                const Icon = stat.icon;
+                return (
+                  <motion.div
+                    key={stat.label}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.1 }}
+                    className="bg-slate-800/30 backdrop-blur-xl rounded-2xl p-6 border border-slate-700/20"
+                  >
+                    <div className={`w-12 h-12 mx-auto mb-4 rounded-full bg-gradient-to-r ${stat.color} flex items-center justify-center`}>
+                      <Icon className="w-6 h-6 text-white" />
+                    </div>
+                    <div className="text-2xl font-bold text-slate-200 text-center mb-1">
+                      {stat.value}
+                    </div>
+                    <div className="text-slate-400 text-center text-sm">
+                      {stat.label}
+                    </div>
+                  </motion.div>
+                );
+              })}
+            </div>
+          </div>
+        </motion.div>
+
+        {/* Story Reel */}
+        <div className="px-4 sm:px-6 lg:px-8 mb-8">
+          <div className="max-w-7xl mx-auto">
+            <StoryReel />
           </div>
         </div>
-        
-        <div className="lg:col-span-1">
-          <RightSidebar />
+
+        {/* Main Content Grid */}
+        <div className="px-4 sm:px-6 lg:px-8">
+          <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-4 gap-8">
+            
+            {/* Left Sidebar */}
+            <div className="lg:col-span-1 space-y-6">
+              <FeaturedCreators />
+              <TrendingCreators />
+            </div>
+
+            {/* Main Content */}
+            <div className="lg:col-span-2 space-y-6">
+              <NewPostCreator onCreatePost={() => setIsCreatePostOpen(true)} />
+              <CreatorsFeed />
+            </div>
+
+            {/* Right Sidebar */}
+            <div className="lg:col-span-1 space-y-6">
+              <SubscribedCreators />
+              <PromotedAds />
+            </div>
+          </div>
         </div>
       </div>
 
-      {isCreatePostOpen && (
-        <CreatePostDialog
-          open={isCreatePostOpen}
-          onOpenChange={(open) => {
-            if (!open) handlePostCreated();
-            else openCreatePost();
-          }}
-          selectedFiles={selectedFiles}
-          onFileSelect={setSelectedFiles}
-        />
-      )}
-    </HomeLayout>
+      <CreatePostDialog 
+        open={isCreatePostOpen} 
+        onOpenChange={setIsCreatePostOpen}
+      />
+    </div>
   );
 };
 

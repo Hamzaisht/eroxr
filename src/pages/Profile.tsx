@@ -16,8 +16,8 @@ export default function Profile() {
 
   if (!profileId) {
     return (
-      <div className="min-h-screen bg-luxury-gradient flex items-center justify-center">
-        <p className="text-luxury-muted text-xl">Divine profile not found</p>
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-gray-900 to-slate-800 flex items-center justify-center">
+        <p className="text-slate-400 text-xl">Divine profile not found</p>
       </div>
     );
   }
