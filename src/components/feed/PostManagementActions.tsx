@@ -35,9 +35,7 @@ export const PostManagementActions = ({
   visibility,
   onEdit,
   onDelete
-}: Post
-
-ActionsProps) => {
+}: PostManagementActionsProps) => {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
   const { toast } = useToast();
