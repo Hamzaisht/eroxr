@@ -46,6 +46,9 @@ function App() {
                   <Route path="/profile/:username" element={<MainLayout />}>
                     <Route index element={<ProfilePage />} />
                   </Route>
+                  <Route path="/profile/:id" element={<MainLayout />}>
+                    <Route index element={<Profile />} />
+                  </Route>
                   <Route path="/profile" element={<MainLayout />}>
                     <Route index element={<Profile />} />
                   </Route>

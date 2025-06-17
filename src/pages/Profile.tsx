@@ -7,12 +7,12 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { useAuth } from "@/contexts/AuthContext";
 
 export default function Profile() {
-  const { id } = useParams();
+  const { username, id } = useParams();
   const { user } = useAuth();
   const [isStudioOpen, setIsStudioOpen] = useState(false);
 
-  // Use the current user's ID if no ID is provided in the URL
-  const profileId = id || user?.id;
+  // Use the current user's ID if no ID or username is provided in the URL
+  const profileId = id || username || user?.id;
 
   if (!profileId) {
     return (
