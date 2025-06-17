@@ -7,7 +7,7 @@ import { CreatorsFeed } from "@/components/CreatorsFeed";
 import { FeaturedCreators } from "@/components/FeaturedCreators";
 import { StoryReel } from "@/components/StoryReel";
 import { TrendingCreators } from "@/components/TrendingCreators";
-import { PromotedAds } from "@/components/PromotedAds";
+import PromotedAds from "@/components/PromotedAds";
 import { SubscribedCreators } from "@/components/SubscribedCreators";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { Crown, Sparkles, Users, Heart } from "lucide-react";
@@ -129,7 +129,7 @@ const Home = () => {
 
             {/* Main Content */}
             <div className="lg:col-span-2 space-y-6">
-              <NewPostCreator onCreatePost={() => setIsCreatePostOpen(true)} />
+              <NewPostCreator onPostCreated={() => setIsCreatePostOpen(true)} />
               <CreatorsFeed />
             </div>
 
