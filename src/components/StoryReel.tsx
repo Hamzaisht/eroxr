@@ -1,7 +1,7 @@
 
 import { memo, useCallback, useEffect } from "react";
 import { AnimatePresence } from "framer-motion";
-import { ImmersiveStoryViewer } from "./stories/ImmersiveStoryViewer";
+import { EnhancedStoryViewer } from "./stories/EnhancedStoryViewer";
 import { StoryUploadModal } from "./stories/StoryUploadModal";
 import { StoryAvatar } from "./story/StoryAvatar";
 import { useStoryReel } from "./story/useStoryReel";
@@ -82,10 +82,10 @@ export const StoryReel = memo(() => {
         onOpenChange={handleCloseUpload} 
       />
 
-      {/* Immersive Story Viewer */}
+      {/* Enhanced Story Viewer */}
       <AnimatePresence>
         {showViewer && allStories.length > 0 && (
-          <ImmersiveStoryViewer
+          <EnhancedStoryViewer
             stories={allStories}
             initialStoryIndex={selectedStoryIndex}
             onClose={handleCloseViewer}
