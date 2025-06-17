@@ -10,12 +10,12 @@ interface ProfileStudioButtonProps {
 export const ProfileStudioButton = ({ onEditClick }: ProfileStudioButtonProps) => {
   return (
     <motion.div
-      whileHover={{ scale: 1.05, y: -2 }}
+      whileHover={{ scale: 1.05 }}
       whileTap={{ scale: 0.95 }}
     >
       <Button
         onClick={onEditClick}
-        className="bg-gradient-to-r from-slate-600 to-gray-600 hover:from-slate-500 hover:to-gray-500 text-white px-8 py-3 rounded-2xl font-semibold text-lg shadow-2xl border border-slate-500/30"
+        className="bg-gradient-to-r from-slate-600 to-gray-600 hover:from-slate-500 hover:to-gray-500 text-white border border-slate-500/30 backdrop-blur-sm px-8 py-3 rounded-2xl font-semibold text-lg shadow-2xl"
       >
         <Crown className="w-5 h-5 mr-2" />
         Divine Studio

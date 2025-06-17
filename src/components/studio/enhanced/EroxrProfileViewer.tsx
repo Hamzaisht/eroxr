@@ -1,4 +1,3 @@
-
 import { motion, AnimatePresence } from 'framer-motion';
 import { MapPin, Calendar, Users, Settings, Crown, Sparkles, Heart, Eye, Star, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -10,6 +9,8 @@ import { ProfilePosts } from '@/components/profile/container/ProfilePosts';
 import { ProfileStudioButton } from './ProfileStudioButton';
 import { EroxrProfileStats } from './EroxrProfileStats';
 import { EroxrSubscriptionTier } from './EroxrSubscriptionTier';
+import { useState, useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 
 interface EroxrProfileViewerProps {
   profileId: string;
@@ -17,12 +18,52 @@ interface EroxrProfileViewerProps {
 }
 
 export const EroxrProfileViewer = ({ profileId, onEditClick }: EroxrProfileViewerProps) => {
-  const { profile, isLoading } = useStudioProfile(profileId);
+  const [resolvedProfileId, setResolvedProfileId] = useState<string | null>(null);
+  const [isResolving, setIsResolving] = useState(true);
   const { user } = useAuth();
-  
-  const isOwnProfile = user?.id === profileId;
 
-  if (isLoading) {
+  // Resolve profileId if it's a username
+  useEffect(() => {
+    const resolveProfileId = async () => {
+      // Check if profileId is a UUID (36 characters with hyphens)
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      
+      if (uuidRegex.test(profileId)) {
+        // It's already a UUID
+        setResolvedProfileId(profileId);
+        setIsResolving(false);
+        return;
+      }
+
+      // It might be a username, try to resolve it
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('id')
+          .eq('username', profileId)
+          .single();
+
+        if (error || !data) {
+          console.error('Failed to resolve username:', error);
+          setResolvedProfileId(null);
+        } else {
+          setResolvedProfileId(data.id);
+        }
+      } catch (error) {
+        console.error('Error resolving profile:', error);
+        setResolvedProfileId(null);
+      } finally {
+        setIsResolving(false);
+      }
+    };
+
+    resolveProfileId();
+  }, [profileId]);
+
+  const { profile, isLoading } = useStudioProfile(resolvedProfileId || '');
+  const isOwnProfile = user?.id === resolvedProfileId;
+
+  if (isResolving || isLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-gray-900 to-slate-800 flex items-center justify-center">
         <motion.div
@@ -34,7 +75,7 @@ export const EroxrProfileViewer = ({ profileId, onEditClick }: EroxrProfileViewe
     );
   }
 
-  if (!profile) {
+  if (!resolvedProfileId || !profile) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-gray-900 to-slate-800 flex items-center justify-center">
         <motion.div
@@ -213,7 +254,7 @@ export const EroxrProfileViewer = ({ profileId, onEditClick }: EroxrProfileViewe
       </div>
 
       {/* Stats Section */}
-      <EroxrProfileStats profileId={profileId} />
+      <EroxrProfileStats profileId={resolvedProfileId} />
 
       {/* Interests/Skills Section */}
       {profile.interests && profile.interests.length > 0 && (
@@ -250,7 +291,7 @@ export const EroxrProfileViewer = ({ profileId, onEditClick }: EroxrProfileViewe
       )}
 
       {/* Subscription Tier (for non-own profiles) */}
-      {!isOwnProfile && <EroxrSubscriptionTier profileId={profileId} />}
+      {!isOwnProfile && <EroxrSubscriptionTier profileId={resolvedProfileId} />}
 
       {/* Content Tabs */}
       <div className="px-8 py-12">

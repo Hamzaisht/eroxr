@@ -43,14 +43,9 @@ function App() {
                   <Route path="/search" element={<MainLayout />}>
                     <Route index element={<SearchPage />} />
                   </Route>
-                  <Route path="/profile/:username" element={<MainLayout />}>
-                    <Route index element={<ProfilePage />} />
-                  </Route>
-                  <Route path="/profile/:id" element={<MainLayout />}>
-                    <Route index element={<Profile />} />
-                  </Route>
                   <Route path="/profile" element={<MainLayout />}>
                     <Route index element={<Profile />} />
+                    <Route path=":profileIdentifier" element={<Profile />} />
                   </Route>
                 </Routes>
               </ErrorBoundary>

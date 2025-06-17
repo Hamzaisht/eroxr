@@ -1,7 +1,15 @@
 
-import { ProfileHeaderProps } from '../types';
+import { Profile } from '@/integrations/supabase/types/profile';
 
-export const ProfileHeaderInfo = ({ profile }: Pick<ProfileHeaderProps, 'profile'>) => {
+interface ProfileHeaderInfoProps {
+  profile: Profile & {
+    post_count?: number;
+    follower_count?: number;
+    following_count?: number;
+  };
+}
+
+export const ProfileHeaderInfo = ({ profile }: ProfileHeaderInfoProps) => {
   return (
     <div className="flex space-x-6 text-sm text-gray-400">
       <div className="text-center">
