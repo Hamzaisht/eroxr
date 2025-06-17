@@ -11,7 +11,7 @@ import { GoLiveDialog } from "@/components/home/GoLiveDialog";
 import { WelcomeBanner } from "@/components/home/WelcomeBanner";
 import { useCreatePostDialog } from "@/hooks/useCreatePostDialog";
 import { useGoLiveDialog } from "@/hooks/useGoLiveDialog";
-import { useAuth } from "@/contexts/AuthContext";
+import { useCurrentUser } from "@/hooks/useCurrentUser";
 
 export type TabValue = 'feed' | 'popular' | 'recent' | 'shorts';
 
@@ -20,7 +20,7 @@ const Home = () => {
   const [showWelcome, setShowWelcome] = useState(true);
   const createPostDialog = useCreatePostDialog();
   const goLiveDialog = useGoLiveDialog();
-  const { user } = useAuth();
+  const { user, profile } = useCurrentUser();
 
   const renderContent = () => {
     switch (activeTab) {
@@ -39,6 +39,7 @@ const Home = () => {
 
   const getUserDisplayName = () => {
     if (!user) return undefined;
+    if (profile?.username) return `@${profile.username}`;
     return user.email?.split('@')[0] || 'User';
   };
 
