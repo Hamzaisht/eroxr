@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import type { UploadProgress, MediaUploadOptions } from '@/components/studio/types';
+import type { UploadProgress } from '@/components/studio/types';
 
 export const useStudioUpload = () => {
   const [progress, setProgress] = useState<UploadProgress>({
@@ -14,20 +14,25 @@ export const useStudioUpload = () => {
   const uploadMedia = async (
     file: File, 
     userId: string, 
-    type: 'avatar' | 'banner',
-    options: MediaUploadOptions
+    type: 'avatar' | 'banner'
   ): Promise<{ success: boolean; url?: string }> => {
     console.log(`🎨 Studio: Starting ${type} upload`, { fileName: file.name, size: file.size });
     
     setProgress({ progress: 0, status: 'uploading', message: 'Preparing upload...' });
 
     try {
-      // Validate file
-      if (file.size > options.maxSize) {
-        throw new Error(`File too large. Maximum size: ${Math.round(options.maxSize / 1024 / 1024)}MB`);
+      // Validate file size (10MB for avatars, 50MB for banners)
+      const maxSize = type === 'avatar' ? 10 * 1024 * 1024 : 50 * 1024 * 1024;
+      if (file.size > maxSize) {
+        throw new Error(`File too large. Maximum size: ${Math.round(maxSize / 1024 / 1024)}MB`);
       }
 
-      if (!options.allowedTypes.some(type => file.type.startsWith(type.replace('/*', '')))) {
+      // Validate file type
+      const allowedTypes = type === 'avatar' 
+        ? ['image/jpeg', 'image/png', 'image/webp']
+        : ['image/jpeg', 'image/png', 'image/webp', 'video/mp4', 'video/webm'];
+      
+      if (!allowedTypes.includes(file.type)) {
         throw new Error('Invalid file type. Please select a supported format.');
       }
 
@@ -36,10 +41,11 @@ export const useStudioUpload = () => {
       // Generate unique filename
       const fileExt = file.name.split('.').pop();
       const fileName = `${userId}/${type}_${Date.now()}.${fileExt}`;
+      const bucket = type === 'avatar' ? 'studio-avatars' : 'studio-banners';
 
       // Upload to storage
       const { error: uploadError } = await supabase.storage
-        .from(options.bucket)
+        .from(bucket)
         .upload(fileName, file, { 
           cacheControl: '3600',
           upsert: false 
@@ -54,7 +60,7 @@ export const useStudioUpload = () => {
 
       // Get public URL
       const { data: { publicUrl } } = supabase.storage
-        .from(options.bucket)
+        .from(bucket)
         .getPublicUrl(fileName);
 
       setProgress({ progress: 90, status: 'uploading', message: 'Updating profile...' });

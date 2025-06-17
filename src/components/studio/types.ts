@@ -16,10 +16,18 @@ export interface StudioProfile {
   status?: string;
 }
 
+export interface UploadProgress {
+  progress: number;
+  status: 'idle' | 'uploading' | 'success' | 'error';
+  message?: string;
+}
+
 export interface MediaUploadOptions {
   bucket: string;
   path: string;
   file: File;
+  maxSize: number;
+  allowedTypes: string[];
   onProgress?: (progress: number) => void;
 }
 
