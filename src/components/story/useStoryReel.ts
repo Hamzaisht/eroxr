@@ -34,7 +34,7 @@ export const useStoryReel = () => {
         `)
         .eq("is_active", true)
         .gt("expires_at", new Date().toISOString())
-        .order("created_at", { ascending: true }); // Changed to ascending for chronological order
+        .order("created_at", { ascending: false }); // Newest first for better UX
 
       if (error) throw error;
       return safeCast<StoryData[]>(data);
@@ -119,12 +119,11 @@ export const useStoryReel = () => {
       setSelectedStoryIndex(userStoryIndex >= 0 ? userStoryIndex : 0);
       setShowViewer(true);
     } else {
-      // Create new story
       setShowUploadModal(true);
     }
   };
 
-  // Use all stories in chronological order for viewer
+  // Use all stories in the order they were fetched (newest first)
   const allStories = formattedStories;
 
   // Get user display info with fallbacks
@@ -134,8 +133,6 @@ export const useStoryReel = () => {
   };
 
   const getUserAvatar = () => {
-    // Since User type doesn't have avatar_url, we'll return null
-    // In a real app, you'd fetch this from a profiles table
     return null;
   };
 

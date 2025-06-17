@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSession } from "@supabase/auth-helpers-react";
@@ -16,18 +17,17 @@ interface EnhancedStoryViewerProps {
   onClose: () => void;
 }
 
-// Group stories by user while maintaining chronological order
+// Group stories by user while maintaining the original order
 const groupStoriesByUser = (stories: Story[]) => {
-  const grouped = stories.reduce((acc, story) => {
+  const grouped = stories.reduce((acc, story, index) => {
     const userId = story.creator_id;
     if (!acc[userId]) {
       acc[userId] = [];
     }
-    acc[userId].push(story);
+    acc[userId].push({ ...story, originalIndex: index });
     return acc;
-  }, {} as Record<string, Story[]>);
+  }, {} as Record<string, (Story & { originalIndex: number })[]>);
 
-  // Keep stories in their original order (already chronological from the query)
   return grouped;
 };
 
@@ -36,7 +36,7 @@ export const EnhancedStoryViewer = ({
   initialStoryIndex = 0,
   onClose
 }: EnhancedStoryViewerProps) => {
-  // Group stories by user
+  // Group stories by user while preserving original order
   const groupedStories = groupStoriesByUser(stories);
   const userIds = Object.keys(groupedStories);
   
@@ -65,12 +65,11 @@ export const EnhancedStoryViewer = ({
   const mediaUrl = isVideo ? currentStory?.video_url : currentStory?.media_url;
   const isOwner = session?.user?.id === currentStory?.creator_id;
 
-  // Get story duration - simplified without segments
   const getStoryDuration = useCallback(() => {
     if (isVideo) {
-      return (currentStory?.duration || 30) * 1000; // Full video duration
+      return (currentStory?.duration || 30) * 1000;
     }
-    return (currentStory?.duration || 10) * 1000; // Image duration
+    return (currentStory?.duration || 10) * 1000;
   }, [currentStory, isVideo]);
 
   const storyDuration = getStoryDuration();

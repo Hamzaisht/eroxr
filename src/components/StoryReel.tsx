@@ -1,3 +1,4 @@
+
 import { memo, useCallback, useEffect } from "react";
 import { AnimatePresence } from "framer-motion";
 import { EnhancedStoryViewer } from "./stories/EnhancedStoryViewer";
@@ -40,10 +41,12 @@ export const StoryReel = memo(() => {
     return () => window.removeEventListener('open-story-upload', handleOpenUpload);
   }, [setShowUploadModal]);
 
-  // Handle clicking on other users' stories
+  // Handle clicking on other users' stories with proper index mapping
   const handleOtherStoryClick = useCallback((storyToFind: any) => {
-    // Find the index of this story in the allStories array
+    // Find the exact index of this story in the allStories array
     const storyIndex = allStories.findIndex(story => story.id === storyToFind.id);
+    console.log('Clicking on story:', storyToFind.id, 'at index:', storyIndex);
+    
     if (storyIndex >= 0) {
       handleStoryClick(storyIndex);
     }
