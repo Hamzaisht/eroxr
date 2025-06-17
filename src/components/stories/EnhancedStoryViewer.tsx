@@ -51,8 +51,8 @@ export const EnhancedStoryViewer = ({
   const currentUserIndex = initialUserIndex >= 0 ? initialUserIndex : 0;
   
   // Find which story within the user's stories is the initial one
-  const currentUserStories = groupedStories[userIds[currentUserIndex]] || [];
-  const initialStoryInUserGroup = currentUserStories.findIndex(story => story.id === initialStory?.id);
+  const initialUserStories = groupedStories[userIds[currentUserIndex]] || [];
+  const initialStoryInUserGroup = initialUserStories.findIndex(story => story.id === initialStory?.id);
   
   const [currentUserStoryIndex, setCurrentUserStoryIndex] = useState(currentUserIndex);
   const [currentStoryInGroup, setCurrentStoryInGroup] = useState(initialStoryInUserGroup >= 0 ? initialStoryInUserGroup : 0);
