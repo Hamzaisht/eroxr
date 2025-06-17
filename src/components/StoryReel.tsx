@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
@@ -82,7 +83,7 @@ export const StoryReel = () => {
     creator: {
       id: story.creator_id,
       username: story.profiles?.username || 'User',
-      avatar_url: story.profiles?.avatar_url || undefined,
+      avatar_url: story.profiles?.avatar_url || null,
     }
   }));
 
