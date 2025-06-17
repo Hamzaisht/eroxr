@@ -1,6 +1,6 @@
 
-import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useState, useEffect } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { 
@@ -14,6 +14,7 @@ export const useStoryReel = () => {
   const [selectedStoryIndex, setSelectedStoryIndex] = useState(0);
   const [showUploadModal, setShowUploadModal] = useState(false);
   const { user } = useAuth();
+  const queryClient = useQueryClient();
 
   const { data: stories, isLoading } = useQuery({
     queryKey: ["stories"],
@@ -40,6 +41,47 @@ export const useStoryReel = () => {
       return safeCast<StoryData[]>(data);
     },
   });
+
+  // Set up real-time subscription for stories
+  useEffect(() => {
+    if (!user?.id) return;
+
+    const channel = supabase
+      .channel('stories-realtime')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'stories',
+        },
+        (payload) => {
+          console.log('Story real-time update:', payload);
+          // Invalidate and refetch stories when any story changes
+          queryClient.invalidateQueries({ queryKey: ['stories'] });
+        }
+      )
+      .subscribe();
+
+    // Listen for story upload events
+    const handleStoryUpload = () => {
+      queryClient.invalidateQueries({ queryKey: ['stories'] });
+    };
+
+    // Listen for story deletion events
+    const handleStoryDeleted = () => {
+      queryClient.invalidateQueries({ queryKey: ['stories'] });
+    };
+
+    window.addEventListener('story-uploaded', handleStoryUpload);
+    window.addEventListener('story-deleted', handleStoryDeleted);
+
+    return () => {
+      supabase.removeChannel(channel);
+      window.removeEventListener('story-uploaded', handleStoryUpload);
+      window.removeEventListener('story-deleted', handleStoryDeleted);
+    };
+  }, [user?.id, queryClient]);
 
   // Ensure stories is a safe array to map over
   const safeStories = safeDataAccess(stories, []);

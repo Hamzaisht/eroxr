@@ -28,9 +28,9 @@ const groupStoriesByUser = (stories: Story[]) => {
     return acc;
   }, {} as Record<string, Story[]>);
 
-  // Sort stories within each user group by creation date (newest first)
+  // Sort stories within each user group by creation date (oldest first) for chronological viewing
   Object.keys(grouped).forEach(userId => {
-    grouped[userId].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+    grouped[userId].sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
   });
 
   return grouped;
@@ -56,7 +56,6 @@ export const EnhancedStoryViewer = ({
   
   const [currentUserStoryIndex, setCurrentUserStoryIndex] = useState(currentUserIndex);
   const [currentStoryInGroup, setCurrentStoryInGroup] = useState(initialStoryInUserGroup >= 0 ? initialStoryInUserGroup : 0);
-  const [currentBlockIndex, setCurrentBlockIndex] = useState(0);
   const [progress, setProgress] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   
@@ -71,77 +70,48 @@ export const EnhancedStoryViewer = ({
   const mediaUrl = isVideo ? currentStory?.video_url : currentStory?.media_url;
   const isOwner = session?.user?.id === currentStory?.creator_id;
 
-  // Calculate story segments
+  // Get story duration - simplified without segments
   const getStoryDuration = useCallback(() => {
     if (isVideo) {
-      return 30000; // 30 second segments for videos
+      return (currentStory?.duration || 30) * 1000; // Full video duration
     }
-    return (currentStory?.duration || 10) * 1000;
+    return (currentStory?.duration || 10) * 1000; // Image duration
   }, [currentStory, isVideo]);
 
-  const getTotalBlocks = useCallback(() => {
-    if (isVideo) {
-      // For videos, create 30-second blocks (simulate Snapchat behavior)
-      return Math.max(1, Math.ceil((currentStory?.duration || 30) / 30));
-    }
-    return 1; // Images are single block
-  }, [currentStory, isVideo]);
-
-  const totalBlocks = getTotalBlocks();
-  const blockDuration = getStoryDuration();
+  const storyDuration = getStoryDuration();
 
   const handleNext = useCallback(() => {
-    if (currentBlockIndex < totalBlocks - 1) {
-      // Move to next block within current story
-      setCurrentBlockIndex(prev => prev + 1);
-      setProgress(0);
-    } else if (currentStoryInGroup < currentUserStories.length - 1) {
+    if (currentStoryInGroup < currentUserStories.length - 1) {
       // Move to next story within current user's stories
       setCurrentStoryInGroup(prev => prev + 1);
-      setCurrentBlockIndex(0);
       setProgress(0);
     } else if (currentUserStoryIndex < userIds.length - 1) {
       // Move to next user's stories
       setCurrentUserStoryIndex(prev => prev + 1);
       setCurrentStoryInGroup(0);
-      setCurrentBlockIndex(0);
       setProgress(0);
     } else {
       // No more stories, close viewer
       onClose();
     }
-  }, [currentBlockIndex, totalBlocks, currentStoryInGroup, currentUserStories.length, currentUserStoryIndex, userIds.length, onClose]);
+  }, [currentStoryInGroup, currentUserStories.length, currentUserStoryIndex, userIds.length, onClose]);
 
   const handlePrevious = useCallback(() => {
-    if (currentBlockIndex > 0) {
-      // Move to previous block within current story
-      setCurrentBlockIndex(prev => prev - 1);
-      setProgress(0);
-    } else if (currentStoryInGroup > 0) {
+    if (currentStoryInGroup > 0) {
       // Move to previous story within current user's stories
-      const prevStoryIndex = currentStoryInGroup - 1;
-      const prevStory = currentUserStories[prevStoryIndex];
-      const prevIsVideo = prevStory?.content_type === 'video' || !!prevStory?.video_url;
-      const prevTotalBlocks = prevIsVideo ? Math.max(1, Math.ceil((prevStory?.duration || 30) / 30)) : 1;
-      
-      setCurrentStoryInGroup(prevStoryIndex);
-      setCurrentBlockIndex(prevTotalBlocks - 1);
+      setCurrentStoryInGroup(prev => prev - 1);
       setProgress(0);
     } else if (currentUserStoryIndex > 0) {
       // Move to previous user's stories (go to their last story)
       const prevUserIndex = currentUserStoryIndex - 1;
       const prevUserStories = groupedStories[userIds[prevUserIndex]] || [];
       const lastStoryIndex = prevUserStories.length - 1;
-      const lastStory = prevUserStories[lastStoryIndex];
-      const lastIsVideo = lastStory?.content_type === 'video' || !!lastStory?.video_url;
-      const lastTotalBlocks = lastIsVideo ? Math.max(1, Math.ceil((lastStory?.duration || 30) / 30)) : 1;
       
       setCurrentUserStoryIndex(prevUserIndex);
       setCurrentStoryInGroup(lastStoryIndex);
-      setCurrentBlockIndex(lastTotalBlocks - 1);
       setProgress(0);
     }
-  }, [currentBlockIndex, currentStoryInGroup, currentUserStories, currentUserStoryIndex, userIds, groupedStories]);
+  }, [currentStoryInGroup, currentUserStoryIndex, userIds, groupedStories]);
 
   const handlePause = useCallback(() => {
     setIsPaused(true);
@@ -184,7 +154,7 @@ export const EnhancedStoryViewer = ({
     window.dispatchEvent(new CustomEvent('open-story-upload'));
   };
 
-  // Progress tracking for images
+  // Progress tracking for images (videos handle their own progress)
   useEffect(() => {
     if (!isVideo && !isPaused) {
       progressInterval.current = setInterval(() => {
@@ -193,7 +163,7 @@ export const EnhancedStoryViewer = ({
             handleNext();
             return 0;
           }
-          return prev + (100 / blockDuration) * 100;
+          return prev + (100 / storyDuration) * 100;
         });
       }, 100);
     }
@@ -203,12 +173,11 @@ export const EnhancedStoryViewer = ({
         clearInterval(progressInterval.current);
       }
     };
-  }, [currentUserStoryIndex, currentStoryInGroup, currentBlockIndex, isPaused, isVideo, blockDuration, handleNext]);
+  }, [currentUserStoryIndex, currentStoryInGroup, isPaused, isVideo, storyDuration, handleNext]);
 
-  // Reset states when story changes
+  // Reset progress when story changes
   useEffect(() => {
     setProgress(0);
-    setCurrentBlockIndex(0);
   }, [currentUserStoryIndex, currentStoryInGroup]);
 
   // Keyboard navigation
@@ -242,8 +211,8 @@ export const EnhancedStoryViewer = ({
         <StoryProgressBar
           stories={currentUserStories}
           currentStoryIndex={currentStoryInGroup}
-          currentBlockIndex={currentBlockIndex}
-          totalBlocks={totalBlocks}
+          currentBlockIndex={0}
+          totalBlocks={1}
           progress={progress}
           isPaused={isPaused}
         />
@@ -275,10 +244,7 @@ export const EnhancedStoryViewer = ({
 
         {/* Duration indicator */}
         <div className="absolute bottom-6 left-6 z-40 text-white text-sm bg-black/60 backdrop-blur-sm px-3 py-1 rounded-full border border-white/40">
-          {isVideo ? 
-            `Segment ${currentBlockIndex + 1}/${totalBlocks}` : 
-            `${(currentStory?.duration || 10)}s`
-          }
+          {`${(currentStory?.duration || (isVideo ? 30 : 10))}s`}
         </div>
 
         {/* User stories indicator */}
