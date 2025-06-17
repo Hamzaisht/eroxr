@@ -1,12 +1,11 @@
 
-import { useRef, useCallback } from "react";
+import { useRef } from "react";
 
 interface StoryNavigationTouchProps {
   onNext: () => void;
   onPrevious: () => void;
   onPause: () => void;
   onResume: () => void;
-  className?: string;
 }
 
 export const StoryNavigationTouch = ({
@@ -14,135 +13,75 @@ export const StoryNavigationTouch = ({
   onPrevious,
   onPause,
   onResume,
-  className = ""
 }: StoryNavigationTouchProps) => {
   const touchStartX = useRef<number>(0);
-  const touchStartY = useRef<number>(0);
   const touchStartTime = useRef<number>(0);
-  const longPressTimer = useRef<NodeJS.Timeout>();
-  const mouseDownTime = useRef<number>(0);
-  const isMouseDown = useRef<boolean>(false);
 
-  const handleTouchStart = useCallback((e: React.TouchEvent) => {
-    const touch = e.touches[0];
-    touchStartX.current = touch.clientX;
-    touchStartY.current = touch.clientY;
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
     touchStartTime.current = Date.now();
+    onPause();
+  };
 
-    // Start long press timer for pause
-    longPressTimer.current = setTimeout(() => {
-      onPause();
-    }, 200);
-  }, [onPause]);
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    const touchEndX = e.changedTouches[0].clientX;
+    const touchEndTime = Date.now();
+    const diff = touchStartX.current - touchEndX;
+    const timeDiff = touchEndTime - touchStartTime.current;
 
-  const handleTouchMove = useCallback((e: React.TouchEvent) => {
-    // Clear long press timer on move
-    if (longPressTimer.current) {
-      clearTimeout(longPressTimer.current);
-    }
-  }, []);
-
-  const handleTouchEnd = useCallback((e: React.TouchEvent) => {
-    // Clear long press timer
-    if (longPressTimer.current) {
-      clearTimeout(longPressTimer.current);
-    }
-
-    const touch = e.changedTouches[0];
-    const touchEndX = touch.clientX;
-    const touchEndY = touch.clientY;
-    const touchDuration = Date.now() - touchStartTime.current;
-
-    const deltaX = touchEndX - touchStartX.current;
-    const deltaY = touchEndY - touchStartY.current;
-    const absDeltaX = Math.abs(deltaX);
-    const absDeltaY = Math.abs(deltaY);
-
-    // Resume if we were paused
     onResume();
 
-    // Horizontal swipe detection
-    if (absDeltaX > 50 && absDeltaX > absDeltaY && touchDuration < 500) {
-      if (deltaX > 0) {
-        onPrevious(); // Swipe right = previous
+    // Only register as swipe if it was quick and significant
+    if (timeDiff < 300 && Math.abs(diff) > 50) {
+      if (diff > 0) {
+        onNext();
       } else {
-        onNext(); // Swipe left = next
-      }
-      return;
-    }
-
-    // Tap detection (short touch with minimal movement)
-    if (absDeltaX < 10 && absDeltaY < 10 && touchDuration < 300) {
-      const screenWidth = window.innerWidth;
-      const tapX = touchEndX;
-
-      if (tapX < screenWidth * 0.3) {
-        onPrevious(); // Left side tap = previous
-      } else if (tapX > screenWidth * 0.7) {
-        onNext(); // Right side tap = next
+        onPrevious();
       }
     }
-  }, [onNext, onPrevious, onResume]);
+  };
 
-  // Mouse event handlers
-  const handleMouseDown = useCallback((e: React.MouseEvent) => {
-    mouseDownTime.current = Date.now();
-    isMouseDown.current = true;
+  const handleMouseDown = (e: React.MouseEvent) => {
+    // Prevent default to avoid text selection
+    e.preventDefault();
+    onPause();
+  };
 
-    // Start long press timer for pause (like touch)
-    longPressTimer.current = setTimeout(() => {
-      onPause();
-    }, 200);
-  }, [onPause]);
-
-  const handleMouseUp = useCallback((e: React.MouseEvent) => {
-    // Clear long press timer
-    if (longPressTimer.current) {
-      clearTimeout(longPressTimer.current);
-    }
-
-    if (!isMouseDown.current) return;
-    isMouseDown.current = false;
-
-    const clickDuration = Date.now() - mouseDownTime.current;
-    
-    // Resume if we were paused
+  const handleMouseUp = () => {
     onResume();
+  };
 
-    // Only handle quick clicks (not long holds)
-    if (clickDuration < 300) {
-      const screenWidth = window.innerWidth;
-      const clickX = e.clientX;
+  const handleLeftClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onPrevious();
+  };
 
-      if (clickX < screenWidth * 0.3) {
-        onPrevious(); // Left side click = previous
-      } else if (clickX > screenWidth * 0.7) {
-        onNext(); // Right side click = next
-      }
-    }
-  }, [onNext, onPrevious, onResume]);
-
-  const handleMouseLeave = useCallback(() => {
-    // Clear long press timer if mouse leaves
-    if (longPressTimer.current) {
-      clearTimeout(longPressTimer.current);
-    }
-    isMouseDown.current = false;
-  }, []);
+  const handleRightClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onNext();
+  };
 
   return (
-    <div
-      className={`absolute inset-0 ${className}`}
-      onTouchStart={handleTouchStart}
-      onTouchMove={handleTouchMove}
-      onTouchEnd={handleTouchEnd}
-      onMouseDown={handleMouseDown}
-      onMouseUp={handleMouseUp}
-      onMouseLeave={handleMouseLeave}
-    >
-      {/* Completely invisible navigation zones - no visual feedback */}
-      <div className="absolute inset-y-0 left-0 w-1/3" />
-      <div className="absolute inset-y-0 right-0 w-1/3" />
+    <div className="absolute inset-0 z-30 flex">
+      {/* Left side - Previous */}
+      <div 
+        className="flex-1 cursor-pointer"
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
+        onMouseDown={handleMouseDown}
+        onMouseUp={handleMouseUp}
+        onClick={handleLeftClick}
+      />
+      
+      {/* Right side - Next */}
+      <div 
+        className="flex-1 cursor-pointer"
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
+        onMouseDown={handleMouseDown}
+        onMouseUp={handleMouseUp}
+        onClick={handleRightClick}
+      />
     </div>
   );
 };
