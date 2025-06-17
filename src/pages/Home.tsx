@@ -8,15 +8,19 @@ import { CreatorsFeed } from "@/components/CreatorsFeed";
 import { CreatePostArea } from "@/components/home/CreatePostArea";
 import { CreatePostDialog } from "@/components/CreatePostDialog";
 import { GoLiveDialog } from "@/components/home/GoLiveDialog";
+import { WelcomeBanner } from "@/components/home/WelcomeBanner";
 import { useCreatePostDialog } from "@/hooks/useCreatePostDialog";
 import { useGoLiveDialog } from "@/hooks/useGoLiveDialog";
+import { useAuth } from "@/contexts/AuthContext";
 
 export type TabValue = 'feed' | 'popular' | 'recent' | 'shorts';
 
 const Home = () => {
   const [activeTab, setActiveTab] = useState<TabValue>('feed');
+  const [showWelcome, setShowWelcome] = useState(true);
   const createPostDialog = useCreatePostDialog();
   const goLiveDialog = useGoLiveDialog();
+  const { user } = useAuth();
 
   const renderContent = () => {
     switch (activeTab) {
@@ -33,9 +37,22 @@ const Home = () => {
     }
   };
 
+  const getUserDisplayName = () => {
+    if (!user) return undefined;
+    return user.email?.split('@')[0] || 'User';
+  };
+
   return (
     <HomeLayout>
       <div className="space-y-6">
+        {/* Welcome Banner */}
+        {showWelcome && (
+          <WelcomeBanner 
+            username={getUserDisplayName()}
+            onDismiss={() => setShowWelcome(false)}
+          />
+        )}
+        
         {/* Stories Section */}
         <div className="w-full">
           <StoryReel />
