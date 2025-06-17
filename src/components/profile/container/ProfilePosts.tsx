@@ -49,6 +49,7 @@ export const ProfilePosts = ({ profileId }: ProfilePostsProps) => {
           )
         `)
         .eq('creator_id', profileId)
+        .eq('visibility', 'public')
         .order('created_at', { ascending: false });
 
       if (error) {
@@ -69,8 +70,10 @@ export const ProfilePosts = ({ profileId }: ProfilePostsProps) => {
           isSaved: false,
           // Transform media_assets to match expected structure
           media_url: post.media_assets?.map((asset: any) => {
+            // Use the appropriate bucket based on media type
+            const bucket = asset.media_type === 'video' ? 'media' : 'media';
             const { data: publicUrl } = supabase.storage
-              .from('media')
+              .from(bucket)
               .getPublicUrl(asset.storage_path);
             return publicUrl.publicUrl;
           }) || []

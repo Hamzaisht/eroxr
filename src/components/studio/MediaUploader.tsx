@@ -1,194 +1,206 @@
 
-import { useCallback, useState } from 'react';
-import { useDropzone } from 'react-dropzone';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Upload, Camera, Image, Video, X, CheckCircle, AlertCircle } from 'lucide-react';
-import { Progress } from '@/components/ui/progress';
+import { useState, useCallback } from 'react';
+import { motion } from 'framer-motion';
+import { Upload, Camera, Video, X, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useStudioUpload } from '@/hooks/useStudioUpload';
-import type { MediaUploadOptions } from './types';
+import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 interface MediaUploaderProps {
   type: 'avatar' | 'banner';
   userId: string;
-  currentUrl?: string;
+  currentUrl?: string | null;
   onUploadSuccess: (url: string) => void;
   className?: string;
 }
-
-const UPLOAD_OPTIONS: Record<'avatar' | 'banner', MediaUploadOptions> = {
-  avatar: {
-    maxSize: 10 * 1024 * 1024, // 10MB
-    allowedTypes: ['image/*'],
-    bucket: 'studio-avatars'
-  },
-  banner: {
-    maxSize: 50 * 1024 * 1024, // 50MB
-    allowedTypes: ['image/*', 'video/*'],
-    bucket: 'studio-banners'
-  }
-};
 
 export const MediaUploader = ({ 
   type, 
   userId, 
   currentUrl, 
-  onUploadSuccess, 
-  className = "" 
+  onUploadSuccess,
+  className = ""
 }: MediaUploaderProps) => {
-  const [preview, setPreview] = useState<string | null>(null);
-  const { uploadMedia, progress, resetProgress } = useStudioUpload();
-  const options = UPLOAD_OPTIONS[type];
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const { toast } = useToast();
 
-  const onDrop = useCallback(async (acceptedFiles: File[]) => {
-    const file = acceptedFiles[0];
+  const handleFileUpload = useCallback(async (file: File) => {
     if (!file) return;
 
-    // Create preview
-    const previewUrl = URL.createObjectURL(file);
-    setPreview(previewUrl);
+    setIsUploading(true);
+    setUploadProgress(0);
 
-    // Upload file
-    const result = await uploadMedia(file, userId, type, options);
-    
-    if (result.success && result.url) {
-      onUploadSuccess(result.url);
-      setTimeout(() => {
-        setPreview(null);
-        resetProgress();
-      }, 2000);
-    } else {
-      setPreview(null);
+    try {
+      const bucket = type === 'avatar' ? 'studio-avatars' : 'studio-banners';
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${userId}/${Date.now()}.${fileExt}`;
+
+      // Simulate upload progress
+      const progressInterval = setInterval(() => {
+        setUploadProgress(prev => {
+          if (prev >= 90) {
+            clearInterval(progressInterval);
+            return 90;
+          }
+          return prev + 10;
+        });
+      }, 100);
+
+      const { data, error } = await supabase.storage
+        .from(bucket)
+        .upload(fileName, file, {
+          cacheControl: '3600',
+          upsert: true
+        });
+
+      clearInterval(progressInterval);
+      setUploadProgress(100);
+
+      if (error) throw error;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from(bucket)
+        .getPublicUrl(data.path);
+
+      // Update profile with new URL
+      await supabase.rpc('studio_update_profile', {
+        [type === 'avatar' ? 'p_avatar_url' : 'p_banner_url']: publicUrl
+      });
+
+      onUploadSuccess(publicUrl);
+      
+      toast({
+        title: "Upload Successful",
+        description: `Your ${type} has been updated successfully!`,
+      });
+
+    } catch (error: any) {
+      console.error('Upload error:', error);
+      toast({
+        title: "Upload Failed",
+        description: error.message || "Failed to upload file",
+        variant: "destructive",
+      });
+    } finally {
+      setIsUploading(false);
+      setUploadProgress(0);
     }
-  }, [uploadMedia, userId, type, options, onUploadSuccess, resetProgress]);
+  }, [type, userId, onUploadSuccess, toast]);
 
-  const { getRootProps, getInputProps, isDragActive } = useDropzone({
-    onDrop,
-    accept: options.allowedTypes.reduce((acc, type) => {
-      acc[type] = [];
-      return acc;
-    }, {} as Record<string, string[]>),
-    maxFiles: 1,
-    maxSize: options.maxSize
-  });
-
-  const isUploading = progress.status === 'uploading';
-  const isSuccess = progress.status === 'success';
-  const isError = progress.status === 'error';
+  const handleFileSelect = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      handleFileUpload(file);
+    }
+  }, [handleFileUpload]);
 
   return (
     <div className={`relative ${className}`}>
-      <div
-        {...getRootProps()}
-        className={`
-          relative overflow-hidden cursor-pointer transition-all duration-300
-          ${type === 'avatar' ? 'w-32 h-32 rounded-full' : 'w-full h-48 rounded-2xl'}
-          ${isDragActive ? 'scale-105' : 'hover:scale-102'}
-          ${isUploading ? 'pointer-events-none' : ''}
-        `}
+      <input
+        type="file"
+        accept={type === 'avatar' ? 'image/*' : 'image/*,video/*'}
+        onChange={handleFileSelect}
+        className="hidden"
+        id={`${type}-upload-${userId}`}
+        disabled={isUploading}
+      />
+      
+      <label 
+        htmlFor={`${type}-upload-${userId}`}
+        className="cursor-pointer block"
       >
-        <input {...getInputProps()} disabled={isUploading} />
-        
-        {/* Background Image/Video */}
-        {(currentUrl || preview) && (
-          <div className="absolute inset-0">
-            {currentUrl?.includes('.mp4') || currentUrl?.includes('.webm') || preview?.includes('video') ? (
-              <video
-                src={preview || currentUrl}
-                className="w-full h-full object-cover"
-                muted
-                loop
-                autoPlay
-              />
-            ) : (
-              <img
-                src={preview || currentUrl}
-                alt={`${type} preview`}
-                className="w-full h-full object-cover"
-              />
+        {type === 'avatar' ? (
+          <motion.div
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            className="relative w-32 h-32 mx-auto"
+          >
+            <div className="w-full h-full rounded-full overflow-hidden border-4 border-yellow-400/30 bg-luxury-darker/50 backdrop-blur-xl shadow-2xl">
+              {currentUrl ? (
+                <img
+                  src={currentUrl}
+                  alt="Current avatar"
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <div className="w-full h-full bg-gradient-to-br from-yellow-400/20 to-luxury-primary/20 flex items-center justify-center">
+                  <Camera className="w-12 h-12 text-yellow-400" />
+                </div>
+              )}
+            </div>
+            
+            {!isUploading && (
+              <div className="absolute inset-0 bg-black/50 rounded-full opacity-0 hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                <div className="text-center text-white">
+                  <Upload className="w-6 h-6 mx-auto mb-1" />
+                  <span className="text-sm">Upload</span>
+                </div>
+              </div>
             )}
-          </div>
+            
+            {isUploading && (
+              <div className="absolute inset-0 bg-black/70 rounded-full flex items-center justify-center">
+                <div className="text-center text-white">
+                  <div className="w-8 h-8 border-2 border-yellow-400 border-t-transparent rounded-full animate-spin mb-2" />
+                  <span className="text-sm">{uploadProgress}%</span>
+                </div>
+              </div>
+            )}
+          </motion.div>
+        ) : (
+          <motion.div
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            className="relative w-full h-48 rounded-2xl overflow-hidden border-2 border-yellow-400/30 bg-luxury-darker/50 backdrop-blur-xl"
+          >
+            {currentUrl ? (
+              currentUrl.includes('.mp4') || currentUrl.includes('.webm') ? (
+                <video
+                  src={currentUrl}
+                  className="w-full h-full object-cover"
+                  muted
+                  loop
+                  autoPlay
+                />
+              ) : (
+                <img
+                  src={currentUrl}
+                  alt="Current banner"
+                  className="w-full h-full object-cover"
+                />
+              )
+            ) : (
+              <div className="w-full h-full bg-gradient-to-br from-yellow-400/20 to-luxury-primary/20 flex items-center justify-center">
+                <div className="text-center text-yellow-400">
+                  <Video className="w-16 h-16 mx-auto mb-4" />
+                  <p className="text-lg font-semibold">Upload Divine Banner</p>
+                  <p className="text-sm text-luxury-muted">Image or Video</p>
+                </div>
+              </div>
+            )}
+            
+            {!isUploading && (
+              <div className="absolute inset-0 bg-black/50 opacity-0 hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                <div className="text-center text-white">
+                  <Upload className="w-8 h-8 mx-auto mb-2" />
+                  <span className="text-lg">Upload New Banner</span>
+                </div>
+              </div>
+            )}
+            
+            {isUploading && (
+              <div className="absolute inset-0 bg-black/70 flex items-center justify-center">
+                <div className="text-center text-white">
+                  <div className="w-12 h-12 border-4 border-yellow-400 border-t-transparent rounded-full animate-spin mb-4" />
+                  <span className="text-lg">{uploadProgress}%</span>
+                  <p className="text-sm text-luxury-muted">Uploading divine content...</p>
+                </div>
+              </div>
+            )}
+          </motion.div>
         )}
-
-        {/* Overlay */}
-        <div className={`
-          absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent
-          flex items-center justify-center transition-opacity duration-300
-          ${isDragActive ? 'opacity-100' : currentUrl || preview ? 'opacity-0 hover:opacity-100' : 'opacity-100'}
-        `}>
-          <div className="text-center text-white">
-            {isUploading ? (
-              <div className="space-y-2">
-                <div className="animate-spin">
-                  <Upload className="w-8 h-8 mx-auto" />
-                </div>
-                <p className="text-sm font-medium">{progress.message}</p>
-              </div>
-            ) : isSuccess ? (
-              <div className="space-y-2">
-                <CheckCircle className="w-8 h-8 mx-auto text-green-400" />
-                <p className="text-sm font-medium">Upload Complete!</p>
-              </div>
-            ) : isError ? (
-              <div className="space-y-2">
-                <AlertCircle className="w-8 h-8 mx-auto text-red-400" />
-                <p className="text-sm font-medium">Upload Failed</p>
-              </div>
-            ) : (
-              <div className="space-y-2">
-                {type === 'avatar' ? (
-                  <Camera className="w-8 h-8 mx-auto" />
-                ) : (
-                  <div className="flex items-center justify-center space-x-2">
-                    <Image className="w-6 h-6" />
-                    <Video className="w-6 h-6" />
-                  </div>
-                )}
-                <div className="text-center">
-                  <p className="text-sm font-medium">
-                    {isDragActive ? 'Drop here' : `Upload ${type}`}
-                  </p>
-                  <p className="text-xs opacity-75">
-                    {type === 'avatar' ? 'Max 10MB' : 'Max 50MB - Image/Video'}
-                  </p>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Progress Overlay */}
-        <AnimatePresence>
-          {isUploading && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="absolute inset-0 bg-black/50 flex items-end"
-            >
-              <div className="w-full p-4">
-                <Progress value={progress.progress} className="h-2" />
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
-
-      {/* Clear button for preview */}
-      {preview && !isUploading && (
-        <Button
-          variant="destructive"
-          size="sm"
-          className="absolute -top-2 -right-2 w-6 h-6 rounded-full p-0"
-          onClick={(e) => {
-            e.stopPropagation();
-            setPreview(null);
-            resetProgress();
-          }}
-        >
-          <X className="w-3 h-3" />
-        </Button>
-      )}
+      </label>
     </div>
   );
 };

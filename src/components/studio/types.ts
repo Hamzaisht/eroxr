@@ -1,26 +1,33 @@
 
 export interface StudioProfile {
   id: string;
-  username: string | null;
-  bio: string | null;
-  location: string | null;
-  avatar_url: string | null;
-  banner_url: string | null;
-  interests: string[] | null;
-  profile_visibility: boolean;
-  is_verified: boolean;
+  username?: string;
+  bio?: string;
+  location?: string;
+  avatar_url?: string;
+  banner_url?: string;
+  interests?: string[];
+  is_verified?: boolean;
   created_at: string;
   updated_at: string;
-}
-
-export interface UploadProgress {
-  progress: number;
-  status: 'idle' | 'uploading' | 'success' | 'error';
-  message?: string;
+  profile_visibility?: boolean;
+  first_name?: string;
+  last_name?: string;
+  status?: string;
 }
 
 export interface MediaUploadOptions {
-  maxSize: number;
-  allowedTypes: string[];
   bucket: string;
+  path: string;
+  file: File;
+  onProgress?: (progress: number) => void;
+}
+
+export interface ProfileUpdateData {
+  username?: string;
+  bio?: string;
+  location?: string;
+  avatar_url?: string;
+  banner_url?: string;
+  interests?: string[];
 }
