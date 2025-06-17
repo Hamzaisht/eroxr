@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, ChevronLeft, ChevronRight, Trash2, Plus, Eye, Share2, Download } from "lucide-react";
@@ -279,7 +278,7 @@ export const ImmersiveStoryViewer = ({
         className="fixed inset-0 z-[200] bg-black flex items-center justify-center"
       >
         {/* Progress bars - Enhanced for blocks */}
-        <div className="absolute top-2 left-4 right-4 z-[220] flex space-x-1">
+        <div className="absolute top-2 left-4 right-4 z-[250] flex space-x-1">
           {Array.from({ length: totalBlocks }, (_, blockIndex) => (
             <div
               key={`${currentIndex}-${blockIndex}`}
@@ -296,10 +295,10 @@ export const ImmersiveStoryViewer = ({
           ))}
         </div>
 
-        {/* Header with maximum visibility */}
-        <div className="absolute top-6 left-4 right-4 z-[230] flex items-center justify-between text-white">
+        {/* Header - Repositioned to avoid search bar overlap */}
+        <div className="absolute top-16 left-4 right-4 z-[250] flex items-center justify-between text-white">
           <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 rounded-full overflow-hidden bg-white/20 border border-white/30">
+            <div className="w-10 h-10 rounded-full overflow-hidden bg-black/60 backdrop-blur-sm border-2 border-white/40">
               {currentStory.creator.avatar_url ? (
                 <img
                   src={currentStory.creator.avatar_url}
@@ -307,14 +306,14 @@ export const ImmersiveStoryViewer = ({
                   className="w-full h-full object-cover"
                 />
               ) : (
-                <div className="w-full h-full flex items-center justify-center text-sm font-bold">
+                <div className="w-full h-full flex items-center justify-center text-sm font-bold text-white">
                   {(currentStory.creator.username || 'U').slice(0, 2).toUpperCase()}
                 </div>
               )}
             </div>
             <div>
-              <p className="text-sm font-medium">{currentStory.creator.username || 'User'}</p>
-              <p className="text-xs text-white/60">
+              <p className="text-sm font-bold text-white drop-shadow-lg">{currentStory.creator.username || 'User'}</p>
+              <p className="text-xs text-white/80 drop-shadow-md">
                 {new Date(currentStory.created_at).toLocaleTimeString([], { 
                   hour: '2-digit', 
                   minute: '2-digit' 
@@ -323,15 +322,16 @@ export const ImmersiveStoryViewer = ({
             </div>
           </div>
 
-          <div className="flex items-center space-x-2">
-            {/* Add Story Button - Maximum visibility */}
+          {/* Action buttons - Better positioning and visibility */}
+          <div className="flex items-center space-x-3">
+            {/* Add Story Button */}
             <Button
               variant="ghost"
               size="icon"
               onClick={handleAddStory}
-              className="w-12 h-12 text-white hover:text-amber-300 hover:bg-white/30 bg-black/50 backdrop-blur-sm border-2 border-white/40 shadow-lg"
+              className="w-14 h-14 text-white hover:text-amber-300 hover:bg-amber-300/20 bg-black/70 backdrop-blur-sm border-2 border-white/60 shadow-2xl hover:shadow-amber-300/25 transition-all duration-200 hover:scale-105"
             >
-              <Plus className="w-6 h-6" />
+              <Plus className="w-7 h-7 stroke-2" />
             </Button>
 
             {/* Owner Controls */}
@@ -340,20 +340,20 @@ export const ImmersiveStoryViewer = ({
                 variant="ghost"
                 size="icon"
                 onClick={handleDelete}
-                className="w-12 h-12 text-white hover:text-red-400 hover:bg-red-400/30 bg-black/50 backdrop-blur-sm border-2 border-white/40 shadow-lg"
+                className="w-14 h-14 text-white hover:text-red-300 hover:bg-red-500/20 bg-black/70 backdrop-blur-sm border-2 border-white/60 shadow-2xl hover:shadow-red-500/25 transition-all duration-200 hover:scale-105"
               >
-                <Trash2 className="w-6 h-6" />
+                <Trash2 className="w-7 h-7 stroke-2" />
               </Button>
             )}
 
-            {/* Close Button - Maximum visibility */}
+            {/* Close Button */}
             <Button
               variant="ghost"
               size="icon"
               onClick={onClose}
-              className="w-12 h-12 text-white hover:text-white/80 hover:bg-white/30 bg-black/50 backdrop-blur-sm border-2 border-white/40 shadow-lg"
+              className="w-14 h-14 text-white hover:text-white/90 hover:bg-white/20 bg-black/70 backdrop-blur-sm border-2 border-white/60 shadow-2xl transition-all duration-200 hover:scale-105"
             >
-              <X className="w-6 h-6" />
+              <X className="w-7 h-7 stroke-2" />
             </Button>
           </div>
         </div>
@@ -415,48 +415,45 @@ export const ImmersiveStoryViewer = ({
           </div>
         </div>
 
-        {/* Snapchat-like Stats Panel */}
-        <div className="absolute bottom-20 right-4 z-[220] flex flex-col items-center space-y-4">
-          {/* Views */}
+        {/* Stats Panel - Repositioned for better access */}
+        <div className="absolute bottom-32 right-6 z-[240] flex flex-col items-center space-y-6">
           <div className="flex flex-col items-center">
             <Button
               variant="ghost"
               size="icon"
-              className="w-12 h-12 rounded-full bg-black/50 backdrop-blur-sm text-white hover:bg-white/20 border border-white/30"
+              className="w-14 h-14 rounded-full bg-black/60 backdrop-blur-sm text-white hover:bg-white/20 border-2 border-white/40 shadow-xl"
             >
               <Eye className="w-6 h-6" />
             </Button>
-            <span className="text-white text-xs mt-1 font-medium bg-black/30 px-2 py-1 rounded-full">
+            <span className="text-white text-sm mt-2 font-bold bg-black/40 px-3 py-1 rounded-full border border-white/30">
               {storyStats.views}
             </span>
           </div>
 
-          {/* Shares */}
           <div className="flex flex-col items-center">
             <Button
               variant="ghost"
               size="icon"
               onClick={handleShare}
-              className="w-12 h-12 rounded-full bg-black/50 backdrop-blur-sm text-white hover:bg-white/20 border border-white/30"
+              className="w-14 h-14 rounded-full bg-black/60 backdrop-blur-sm text-white hover:bg-white/20 border-2 border-white/40 shadow-xl"
             >
               <Share2 className="w-6 h-6" />
             </Button>
-            <span className="text-white text-xs mt-1 font-medium bg-black/30 px-2 py-1 rounded-full">
+            <span className="text-white text-sm mt-2 font-bold bg-black/40 px-3 py-1 rounded-full border border-white/30">
               {storyStats.shares}
             </span>
           </div>
 
-          {/* Screenshots */}
           <div className="flex flex-col items-center">
             <Button
               variant="ghost"
               size="icon"
               onClick={handleScreenshot}
-              className="w-12 h-12 rounded-full bg-black/50 backdrop-blur-sm text-white hover:bg-white/20 border border-white/30"
+              className="w-14 h-14 rounded-full bg-black/60 backdrop-blur-sm text-white hover:bg-white/20 border-2 border-white/40 shadow-xl"
             >
               <Download className="w-6 h-6" />
             </Button>
-            <span className="text-white text-xs mt-1 font-medium bg-black/30 px-2 py-1 rounded-full">
+            <span className="text-white text-sm mt-2 font-bold bg-black/40 px-3 py-1 rounded-full border border-white/30">
               {storyStats.screenshots}
             </span>
           </div>
@@ -464,14 +461,14 @@ export const ImmersiveStoryViewer = ({
 
         {/* Loading indicator */}
         {isLoading && (
-          <div className="absolute inset-0 flex items-center justify-center bg-black/50 z-[210]">
+          <div className="absolute inset-0 flex items-center justify-center bg-black/50 z-[230]">
             <div className="w-8 h-8 border-2 border-white border-t-transparent rounded-full animate-spin" />
           </div>
         )}
 
         {/* Duration indicator */}
         {!isLoading && (
-          <div className="absolute bottom-4 left-4 z-[220] text-white text-sm bg-black/50 backdrop-blur-sm px-3 py-1 rounded-full border border-white/30">
+          <div className="absolute bottom-6 left-6 z-[240] text-white text-sm bg-black/60 backdrop-blur-sm px-4 py-2 rounded-full border-2 border-white/40 shadow-xl">
             {isVideo ? 
               `Block ${currentBlock + 1}/${totalBlocks}` : 
               `${(currentStory?.duration || 10)}s`
