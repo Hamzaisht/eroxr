@@ -140,17 +140,9 @@ export const StoryNavigationTouch = ({
       onMouseUp={handleMouseUp}
       onMouseLeave={handleMouseLeave}
     >
-      {/* Visual feedback areas */}
-      <div className="absolute inset-y-0 left-0 w-1/3 flex items-center justify-start pl-4 pointer-events-none">
-        <div className="w-2 h-12 bg-white/20 rounded-full opacity-0 transition-opacity" />
-      </div>
-      <div className="absolute inset-y-0 right-0 w-1/3 flex items-center justify-end pr-4 pointer-events-none">
-        <div className="w-2 h-12 bg-white/20 rounded-full opacity-0 transition-opacity" />
-      </div>
-      
-      {/* Invisible click zones for better UX indication */}
-      <div className="absolute inset-y-0 left-0 w-1/3 cursor-pointer hover:bg-white/5 transition-colors" />
-      <div className="absolute inset-y-0 right-0 w-1/3 cursor-pointer hover:bg-white/5 transition-colors" />
+      {/* Completely invisible navigation zones - no visual feedback */}
+      <div className="absolute inset-y-0 left-0 w-1/3" />
+      <div className="absolute inset-y-0 right-0 w-1/3" />
     </div>
   );
 };
