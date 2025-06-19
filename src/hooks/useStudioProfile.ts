@@ -71,6 +71,6 @@ export const useStudioProfile = (profileId: string) => {
     isLoading,
     error,
     updateProfile: updateProfileMutation.mutate,
-    isUpdating: updateProfileMutation.isPending,
+    isUpdating: updateProfileMutation.isLoading,
   };
 };
