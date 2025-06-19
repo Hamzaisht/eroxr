@@ -7,6 +7,9 @@ import { LoadingScreen } from "@/components/layout/LoadingScreen";
 import { BackgroundVideo } from "@/components/video/BackgroundVideo";
 import { BackgroundEffects } from "@/components/layout/BackgroundEffects";
 import { useAuth } from "@/contexts/AuthContext";
+import { AnimatedBackground } from "@/components/auth/signup/AnimatedBackground";
+import { FloatingParticles } from "@/components/auth/signup/FloatingParticles";
+import { FloatingIcons } from "@/components/auth/signup/FloatingIcons";
 
 const Register = () => {
   const { user, session, loading } = useAuth();
@@ -65,7 +68,86 @@ const Register = () => {
             transition={{ duration: 0.5 }}
             className="w-full max-w-md mx-auto"
           >
-            <SignupForm onToggleMode={handleToggleMode} />
+            <motion.div
+              className="relative backdrop-blur-xl bg-gradient-to-br from-gray-900/95 via-gray-800/95 to-gray-900/95 rounded-2xl border border-gray-700/50 overflow-hidden"
+              whileHover={{ 
+                scale: 1.02,
+                boxShadow: "0 25px 50px rgba(217, 70, 239, 0.2)"
+              }}
+              transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+            >
+              <AnimatedBackground />
+              
+              <div className="relative z-10 p-8 space-y-8">
+                <motion.div
+                  className="text-center space-y-4"
+                  initial={{ opacity: 0, y: -20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.2, duration: 0.6 }}
+                >
+                  <FloatingIcons />
+                  
+                  <motion.h1 
+                    className="text-5xl font-bold relative"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.3, duration: 0.6 }}
+                  >
+                    <motion.span
+                      className="bg-gradient-to-r from-pink-400 via-purple-400 to-cyan-400 bg-clip-text text-transparent"
+                      animate={{
+                        backgroundPosition: ['0% 50%', '100% 50%', '0% 50%'],
+                      }}
+                      transition={{
+                        duration: 3,
+                        repeat: Infinity,
+                        ease: "easeInOut"
+                      }}
+                      style={{
+                        backgroundSize: '200% auto',
+                      }}
+                    >
+                      Join Us
+                    </motion.span>
+                  </motion.h1>
+                  
+                  <motion.p 
+                    className="text-gray-300 text-lg relative"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.4, duration: 0.6 }}
+                  >
+                    Create your{" "}
+                    <motion.span
+                      className="text-transparent bg-gradient-to-r from-pink-400 to-purple-400 bg-clip-text font-semibold"
+                      animate={{
+                        backgroundPosition: ['0% 50%', '100% 50%', '0% 50%'],
+                      }}
+                      transition={{
+                        duration: 4,
+                        repeat: Infinity,
+                        ease: "easeInOut"
+                      }}
+                      style={{
+                        backgroundSize: '200% auto',
+                      }}
+                    >
+                      premium account
+                    </motion.span>
+                  </motion.p>
+                </motion.div>
+                
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.4, duration: 0.6 }}
+                >
+                  <SignupForm onToggleMode={handleToggleMode} isLoginMode={false} />
+                </motion.div>
+              </div>
+              
+              <FloatingParticles />
+            </motion.div>
           </motion.div>
         </AnimatePresence>
       </div>
