@@ -2342,6 +2342,24 @@ export type Database = {
         Args: { row_id: string; counter_name: string; table_name?: string }
         Returns: undefined
       }
+      rls_bypass_profile_fetch: {
+        Args: { p_user_id: string }
+        Returns: Json
+      }
+      rls_bypass_profile_update: {
+        Args: {
+          p_user_id: string
+          p_username?: string
+          p_bio?: string
+          p_location?: string
+          p_avatar_url?: string
+          p_banner_url?: string
+          p_interests?: string[]
+          p_profile_visibility?: boolean
+          p_status?: string
+        }
+        Returns: Json
+      }
       safe_profile_update: {
         Args: {
           p_user_id: string

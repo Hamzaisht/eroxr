@@ -111,11 +111,11 @@ export const useAdDatabaseOperations = () => {
   const updateProfileAvatar = async (avatarUrl: string | null) => {
     if (!session?.user?.id || !avatarUrl) return;
     
-    console.log("Updating profile with avatar URL using safe RPC:", avatarUrl);
+    console.log("Updating profile with avatar URL using RLS-bypass:", avatarUrl);
     
     try {
-      // Use the safe profile update RPC function to avoid stack depth issues
-      const { data: safeResult, error: rpcError } = await supabase.rpc('safe_profile_update', {
+      // Use the new RLS-bypass profile update function
+      const { data: result, error: rpcError } = await supabase.rpc('rls_bypass_profile_update', {
         p_user_id: session.user.id,
         p_username: null,
         p_bio: null,
@@ -127,12 +127,12 @@ export const useAdDatabaseOperations = () => {
         p_status: null,
       });
 
-      if (!rpcError && safeResult?.success) {
-        console.log("✅ Profile avatar updated successfully via safe RPC");
+      if (!rpcError && result?.success) {
+        console.log("✅ Profile avatar updated successfully via RLS-bypass");
         return true;
       }
 
-      console.error("❌ Safe profile update failed:", rpcError || safeResult?.error);
+      console.error("❌ RLS-bypass profile update failed:", rpcError || result?.error);
       return false;
     } catch (error: any) {
       console.error("💥 Profile avatar update error:", error);

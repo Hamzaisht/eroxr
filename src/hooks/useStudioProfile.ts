@@ -13,40 +13,40 @@ export const useStudioProfile = (profileId: string) => {
   const { data: profile, isLoading, error } = useQuery({
     queryKey: ['studio-profile', profileId],
     queryFn: async () => {
-      console.log('🎨 useStudioProfile: Fetching profile for ID:', profileId);
+      console.log('🎨 useStudioProfile: Fetching profile via RLS-bypass for ID:', profileId);
       
-      // Use the safe profile fetch operation
+      // Use the RLS-bypass profile fetch operation
       const result = await safeProfileFetch(profileId);
       
       if (!result.success) {
-        console.error('❌ useStudioProfile: Profile fetch failed:', result.error);
+        console.error('❌ useStudioProfile: RLS-bypass fetch failed:', result.error);
         throw new Error(result.error || 'Failed to fetch profile');
       }
       
-      console.log('✅ useStudioProfile: Profile fetched successfully');
+      console.log('✅ useStudioProfile: Profile fetched successfully via RLS-bypass');
       return result.data as StudioProfile;
     },
     staleTime: 5 * 60 * 1000,
-    cacheTime: 10 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
     enabled: !!profileId,
   });
 
   const updateProfileMutation = useMutation({
     mutationFn: async (updates: Partial<StudioProfile>) => {
-      console.log('🎨 useStudioProfile: Updating profile with:', updates);
+      console.log('🎨 useStudioProfile: Updating profile via RLS-bypass with:', updates);
       
-      // Use the safe profile update operation
+      // Use the RLS-bypass profile update operation
       const result = await safeProfileUpdate({
         userId: profileId,
         ...updates
       });
       
       if (!result.success) {
-        console.error('❌ useStudioProfile: Profile update failed:', result.error);
+        console.error('❌ useStudioProfile: RLS-bypass update failed:', result.error);
         throw new Error(result.error || 'Failed to update profile');
       }
       
-      console.log('✅ useStudioProfile: Profile updated successfully');
+      console.log('✅ useStudioProfile: Profile updated successfully via RLS-bypass');
       return result.data;
     },
     onSuccess: () => {
@@ -71,6 +71,6 @@ export const useStudioProfile = (profileId: string) => {
     isLoading,
     error,
     updateProfile: updateProfileMutation.mutate,
-    isUpdating: updateProfileMutation.isLoading,
+    isUpdating: updateProfileMutation.isPending,
   };
 };
