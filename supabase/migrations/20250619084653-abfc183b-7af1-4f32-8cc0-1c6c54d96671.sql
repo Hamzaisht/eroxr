@@ -171,3 +171,67 @@ EXCEPTION
     RETURN 0;
 END;
 $$;
+
+-- Step 8: Ensure storage buckets exist and are properly configured
+INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+VALUES 
+  ('studio-avatars', 'studio-avatars', true, 10485760, ARRAY['image/jpeg', 'image/png', 'image/webp', 'image/gif']),
+  ('studio-banners', 'studio-banners', true, 52428800, ARRAY['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'video/mp4', 'video/webm'])
+ON CONFLICT (id) DO UPDATE SET
+  file_size_limit = EXCLUDED.file_size_limit,
+  allowed_mime_types = EXCLUDED.allowed_mime_types,
+  public = EXCLUDED.public;
+
+-- Step 9: Create storage policies for studio buckets
+DROP POLICY IF EXISTS "studio_avatars_public_select" ON storage.objects;
+DROP POLICY IF EXISTS "studio_avatars_user_insert" ON storage.objects;
+DROP POLICY IF EXISTS "studio_avatars_user_update" ON storage.objects;
+DROP POLICY IF EXISTS "studio_avatars_user_delete" ON storage.objects;
+DROP POLICY IF EXISTS "studio_banners_public_select" ON storage.objects;
+DROP POLICY IF EXISTS "studio_banners_user_insert" ON storage.objects;
+DROP POLICY IF EXISTS "studio_banners_user_update" ON storage.objects;
+DROP POLICY IF EXISTS "studio_banners_user_delete" ON storage.objects;
+
+-- Avatar storage policies
+CREATE POLICY "studio_avatars_public_select" ON storage.objects
+FOR SELECT USING (bucket_id = 'studio-avatars');
+
+CREATE POLICY "studio_avatars_user_insert" ON storage.objects
+FOR INSERT WITH CHECK (
+  bucket_id = 'studio-avatars' 
+  AND auth.uid()::text = (storage.foldername(name))[1]
+);
+
+CREATE POLICY "studio_avatars_user_update" ON storage.objects
+FOR UPDATE USING (
+  bucket_id = 'studio-avatars' 
+  AND auth.uid()::text = (storage.foldername(name))[1]
+);
+
+CREATE POLICY "studio_avatars_user_delete" ON storage.objects
+FOR DELETE USING (
+  bucket_id = 'studio-avatars' 
+  AND auth.uid()::text = (storage.foldername(name))[1]
+);
+
+-- Banner storage policies
+CREATE POLICY "studio_banners_public_select" ON storage.objects
+FOR SELECT USING (bucket_id = 'studio-banners');
+
+CREATE POLICY "studio_banners_user_insert" ON storage.objects
+FOR INSERT WITH CHECK (
+  bucket_id = 'studio-banners' 
+  AND auth.uid()::text = (storage.foldername(name))[1]
+);
+
+CREATE POLICY "studio_banners_user_update" ON storage.objects
+FOR UPDATE USING (
+  bucket_id = 'studio-banners' 
+  AND auth.uid()::text = (storage.foldername(name))[1]
+);
+
+CREATE POLICY "studio_banners_user_delete" ON storage.objects
+FOR DELETE USING (
+  bucket_id = 'studio-banners' 
+  AND auth.uid()::text = (storage.foldername(name))[1]
+);

@@ -1,4 +1,3 @@
-
 import { useState, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { Upload, Camera, Video, Crown, Sparkles } from 'lucide-react';
@@ -26,19 +25,29 @@ export const MediaUploader = ({
 
   const safeProfileUpdate = useCallback(async (url: string) => {
     try {
-      // Primary: Use safe profile update function
-      const updateField = type === 'avatar' ? 'p_avatar_url' : 'p_banner_url';
-      const { data: safeResult, error: rpcError } = await supabase.rpc('safe_profile_update', {
+      console.log(`🎨 MediaUploader: Updating ${type} URL:`, url);
+      
+      // Use the safe profile update function with correct parameters
+      const updateParams = {
         p_user_id: userId,
-        [updateField]: url,
-      });
+        p_username: null,
+        p_bio: null,
+        p_location: null,
+        p_avatar_url: type === 'avatar' ? url : null,
+        p_banner_url: type === 'banner' ? url : null,
+        p_interests: null,
+        p_profile_visibility: null,
+        p_status: null,
+      };
+
+      const { data: safeResult, error: rpcError } = await supabase.rpc('safe_profile_update', updateParams);
 
       if (!rpcError && safeResult?.success) {
         console.log('✅ MediaUploader: Profile updated via safe function');
         return true;
       }
 
-      console.warn('⚠️ MediaUploader: Safe update failed, trying fallback:', rpcError);
+      console.warn('⚠️ MediaUploader: Safe update failed, trying fallback:', rpcError || safeResult?.error);
       
       // Fallback: Direct update
       const updateData = {
@@ -53,14 +62,14 @@ export const MediaUploader = ({
 
       if (directError) {
         console.error('❌ MediaUploader: Direct update failed:', directError);
-        return false;
+        throw new Error(`Failed to update profile: ${directError.message}`);
       }
 
       console.log('✅ MediaUploader: Profile updated via fallback');
       return true;
-    } catch (error) {
+    } catch (error: any) {
       console.error('💥 MediaUploader: Profile update failed:', error);
-      return false;
+      throw error;
     }
   }, [type, userId]);
 
@@ -71,22 +80,35 @@ export const MediaUploader = ({
     setUploadProgress(0);
 
     try {
-      const bucket = type === 'avatar' ? 'avatars' : 'banners';
+      console.log(`🎨 MediaUploader: Starting ${type} upload`, { fileName: file.name, size: file.size });
+
+      // Validate file
+      const maxSize = type === 'avatar' ? 10 * 1024 * 1024 : 50 * 1024 * 1024;
+      if (file.size > maxSize) {
+        throw new Error(`File too large. Maximum size: ${Math.round(maxSize / 1024 / 1024)}MB`);
+      }
+
+      const allowedTypes = type === 'avatar' 
+        ? ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
+        : ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'video/mp4', 'video/webm'];
+      
+      if (!allowedTypes.includes(file.type)) {
+        throw new Error(`Invalid file type. Allowed: ${allowedTypes.join(', ')}`);
+      }
+
+      // Generate unique filename with proper path structure
       const fileExt = file.name.split('.').pop();
-      const fileName = `${userId}/${Date.now()}.${fileExt}`;
+      const fileName = `${userId}/${type}_${Date.now()}.${fileExt}`;
+      const bucket = type === 'avatar' ? 'studio-avatars' : 'studio-banners';
 
       // Simulate upload progress
       const progressInterval = setInterval(() => {
-        setUploadProgress(prev => {
-          if (prev >= 90) {
-            clearInterval(progressInterval);
-            return 90;
-          }
-          return prev + 10;
-        });
-      }, 100);
+        setUploadProgress(prev => Math.min(prev + 10, 90));
+      }, 200);
 
-      const { data, error } = await supabase.storage
+      console.log(`🎨 MediaUploader: Uploading to bucket: ${bucket}, path: ${fileName}`);
+
+      const { data, error: uploadError } = await supabase.storage
         .from(bucket)
         .upload(fileName, file, {
           cacheControl: '3600',
@@ -94,29 +116,33 @@ export const MediaUploader = ({
         });
 
       clearInterval(progressInterval);
-      setUploadProgress(100);
 
-      if (error) throw error;
+      if (uploadError) {
+        console.error('❌ MediaUploader: Storage upload error:', uploadError);
+        throw new Error(`Upload failed: ${uploadError.message}`);
+      }
+
+      setUploadProgress(95);
 
       const { data: { publicUrl } } = supabase.storage
         .from(bucket)
         .getPublicUrl(data.path);
 
+      console.log('🎨 MediaUploader: Generated public URL:', publicUrl);
+
       // Update profile using safe method
-      const updateSuccess = await safeProfileUpdate(publicUrl);
+      await safeProfileUpdate(publicUrl);
       
-      if (updateSuccess) {
-        onUploadSuccess(publicUrl);
-        toast({
-          title: "Upload Complete",
-          description: `Your ${type} has been updated successfully!`,
-        });
-      } else {
-        throw new Error('Failed to update profile');
-      }
+      setUploadProgress(100);
+      onUploadSuccess(publicUrl);
+      
+      toast({
+        title: "Upload Complete",
+        description: `Your ${type} has been updated successfully!`,
+      });
 
     } catch (error: any) {
-      console.error('Upload error:', error);
+      console.error('💥 MediaUploader: Upload error:', error);
       toast({
         title: "Upload Failed",
         description: error.message || "Failed to upload media. Please try again.",
