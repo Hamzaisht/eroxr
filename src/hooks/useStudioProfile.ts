@@ -10,9 +10,9 @@ export const useStudioProfile = (profileId: string) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const { data: profile, isLoading, error } = useQuery({
-    queryKey: ['studio-profile', profileId],
-    queryFn: async () => {
+  const { data: profile, isLoading, error } = useQuery(
+    ['studio-profile', profileId],
+    async () => {
       console.log('🎨 useStudioProfile: Fetching profile via RLS-bypass for ID:', profileId);
       
       // Use the RLS-bypass profile fetch operation
@@ -26,13 +26,15 @@ export const useStudioProfile = (profileId: string) => {
       console.log('✅ useStudioProfile: Profile fetched successfully via RLS-bypass');
       return result.data as StudioProfile;
     },
-    staleTime: 5 * 60 * 1000,
-    gcTime: 10 * 60 * 1000,
-    enabled: !!profileId,
-  });
+    {
+      staleTime: 5 * 60 * 1000,
+      cacheTime: 10 * 60 * 1000,
+      enabled: !!profileId,
+    }
+  );
 
-  const updateProfileMutation = useMutation({
-    mutationFn: async (updates: Partial<StudioProfile>) => {
+  const updateProfileMutation = useMutation(
+    async (updates: Partial<StudioProfile>) => {
       console.log('🎨 useStudioProfile: Updating profile via RLS-bypass with:', updates);
       
       // Use the RLS-bypass profile update operation
@@ -49,22 +51,24 @@ export const useStudioProfile = (profileId: string) => {
       console.log('✅ useStudioProfile: Profile updated successfully via RLS-bypass');
       return result.data;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['studio-profile', profileId] });
-      toast({
-        title: "Profile Updated",
-        description: "Your profile has been updated successfully!",
-      });
-    },
-    onError: (error: any) => {
-      console.error('💥 useStudioProfile: Profile update failed:', error);
-      toast({
-        title: "Update Failed",
-        description: error.message || "Failed to update profile. Please try again.",
-        variant: "destructive",
-      });
-    },
-  });
+    {
+      onSuccess: () => {
+        queryClient.invalidateQueries(['studio-profile', profileId]);
+        toast({
+          title: "Profile Updated",
+          description: "Your profile has been updated successfully!",
+        });
+      },
+      onError: (error: any) => {
+        console.error('💥 useStudioProfile: Profile update failed:', error);
+        toast({
+          title: "Update Failed",
+          description: error.message || "Failed to update profile. Please try again.",
+          variant: "destructive",
+        });
+      },
+    }
+  );
 
   return {
     profile,
