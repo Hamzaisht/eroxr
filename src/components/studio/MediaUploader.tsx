@@ -1,8 +1,7 @@
 
 import { useState, useCallback } from 'react';
 import { motion } from 'framer-motion';
-import { Upload, Camera, Video, X, Check, Crown, Sparkles } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Upload, Camera, Video, Crown, Sparkles } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -25,6 +24,46 @@ export const MediaUploader = ({
   const [uploadProgress, setUploadProgress] = useState(0);
   const { toast } = useToast();
 
+  const safeProfileUpdate = useCallback(async (url: string) => {
+    try {
+      // Primary: Use safe profile update function
+      const updateField = type === 'avatar' ? 'p_avatar_url' : 'p_banner_url';
+      const { data: safeResult, error: rpcError } = await supabase.rpc('safe_profile_update', {
+        p_user_id: userId,
+        [updateField]: url,
+      });
+
+      if (!rpcError && safeResult?.success) {
+        console.log('✅ MediaUploader: Profile updated via safe function');
+        return true;
+      }
+
+      console.warn('⚠️ MediaUploader: Safe update failed, trying fallback:', rpcError);
+      
+      // Fallback: Direct update
+      const updateData = {
+        [type === 'avatar' ? 'avatar_url' : 'banner_url']: url,
+        updated_at: new Date().toISOString()
+      };
+
+      const { error: directError } = await supabase
+        .from('profiles')
+        .update(updateData)
+        .eq('id', userId);
+
+      if (directError) {
+        console.error('❌ MediaUploader: Direct update failed:', directError);
+        return false;
+      }
+
+      console.log('✅ MediaUploader: Profile updated via fallback');
+      return true;
+    } catch (error) {
+      console.error('💥 MediaUploader: Profile update failed:', error);
+      return false;
+    }
+  }, [type, userId]);
+
   const handleFileUpload = useCallback(async (file: File) => {
     if (!file) return;
 
@@ -32,7 +71,7 @@ export const MediaUploader = ({
     setUploadProgress(0);
 
     try {
-      const bucket = type === 'avatar' ? 'studio-avatars' : 'studio-banners';
+      const bucket = type === 'avatar' ? 'avatars' : 'banners';
       const fileExt = file.name.split('.').pop();
       const fileName = `${userId}/${Date.now()}.${fileExt}`;
 
@@ -63,30 +102,31 @@ export const MediaUploader = ({
         .from(bucket)
         .getPublicUrl(data.path);
 
-      // Update profile with new URL
-      await supabase.rpc('studio_update_profile', {
-        [type === 'avatar' ? 'p_avatar_url' : 'p_banner_url']: publicUrl
-      });
-
-      onUploadSuccess(publicUrl);
+      // Update profile using safe method
+      const updateSuccess = await safeProfileUpdate(publicUrl);
       
-      toast({
-        title: "Divine Upload Complete",
-        description: `Your ${type} has been blessed by the gods!`,
-      });
+      if (updateSuccess) {
+        onUploadSuccess(publicUrl);
+        toast({
+          title: "Upload Complete",
+          description: `Your ${type} has been updated successfully!`,
+        });
+      } else {
+        throw new Error('Failed to update profile');
+      }
 
     } catch (error: any) {
       console.error('Upload error:', error);
       toast({
         title: "Upload Failed",
-        description: "The gods have rejected this offering. Please try again.",
+        description: error.message || "Failed to upload media. Please try again.",
         variant: "destructive",
       });
     } finally {
       setIsUploading(false);
       setUploadProgress(0);
     }
-  }, [type, userId, onUploadSuccess, toast]);
+  }, [type, userId, onUploadSuccess, toast, safeProfileUpdate]);
 
   const handleFileSelect = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -120,7 +160,7 @@ export const MediaUploader = ({
               {currentUrl ? (
                 <img
                   src={currentUrl}
-                  alt="Divine avatar"
+                  alt="Avatar"
                   className="w-full h-full object-cover"
                 />
               ) : (
@@ -154,7 +194,7 @@ export const MediaUploader = ({
               <div className="absolute inset-0 bg-gradient-to-br from-purple-900/70 via-transparent to-cyan-900/70 rounded-full opacity-0 hover:opacity-100 transition-opacity duration-300 flex items-center justify-center backdrop-blur-sm">
                 <div className="text-center text-white">
                   <Upload className="w-6 h-6 mx-auto mb-1" />
-                  <span className="text-sm font-semibold">Upload Divine Avatar</span>
+                  <span className="text-sm font-semibold">Upload Avatar</span>
                 </div>
               </div>
             )}
@@ -197,7 +237,7 @@ export const MediaUploader = ({
               ) : (
                 <img
                   src={currentUrl}
-                  alt="Divine banner"
+                  alt="Banner"
                   className="w-full h-full object-cover"
                 />
               )
@@ -208,7 +248,7 @@ export const MediaUploader = ({
                     <Video className="w-12 h-12" />
                     <Crown className="w-8 h-8 text-purple-400" />
                   </div>
-                  <p className="text-lg font-bold mb-2">Upload Divine Banner</p>
+                  <p className="text-lg font-bold mb-2">Upload Banner</p>
                   <p className="text-sm text-slate-400">Image or Video</p>
                 </div>
                 
@@ -242,7 +282,7 @@ export const MediaUploader = ({
                     <Upload className="w-8 h-8" />
                     <Sparkles className="w-6 h-6 text-purple-400" />
                   </div>
-                  <span className="text-lg font-bold">Upload New Divine Banner</span>
+                  <span className="text-lg font-bold">Upload New Banner</span>
                 </div>
               </div>
             )}
@@ -256,7 +296,7 @@ export const MediaUploader = ({
                     transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
                   />
                   <span className="text-lg font-bold">{uploadProgress}%</span>
-                  <p className="text-sm text-purple-300 mt-2">Ascending to divine realms...</p>
+                  <p className="text-sm text-purple-300 mt-2">Uploading...</p>
                 </div>
               </div>
             )}

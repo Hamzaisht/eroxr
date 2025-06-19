@@ -2288,13 +2288,33 @@ export type Database = {
         Args: { p_table_name: string; p_column_name: string }
         Returns: boolean
       }
+      check_profile_permissions: {
+        Args: {
+          p_user_id: string
+          p_target_profile_id: string
+          p_operation: string
+        }
+        Returns: boolean
+      }
       cleanup_expired_demo_content: {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
+      detect_stack_depth: {
+        Args: Record<PropertyKey, never>
+        Returns: number
+      }
       get_current_user_id: {
         Args: Record<PropertyKey, never>
         Returns: string
+      }
+      get_current_user_role: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
+      get_profile_safe: {
+        Args: { p_user_id: string }
+        Returns: Json
       }
       get_top_trending_hashtags: {
         Args: Record<PropertyKey, never>
@@ -2321,6 +2341,20 @@ export type Database = {
       increment_counter: {
         Args: { row_id: string; counter_name: string; table_name?: string }
         Returns: undefined
+      }
+      safe_profile_update: {
+        Args: {
+          p_user_id: string
+          p_username?: string
+          p_bio?: string
+          p_location?: string
+          p_avatar_url?: string
+          p_banner_url?: string
+          p_interests?: string[]
+          p_profile_visibility?: boolean
+          p_status?: string
+        }
+        Returns: Json
       }
       studio_update_profile: {
         Args: {

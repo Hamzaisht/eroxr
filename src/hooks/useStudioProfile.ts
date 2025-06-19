@@ -14,69 +14,124 @@ export const useStudioProfile = (profileId: string) => {
     queryFn: async () => {
       console.log('🎨 Studio: Fetching profile for ID:', profileId);
       
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', profileId)
-        .single();
-      
-      if (error) {
-        console.error('❌ Studio: Profile fetch error:', error);
+      try {
+        // Primary: Use safe profile fetch function
+        const { data: safeResult, error: rpcError } = await supabase.rpc('get_profile_safe', {
+          p_user_id: profileId
+        });
+
+        if (!rpcError && safeResult?.success) {
+          console.log('✅ Studio: Profile fetched via safe function:', safeResult.data);
+          return safeResult.data as StudioProfile;
+        }
+
+        console.warn('⚠️ Studio: Safe function failed, trying direct query:', rpcError);
+        
+        // Fallback: Direct query with error handling
+        const { data: directData, error: directError } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', profileId)
+          .maybeSingle();
+        
+        if (directError) {
+          console.error('❌ Studio: Direct query failed:', directError);
+          throw directError;
+        }
+        
+        if (!directData) {
+          throw new Error('Profile not found');
+        }
+        
+        console.log('✅ Studio: Profile fetched via fallback:', directData);
+        return directData as StudioProfile;
+        
+      } catch (error) {
+        console.error('❌ Studio: All profile fetch methods failed:', error);
         throw error;
       }
-      
-      console.log('✅ Studio: Profile fetched successfully:', data);
-      return data as StudioProfile;
     },
     staleTime: 5 * 60 * 1000,
     cacheTime: 10 * 60 * 1000,
+    enabled: !!profileId,
   });
 
   const updateProfileMutation = useMutation({
     mutationFn: async (updates: Partial<StudioProfile>) => {
       console.log('🎨 Studio: Updating profile with:', updates);
       
-      // Try using the RPC function first, fallback to direct update
       try {
-        const { error } = await supabase.rpc('studio_update_profile', {
+        // Primary: Use safe profile update function
+        const { data: safeResult, error: rpcError } = await supabase.rpc('safe_profile_update', {
+          p_user_id: profileId,
           p_username: updates.username || null,
           p_bio: updates.bio || null,
           p_location: updates.location || null,
           p_avatar_url: updates.avatar_url || null,
           p_banner_url: updates.banner_url || null,
           p_interests: updates.interests || null,
+          p_profile_visibility: updates.profile_visibility || null,
+          p_status: updates.status || null,
         });
 
-        if (error) throw error;
-      } catch (rpcError) {
-        console.warn('⚠️ Studio: RPC update failed, trying direct update:', rpcError);
+        if (!rpcError && safeResult?.success) {
+          console.log('✅ Studio: Profile updated via safe function');
+          return safeResult.data;
+        }
+
+        console.warn('⚠️ Studio: Safe update failed, trying fallback:', rpcError || safeResult?.error);
         
-        // Fallback to direct update
-        const { error } = await supabase
+        // Fallback 1: Try the existing studio_update_profile function
+        try {
+          const { error: studioError } = await supabase.rpc('studio_update_profile', {
+            p_username: updates.username || null,
+            p_bio: updates.bio || null,
+            p_location: updates.location || null,
+            p_avatar_url: updates.avatar_url || null,
+            p_banner_url: updates.banner_url || null,
+            p_interests: updates.interests || null,
+          });
+
+          if (!studioError) {
+            console.log('✅ Studio: Profile updated via studio RPC');
+            return;
+          }
+        } catch (studioErr) {
+          console.warn('⚠️ Studio: Studio RPC failed:', studioErr);
+        }
+
+        // Fallback 2: Direct update with minimal data
+        const updateData: any = {};
+        if (updates.username !== undefined) updateData.username = updates.username;
+        if (updates.bio !== undefined) updateData.bio = updates.bio;
+        if (updates.location !== undefined) updateData.location = updates.location;
+        if (updates.avatar_url !== undefined) updateData.avatar_url = updates.avatar_url;
+        if (updates.banner_url !== undefined) updateData.banner_url = updates.banner_url;
+        if (updates.interests !== undefined) updateData.interests = updates.interests;
+        
+        updateData.updated_at = new Date().toISOString();
+
+        const { error: directError } = await supabase
           .from('profiles')
-          .update({
-            username: updates.username,
-            bio: updates.bio,
-            location: updates.location,
-            avatar_url: updates.avatar_url,
-            banner_url: updates.banner_url,
-            interests: updates.interests,
-            updated_at: new Date().toISOString(),
-          })
+          .update(updateData)
           .eq('id', profileId);
 
-        if (error) {
-          console.error('❌ Studio: Direct update error:', error);
-          throw error;
+        if (directError) {
+          console.error('❌ Studio: Direct update failed:', directError);
+          throw directError;
         }
-      }
 
-      console.log('✅ Studio: Profile updated successfully');
+        console.log('✅ Studio: Profile updated via direct query');
+
+      } catch (error) {
+        console.error('💥 Studio: All profile update methods failed:', error);
+        throw error;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['studio-profile', profileId] });
       toast({
-        title: "Studio Profile Updated",
+        title: "Profile Updated",
         description: "Your profile has been updated successfully!",
       });
     },
@@ -84,7 +139,7 @@ export const useStudioProfile = (profileId: string) => {
       console.error('💥 Studio: Profile update failed:', error);
       toast({
         title: "Update Failed",
-        description: error.message || "Failed to update profile",
+        description: error.message || "Failed to update profile. Please try again.",
         variant: "destructive",
       });
     },

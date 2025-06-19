@@ -1,3 +1,4 @@
+
 import { useState, useCallback } from 'react';
 import { useSession } from '@supabase/auth-helpers-react';
 import { useToast } from '@/hooks/use-toast';
@@ -29,10 +30,10 @@ export const useStoryUpload = () => {
 
   // Validate file before upload
   const validateFile = useCallback((file: File): { valid: boolean; error?: string } => {
-    // CRITICAL: Run comprehensive file diagnostic
+    // Run comprehensive file diagnostic
     runFileDiagnostic(file);
     
-    // CRITICAL: Strict file validation
+    // Strict file validation
     if (!file || !(file instanceof File) || file.size === 0) {
       console.error("❌ Invalid File passed to uploader", file);
       return { 
@@ -73,7 +74,7 @@ export const useStoryUpload = () => {
       // Reset any previous state
       resetState();
       
-      // CRITICAL: Run comprehensive file diagnostic
+      // Run comprehensive file diagnostic
       runFileDiagnostic(file);
       
       // Validate file
@@ -88,7 +89,7 @@ export const useStoryUpload = () => {
         return false;
       }
       
-      // Create preview - FIX: Await the Promise before setting state
+      // Create preview
       try {
         const preview = await createFilePreview(file);
         setPreviewUrl(preview);
@@ -104,7 +105,7 @@ export const useStoryUpload = () => {
     }
   }, [resetState, validateFile, toast]);
 
-  // Upload story
+  // Upload story with safe error handling
   const uploadFile = useCallback(async (file: File) => {
     if (!session?.user?.id) {
       setError('You must be logged in to upload stories');
@@ -116,10 +117,10 @@ export const useStoryUpload = () => {
       return { success: false, error: 'Authentication required' };
     }
 
-    // CRITICAL: Run comprehensive file diagnostic
+    // Run comprehensive file diagnostic
     runFileDiagnostic(file);
     
-    // CRITICAL: Strict file validation
+    // Strict file validation
     if (!file || !(file instanceof File) || file.size === 0) {
       const errorMessage = "Only raw File instances with data can be uploaded";
       console.error("❌ Invalid File passed to uploader", file);
@@ -155,7 +156,7 @@ export const useStoryUpload = () => {
         setProgress(prev => Math.min(prev + 5, 90));
       }, 200);
       
-      // Upload using the stories hook
+      // Upload using the stories hook with safe error handling
       const result = await uploadStory(file);
       
       clearInterval(progressInterval);
@@ -177,15 +178,16 @@ export const useStoryUpload = () => {
       return result;
     } catch (err: any) {
       console.error('Story upload error:', err);
-      setError(err.message || 'Failed to upload story');
+      const errorMessage = err.message || 'Failed to upload story';
+      setError(errorMessage);
       
       toast({
         title: 'Upload failed',
-        description: err.message || 'There was a problem uploading your story',
+        description: errorMessage,
         variant: 'destructive',
       });
       
-      return { success: false, error: err.message };
+      return { success: false, error: errorMessage };
     } finally {
       setIsSubmitting(false);
     }
