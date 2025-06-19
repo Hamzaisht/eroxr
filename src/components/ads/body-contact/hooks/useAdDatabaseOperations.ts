@@ -1,3 +1,4 @@
+
 import { useSession } from "@supabase/auth-helpers-react";
 import { supabase } from "@/integrations/supabase/client";
 import { AdFormValues } from "../types";
@@ -110,15 +111,32 @@ export const useAdDatabaseOperations = () => {
   const updateProfileAvatar = async (avatarUrl: string | null) => {
     if (!session?.user?.id || !avatarUrl) return;
     
-    console.log("Updating profile with avatar URL:", avatarUrl);
+    console.log("Updating profile with avatar URL using safe RPC:", avatarUrl);
     
-    const { error: profileError } = await supabase
-      .from("profiles")
-      .update({ avatar_url: avatarUrl })
-      .eq("id", asColumnValue(session.user.id));
+    try {
+      // Use the safe profile update RPC function to avoid stack depth issues
+      const { data: safeResult, error: rpcError } = await supabase.rpc('safe_profile_update', {
+        p_user_id: session.user.id,
+        p_username: null,
+        p_bio: null,
+        p_location: null,
+        p_avatar_url: avatarUrl,
+        p_banner_url: null,
+        p_interests: null,
+        p_profile_visibility: null,
+        p_status: null,
+      });
 
-    if (profileError) {
-      console.error("Avatar profile update error:", profileError);
+      if (!rpcError && safeResult?.success) {
+        console.log("✅ Profile avatar updated successfully via safe RPC");
+        return true;
+      }
+
+      console.error("❌ Safe profile update failed:", rpcError || safeResult?.error);
+      return false;
+    } catch (error: any) {
+      console.error("💥 Profile avatar update error:", error);
+      return false;
     }
   };
 

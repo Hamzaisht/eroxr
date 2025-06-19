@@ -17,7 +17,9 @@ export const safeProfileUpdate = async (params: SafeProfileUpdateParams) => {
   const { userId, ...updates } = params;
   
   try {
-    // Primary: Use safe profile update function
+    console.log('🔒 SafeProfileOperations: Using safe profile update RPC for:', userId);
+    
+    // Use safe profile update function with proper error handling
     const { data: safeResult, error: rpcError } = await supabase.rpc('safe_profile_update', {
       p_user_id: userId,
       p_username: updates.username || null,
@@ -31,70 +33,46 @@ export const safeProfileUpdate = async (params: SafeProfileUpdateParams) => {
     });
 
     if (!rpcError && safeResult?.success) {
+      console.log('✅ SafeProfileOperations: Profile updated successfully via safe RPC');
       return { success: true, data: safeResult.data, method: 'safe_rpc' };
     }
 
-    console.warn('Safe profile update failed, trying fallback:', rpcError || safeResult?.error);
-    
-    // Fallback: Direct update with minimal data
-    const updateData: any = {};
-    Object.entries(updates).forEach(([key, value]) => {
-      if (value !== undefined) {
-        updateData[key] = value;
-      }
-    });
-    
-    updateData.updated_at = new Date().toISOString();
-
-    const { data, error: directError } = await supabase
-      .from('profiles')
-      .update(updateData)
-      .eq('id', userId)
-      .select()
-      .single();
-
-    if (directError) {
-      return { success: false, error: directError.message, method: 'direct_fallback' };
-    }
-
-    return { success: true, data, method: 'direct_fallback' };
+    console.error('❌ SafeProfileOperations: Safe RPC failed:', rpcError || safeResult?.error);
+    return { 
+      success: false, 
+      error: rpcError?.message || safeResult?.error || 'RPC function failed', 
+      method: 'safe_rpc_failed' 
+    };
     
   } catch (error: any) {
+    console.error('💥 SafeProfileOperations: Critical error:', error);
     return { success: false, error: error.message, method: 'error' };
   }
 };
 
 export const safeProfileFetch = async (userId: string) => {
   try {
-    // Primary: Use safe profile fetch function
+    console.log('🔍 SafeProfileOperations: Fetching profile safely for:', userId);
+    
+    // Use safe profile fetch function
     const { data: safeResult, error: rpcError } = await supabase.rpc('get_profile_safe', {
       p_user_id: userId
     });
 
     if (!rpcError && safeResult?.success) {
+      console.log('✅ SafeProfileOperations: Profile fetched successfully via safe RPC');
       return { success: true, data: safeResult.data, method: 'safe_rpc' };
     }
 
-    console.warn('Safe profile fetch failed, trying fallback:', rpcError);
-    
-    // Fallback: Direct query
-    const { data, error: directError } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', userId)
-      .maybeSingle();
-    
-    if (directError) {
-      return { success: false, error: directError.message, method: 'direct_fallback' };
-    }
-    
-    if (!data) {
-      return { success: false, error: 'Profile not found', method: 'direct_fallback' };
-    }
-
-    return { success: true, data, method: 'direct_fallback' };
+    console.error('❌ SafeProfileOperations: Safe fetch failed:', rpcError || safeResult?.error);
+    return { 
+      success: false, 
+      error: rpcError?.message || safeResult?.error || 'Profile not found', 
+      method: 'safe_rpc_failed' 
+    };
     
   } catch (error: any) {
+    console.error('💥 SafeProfileOperations: Critical fetch error:', error);
     return { success: false, error: error.message, method: 'error' };
   }
 };
