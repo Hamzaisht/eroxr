@@ -1,8 +1,10 @@
+
 import { useState, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { Upload, Camera, Video, Crown, Sparkles } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { safeProfileUpdate } from './SafeProfileOperations';
 
 interface MediaUploaderProps {
   type: 'avatar' | 'banner';
@@ -22,56 +24,6 @@ export const MediaUploader = ({
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const { toast } = useToast();
-
-  const safeProfileUpdate = useCallback(async (url: string) => {
-    try {
-      console.log(`🎨 MediaUploader: Updating ${type} URL:`, url);
-      
-      // Use the safe profile update function with correct parameters
-      const updateParams = {
-        p_user_id: userId,
-        p_username: null,
-        p_bio: null,
-        p_location: null,
-        p_avatar_url: type === 'avatar' ? url : null,
-        p_banner_url: type === 'banner' ? url : null,
-        p_interests: null,
-        p_profile_visibility: null,
-        p_status: null,
-      };
-
-      const { data: safeResult, error: rpcError } = await supabase.rpc('safe_profile_update', updateParams);
-
-      if (!rpcError && safeResult?.success) {
-        console.log('✅ MediaUploader: Profile updated via safe function');
-        return true;
-      }
-
-      console.warn('⚠️ MediaUploader: Safe update failed, trying fallback:', rpcError || safeResult?.error);
-      
-      // Fallback: Direct update
-      const updateData = {
-        [type === 'avatar' ? 'avatar_url' : 'banner_url']: url,
-        updated_at: new Date().toISOString()
-      };
-
-      const { error: directError } = await supabase
-        .from('profiles')
-        .update(updateData)
-        .eq('id', userId);
-
-      if (directError) {
-        console.error('❌ MediaUploader: Direct update failed:', directError);
-        throw new Error(`Failed to update profile: ${directError.message}`);
-      }
-
-      console.log('✅ MediaUploader: Profile updated via fallback');
-      return true;
-    } catch (error: any) {
-      console.error('💥 MediaUploader: Profile update failed:', error);
-      throw error;
-    }
-  }, [type, userId]);
 
   const handleFileUpload = useCallback(async (file: File) => {
     if (!file) return;
@@ -130,8 +82,20 @@ export const MediaUploader = ({
 
       console.log('🎨 MediaUploader: Generated public URL:', publicUrl);
 
-      // Update profile using safe method
-      await safeProfileUpdate(publicUrl);
+      // Update profile using ONLY the safe RPC function - no fallbacks
+      console.log(`🎨 MediaUploader: Updating ${type} URL using safe RPC only:`, publicUrl);
+      
+      const result = await safeProfileUpdate({
+        userId,
+        [type === 'avatar' ? 'avatar_url' : 'banner_url']: publicUrl
+      });
+
+      if (!result.success) {
+        console.error('❌ MediaUploader: Safe profile update failed:', result.error);
+        throw new Error(`Failed to update profile: ${result.error}`);
+      }
+
+      console.log('✅ MediaUploader: Profile updated successfully via safe RPC');
       
       setUploadProgress(100);
       onUploadSuccess(publicUrl);
@@ -152,7 +116,7 @@ export const MediaUploader = ({
       setIsUploading(false);
       setUploadProgress(0);
     }
-  }, [type, userId, onUploadSuccess, toast, safeProfileUpdate]);
+  }, [type, userId, onUploadSuccess, toast]);
 
   const handleFileSelect = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
