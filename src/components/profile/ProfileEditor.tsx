@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import type { StudioProfile } from './types';
+import type { StudioProfile } from '@/components/studio/types';
 
 const profileSchema = z.object({
   username: z.string().min(3, 'Username must be at least 3 characters').optional(),
