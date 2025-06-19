@@ -2288,14 +2288,6 @@ export type Database = {
         Args: { p_table_name: string; p_column_name: string }
         Returns: boolean
       }
-      check_profile_permissions: {
-        Args: {
-          p_user_id: string
-          p_target_profile_id: string
-          p_operation: string
-        }
-        Returns: boolean
-      }
       cleanup_expired_demo_content: {
         Args: Record<PropertyKey, never>
         Returns: undefined
@@ -2311,10 +2303,6 @@ export type Database = {
       get_current_user_role: {
         Args: Record<PropertyKey, never>
         Returns: string
-      }
-      get_profile_safe: {
-        Args: { p_user_id: string }
-        Returns: Json
       }
       get_top_trending_hashtags: {
         Args: Record<PropertyKey, never>
@@ -2359,46 +2347,6 @@ export type Database = {
           p_status?: string
         }
         Returns: Json
-      }
-      safe_profile_update: {
-        Args: {
-          p_user_id: string
-          p_username?: string
-          p_bio?: string
-          p_location?: string
-          p_avatar_url?: string
-          p_banner_url?: string
-          p_interests?: string[]
-          p_profile_visibility?: boolean
-          p_status?: string
-        }
-        Returns: Json
-      }
-      studio_update_profile: {
-        Args: {
-          p_username?: string
-          p_bio?: string
-          p_location?: string
-          p_avatar_url?: string
-          p_banner_url?: string
-          p_interests?: string[]
-        }
-        Returns: undefined
-      }
-      update_profile_bypass_rls: {
-        Args: {
-          p_user_id: string
-          p_username?: string
-          p_bio?: string
-          p_location?: string
-          p_avatar_url?: string
-          p_banner_url?: string
-          p_interests?: string[]
-          p_profile_visibility?: boolean
-          p_is_suspended?: boolean
-          p_suspended_at?: string
-        }
-        Returns: undefined
       }
       update_trending_score: {
         Args: { p_post_id: string }
