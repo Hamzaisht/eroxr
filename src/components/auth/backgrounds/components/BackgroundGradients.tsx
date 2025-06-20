@@ -4,47 +4,30 @@ import { motion } from "framer-motion";
 export const BackgroundGradients = () => {
   return (
     <>
-      {/* Divine Realm Background - Multiple ethereal layers */}
+      {/* Primary subtle gradient */}
       <motion.div
-        className="absolute inset-0 bg-gradient-to-br from-indigo-900/30 via-purple-900/40 to-rose-900/30"
+        className="absolute inset-0 bg-gradient-to-br from-slate-900 via-gray-900 to-slate-800"
         animate={{
-          scale: [1, 1.02, 1],
-          rotate: [0, 0.3, 0],
+          opacity: [0.9, 1, 0.9],
         }}
         transition={{ 
-          duration: 25, 
+          duration: 8, 
           repeat: Infinity, 
           ease: "easeInOut" 
         }}
       />
       
-      {/* Love's Awakening - Pink to golden dawn */}
+      {/* Subtle accent overlay */}
       <motion.div
-        className="absolute inset-0 bg-gradient-to-t from-pink-900/20 via-purple-800/25 to-amber-700/15"
+        className="absolute inset-0 bg-gradient-to-t from-blue-900/10 via-transparent to-purple-900/5"
         animate={{
-          opacity: [0.3, 0.6, 0.3],
-          scale: [0.98, 1.03, 0.98],
+          opacity: [0.3, 0.5, 0.3],
         }}
         transition={{ 
-          duration: 20, 
+          duration: 12, 
           repeat: Infinity, 
           ease: "easeInOut",
           delay: 2
-        }}
-      />
-
-      {/* Desire's Fire - Passionate reds and oranges */}
-      <motion.div
-        className="absolute inset-0 bg-gradient-to-bl from-red-900/15 via-orange-800/20 to-pink-900/25"
-        animate={{
-          rotate: [0, -0.5, 0],
-          scale: [1.01, 0.99, 1.01],
-        }}
-        transition={{ 
-          duration: 18, 
-          repeat: Infinity, 
-          ease: "easeInOut",
-          delay: 4
         }}
       />
     </>
