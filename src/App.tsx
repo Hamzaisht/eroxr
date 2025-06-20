@@ -6,6 +6,7 @@ import { MainLayout } from "@/components/layout/MainLayout";
 import { ErrorBoundary } from "@/components/ui/ErrorBoundary";
 import ProfilePage from "@/pages/ProfilePage";
 import Profile from "@/pages/Profile";
+import NewProfile from "@/pages/NewProfile";
 import Home from "@/pages/Home";
 import SearchPage from "@/pages/Search";
 import Index from "@/pages/Index";
@@ -46,6 +47,10 @@ function App() {
                   <Route path="/profile" element={<MainLayout />}>
                     <Route index element={<Profile />} />
                     <Route path=":profileIdentifier" element={<Profile />} />
+                  </Route>
+                  <Route path="/new-profile" element={<MainLayout />}>
+                    <Route index element={<NewProfile />} />
+                    <Route path=":profileIdentifier" element={<NewProfile />} />
                   </Route>
                 </Routes>
               </ErrorBoundary>
