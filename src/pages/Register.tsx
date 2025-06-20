@@ -7,6 +7,7 @@ import { LoadingScreen } from "@/components/layout/LoadingScreen";
 import { BackgroundVideo } from "@/components/video/BackgroundVideo";
 import { BackgroundEffects } from "@/components/layout/BackgroundEffects";
 import { useAuth } from "@/contexts/AuthContext";
+import { ErosPatternBackground } from "@/components/auth/backgrounds/ErosPatternBackground";
 
 const Register = () => {
   const { user, session, loading } = useAuth();
@@ -66,26 +67,14 @@ const Register = () => {
             className="w-full"
           >
             <motion.div
-              className="relative backdrop-blur-xl bg-gradient-to-br from-gray-900/95 via-gray-800/95 to-gray-900/95 rounded-2xl border border-gray-700/50 overflow-hidden shadow-2xl"
+              className="relative backdrop-blur-xl overflow-hidden shadow-2xl"
               whileHover={{ 
                 scale: 1.02,
                 boxShadow: "0 25px 50px rgba(217, 70, 239, 0.2)"
               }}
               transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
             >
-              {/* Animated gradient border */}
-              <motion.div
-                className="absolute inset-0"
-                style={{
-                  background: "conic-gradient(from 0deg at 50% 50%, #ec4899, #8b5cf6, #06b6d4, #ec4899)",
-                  padding: "2px",
-                  borderRadius: "1rem",
-                }}
-                animate={{ rotate: 360 }}
-                transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
-              >
-                <div className="w-full h-full bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 rounded-2xl" />
-              </motion.div>
+              <ErosPatternBackground />
               
               <div className="relative z-10 p-8 space-y-8">
                 <motion.div
@@ -114,7 +103,7 @@ const Register = () => {
                         backgroundSize: '200% auto',
                       }}
                     >
-                      Join Us
+                      Join Eroxr
                     </motion.span>
                   </motion.h1>
                   
@@ -153,28 +142,28 @@ const Register = () => {
                 </motion.div>
               </div>
               
-              {/* Floating particles */}
-              {[...Array(8)].map((_, i) => (
+              {/* Floating particles with Eros theme */}
+              {[...Array(6)].map((_, i) => (
                 <motion.div
                   key={i}
-                  className="absolute w-2 h-2 rounded-full"
+                  className="absolute w-1.5 h-1.5 rounded-full opacity-40"
                   style={{
                     background: `linear-gradient(45deg, ${
                       i % 3 === 0 ? '#ec4899' : i % 3 === 1 ? '#8b5cf6' : '#06b6d4'
                     }, transparent)`,
-                    left: `${15 + i * 12}%`,
-                    top: `${10 + (i % 3) * 30}%`,
+                    left: `${20 + i * 15}%`,
+                    top: `${15 + (i % 3) * 25}%`,
                   }}
                   animate={{
-                    y: [0, -30, 0],
-                    opacity: [0, 1, 0],
-                    scale: [0, 1.5, 0],
+                    y: [0, -20, 0],
+                    opacity: [0, 0.6, 0],
+                    scale: [0, 1.2, 0],
                     rotate: [0, 180, 360],
                   }}
                   transition={{
-                    duration: 4 + i * 0.3,
+                    duration: 4 + i * 0.5,
                     repeat: Infinity,
-                    delay: i * 0.4,
+                    delay: i * 0.3,
                     ease: "easeInOut",
                   }}
                 />
