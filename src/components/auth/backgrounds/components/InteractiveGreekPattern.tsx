@@ -1,6 +1,6 @@
 
 import { motion } from "framer-motion";
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 
 export const InteractiveGreekPattern = () => {
   const [isPressed, setIsPressed] = useState(false);
@@ -25,14 +25,14 @@ export const InteractiveGreekPattern = () => {
   }, []);
 
   // Update hold duration while pressed
-  useState(() => {
+  useEffect(() => {
     if (isPressed && pressStartTime) {
       const interval = setInterval(() => {
         setHoldDuration(Date.now() - pressStartTime);
       }, 50);
       return () => clearInterval(interval);
     }
-  });
+  }, [isPressed, pressStartTime]);
 
   // Calculate scale based on hold duration (max 2x scale after 2 seconds)
   const scale = isPressed 
@@ -66,7 +66,7 @@ export const InteractiveGreekPattern = () => {
       >
         <svg
           viewBox="0 0 400 400"
-          className="w-full h-full opacity-20 hover:opacity-30 transition-opacity duration-300"
+          className="w-full h-full opacity-40 hover:opacity-60 transition-opacity duration-300"
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
         >
@@ -75,8 +75,8 @@ export const InteractiveGreekPattern = () => {
             cx="200"
             cy="200"
             r="180"
-            stroke="rgba(255, 255, 255, 0.3)"
-            strokeWidth="4"
+            stroke="rgba(255, 255, 255, 0.5)"
+            strokeWidth="3"
           />
           
           {/* Inner circle */}
@@ -84,7 +84,7 @@ export const InteractiveGreekPattern = () => {
             cx="200"
             cy="200"
             r="140"
-            stroke="rgba(255, 255, 255, 0.2)"
+            stroke="rgba(255, 255, 255, 0.4)"
             strokeWidth="2"
           />
           
@@ -99,8 +99,8 @@ export const InteractiveGreekPattern = () => {
               <g key={`outer-${i}`} transform={`translate(${x}, ${y}) rotate(${rotation})`}>
                 <path
                   d="M-15,-15 L15,-15 L15,15 L-5,15 L-5,-5 L5,-5"
-                  stroke="rgba(255, 255, 255, 0.4)"
-                  strokeWidth="2"
+                  stroke="rgba(255, 255, 255, 0.6)"
+                  strokeWidth="2.5"
                   fill="none"
                 />
               </g>
@@ -118,21 +118,28 @@ export const InteractiveGreekPattern = () => {
               <g key={`inner-${i}`} transform={`translate(${x}, ${y}) rotate(${rotation})`}>
                 <path
                   d="M-10,-10 L10,-10 L10,10 L-3,10 L-3,-3 L3,-3"
-                  stroke="rgba(255, 255, 255, 0.3)"
-                  strokeWidth="1.5"
+                  stroke="rgba(255, 255, 255, 0.5)"
+                  strokeWidth="2"
                   fill="none"
                 />
               </g>
             );
           })}
           
-          {/* Center ornament */}
+          {/* Center ornament - more elaborate Greek pattern */}
           <g transform="translate(200, 200)">
             <path
               d="M-20,-20 L20,-20 L20,20 L-8,20 L-8,-8 L8,-8 L8,8 L-20,8 Z"
-              stroke="rgba(255, 255, 255, 0.5)"
+              stroke="rgba(255, 255, 255, 0.7)"
+              strokeWidth="3"
+              fill="rgba(255, 255, 255, 0.1)"
+            />
+            {/* Inner cross pattern */}
+            <path
+              d="M-12,-12 L12,-12 L12,12 L-4,12 L-4,-4 L4,-4 L4,4 L-12,4 Z"
+              stroke="rgba(255, 255, 255, 0.6)"
               strokeWidth="2"
-              fill="rgba(255, 255, 255, 0.05)"
+              fill="none"
             />
           </g>
         </svg>
@@ -142,12 +149,12 @@ export const InteractiveGreekPattern = () => {
           <motion.div
             className="absolute inset-0 rounded-full"
             style={{
-              background: "radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%)",
+              background: "radial-gradient(circle, rgba(255, 255, 255, 0.2) 0%, transparent 70%)",
               filter: "blur(20px)",
             }}
             animate={{
-              opacity: [0, 0.5, 0],
-              scale: [0.8, 1.2, 0.8],
+              opacity: [0, 0.8, 0],
+              scale: [0.8, 1.3, 0.8],
             }}
             transition={{
               duration: 1,
