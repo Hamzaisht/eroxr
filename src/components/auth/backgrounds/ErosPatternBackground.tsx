@@ -16,9 +16,16 @@ export const ErosPatternBackground = () => {
   }, []);
 
   return (
-    <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
-      <BackgroundGradients />
-      <InteractiveGreekPattern />
-    </div>
+    <>
+      {/* Background gradients layer */}
+      <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
+        <BackgroundGradients />
+      </div>
+      
+      {/* Interactive Greek pattern layer - positioned behind everything */}
+      <div className="fixed inset-0 z-0 overflow-hidden">
+        <InteractiveGreekPattern />
+      </div>
+    </>
   );
 };

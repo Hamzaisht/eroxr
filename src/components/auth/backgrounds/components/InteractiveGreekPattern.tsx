@@ -42,7 +42,7 @@ export const InteractiveGreekPattern = () => {
   return (
     <div className="absolute inset-0 flex items-center justify-center">
       <motion.div
-        className="relative w-96 h-96 cursor-pointer pointer-events-auto"
+        className="relative w-[600px] h-[600px] cursor-pointer"
         onMouseDown={handleMouseDown}
         onMouseUp={handleMouseUp}
         onMouseLeave={handleMouseLeave}
@@ -66,7 +66,7 @@ export const InteractiveGreekPattern = () => {
       >
         <svg
           viewBox="0 0 400 400"
-          className="w-full h-full opacity-40 hover:opacity-60 transition-opacity duration-300"
+          className="w-full h-full opacity-20 hover:opacity-30 transition-opacity duration-300"
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
         >
@@ -75,8 +75,8 @@ export const InteractiveGreekPattern = () => {
             cx="200"
             cy="200"
             r="180"
-            stroke="rgba(255, 255, 255, 0.5)"
-            strokeWidth="3"
+            stroke="rgba(255, 255, 255, 0.3)"
+            strokeWidth="2"
           />
           
           {/* Inner circle */}
@@ -84,8 +84,8 @@ export const InteractiveGreekPattern = () => {
             cx="200"
             cy="200"
             r="140"
-            stroke="rgba(255, 255, 255, 0.4)"
-            strokeWidth="2"
+            stroke="rgba(255, 255, 255, 0.25)"
+            strokeWidth="1.5"
           />
           
           {/* Greek meander pattern - outer ring */}
@@ -99,8 +99,8 @@ export const InteractiveGreekPattern = () => {
               <g key={`outer-${i}`} transform={`translate(${x}, ${y}) rotate(${rotation})`}>
                 <path
                   d="M-15,-15 L15,-15 L15,15 L-5,15 L-5,-5 L5,-5"
-                  stroke="rgba(255, 255, 255, 0.6)"
-                  strokeWidth="2.5"
+                  stroke="rgba(255, 255, 255, 0.4)"
+                  strokeWidth="2"
                   fill="none"
                 />
               </g>
@@ -118,8 +118,8 @@ export const InteractiveGreekPattern = () => {
               <g key={`inner-${i}`} transform={`translate(${x}, ${y}) rotate(${rotation})`}>
                 <path
                   d="M-10,-10 L10,-10 L10,10 L-3,10 L-3,-3 L3,-3"
-                  stroke="rgba(255, 255, 255, 0.5)"
-                  strokeWidth="2"
+                  stroke="rgba(255, 255, 255, 0.35)"
+                  strokeWidth="1.5"
                   fill="none"
                 />
               </g>
@@ -130,15 +130,15 @@ export const InteractiveGreekPattern = () => {
           <g transform="translate(200, 200)">
             <path
               d="M-20,-20 L20,-20 L20,20 L-8,20 L-8,-8 L8,-8 L8,8 L-20,8 Z"
-              stroke="rgba(255, 255, 255, 0.7)"
-              strokeWidth="3"
-              fill="rgba(255, 255, 255, 0.1)"
+              stroke="rgba(255, 255, 255, 0.5)"
+              strokeWidth="2"
+              fill="rgba(255, 255, 255, 0.05)"
             />
             {/* Inner cross pattern */}
             <path
               d="M-12,-12 L12,-12 L12,12 L-4,12 L-4,-4 L4,-4 L4,4 L-12,4 Z"
-              stroke="rgba(255, 255, 255, 0.6)"
-              strokeWidth="2"
+              stroke="rgba(255, 255, 255, 0.4)"
+              strokeWidth="1.5"
               fill="none"
             />
           </g>
@@ -149,7 +149,7 @@ export const InteractiveGreekPattern = () => {
           <motion.div
             className="absolute inset-0 rounded-full"
             style={{
-              background: "radial-gradient(circle, rgba(255, 255, 255, 0.2) 0%, transparent 70%)",
+              background: "radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%)",
               filter: "blur(20px)",
             }}
             animate={{
