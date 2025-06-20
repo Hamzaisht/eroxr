@@ -40,7 +40,7 @@ export const InteractiveGreekPattern = () => {
     : 1;
 
   return (
-    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+    <div className="absolute inset-0 flex items-center justify-center">
       <motion.div
         className="relative w-96 h-96 cursor-pointer pointer-events-auto"
         onMouseDown={handleMouseDown}
