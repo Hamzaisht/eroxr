@@ -56,6 +56,9 @@ const Login = () => {
       <div className="fixed inset-0 pointer-events-none">
         <BackgroundEffects />
       </div>
+
+      {/* Eros Pattern Background */}
+      <ErosPatternBackground />
       
       <div className="relative z-10 w-full max-w-md mx-auto px-4">
         <AnimatePresence>
@@ -67,15 +70,13 @@ const Login = () => {
             className="w-full"
           >
             <motion.div
-              className="relative backdrop-blur-xl overflow-hidden shadow-2xl"
+              className="relative backdrop-blur-xl bg-gray-900/40 border border-gray-700/50 rounded-2xl overflow-hidden shadow-2xl"
               whileHover={{ 
                 scale: 1.02,
                 boxShadow: "0 25px 50px rgba(6, 182, 212, 0.2)"
               }}
               transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
             >
-              <ErosPatternBackground />
-              
               <div className="relative z-10 p-8 space-y-8">
                 <motion.div
                   className="text-center space-y-4"
