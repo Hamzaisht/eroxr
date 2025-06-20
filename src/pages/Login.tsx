@@ -6,10 +6,6 @@ import { LoadingScreen } from "@/components/layout/LoadingScreen";
 import { BackgroundVideo } from "@/components/video/BackgroundVideo";
 import { BackgroundEffects } from "@/components/layout/BackgroundEffects";
 import { useAuth } from "@/contexts/AuthContext";
-import { AnimatedBackground } from "@/components/auth/login/AnimatedBackground";
-import { FloatingParticles } from "@/components/auth/login/FloatingParticles";
-import { AnimatedHeader } from "@/components/auth/login/AnimatedHeader";
-import { FloatingIcons } from "@/components/auth/login/FloatingIcons";
 import { SignupForm } from "@/components/auth/signup/SignupForm";
 
 const Login = () => {
@@ -49,7 +45,7 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen w-full bg-luxury-dark flex items-center justify-center overflow-auto">
+    <div className="min-h-screen w-full bg-luxury-dark flex items-center justify-center overflow-hidden relative">
       <BackgroundVideo 
         videoUrl="/background-video.mp4"
         fallbackImage="/bg-fallback.jpg"
@@ -60,24 +56,36 @@ const Login = () => {
         <BackgroundEffects />
       </div>
       
-      <div className="relative z-10 w-full px-4 sm:px-8 md:px-12 lg:px-24">
+      <div className="relative z-10 w-full max-w-md mx-auto px-4">
         <AnimatePresence>
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
             transition={{ duration: 0.5 }}
-            className="w-full max-w-md mx-auto"
+            className="w-full"
           >
             <motion.div
-              className="relative backdrop-blur-xl bg-gradient-to-br from-gray-900/95 via-gray-800/95 to-gray-900/95 rounded-2xl border border-gray-700/50 overflow-hidden"
+              className="relative backdrop-blur-xl bg-gradient-to-br from-gray-900/95 via-gray-800/95 to-gray-900/95 rounded-2xl border border-gray-700/50 overflow-hidden shadow-2xl"
               whileHover={{ 
                 scale: 1.02,
                 boxShadow: "0 25px 50px rgba(6, 182, 212, 0.2)"
               }}
               transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
             >
-              <AnimatedBackground />
+              {/* Animated gradient border */}
+              <motion.div
+                className="absolute inset-0"
+                style={{
+                  background: "conic-gradient(from 0deg at 50% 50%, #06b6d4, #8b5cf6, #ec4899, #06b6d4)",
+                  padding: "2px",
+                  borderRadius: "1rem",
+                }}
+                animate={{ rotate: 360 }}
+                transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
+              >
+                <div className="w-full h-full bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 rounded-2xl" />
+              </motion.div>
               
               <div className="relative z-10 p-8 space-y-8">
                 <motion.div
@@ -86,8 +94,71 @@ const Login = () => {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.2, duration: 0.6 }}
                 >
-                  <FloatingIcons />
-                  <AnimatedHeader />
+                  <motion.h1 
+                    className="text-5xl font-bold relative"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.3, duration: 0.6 }}
+                  >
+                    <motion.span
+                      className="bg-gradient-to-r from-cyan-400 via-purple-400 to-pink-400 bg-clip-text text-transparent"
+                      animate={{
+                        backgroundPosition: ['0% 50%', '100% 50%', '0% 50%'],
+                      }}
+                      transition={{
+                        duration: 3,
+                        repeat: Infinity,
+                        ease: "easeInOut"
+                      }}
+                      style={{
+                        backgroundSize: '200% auto',
+                      }}
+                    >
+                      Welcome Back
+                    </motion.span>
+                  </motion.h1>
+                  
+                  <motion.p 
+                    className="text-gray-300 text-lg relative"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.4, duration: 0.6 }}
+                  >
+                    Sign in to your{" "}
+                    <motion.span
+                      className="text-transparent bg-gradient-to-r from-cyan-400 to-purple-400 bg-clip-text font-semibold"
+                      animate={{
+                        backgroundPosition: ['0% 50%', '100% 50%', '0% 50%'],
+                      }}
+                      transition={{
+                        duration: 4,
+                        repeat: Infinity,
+                        ease: "easeInOut"
+                      }}
+                      style={{
+                        backgroundSize: '200% auto',
+                      }}
+                    >
+                      premium account
+                    </motion.span>
+                  </motion.p>
+
+                  {/* Security badges */}
+                  <motion.div
+                    className="flex items-center justify-center gap-4 text-xs text-gray-400"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.5, duration: 0.6 }}
+                  >
+                    <div className="flex items-center gap-1">
+                      <span>🔒</span>
+                      <span>Secure login</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <span>🔐</span>
+                      <span>End-to-end encrypted</span>
+                    </div>
+                  </motion.div>
                 </motion.div>
                 
                 <motion.div
@@ -99,7 +170,32 @@ const Login = () => {
                 </motion.div>
               </div>
               
-              <FloatingParticles />
+              {/* Floating particles */}
+              {[...Array(8)].map((_, i) => (
+                <motion.div
+                  key={i}
+                  className="absolute w-2 h-2 rounded-full"
+                  style={{
+                    background: `linear-gradient(45deg, ${
+                      i % 3 === 0 ? '#06b6d4' : i % 3 === 1 ? '#8b5cf6' : '#ec4899'
+                    }, transparent)`,
+                    left: `${15 + i * 12}%`,
+                    top: `${10 + (i % 3) * 30}%`,
+                  }}
+                  animate={{
+                    y: [0, -30, 0],
+                    opacity: [0, 1, 0],
+                    scale: [0, 1.5, 0],
+                    rotate: [0, 180, 360],
+                  }}
+                  transition={{
+                    duration: 4 + i * 0.3,
+                    repeat: Infinity,
+                    delay: i * 0.4,
+                    ease: "easeInOut",
+                  }}
+                />
+              ))}
             </motion.div>
           </motion.div>
         </AnimatePresence>
