@@ -14,209 +14,383 @@ export const ErosPatternBackground = () => {
     return () => window.removeEventListener('mousemove', handleMouseMove);
   }, []);
 
-  // Greek key pattern SVG path
-  const greekKeyPattern = "M0,0 L8,0 L8,8 L16,8 L16,16 L8,16 L8,24 L0,24 L0,16 L-8,16 L-8,8 L0,8 Z";
-
   return (
-    <div className="fixed inset-0 pointer-events-none z-0">
-      {/* Dynamic background glow following mouse */}
+    <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
+      {/* Layered Background Gradients for Depth */}
       <motion.div
-        className="absolute -inset-6 bg-gradient-to-r from-pink-500/10 via-purple-500/15 to-cyan-500/10 rounded-3xl blur-3xl opacity-60"
+        className="absolute inset-0 bg-gradient-to-br from-pink-900/20 via-purple-900/30 to-cyan-900/20"
         animate={{
-          x: (mousePosition.x - (typeof window !== 'undefined' ? window.innerWidth / 2 : 0)) * 0.015,
-          y: (mousePosition.y - (typeof window !== 'undefined' ? window.innerHeight / 2 : 0)) * 0.015,
-          rotate: [0, 0.5, -0.5, 0],
+          scale: [1, 1.05, 1],
+          rotate: [0, 0.5, 0],
         }}
         transition={{ 
-          x: { type: "spring", stiffness: 50, damping: 30 },
-          y: { type: "spring", stiffness: 50, damping: 30 },
-          rotate: { duration: 8, repeat: Infinity, ease: "easeInOut" }
+          duration: 20, 
+          repeat: Infinity, 
+          ease: "easeInOut" 
         }}
       />
 
-      {/* Animated Greek pattern overlay */}
-      <div className="absolute inset-0 overflow-hidden">
+      {/* Dynamic Mouse-Following Mega Glow */}
+      <motion.div
+        className="absolute w-[800px] h-[800px] -translate-x-1/2 -translate-y-1/2 rounded-full"
+        style={{
+          background: "radial-gradient(circle, rgba(236,72,153,0.4) 0%, rgba(139,92,246,0.3) 30%, rgba(6,182,212,0.2) 60%, transparent 100%)",
+          filter: "blur(60px)",
+        }}
+        animate={{
+          x: (mousePosition.x - (typeof window !== 'undefined' ? window.innerWidth / 2 : 0)) * 0.1,
+          y: (mousePosition.y - (typeof window !== 'undefined' ? window.innerHeight / 2 : 0)) * 0.1,
+          scale: [1, 1.2, 1],
+        }}
+        transition={{ 
+          x: { type: "spring", stiffness: 20, damping: 30 },
+          y: { type: "spring", stiffness: 20, damping: 30 },
+          scale: { duration: 8, repeat: Infinity, ease: "easeInOut" }
+        }}
+      />
+
+      {/* Animated Greek Pattern Network */}
+      <div className="absolute inset-0">
         <svg
-          className="absolute inset-0 w-full h-full opacity-5"
-          viewBox="0 0 400 400"
+          className="absolute inset-0 w-full h-full opacity-15"
+          viewBox="0 0 800 800"
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
         >
           <defs>
+            {/* Advanced Greek Key Pattern */}
             <pattern
-              id="greekPattern"
+              id="erosGreekPattern"
               x="0"
               y="0"
-              width="40"
-              height="40"
+              width="60"
+              height="60"
               patternUnits="userSpaceOnUse"
             >
-              <motion.path
-                d={greekKeyPattern}
-                stroke="url(#greekGradient)"
-                strokeWidth="1.5"
-                fill="none"
-                initial={{ pathLength: 0, opacity: 0 }}
-                animate={{ pathLength: 1, opacity: 0.3 }}
-                transition={{ duration: 2, repeat: Infinity, repeatType: "reverse" }}
-              />
+              <motion.g
+                animate={{ rotate: [0, 360] }}
+                transition={{ duration: 60, repeat: Infinity, ease: "linear" }}
+              >
+                <path
+                  d="M10,10 L50,10 L50,20 L20,20 L20,40 L50,40 L50,50 L10,50 L10,40 L40,40 L40,20 L10,20 Z"
+                  stroke="url(#erosGradient1)"
+                  strokeWidth="1.5"
+                  fill="none"
+                  opacity="0.7"
+                />
+                <path
+                  d="M0,25 L15,25 L15,35 L25,35 L25,15 L35,15 L35,45 L15,45 L15,55 L5,55 L5,35 L0,35 Z"
+                  stroke="url(#erosGradient2)"
+                  strokeWidth="1"
+                  fill="none"
+                  opacity="0.5"
+                />
+              </motion.g>
             </pattern>
-            <linearGradient id="greekGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+
+            {/* Multiple Gradient Definitions */}
+            <linearGradient id="erosGradient1" x1="0%" y1="0%" x2="100%" y2="100%">
               <stop offset="0%" stopColor="#ec4899" />
               <stop offset="50%" stopColor="#8b5cf6" />
               <stop offset="100%" stopColor="#06b6d4" />
             </linearGradient>
+            <radialGradient id="erosGradient2" cx="50%" cy="50%" r="50%">
+              <stop offset="0%" stopColor="#06b6d4" />
+              <stop offset="100%" stopColor="#ec4899" />
+            </radialGradient>
+            <linearGradient id="erosGradient3" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stopColor="#8b5cf6" />
+              <stop offset="100%" stopColor="#06b6d4" />
+            </linearGradient>
           </defs>
-          <rect width="100%" height="100%" fill="url(#greekPattern)" />
+          
+          <rect width="100%" height="100%" fill="url(#erosGreekPattern)" />
+          
+          {/* Overlapping Pattern Layers for Complexity */}
+          <rect 
+            width="100%" 
+            height="100%" 
+            fill="url(#erosGreekPattern)" 
+            transform="rotate(45 400 400) scale(0.7)"
+            opacity="0.3"
+          />
         </svg>
       </div>
 
-      {/* Rotating Eros-inspired circular patterns */}
+      {/* Multiple Rotating Eros Symbols - Large Scale */}
       <motion.div
-        className="absolute top-1/4 left-1/4 w-32 h-32 opacity-10"
+        className="absolute top-1/6 left-1/6 w-80 h-80 opacity-8"
         animate={{ rotate: 360 }}
-        transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
+        transition={{ duration: 40, repeat: Infinity, ease: "linear" }}
       >
-        <svg viewBox="0 0 100 100" className="w-full h-full">
-          <circle
-            cx="50"
-            cy="50"
-            r="40"
-            fill="none"
-            stroke="url(#erosGradient1)"
-            strokeWidth="1"
-            strokeDasharray="5,5"
-          />
-          <circle
-            cx="50"
-            cy="50"
-            r="30"
-            fill="none"
-            stroke="url(#erosGradient1)"
-            strokeWidth="0.5"
-            strokeDasharray="3,3"
-          />
+        <svg viewBox="0 0 200 200" className="w-full h-full">
+          <g transform="translate(100,100)">
+            {/* Stylized Eros Bow */}
+            <motion.path
+              d="M-60,-20 Q0,-80 60,-20 Q0,40 -60,-20"
+              fill="none"
+              stroke="url(#bowGradient)"
+              strokeWidth="3"
+              animate={{ 
+                pathLength: [0, 1, 0],
+                opacity: [0.3, 0.8, 0.3]
+              }}
+              transition={{
+                duration: 6,
+                repeat: Infinity,
+                ease: "easeInOut"
+              }}
+            />
+            {/* Arrow */}
+            <motion.line
+              x1="0" y1="-60"
+              x2="0" y2="60"
+              stroke="url(#arrowGradient)"
+              strokeWidth="2"
+              animate={{ 
+                scaleY: [0.5, 1.2, 0.5],
+                opacity: [0.4, 1, 0.4]
+              }}
+              transition={{
+                duration: 4,
+                repeat: Infinity,
+                ease: "easeInOut",
+                delay: 1
+              }}
+            />
+            {/* Central Gem */}
+            <motion.circle
+              cx="0" cy="0" r="8"
+              fill="url(#gemGradient)"
+              animate={{ 
+                scale: [1, 1.5, 1],
+                opacity: [0.6, 1, 0.6]
+              }}
+              transition={{
+                duration: 3,
+                repeat: Infinity,
+                ease: "easeInOut"
+              }}
+            />
+          </g>
           <defs>
-            <linearGradient id="erosGradient1">
+            <linearGradient id="bowGradient">
               <stop offset="0%" stopColor="#ec4899" />
               <stop offset="100%" stopColor="#8b5cf6" />
             </linearGradient>
-          </defs>
-        </svg>
-      </motion.div>
-
-      <motion.div
-        className="absolute bottom-1/4 right-1/4 w-24 h-24 opacity-8"
-        animate={{ rotate: -360 }}
-        transition={{ duration: 30, repeat: Infinity, ease: "linear" }}
-      >
-        <svg viewBox="0 0 100 100" className="w-full h-full">
-          <circle
-            cx="50"
-            cy="50"
-            r="35"
-            fill="none"
-            stroke="url(#erosGradient2)"
-            strokeWidth="1"
-            strokeDasharray="4,4"
-          />
-          <defs>
-            <linearGradient id="erosGradient2">
+            <linearGradient id="arrowGradient">
               <stop offset="0%" stopColor="#06b6d4" />
-              <stop offset="100%" stopColor="#ec4899" />
+              <stop offset="100%" stopColor="#8b5cf6" />
             </linearGradient>
-          </defs>
-        </svg>
-      </motion.div>
-
-      {/* Central Eros symbol pattern */}
-      <motion.div
-        className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-16 h-16 opacity-5"
-        animate={{ 
-          rotate: [0, 360],
-          scale: [1, 1.1, 1]
-        }}
-        transition={{ 
-          rotate: { duration: 40, repeat: Infinity, ease: "linear" },
-          scale: { duration: 6, repeat: Infinity, ease: "easeInOut" }
-        }}
-      >
-        <svg viewBox="0 0 100 100" className="w-full h-full">
-          {/* Stylized Eros bow pattern */}
-          <path
-            d="M20,50 Q50,20 80,50 Q50,80 20,50"
-            fill="none"
-            stroke="url(#erosCenterGradient)"
-            strokeWidth="2"
-          />
-          <circle cx="50" cy="50" r="3" fill="url(#erosCenterGradient)" />
-          <defs>
-            <radialGradient id="erosCenterGradient">
-              <stop offset="0%" stopColor="#8b5cf6" />
+            <radialGradient id="gemGradient">
+              <stop offset="0%" stopColor="#ffffff" stopOpacity="0.8" />
               <stop offset="100%" stopColor="#ec4899" />
             </radialGradient>
           </defs>
         </svg>
       </motion.div>
 
-      {/* Additional floating geometric elements */}
+      {/* Counter-Rotating Eros Symbol - Right Side */}
       <motion.div
-        className="absolute top-1/6 right-1/3 w-12 h-12 opacity-8"
-        animate={{ 
-          rotate: [0, 180, 360],
-          x: [0, 20, 0],
-          y: [0, -15, 0]
-        }}
-        transition={{ 
-          duration: 15, 
-          repeat: Infinity, 
-          ease: "easeInOut" 
-        }}
+        className="absolute bottom-1/4 right-1/4 w-60 h-60 opacity-6"
+        animate={{ rotate: -360 }}
+        transition={{ duration: 35, repeat: Infinity, ease: "linear" }}
       >
-        <svg viewBox="0 0 100 100" className="w-full h-full">
-          <polygon
-            points="50,10 80,40 50,90 20,40"
-            fill="none"
-            stroke="url(#geometricGradient)"
-            strokeWidth="1.5"
-          />
+        <svg viewBox="0 0 150 150" className="w-full h-full">
+          <g transform="translate(75,75)">
+            <motion.path
+              d="M-40,-15 Q0,-55 40,-15 Q0,25 -40,-15"
+              fill="none"
+              stroke="url(#bow2Gradient)"
+              strokeWidth="2.5"
+              animate={{ 
+                pathLength: [1, 0, 1],
+                opacity: [0.4, 0.9, 0.4]
+              }}
+              transition={{
+                duration: 7,
+                repeat: Infinity,
+                ease: "easeInOut"
+              }}
+            />
+            <motion.circle
+              cx="0" cy="0" r="6"
+              fill="url(#gem2Gradient)"
+              animate={{ 
+                scale: [0.8, 1.3, 0.8],
+                rotate: [0, 180, 360]
+              }}
+              transition={{
+                duration: 5,
+                repeat: Infinity,
+                ease: "easeInOut"
+              }}
+            />
+          </g>
           <defs>
-            <linearGradient id="geometricGradient">
+            <linearGradient id="bow2Gradient">
+              <stop offset="0%" stopColor="#06b6d4" />
+              <stop offset="100%" stopColor="#ec4899" />
+            </linearGradient>
+            <radialGradient id="gem2Gradient">
               <stop offset="0%" stopColor="#8b5cf6" />
               <stop offset="100%" stopColor="#06b6d4" />
-            </linearGradient>
+            </radialGradient>
           </defs>
         </svg>
       </motion.div>
 
-      <motion.div
-        className="absolute bottom-1/6 left-1/3 w-10 h-10 opacity-6"
-        animate={{ 
-          rotate: [360, 180, 0],
-          scale: [1, 1.2, 1]
-        }}
-        transition={{ 
-          duration: 18, 
-          repeat: Infinity, 
-          ease: "easeInOut" 
-        }}
-      >
-        <svg viewBox="0 0 100 100" className="w-full h-full">
-          <rect
-            x="25" y="25" width="50" height="50"
-            fill="none"
-            stroke="url(#squareGradient)"
-            strokeWidth="1"
-            transform="rotate(45 50 50)"
-          />
-          <defs>
-            <linearGradient id="squareGradient">
-              <stop offset="0%" stopColor="#ec4899" />
-              <stop offset="100%" stopColor="#8b5cf6" />
-            </linearGradient>
-          </defs>
-        </svg>
-      </motion.div>
+      {/* Floating Geometric Elements with Complex Paths */}
+      {[...Array(12)].map((_, i) => (
+        <motion.div
+          key={i}
+          className="absolute opacity-20"
+          style={{
+            left: `${20 + (i * 7) % 80}%`,
+            top: `${15 + (i * 11) % 70}%`,
+            width: `${20 + (i % 3) * 10}px`,
+            height: `${20 + (i % 3) * 10}px`,
+          }}
+          animate={{
+            rotate: [0, 360],
+            x: [0, Math.sin(i) * 50, 0],
+            y: [0, Math.cos(i) * 30, 0],
+            scale: [1, 1.2 + (i % 2) * 0.3, 1],
+            opacity: [0.1, 0.4, 0.1],
+          }}
+          transition={{
+            duration: 15 + i * 2,
+            repeat: Infinity,
+            ease: "easeInOut",
+            delay: i * 0.5,
+          }}
+        >
+          <svg viewBox="0 0 40 40" className="w-full h-full">
+            {i % 4 === 0 && (
+              <polygon
+                points="20,5 35,15 35,25 20,35 5,25 5,15"
+                fill="none"
+                stroke={`url(#grad${i % 3})`}
+                strokeWidth="1.5"
+              />
+            )}
+            {i % 4 === 1 && (
+              <circle
+                cx="20" cy="20" r="15"
+                fill="none"
+                stroke={`url(#grad${i % 3})`}
+                strokeWidth="1"
+                strokeDasharray="3,3"
+              />
+            )}
+            {i % 4 === 2 && (
+              <rect
+                x="8" y="8" width="24" height="24"
+                fill="none"
+                stroke={`url(#grad${i % 3})`}
+                strokeWidth="1"
+                transform="rotate(45 20 20)"
+              />
+            )}
+            {i % 4 === 3 && (
+              <path
+                d="M20,10 L25,20 L20,30 L15,20 Z"
+                fill="none"
+                stroke={`url(#grad${i % 3})`}
+                strokeWidth="1.5"
+              />
+            )}
+            <defs>
+              <linearGradient id={`grad${i % 3}`}>
+                <stop offset="0%" stopColor={i % 3 === 0 ? "#ec4899" : i % 3 === 1 ? "#8b5cf6" : "#06b6d4"} />
+                <stop offset="100%" stopColor={i % 3 === 0 ? "#8b5cf6" : i % 3 === 1 ? "#06b6d4" : "#ec4899"} />
+              </linearGradient>
+            </defs>
+          </svg>
+        </motion.div>
+      ))}
+
+      {/* Pulsing Energy Rings */}
+      {[...Array(5)].map((_, i) => (
+        <motion.div
+          key={`ring-${i}`}
+          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full border opacity-10"
+          style={{
+            width: `${300 + i * 100}px`,
+            height: `${300 + i * 100}px`,
+            borderColor: i % 2 === 0 ? "#ec4899" : "#8b5cf6",
+            borderWidth: "1px",
+          }}
+          animate={{
+            scale: [1, 1.1, 1],
+            opacity: [0.05, 0.2, 0.05],
+            rotate: [0, 360],
+          }}
+          transition={{
+            duration: 20 + i * 5,
+            repeat: Infinity,
+            ease: "easeInOut",
+            delay: i * 2,
+          }}
+        />
+      ))}
+
+      {/* Particle System Enhancement */}
+      {[...Array(30)].map((_, i) => (
+        <motion.div
+          key={`particle-${i}`}
+          className="absolute w-1 h-1 rounded-full"
+          style={{
+            background: `linear-gradient(45deg, ${
+              i % 3 === 0 ? '#ec4899' : i % 3 === 1 ? '#8b5cf6' : '#06b6d4'
+            }, transparent)`,
+            left: `${Math.random() * 100}%`,
+            top: `${Math.random() * 100}%`,
+          }}
+          animate={{
+            y: [0, -100, 0],
+            x: [0, Math.sin(i) * 50, 0],
+            opacity: [0, 1, 0],
+            scale: [0, 2, 0],
+            rotate: [0, 360],
+          }}
+          transition={{
+            duration: 8 + Math.random() * 10,
+            repeat: Infinity,
+            delay: Math.random() * 5,
+            ease: "easeInOut",
+          }}
+        />
+      ))}
+
+      {/* Ambient Light Streaks */}
+      {[...Array(6)].map((_, i) => (
+        <motion.div
+          key={`streak-${i}`}
+          className="absolute opacity-5"
+          style={{
+            width: "2px",
+            height: `${200 + i * 50}px`,
+            background: `linear-gradient(to bottom, transparent, ${
+              i % 3 === 0 ? '#ec4899' : i % 3 === 1 ? '#8b5cf6' : '#06b6d4'
+            }, transparent)`,
+            left: `${20 + i * 15}%`,
+            top: `${10 + i * 5}%`,
+            transform: `rotate(${15 + i * 30}deg)`,
+          }}
+          animate={{
+            opacity: [0.02, 0.15, 0.02],
+            scaleY: [0.5, 1.2, 0.5],
+            rotate: [15 + i * 30, 25 + i * 30, 15 + i * 30],
+          }}
+          transition={{
+            duration: 12 + i * 3,
+            repeat: Infinity,
+            ease: "easeInOut",
+            delay: i * 1.5,
+          }}
+        />
+      ))}
     </div>
   );
 };
