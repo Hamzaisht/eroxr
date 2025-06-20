@@ -9,7 +9,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { AnimatedBackground } from "@/components/auth/login/AnimatedBackground";
 import { FloatingParticles } from "@/components/auth/login/FloatingParticles";
 import { AnimatedHeader } from "@/components/auth/login/AnimatedHeader";
-import { AuthFooter } from "@/components/auth/login/AuthFooter";
+import { FloatingIcons } from "@/components/auth/login/FloatingIcons";
 import { SignupForm } from "@/components/auth/signup/SignupForm";
 
 const Login = () => {
@@ -80,7 +80,15 @@ const Login = () => {
               <AnimatedBackground />
               
               <div className="relative z-10 p-8 space-y-8">
-                <AnimatedHeader />
+                <motion.div
+                  className="text-center space-y-4"
+                  initial={{ opacity: 0, y: -20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.2, duration: 0.6 }}
+                >
+                  <FloatingIcons />
+                  <AnimatedHeader />
+                </motion.div>
                 
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}

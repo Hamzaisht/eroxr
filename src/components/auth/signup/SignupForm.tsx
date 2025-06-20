@@ -5,12 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useToast } from "@/hooks/use-toast";
 import { Form } from "@/components/ui/form";
 import { signupSchema, loginSchema, type SignupFormValues, type LoginFormValues } from "../types";
-import { SignupHeader } from "./SignupHeader";
-import { SignupFooter } from "./SignupFooter";
 import { motion, AnimatePresence } from "framer-motion";
-import { AnimatedBackground } from "./AnimatedBackground";
-import { FloatingParticles } from "./FloatingParticles";
-import { FloatingIcons } from "./FloatingIcons";
 import { AnimatedFormFields } from "./AnimatedFormFields";
 import { AnimatedSubmitButton } from "./AnimatedSubmitButton";
 import { useAuth } from "@/contexts/AuthContext";
@@ -128,74 +123,42 @@ export const SignupForm = ({ onToggleMode, isLoginMode = false }: SignupFormProp
   };
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-      className="relative w-full max-w-md mx-auto"
-    >
-      <AnimatedBackground />
-
-      {/* Main card */}
-      <motion.div
-        className="relative backdrop-blur-xl bg-gradient-to-br from-gray-900/95 via-gray-800/95 to-gray-900/95 rounded-2xl border border-gray-700/50 overflow-hidden"
-        whileHover={{ 
-          scale: 1.02,
-          boxShadow: "0 25px 50px rgba(217, 70, 239, 0.2)"
-        }}
-        transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-      >
-        {/* Content */}
-        <div className="relative z-10 p-8 space-y-8">
-          {/* Header with floating elements */}
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        <AnimatePresence mode="wait">
           <motion.div
-            className="text-center space-y-4"
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2, duration: 0.6 }}
+            key="form-fields"
+            variants={stepVariants}
+            initial="hidden"
+            animate="visible"
+            exit="exit"
+            transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+            className="space-y-4"
           >
-            <FloatingIcons />
-            <SignupHeader isLoginMode={isLoginMode} />
+            <AnimatedFormFields form={form} isLoading={isLoading} isLoginMode={isLoginMode} />
           </motion.div>
+        </AnimatePresence>
 
-          {/* Form with step animations */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4, duration: 0.6 }}
-          >
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                <AnimatePresence mode="wait">
-                  <motion.div
-                    key="form-fields"
-                    variants={stepVariants}
-                    initial="hidden"
-                    animate="visible"
-                    exit="exit"
-                    transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-                    className="space-y-4"
-                  >
-                    <AnimatedFormFields form={form} isLoading={isLoading} isLoginMode={isLoginMode} />
-                  </motion.div>
-                </AnimatePresence>
+        <AnimatedSubmitButton isLoading={isLoading} isLoginMode={isLoginMode} />
 
-                <AnimatedSubmitButton isLoading={isLoading} isLoginMode={isLoginMode} />
-              </form>
-            </Form>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 1.1, duration: 0.6 }}
-          >
-            <SignupFooter onToggleMode={onToggleMode} isLoginMode={isLoginMode} />
-          </motion.div>
-        </div>
-
-        <FloatingParticles />
-      </motion.div>
-    </motion.div>
+        <motion.div
+          className="text-center pt-4"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.6, duration: 0.4 }}
+        >
+          <p className="text-sm text-gray-400">
+            {isLoginMode ? "Don't have an account?" : "Already have an account?"}{" "}
+            <button
+              type="button"
+              onClick={onToggleMode}
+              className="text-cyan-400 hover:text-cyan-300 font-medium transition-colors"
+            >
+              {isLoginMode ? "Sign up" : "Sign in"}
+            </button>
+          </p>
+        </motion.div>
+      </form>
+    </Form>
   );
 };
