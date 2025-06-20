@@ -7,7 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useStudioProfile } from '@/hooks/useStudioProfile';
 import { useAuth } from '@/contexts/AuthContext';
 import { MediaUploader } from '../MediaUploader';
-import { ProfileEditor } from '../ProfileEditor';
+import { EroxrProfileEditor } from './EroxrProfileEditor';
 import { EroxrProfileSettings } from './EroxrProfileSettings';
 
 interface EroxrProfileStudioProps {
@@ -98,7 +98,7 @@ export const EroxrProfileStudio = ({ profileId, onClose }: EroxrProfileStudioPro
 
             <TabsContent value="profile" className="space-y-8">
               {profile && (
-                <ProfileEditor
+                <EroxrProfileEditor
                   profile={profile}
                   onUpdate={updateProfile}
                   isUpdating={isUpdating}

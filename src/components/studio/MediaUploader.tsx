@@ -1,7 +1,9 @@
 
 import { useState, useCallback } from 'react';
 import { motion } from 'framer-motion';
-import { Upload, Camera, Video, Crown, Sparkles } from 'lucide-react';
+import { Upload, X, Image, Video, User, Crown } from 'lucide-react';
+import { useDropzone } from 'react-dropzone';
+import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -21,68 +23,41 @@ export const MediaUploader = ({
   className = ""
 }: MediaUploaderProps) => {
   const [isUploading, setIsUploading] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState(0);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const { toast } = useToast();
 
-  const handleFileUpload = useCallback(async (file: File) => {
+  const onDrop = useCallback(async (acceptedFiles: File[]) => {
+    const file = acceptedFiles[0];
     if (!file) return;
 
     setIsUploading(true);
-    setUploadProgress(0);
-
+    
     try {
-      console.log(`🎨 MediaUploader: Starting ${type} upload`, { fileName: file.name, size: file.size });
-
-      // Validate file
-      const maxSize = type === 'avatar' ? 10 * 1024 * 1024 : 50 * 1024 * 1024;
-      if (file.size > maxSize) {
-        throw new Error(`File too large. Maximum size: ${Math.round(maxSize / 1024 / 1024)}MB`);
-      }
-
-      const allowedTypes = type === 'avatar' 
-        ? ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
-        : ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'video/mp4', 'video/webm'];
-      
-      if (!allowedTypes.includes(file.type)) {
-        throw new Error(`Invalid file type. Allowed: ${allowedTypes.join(', ')}`);
-      }
-
-      // Generate unique filename with proper path structure
+      // Create a unique filename
       const fileExt = file.name.split('.').pop();
       const fileName = `${userId}/${type}_${Date.now()}.${fileExt}`;
-      const bucket = type === 'avatar' ? 'studio-avatars' : 'studio-banners';
-
-      // Simulate upload progress
-      const progressInterval = setInterval(() => {
-        setUploadProgress(prev => Math.min(prev + 10, 90));
-      }, 200);
-
-      console.log(`🎨 MediaUploader: Uploading to bucket: ${bucket}, path: ${fileName}`);
-
-      const { data, error: uploadError } = await supabase.storage
-        .from(bucket)
+      
+      // Upload to Supabase Storage
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('media')
         .upload(fileName, file, {
           cacheControl: '3600',
           upsert: true
         });
 
-      clearInterval(progressInterval);
-
       if (uploadError) {
-        console.error('❌ MediaUploader: Storage upload error:', uploadError);
-        throw new Error(`Upload failed: ${uploadError.message}`);
+        throw uploadError;
       }
 
-      setUploadProgress(95);
+      // Get public URL
+      const { data: urlData } = supabase.storage
+        .from('media')
+        .getPublicUrl(uploadData.path);
 
-      const { data: { publicUrl } } = supabase.storage
-        .from(bucket)
-        .getPublicUrl(data.path);
+      const publicUrl = urlData.publicUrl;
 
-      console.log('🎨 MediaUploader: Generated public URL:', publicUrl);
-
-      // Update profile using ONLY the RLS-bypass function - crystal clear execution
-      console.log(`🎨 MediaUploader: Updating ${type} URL using RLS-bypass:`, publicUrl);
+      // Update profile via RLS-bypass function
+      console.log(`🔒 MediaUploader: Updating ${type} via RLS-bypass:`, publicUrl);
       
       const { data: result, error: rpcError } = await supabase.rpc('rls_bypass_profile_update', {
         p_user_id: userId,
@@ -97,221 +72,125 @@ export const MediaUploader = ({
       });
 
       if (rpcError || !result?.success) {
-        console.error('❌ MediaUploader: RLS-bypass update failed:', rpcError || result?.error);
-        throw new Error(`Failed to update profile: ${rpcError?.message || result?.error || 'Unknown error'}`);
+        console.error(`❌ MediaUploader: RLS-bypass ${type} update failed:`, rpcError || result?.error);
+        throw new Error(rpcError?.message || result?.error || `Failed to update ${type}`);
       }
 
-      console.log('✅ MediaUploader: Profile updated successfully via RLS-bypass');
+      console.log(`✅ MediaUploader: ${type} updated successfully via RLS-bypass`);
       
-      setUploadProgress(100);
       onUploadSuccess(publicUrl);
+      setPreviewUrl(publicUrl);
       
       toast({
-        title: "Upload Complete",
+        title: "Upload Successful",
         description: `Your ${type} has been updated successfully!`,
       });
-
     } catch (error: any) {
-      console.error('💥 MediaUploader: Upload error:', error);
+      console.error(`💥 MediaUploader: ${type} upload error:`, error);
       toast({
         title: "Upload Failed",
-        description: error.message || "Failed to upload media. Please try again.",
+        description: error.message || `Failed to upload ${type}`,
         variant: "destructive",
       });
     } finally {
       setIsUploading(false);
-      setUploadProgress(0);
     }
   }, [type, userId, onUploadSuccess, toast]);
 
-  const handleFileSelect = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      handleFileUpload(file);
-    }
-  }, [handleFileUpload]);
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    onDrop,
+    accept: {
+      'image/*': ['.jpeg', '.jpg', '.png', '.gif', '.webp'],
+      'video/*': ['.mp4', '.webm', '.mov']
+    },
+    maxFiles: 1,
+    disabled: isUploading
+  });
+
+  const displayUrl = previewUrl || currentUrl;
+  const isVideo = displayUrl?.includes('.mp4') || displayUrl?.includes('.webm') || displayUrl?.includes('.mov');
 
   return (
-    <div className={`relative ${className}`}>
-      <input
-        type="file"
-        accept={type === 'avatar' ? 'image/*' : 'image/*,video/*'}
-        onChange={handleFileSelect}
-        className="hidden"
-        id={`${type}-upload-${userId}`}
-        disabled={isUploading}
-      />
-      
-      <label 
-        htmlFor={`${type}-upload-${userId}`}
-        className="cursor-pointer block"
+    <motion.div
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
+      className={`relative ${className}`}
+    >
+      <div
+        {...getRootProps()}
+        className={`
+          relative group cursor-pointer border-2 border-dashed rounded-2xl transition-all duration-300
+          ${isDragActive 
+            ? 'border-slate-400 bg-slate-800/50' 
+            : 'border-slate-600 hover:border-slate-500 hover:bg-slate-800/30'
+          }
+          ${type === 'avatar' ? 'aspect-square max-w-xs mx-auto' : 'aspect-video w-full'}
+          ${isUploading ? 'pointer-events-none opacity-50' : ''}
+        `}
       >
-        {type === 'avatar' ? (
-          <motion.div
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            className="relative w-32 h-32 mx-auto"
-          >
-            <div className="w-full h-full rounded-full overflow-hidden border-4 border-gradient-to-r from-purple-500/50 to-cyan-500/50 bg-gradient-to-br from-slate-800/50 to-gray-900/50 backdrop-blur-xl shadow-2xl">
-              {currentUrl ? (
-                <img
-                  src={currentUrl}
-                  alt="Avatar"
-                  className="w-full h-full object-cover"
-                />
+        <input {...getInputProps()} />
+        
+        {displayUrl ? (
+          <div className="relative w-full h-full rounded-2xl overflow-hidden">
+            {isVideo ? (
+              <video
+                src={displayUrl}
+                className="w-full h-full object-cover"
+                muted
+                loop
+                autoPlay
+              />
+            ) : (
+              <img
+                src={displayUrl}
+                alt={`${type} preview`}
+                className="w-full h-full object-cover"
+              />
+            )}
+            
+            {/* Overlay */}
+            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+              <div className="text-center text-white">
+                <Upload className="w-8 h-8 mx-auto mb-2" />
+                <p className="text-sm font-medium">
+                  {isUploading ? 'Uploading...' : `Change ${type}`}
+                </p>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="flex flex-col items-center justify-center h-full p-8 text-center">
+            <div className="mb-4">
+              {type === 'avatar' ? (
+                <Crown className="w-16 h-16 text-slate-400 mx-auto" />
               ) : (
-                <div className="w-full h-full bg-gradient-to-br from-purple-500/20 via-cyan-500/10 to-slate-800/30 flex items-center justify-center relative overflow-hidden">
-                  <Camera className="w-12 h-12 text-cyan-400" />
-                  {/* Floating particles */}
-                  {[...Array(6)].map((_, i) => (
-                    <motion.div
-                      key={i}
-                      className="absolute w-1 h-1 bg-cyan-400 rounded-full"
-                      style={{
-                        left: `${20 + (i * 10)}%`,
-                        top: `${30 + (i % 2) * 40}%`,
-                      }}
-                      animate={{
-                        scale: [0.5, 1.5, 0.5],
-                        opacity: [0.3, 1, 0.3],
-                      }}
-                      transition={{
-                        duration: 2 + (i * 0.2),
-                        repeat: Infinity,
-                        ease: "easeInOut",
-                      }}
-                    />
-                  ))}
-                </div>
+                <Image className="w-16 h-16 text-slate-400 mx-auto" />
               )}
             </div>
             
-            {!isUploading && (
-              <div className="absolute inset-0 bg-gradient-to-br from-purple-900/70 via-transparent to-cyan-900/70 rounded-full opacity-0 hover:opacity-100 transition-opacity duration-300 flex items-center justify-center backdrop-blur-sm">
-                <div className="text-center text-white">
-                  <Upload className="w-6 h-6 mx-auto mb-1" />
-                  <span className="text-sm font-semibold">Upload Avatar</span>
-                </div>
-              </div>
-            )}
-            
-            {isUploading && (
-              <div className="absolute inset-0 bg-gradient-to-br from-purple-900/90 to-cyan-900/90 rounded-full flex items-center justify-center backdrop-blur-sm">
-                <div className="text-center text-white">
-                  <motion.div
-                    className="w-8 h-8 border-2 border-cyan-400 border-t-transparent rounded-full mb-2"
-                    animate={{ rotate: 360 }}
-                    transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                  />
-                  <span className="text-sm font-bold">{uploadProgress}%</span>
-                </div>
-              </div>
-            )}
-
-            {/* Divine glow effect */}
-            <motion.div
-              className="absolute inset-0 rounded-full bg-gradient-to-r from-purple-500/20 to-cyan-500/20 blur-xl -z-10"
-              animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.6, 0.3] }}
-              transition={{ duration: 3, repeat: Infinity }}
-            />
-          </motion.div>
-        ) : (
-          <motion.div
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            className="relative w-full h-48 rounded-2xl overflow-hidden border-2 border-gradient-to-r from-purple-500/50 to-cyan-500/50 bg-gradient-to-br from-slate-800/50 to-gray-900/50 backdrop-blur-xl shadow-2xl"
-          >
-            {currentUrl ? (
-              currentUrl.includes('.mp4') || currentUrl.includes('.webm') ? (
-                <video
-                  src={currentUrl}
-                  className="w-full h-full object-cover"
-                  muted
-                  loop
-                  autoPlay
-                />
-              ) : (
-                <img
-                  src={currentUrl}
-                  alt="Banner"
-                  className="w-full h-full object-cover"
-                />
-              )
-            ) : (
-              <div className="w-full h-full bg-gradient-to-br from-purple-500/20 via-cyan-500/10 to-slate-800/30 flex items-center justify-center relative overflow-hidden">
-                <div className="text-center text-cyan-400">
-                  <div className="flex items-center justify-center gap-4 mb-4">
-                    <Video className="w-12 h-12" />
-                    <Crown className="w-8 h-8 text-purple-400" />
-                  </div>
-                  <p className="text-lg font-bold mb-2">Upload Banner</p>
-                  <p className="text-sm text-slate-400">Image or Video</p>
-                </div>
-                
-                {/* Cosmic background effects */}
-                {[...Array(12)].map((_, i) => (
-                  <motion.div
-                    key={i}
-                    className="absolute w-1 h-1 bg-gradient-to-r from-purple-400 to-cyan-400 rounded-full"
-                    style={{
-                      left: `${10 + (i * 7)}%`,
-                      top: `${20 + (i % 3) * 20}%`,
-                    }}
-                    animate={{
-                      scale: [0.5, 1.5, 0.5],
-                      opacity: [0.3, 1, 0.3],
-                    }}
-                    transition={{
-                      duration: 2.5 + (i * 0.1),
-                      repeat: Infinity,
-                      ease: "easeInOut",
-                    }}
-                  />
-                ))}
-              </div>
-            )}
-            
-            {!isUploading && (
-              <div className="absolute inset-0 bg-gradient-to-br from-purple-900/70 via-transparent to-cyan-900/70 opacity-0 hover:opacity-100 transition-opacity duration-300 flex items-center justify-center backdrop-blur-sm">
-                <div className="text-center text-white">
-                  <div className="flex items-center justify-center gap-2 mb-2">
-                    <Upload className="w-8 h-8" />
-                    <Sparkles className="w-6 h-6 text-purple-400" />
-                  </div>
-                  <span className="text-lg font-bold">Upload New Banner</span>
-                </div>
-              </div>
-            )}
-            
-            {isUploading && (
-              <div className="absolute inset-0 bg-gradient-to-br from-purple-900/90 to-cyan-900/90 flex items-center justify-center backdrop-blur-sm">
-                <div className="text-center text-white">
-                  <motion.div
-                    className="w-12 h-12 border-4 border-cyan-400 border-t-transparent rounded-full mb-4"
-                    animate={{ rotate: 360 }}
-                    transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                  />
-                  <span className="text-lg font-bold">{uploadProgress}%</span>
-                  <p className="text-sm text-purple-300 mt-2">Uploading...</p>
-                </div>
-              </div>
-            )}
-
-            {/* Divine aura effect */}
-            <motion.div
-              className="absolute inset-0 bg-gradient-to-r from-purple-500/10 to-cyan-500/10 blur-xl -z-10"
-              animate={{ 
-                background: [
-                  "linear-gradient(45deg, rgba(168,85,247,0.1), rgba(6,182,212,0.1))",
-                  "linear-gradient(135deg, rgba(6,182,212,0.1), rgba(168,85,247,0.1))",
-                  "linear-gradient(45deg, rgba(168,85,247,0.1), rgba(6,182,212,0.1))"
-                ]
-              }}
-              transition={{ duration: 4, repeat: Infinity }}
-            />
-          </motion.div>
+            <div className="space-y-2">
+              <p className="text-slate-200 font-medium text-lg">
+                {isUploading ? 'Uploading...' : `Upload ${type === 'avatar' ? 'Divine Avatar' : 'Divine Banner'}`}
+              </p>
+              <p className="text-slate-400 text-sm">
+                {isDragActive ? 'Drop your file here' : 'Drag & drop or click to browse'}
+              </p>
+              <p className="text-slate-500 text-xs">
+                Supports: JPG, PNG, GIF, MP4, WebM
+              </p>
+            </div>
+          </div>
         )}
-      </label>
-    </div>
+        
+        {isUploading && (
+          <div className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-2xl">
+            <div className="text-center text-white">
+              <div className="w-8 h-8 border-2 border-white border-t-transparent rounded-full animate-spin mx-auto mb-2" />
+              <p className="text-sm font-medium">Uploading...</p>
+            </div>
+          </div>
+        )}
+      </div>
+    </motion.div>
   );
 };
