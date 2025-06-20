@@ -22,8 +22,8 @@ export const ErosPatternBackground = () => {
         <BackgroundGradients />
       </div>
       
-      {/* Interactive Greek pattern layer - positioned behind everything */}
-      <div className="fixed inset-0 z-0 overflow-hidden">
+      {/* Interactive Greek pattern layer - covers entire viewport */}
+      <div className="fixed inset-0 z-0 overflow-hidden pointer-events-none">
         <InteractiveGreekPattern />
       </div>
     </>
