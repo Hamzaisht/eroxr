@@ -24,13 +24,14 @@ export const SimpleMediaUploader = ({
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const { toast } = useToast();
 
-  const onDrop = useCallback(async (acceptedFiles: File[]) => {
-    const file = acceptedFiles[0];
-    if (!file) return;
-
+  const uploadFile = useCallback(async (file: File) => {
+    if (isUploading) return; // Prevent multiple uploads
+    
     setIsUploading(true);
     
     try {
+      console.log(`🎨 SimpleMediaUploader: Starting ${type} upload for user ${userId}`);
+      
       // Create a unique filename
       const fileExt = file.name.split('.').pop();
       const fileName = `${userId}/${type}_${Date.now()}.${fileExt}`;
@@ -53,9 +54,10 @@ export const SimpleMediaUploader = ({
         .getPublicUrl(uploadData.path);
 
       const publicUrl = urlData.publicUrl;
+      console.log(`📸 SimpleMediaUploader: File uploaded successfully to ${publicUrl}`);
 
       // Update profile via RLS-bypass function
-      const { data: result, error: rpcError } = await supabase.rpc('rls_bypass_profile_update', {
+      const updateData = {
         p_user_id: userId,
         p_username: null,
         p_bio: null,
@@ -65,21 +67,25 @@ export const SimpleMediaUploader = ({
         p_interests: null,
         p_profile_visibility: null,
         p_status: null,
-      });
+      };
+
+      const { data: result, error: rpcError } = await supabase.rpc('rls_bypass_profile_update', updateData);
 
       if (rpcError || !result?.success) {
         throw new Error(rpcError?.message || result?.error || `Failed to update ${type}`);
       }
       
-      onUploadSuccess(publicUrl);
+      console.log(`✅ SimpleMediaUploader: Profile updated successfully`);
+      
       setPreviewUrl(publicUrl);
+      onUploadSuccess(publicUrl);
       
       toast({
         title: "Upload Successful",
         description: `Your ${type} has been updated successfully!`,
       });
     } catch (error: any) {
-      console.error(`SimpleMediaUploader: ${type} upload error:`, error);
+      console.error(`❌ SimpleMediaUploader: ${type} upload error:`, error);
       toast({
         title: "Upload Failed",
         description: error.message || `Failed to upload ${type}`,
@@ -88,7 +94,14 @@ export const SimpleMediaUploader = ({
     } finally {
       setIsUploading(false);
     }
-  }, [type, userId, onUploadSuccess, toast]);
+  }, [type, userId, onUploadSuccess, toast, isUploading]);
+
+  const onDrop = useCallback(async (acceptedFiles: File[]) => {
+    const file = acceptedFiles[0];
+    if (!file) return;
+
+    await uploadFile(file);
+  }, [uploadFile]);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
