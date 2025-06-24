@@ -88,7 +88,7 @@ export const SimpleProfileStudio = ({ profileId, isOpen, onClose }: SimpleProfil
                   {/* Avatar Upload */}
                   <div className="space-y-4">
                     <h3 className="text-xl font-semibold text-slate-200">Profile Avatar</h3>
-                    <p className="text-slate-400">Uploa your profile picture</p>
+                    <p className="text-slate-400">Upload your profile picture</p>
                     <SimpleMediaUploader
                       type="avatar"
                       userId={profileId}

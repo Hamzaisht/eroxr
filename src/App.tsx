@@ -4,8 +4,6 @@ import { Toaster } from "@/components/ui/toaster";
 import { ToastProvider } from "@/hooks/use-toast";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { ErrorBoundary } from "@/components/ui/ErrorBoundary";
-import ProfilePage from "@/pages/ProfilePage";
-import Profile from "@/pages/Profile";
 import NewProfile from "@/pages/NewProfile";
 import Home from "@/pages/Home";
 import SearchPage from "@/pages/Search";
@@ -43,10 +41,6 @@ function App() {
                   </Route>
                   <Route path="/search" element={<MainLayout />}>
                     <Route index element={<SearchPage />} />
-                  </Route>
-                  <Route path="/profile" element={<MainLayout />}>
-                    <Route index element={<Profile />} />
-                    <Route path=":profileIdentifier" element={<Profile />} />
                   </Route>
                   <Route path="/new-profile" element={<MainLayout />}>
                     <Route index element={<NewProfile />} />
