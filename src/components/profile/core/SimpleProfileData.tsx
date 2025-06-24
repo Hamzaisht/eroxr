@@ -24,19 +24,22 @@ export const useSimpleProfile = (profileId: string) => {
       setLoading(true);
       console.log('🎯 SimpleProfile: Fetching profile for:', profileId);
       
-      const { data: result, error: rpcError } = await supabase.rpc('rls_bypass_profile_fetch', {
-        p_user_id: profileId
-      });
+      // Use direct Supabase query instead of RLS bypass function
+      const { data, error: fetchError } = await supabase
+        .from('profiles')
+        .select('id, username, bio, location, avatar_url, banner_url, interests, created_at')
+        .eq('id', profileId)
+        .single();
 
-      if (rpcError || !result?.success) {
-        console.error('❌ SimpleProfile: Fetch failed:', rpcError || result?.error);
-        setError(rpcError?.message || result?.error || 'Profile not found');
+      if (fetchError) {
+        console.error('❌ SimpleProfile: Fetch failed:', fetchError);
+        setError(fetchError.message || 'Profile not found');
         setProfile(null);
         return;
       }
 
       console.log('✅ SimpleProfile: Profile fetched successfully');
-      setProfile(result.data as SimpleProfile);
+      setProfile(data as SimpleProfile);
       setError(null);
     } catch (err: any) {
       console.error('💥 SimpleProfile: Critical error:', err);
@@ -51,21 +54,25 @@ export const useSimpleProfile = (profileId: string) => {
     try {
       console.log('🎯 SimpleProfile: Updating profile with:', updates);
       
-      const { data: result, error: rpcError } = await supabase.rpc('rls_bypass_profile_update', {
-        p_user_id: profileId,
-        p_username: updates.username || null,
-        p_bio: updates.bio || null,
-        p_location: updates.location || null,
-        p_avatar_url: updates.avatar_url || null,
-        p_banner_url: updates.banner_url || null,
-        p_interests: updates.interests || null,
-        p_profile_visibility: null,
-        p_status: null,
-      });
+      // Use direct Supabase query instead of RLS bypass function
+      const { data, error: updateError } = await supabase
+        .from('profiles')
+        .update({
+          username: updates.username,
+          bio: updates.bio,
+          location: updates.location,
+          avatar_url: updates.avatar_url,
+          banner_url: updates.banner_url,
+          interests: updates.interests,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', profileId)
+        .select()
+        .single();
 
-      if (rpcError || !result?.success) {
-        console.error('❌ SimpleProfile: Update failed:', rpcError || result?.error);
-        throw new Error(rpcError?.message || result?.error || 'Update failed');
+      if (updateError) {
+        console.error('❌ SimpleProfile: Update failed:', updateError);
+        throw new Error(updateError.message || 'Update failed');
       }
 
       console.log('✅ SimpleProfile: Profile updated successfully');

@@ -56,23 +56,18 @@ export const SimpleMediaUploader = ({
       const publicUrl = urlData.publicUrl;
       console.log(`📸 SimpleMediaUploader: File uploaded successfully to ${publicUrl}`);
 
-      // Update profile via RLS-bypass function
-      const updateData = {
-        p_user_id: userId,
-        p_username: null,
-        p_bio: null,
-        p_location: null,
-        p_avatar_url: type === 'avatar' ? publicUrl : null,
-        p_banner_url: type === 'banner' ? publicUrl : null,
-        p_interests: null,
-        p_profile_visibility: null,
-        p_status: null,
-      };
+      // Update profile using direct Supabase query instead of RLS bypass function
+      const updateData = type === 'avatar' 
+        ? { avatar_url: publicUrl, updated_at: new Date().toISOString() }
+        : { banner_url: publicUrl, updated_at: new Date().toISOString() };
 
-      const { data: result, error: rpcError } = await supabase.rpc('rls_bypass_profile_update', updateData);
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update(updateData)
+        .eq('id', userId);
 
-      if (rpcError || !result?.success) {
-        throw new Error(rpcError?.message || result?.error || `Failed to update ${type}`);
+      if (updateError) {
+        throw new Error(`Failed to update ${type}: ${updateError.message}`);
       }
       
       console.log(`✅ SimpleMediaUploader: Profile updated successfully`);
