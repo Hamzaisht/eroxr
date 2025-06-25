@@ -12,13 +12,12 @@ const Index = () => {
     user: user ? "exists" : "null", 
     session: session ? "exists" : "null",
     loading,
-    error: error || "none",
-    pathname: window.location.pathname
+    error: error || "none"
   });
 
   // Show loading while session is being determined
   if (loading) {
-    console.log("📍 Index page - Showing loading screen (auth loading)");
+    console.log("📍 Index page - Showing loading screen");
     return <LoadingScreen />;
   }
 

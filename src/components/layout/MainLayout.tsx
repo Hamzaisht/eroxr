@@ -26,7 +26,7 @@ export const MainLayout = () => {
   
   // Show loading screen while checking authentication
   if (loading) {
-    console.log("🏗️ MainLayout - Showing loading screen (checking auth)");
+    console.log("🏗️ MainLayout - Showing loading screen");
     return <LoadingScreen />;
   }
   
@@ -70,7 +70,7 @@ export const MainLayout = () => {
         
         {/* Main content wrapper with studio styling */}
         <MainContent isErosRoute={isErosRoute}>
-          <div className="pt-20 relative z-10"> {/* Add padding for fixed header and ensure content is above background */}
+          <div className="pt-20 relative z-10">
             <Outlet />
           </div>
         </MainContent>

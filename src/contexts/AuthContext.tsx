@@ -27,41 +27,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     
     let isMounted = true;
     
-    // Get initial session first
-    const getInitialSession = async () => {
-      try {
-        console.log('🔄 AuthProvider: Getting initial session...');
-        const { data: { session: initialSession }, error } = await supabase.auth.getSession();
-        
-        if (!isMounted) return;
-        
-        console.log('🔄 AuthProvider: Initial session result:', {
-          hasSession: !!initialSession,
-          hasUser: !!initialSession?.user,
-          error: error?.message
-        });
-        
-        if (error) {
-          console.error('❌ AuthProvider: Error getting initial session:', error);
-          setError(error.message);
-        } else {
-          setSession(initialSession);
-          setUser(initialSession?.user ?? null);
-        }
-        
-        // Set loading to false after initial session check
-        setLoading(false);
-        
-      } catch (err: any) {
-        console.error('💥 AuthProvider: Error getting initial session:', err);
-        if (isMounted) {
-          setError(err.message);
-          setLoading(false);
-        }
-      }
-    };
-
-    // Set up auth state listener
+    // Set up auth state listener first
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, newSession) => {
         if (!isMounted) return;
@@ -72,59 +38,63 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           hasUser: !!newSession?.user
         });
         
-        try {
-          if (event === 'SIGNED_IN' && newSession) {
-            console.log('✅ AuthProvider: User signed in, checking/creating profile');
-            
-            // Check if profile exists, create if it doesn't
-            const { data: profile, error: profileError } = await supabase
-              .from('profiles')
-              .select('*')
-              .eq('id', newSession.user.id)
-              .maybeSingle();
-            
-            if (profileError) {
-              console.error('❌ AuthProvider: Error checking profile:', profileError);
-            } else if (!profile) {
-              console.log('📝 AuthProvider: Creating new profile');
-              
-              const { error: insertError } = await supabase
+        // Handle profile creation for new signups without blocking the auth flow
+        if (event === 'SIGNED_IN' && newSession) {
+          // Defer profile creation to avoid blocking auth state
+          setTimeout(async () => {
+            try {
+              const { data: profile } = await supabase
                 .from('profiles')
-                .insert({
-                  id: newSession.user.id,
-                  username: newSession.user.email?.split('@')[0] || 'user',
-                  created_at: new Date().toISOString(),
-                  updated_at: new Date().toISOString()
-                });
+                .select('*')
+                .eq('id', newSession.user.id)
+                .maybeSingle();
               
-              if (insertError) {
-                console.error('❌ AuthProvider: Error creating profile:', insertError);
-                setError('Failed to create user profile');
-              } else {
+              if (!profile) {
+                console.log('📝 AuthProvider: Creating new profile');
+                await supabase
+                  .from('profiles')
+                  .insert({
+                    id: newSession.user.id,
+                    username: newSession.user.email?.split('@')[0] || 'user',
+                    created_at: new Date().toISOString(),
+                    updated_at: new Date().toISOString()
+                  });
                 console.log('✅ AuthProvider: Profile created successfully');
               }
+            } catch (err: any) {
+              console.error('❌ AuthProvider: Profile creation error:', err);
             }
-          }
-          
-          setSession(newSession);
-          setUser(newSession?.user ?? null);
-          setError(null);
-          
-          // Only set loading to false if we haven't already done so
-          if (loading) {
-            setLoading(false);
-          }
-          
-        } catch (err: any) {
-          console.error('💥 AuthProvider: Error in auth state change:', err);
-          setError(err.message);
-          setLoading(false);
+          }, 100);
         }
+        
+        // Update auth state synchronously
+        setSession(newSession);
+        setUser(newSession?.user ?? null);
+        setError(null);
+        setLoading(false);
       }
     );
 
     // Get initial session
-    getInitialSession();
+    supabase.auth.getSession().then(({ data: { session: initialSession }, error }) => {
+      if (!isMounted) return;
+      
+      console.log('🔄 AuthProvider: Initial session result:', {
+        hasSession: !!initialSession,
+        hasUser: !!initialSession?.user,
+        error: error?.message
+      });
+      
+      if (error) {
+        console.error('❌ AuthProvider: Error getting initial session:', error);
+        setError(error.message);
+      } else {
+        setSession(initialSession);
+        setUser(initialSession?.user ?? null);
+      }
+      
+      setLoading(false);
+    });
 
     return () => {
       console.log('🧹 AuthProvider: Cleaning up auth listener');
