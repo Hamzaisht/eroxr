@@ -1,53 +1,74 @@
 
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { Loader2 } from "lucide-react";
+import { Loader2, AlertCircle, Plus } from "lucide-react";
 import { EnhancedPostCard } from "@/components/feed/EnhancedPostCard";
 import { useSession } from "@supabase/auth-helpers-react";
 import { usePostActions } from "@/hooks/usePostActions";
+import { useHomePosts } from "@/hooks/useHomePosts";
+import { Button } from "@/components/ui/button";
 
 export const FeedContent = () => {
   const session = useSession();
   const { handleLike, handleDelete } = usePostActions();
+  const { data: posts, isLoading, error, refetch } = useHomePosts();
   
-  const { data: posts, isLoading } = useQuery({
-    queryKey: ['feed-posts'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('posts')
-        .select(`
-          *,
-          creator:profiles!posts_creator_id_fkey(id, username, avatar_url),
-          media_assets!media_assets_post_id_fkey(
-            id,
-            storage_path,
-            media_type,
-            mime_type,
-            original_name,
-            alt_text
-          )
-        `)
-        .eq('visibility', 'public')
-        .order('created_at', { ascending: false })
-        .limit(10);
-      
-      if (error) throw error;
-      return data;
-    }
+  console.log("🏠 FeedContent - Render state:", {
+    isLoading,
+    hasError: !!error,
+    postsCount: posts?.length || 0,
+    hasSession: !!session
   });
 
   if (isLoading) {
     return (
-      <div className="flex justify-center p-8">
-        <Loader2 className="h-8 w-8 animate-spin" />
+      <div className="flex flex-col items-center justify-center p-8 space-y-4">
+        <Loader2 className="h-8 w-8 animate-spin text-luxury-gold" />
+        <p className="text-luxury-neutral">Loading your feed...</p>
       </div>
     );
   }
 
-  if (!posts?.length) {
+  if (error) {
+    console.error("❌ FeedContent - Error:", error);
     return (
-      <div className="text-center p-8 text-gray-500">
-        <p>No posts available yet. Be the first to share something!</p>
+      <div className="flex flex-col items-center justify-center p-8 space-y-4">
+        <AlertCircle className="h-12 w-12 text-red-400" />
+        <div className="text-center">
+          <h3 className="text-lg font-semibold text-white mb-2">Unable to load feed</h3>
+          <p className="text-luxury-neutral mb-4">
+            {error instanceof Error ? error.message : "Something went wrong while loading posts"}
+          </p>
+          <Button 
+            onClick={() => refetch()} 
+            variant="outline"
+            className="border-luxury-gold text-luxury-gold hover:bg-luxury-gold hover:text-luxury-dark"
+          >
+            Try Again
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  if (!posts || posts.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center p-8 space-y-6 text-center">
+        <div className="bg-luxury-darker/50 rounded-full p-6">
+          <Plus className="h-12 w-12 text-luxury-gold" />
+        </div>
+        <div>
+          <h3 className="text-xl font-semibold text-white mb-2">Welcome to Olympus!</h3>
+          <p className="text-luxury-neutral max-w-md">
+            No posts yet. Be the first to share something amazing with the community!
+          </p>
+        </div>
+        <Button 
+          onClick={() => refetch()} 
+          variant="outline"
+          size="sm"
+          className="border-luxury-gold/50 text-luxury-gold hover:bg-luxury-gold hover:text-luxury-dark"
+        >
+          Refresh Feed
+        </Button>
       </div>
     );
   }
@@ -55,39 +76,28 @@ export const FeedContent = () => {
   return (
     <div className="space-y-6">
       {posts.map((post: any) => {
-        const creator = post.creator || { id: post.creator_id, username: "Unknown" };
+        console.log("🎯 FeedContent - Rendering post:", {
+          id: post.id,
+          hasCreator: !!post.creator,
+          creatorUsername: post.creator?.username,
+          mediaCount: post.media_assets?.length || 0
+        });
         
         return (
           <EnhancedPostCard
             key={post.id}
-            post={{
-              id: post.id,
-              content: post.content,
-              creator_id: post.creator_id,
-              created_at: post.created_at,
-              updated_at: post.updated_at,
-              likes_count: post.likes_count || 0,
-              comments_count: post.comments_count || 0,
-              visibility: post.visibility,
-              view_count: post.view_count,
-              engagement_score: post.engagement_score,
-              is_ppv: post.is_ppv,
-              ppv_amount: post.ppv_amount,
-              creator: {
-                id: creator.id,
-                username: creator.username,
-                avatar_url: creator.avatar_url
-              },
-              media_assets: Array.isArray(post.media_assets) ? post.media_assets : [],
-              isLiked: false,
-              isSaved: false
-            }}
+            post={post}
             currentUserId={session?.user?.id}
             onLike={handleLike}
             onDelete={handleDelete}
           />
         );
       })}
+      
+      {/* Load more indicator - for future implementation */}
+      <div className="flex justify-center py-8">
+        <p className="text-luxury-neutral text-sm">You've reached the end of your feed</p>
+      </div>
     </div>
   );
 };

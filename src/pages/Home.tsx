@@ -20,7 +20,15 @@ const Home = () => {
   const [showWelcome, setShowWelcome] = useState(true);
   const createPostDialog = useCreatePostDialog();
   const goLiveDialog = useGoLiveDialog();
-  const { user, profile } = useCurrentUser();
+  const { user, profile, isLoading } = useCurrentUser();
+
+  console.log("🏠 Home - Render state:", {
+    activeTab,
+    showWelcome,
+    hasUser: !!user,
+    hasProfile: !!profile,
+    isLoading
+  });
 
   const renderContent = () => {
     switch (activeTab) {
@@ -38,6 +46,7 @@ const Home = () => {
   };
 
   const getUserDisplayName = () => {
+    if (isLoading) return "Loading...";
     if (!user) return undefined;
     if (profile?.username) return `@${profile.username}`;
     return user.email?.split('@')[0] || 'User';

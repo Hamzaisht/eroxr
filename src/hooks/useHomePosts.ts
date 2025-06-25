@@ -9,25 +9,28 @@ export const useHomePosts = () => {
   const { session, user } = useAuth();
   const { cleanupOrphanedAssets } = useOrphanedAssetsCleanup();
 
-  // Trigger cleanup periodically
+  // Trigger cleanup periodically but less frequently to avoid performance issues
   useEffect(() => {
     if (user?.id) {
       const cleanup = () => cleanupOrphanedAssets(user.id);
       
-      // Run cleanup on mount
-      cleanup();
+      // Run cleanup on mount but with a delay
+      const timeoutId = setTimeout(cleanup, 2000);
       
-      // Set up periodic cleanup every 10 minutes
-      const interval = setInterval(cleanup, 10 * 60 * 1000);
+      // Set up periodic cleanup every 15 minutes (increased from 10)
+      const interval = setInterval(cleanup, 15 * 60 * 1000);
       
-      return () => clearInterval(interval);
+      return () => {
+        clearTimeout(timeoutId);
+        clearInterval(interval);
+      };
     }
   }, [user?.id, cleanupOrphanedAssets]);
 
   return useQuery({
     queryKey: ['home-posts', user?.id],
     queryFn: async () => {
-      console.log("Home - Fetching posts...");
+      console.log("🏠 Home - Fetching posts with optimized RLS...");
       
       const { data: postsData, error: postsError } = await supabase
         .from('posts')
@@ -73,48 +76,63 @@ export const useHomePosts = () => {
         .limit(20);
 
       if (postsError) {
-        console.error("Home - Error fetching posts:", postsError);
+        console.error("❌ Home - Error fetching posts:", postsError);
         throw new Error(postsError.message || "Failed to fetch posts");
       }
 
-      console.log("Home - Posts fetched successfully:", {
+      console.log("✅ Home - Posts fetched successfully:", {
         count: postsData?.length || 0,
+        hasData: !!postsData,
         sample: postsData?.[0] ? {
           id: postsData[0].id,
           hasMediaAssets: !!postsData[0].media_assets,
           mediaCount: postsData[0].media_assets?.length || 0,
-          creatorType: typeof postsData[0].creator,
-          mediaAssets: postsData[0].media_assets
+          creatorExists: !!postsData[0].creator
         } : null
       });
 
-      // Transform the data to ensure creator is always an object, not an array
-      const transformedData = postsData?.map(post => {
+      // Return empty array if no data to prevent loading issues
+      if (!postsData || postsData.length === 0) {
+        console.log("📭 Home - No posts found, returning empty array");
+        return [];
+      }
+
+      // Transform the data safely
+      const transformedData = postsData.map(post => {
+        // Ensure creator data is properly structured
+        const creator = Array.isArray(post.creator) ? post.creator[0] : post.creator;
+        
         // Check if current user has liked this post
         const isLiked = user?.id ? post.post_likes?.some((like: any) => like.user_id === user.id) : false;
         
         return {
           ...post,
-          creator: Array.isArray(post.creator) ? post.creator[0] : post.creator,
+          creator: creator || {
+            id: post.creator_id,
+            username: "Unknown User",
+            avatar_url: null,
+            bio: null,
+            location: null
+          },
+          media_assets: Array.isArray(post.media_assets) ? post.media_assets.filter(asset => asset && asset.storage_path) : [],
           isLiked,
           isSaved: false // TODO: Add saved posts functionality
         };
-      }) || [];
+      });
 
-      // Debug logging for each post's media assets
-      transformedData.forEach(post => {
-        console.log(`Post ${post.id} media assets:`, {
-          hasMedia: !!post.media_assets,
-          count: post.media_assets?.length || 0,
-          assets: post.media_assets,
-          validAssets: post.media_assets?.filter(asset => asset && asset.storage_path)
-        });
+      console.log("🔄 Home - Data transformed successfully:", {
+        originalCount: postsData.length,
+        transformedCount: transformedData.length,
+        firstPostHasCreator: !!transformedData[0]?.creator?.username
       });
 
       return transformedData;
     },
-    enabled: true,
+    enabled: true, // Always enabled to show public posts
     staleTime: 30000, // 30 seconds
+    gcTime: 5 * 60 * 1000, // 5 minutes (renamed from cacheTime)
     refetchOnWindowFocus: false,
+    retry: 3,
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
   });
 };

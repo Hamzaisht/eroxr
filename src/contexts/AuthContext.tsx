@@ -23,11 +23,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    console.log('🔄 AuthProvider: Initializing auth system');
+    console.log('🔄 AuthProvider: Initializing optimized auth system');
     
     let isMounted = true;
     
-    // Set up auth state listener first
+    // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, newSession) => {
         if (!isMounted) return;
@@ -38,36 +38,36 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           hasUser: !!newSession?.user
         });
         
-        // Handle profile creation for new signups without blocking the auth flow
+        // Handle profile creation for new signups (optimized)
         if (event === 'SIGNED_IN' && newSession) {
-          // Defer profile creation to avoid blocking auth state
+          // Use a more efficient approach - create profile if it doesn't exist
           setTimeout(async () => {
             try {
-              const { data: profile } = await supabase
+              // Try to insert profile, ignore if already exists
+              const { error: insertError } = await supabase
                 .from('profiles')
-                .select('*')
-                .eq('id', newSession.user.id)
+                .insert({
+                  id: newSession.user.id,
+                  username: newSession.user.email?.split('@')[0] || 'user',
+                  created_at: new Date().toISOString(),
+                  updated_at: new Date().toISOString()
+                })
+                .select()
                 .maybeSingle();
               
-              if (!profile) {
-                console.log('📝 AuthProvider: Creating new profile');
-                await supabase
-                  .from('profiles')
-                  .insert({
-                    id: newSession.user.id,
-                    username: newSession.user.email?.split('@')[0] || 'user',
-                    created_at: new Date().toISOString(),
-                    updated_at: new Date().toISOString()
-                  });
-                console.log('✅ AuthProvider: Profile created successfully');
+              // Ignore duplicate key errors (profile already exists)
+              if (insertError && !insertError.message.includes('duplicate key')) {
+                console.error('❌ AuthProvider: Profile creation error:', insertError);
+              } else {
+                console.log('✅ AuthProvider: Profile ensured for user');
               }
             } catch (err: any) {
-              console.error('❌ AuthProvider: Profile creation error:', err);
+              console.error('❌ AuthProvider: Profile creation failed:', err);
             }
           }, 100);
         }
         
-        // Update auth state synchronously
+        // Update auth state
         setSession(newSession);
         setUser(newSession?.user ?? null);
         setError(null);
@@ -117,7 +117,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
       });
       
-      console.log('📝 AuthProvider: Signup result:', data, error);
+      console.log('📝 AuthProvider: Signup result:', !!data, !!error);
       
       if (error) {
         setError(error.message);
@@ -141,7 +141,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         password
       });
       
-      console.log('🔑 AuthProvider: Signin result:', data, error);
+      console.log('🔑 AuthProvider: Signin result:', !!data, !!error);
       
       if (error) {
         setError(error.message);
