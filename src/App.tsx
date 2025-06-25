@@ -30,21 +30,11 @@ const App = () => (
                 <Route path="/" element={<Index />} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/register" element={<Register />} />
-                <Route path="/home" element={
-                  <MainLayout>
-                    <Home />
-                  </MainLayout>
-                } />
-                <Route path="/profile" element={
-                  <MainLayout>
-                    <Profile />
-                  </MainLayout>
-                } />
-                <Route path="/profile/:userId" element={
-                  <MainLayout>
-                    <Profile />
-                  </MainLayout>
-                } />
+                <Route path="/" element={<MainLayout />}>
+                  <Route path="home" element={<Home />} />
+                  <Route path="profile" element={<Profile />} />
+                  <Route path="profile/:userId" element={<Profile />} />
+                </Route>
               </Routes>
             </BrowserRouter>
           </ErrorBoundary>
