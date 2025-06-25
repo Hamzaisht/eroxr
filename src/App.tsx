@@ -1,59 +1,37 @@
 
-import { Routes, Route, BrowserRouter } from "react-router-dom";
 import { Toaster } from "@/components/ui/toaster";
-import { ToastProvider } from "@/hooks/use-toast";
-import { MainLayout } from "@/components/layout/MainLayout";
-import { ErrorBoundary } from "@/components/ui/ErrorBoundary";
-import NewProfile from "@/pages/NewProfile";
-import Home from "@/pages/Home";
-import SearchPage from "@/pages/Search";
-import Index from "@/pages/Index";
-import Login from "@/pages/Login";
-import Register from "@/pages/Register";
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { AuthProvider } from '@/contexts/AuthContext';
+import { Toaster as Sonner } from "@/components/ui/sonner";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { SessionContextProvider } from "@supabase/auth-helpers-react";
+import { supabase } from "@/integrations/supabase/client";
+import { AuthProvider } from "@/contexts/AuthContext";
+import Index from "./pages/Index";
+import Login from "./pages/Login";
+import Profile from "./pages/Profile";
 
-// Create a client for React Query
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      retry: 1,
-      refetchOnWindowFocus: false,
-    },
-  },
-});
+const queryClient = new QueryClient();
 
-function App() {
-  return (
-    <QueryClientProvider client={queryClient}>
+const App = () => (
+  <QueryClientProvider client={queryClient}>
+    <SessionContextProvider supabaseClient={supabase}>
       <AuthProvider>
-        <BrowserRouter>
-          <ToastProvider>
-            <div className="min-h-screen">
-              <Toaster />
-              <ErrorBoundary>
-                <Routes>
-                  <Route path="/" element={<Index />} />
-                  <Route path="/login" element={<Login />} />
-                  <Route path="/register" element={<Register />} />
-                  <Route path="/home" element={<MainLayout />}>
-                    <Route index element={<Home />} />
-                  </Route>
-                  <Route path="/search" element={<MainLayout />}>
-                    <Route index element={<SearchPage />} />
-                  </Route>
-                  <Route path="/new-profile" element={<MainLayout />}>
-                    <Route index element={<NewProfile />} />
-                    <Route path=":profileIdentifier" element={<NewProfile />} />
-                  </Route>
-                </Routes>
-              </ErrorBoundary>
-            </div>
-          </ToastProvider>
-        </BrowserRouter>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/profile" element={<Profile />} />
+              <Route path="/profile/:userId" element={<Profile />} />
+            </Routes>
+          </BrowserRouter>
+        </TooltipProvider>
       </AuthProvider>
-    </QueryClientProvider>
-  );
-}
+    </SessionContextProvider>
+  </QueryClientProvider>
+);
 
 export default App;

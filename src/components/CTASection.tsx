@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
@@ -13,7 +12,7 @@ export const CTASection = () => {
 
   const handleGetStarted = () => {
     if (session) {
-      navigate("/new-profile");
+      navigate("/profile");
     } else {
       navigate("/login");
       toast({

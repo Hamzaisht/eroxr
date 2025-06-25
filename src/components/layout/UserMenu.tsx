@@ -21,7 +21,7 @@ export const UserMenu = () => {
 
   const handleProfileClick = () => {
     if (session?.user) {
-      navigate(`/new-profile/${session.user.id}`);
+      navigate(`/profile/${session.user.id}`);
       setIsOpen(false);
     }
   };

@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
@@ -35,7 +34,7 @@ export const CreatorCard: React.FC<CreatorCardProps> = ({
     console.log('handleViewProfile called for creatorId:', creatorId);
     // Navigate to profile using creatorId
     if (creatorId) {
-      navigate(`/new-profile/${creatorId}`);
+      navigate(`/profile/${creatorId}`);
     } else {
       console.error('CreatorId is required for navigation');
     }
