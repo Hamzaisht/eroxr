@@ -2,17 +2,14 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
-interface UserAvatar {
-  id: string;
-  url: string;
-  storage_path: string;
-  created_at: string;
+interface UserAvatarData {
+  url: string | null;
+  username: string | null;
 }
 
 export const useUserAvatar = (userId?: string | null) => {
-  const [avatar, setAvatar] = useState<UserAvatar | null>(null);
+  const [avatar, setAvatar] = useState<UserAvatarData | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!userId) {
@@ -20,98 +17,34 @@ export const useUserAvatar = (userId?: string | null) => {
       return;
     }
 
-    const fetchAvatar = async () => {
+    const fetchUserAvatar = async () => {
       setIsLoading(true);
-      setError(null);
-
       try {
-        // Query for the most recent avatar using metadata filter for usage
-        const { data, error: queryError } = await supabase
-          .from('media_assets')
-          .select('id, storage_path, created_at')
-          .eq('user_id', userId)
-          .eq('media_type', 'image')
-          .eq('metadata->usage', 'avatar')
-          .order('created_at', { ascending: false })
-          .limit(1)
-          .maybeSingle();
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('avatar_url, username')
+          .eq('id', userId)
+          .single();
 
-        if (queryError) {
-          throw queryError;
-        }
-
-        if (data) {
-          // Get the public URL
-          const { data: { publicUrl } } = supabase.storage
-            .from('media')
-            .getPublicUrl(data.storage_path);
-
-          setAvatar({
-            id: data.id,
-            url: publicUrl,
-            storage_path: data.storage_path,
-            created_at: data.created_at
-          });
+        if (error) {
+          console.error('Error fetching user avatar:', error);
+          setAvatar({ url: null, username: null });
         } else {
-          setAvatar(null);
+          setAvatar({
+            url: data?.avatar_url || null,
+            username: data?.username || null
+          });
         }
-      } catch (err: any) {
-        setError(err.message);
-        setAvatar(null);
+      } catch (err) {
+        console.error('Critical error fetching avatar:', err);
+        setAvatar({ url: null, username: null });
       } finally {
         setIsLoading(false);
       }
     };
 
-    fetchAvatar();
+    fetchUserAvatar();
   }, [userId]);
 
-  const refreshAvatar = async () => {
-    if (userId) {
-      const fetchAvatar = async () => {
-        try {
-          const { data, error: queryError } = await supabase
-            .from('media_assets')
-            .select('id, storage_path, created_at')
-            .eq('user_id', userId)
-            .eq('media_type', 'image')
-            .eq('metadata->usage', 'avatar')
-            .order('created_at', { ascending: false })
-            .limit(1)
-            .maybeSingle();
-
-          if (queryError) {
-            throw queryError;
-          }
-
-          if (data) {
-            const { data: { publicUrl } } = supabase.storage
-              .from('media')
-              .getPublicUrl(data.storage_path);
-
-            setAvatar({
-              id: data.id,
-              url: publicUrl,
-              storage_path: data.storage_path,
-              created_at: data.created_at
-            });
-          } else {
-            setAvatar(null);
-          }
-        } catch (err: any) {
-          setError(err.message);
-          setAvatar(null);
-        }
-      };
-
-      await fetchAvatar();
-    }
-  };
-
-  return {
-    avatar,
-    isLoading,
-    error,
-    refreshAvatar
-  };
+  return { avatar, isLoading };
 };

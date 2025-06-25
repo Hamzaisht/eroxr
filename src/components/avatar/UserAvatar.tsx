@@ -1,6 +1,7 @@
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useUserAvatar } from "@/hooks/useUserAvatar";
+import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 
 interface UserAvatarProps {
@@ -10,6 +11,7 @@ interface UserAvatarProps {
   size?: 'sm' | 'md' | 'lg' | 'xl';
   className?: string;
   fallbackClassName?: string;
+  clickable?: boolean;
 }
 
 export const UserAvatar = ({ 
@@ -18,9 +20,11 @@ export const UserAvatar = ({
   email,
   size = 'md',
   className = "",
-  fallbackClassName = ""
+  fallbackClassName = "",
+  clickable = true
 }: UserAvatarProps) => {
   const { avatar, isLoading } = useUserAvatar(userId);
+  const navigate = useNavigate();
 
   const getInitials = () => {
     if (username) return username.charAt(0).toUpperCase();
@@ -37,8 +41,21 @@ export const UserAvatar = ({
     }
   };
 
+  const handleClick = () => {
+    if (clickable && userId) {
+      navigate(`/new-profile/${userId}`);
+    }
+  };
+
   return (
-    <Avatar className={cn(getSizeClass(), className)}>
+    <Avatar 
+      className={cn(
+        getSizeClass(), 
+        clickable && userId ? 'cursor-pointer hover:ring-2 hover:ring-slate-400/50 transition-all' : '',
+        className
+      )}
+      onClick={handleClick}
+    >
       <AvatarImage 
         src={avatar?.url} 
         alt={username || email || "User avatar"}
