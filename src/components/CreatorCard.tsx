@@ -32,12 +32,12 @@ export const CreatorCard: React.FC<CreatorCardProps> = ({
   const navigate = useNavigate();
 
   const handleViewProfile = () => {
-    console.log('handleViewProfile called for username:', username);
-    // Navigate to profile using username, not creatorId
-    if (username) {
-      navigate(`/profile/${username}`);
+    console.log('handleViewProfile called for creatorId:', creatorId);
+    // Navigate to profile using creatorId
+    if (creatorId) {
+      navigate(`/new-profile/${creatorId}`);
     } else {
-      console.error('Username is required for navigation');
+      console.error('CreatorId is required for navigation');
     }
   };
 

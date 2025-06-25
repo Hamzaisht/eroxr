@@ -21,11 +21,7 @@ export const UserMenu = () => {
 
   const handleProfileClick = () => {
     if (session?.user) {
-      // Get username from user metadata or use email prefix
-      const username = session.user.user_metadata?.username || 
-                      session.user.email?.split('@')[0] || 
-                      `user_${session.user.id.slice(0, 8)}`;
-      navigate(`/profile/${username}`);
+      navigate(`/new-profile/${session.user.id}`);
       setIsOpen(false);
     }
   };
