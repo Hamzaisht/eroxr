@@ -8,9 +8,10 @@ import { MainNav } from "@/components/MainNav";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { LoadingScreen } from "./LoadingScreen";
 import { useAuth } from "@/contexts/AuthContext";
+import { ErrorState } from "@/components/ui/ErrorState";
 
 export const MainLayout = () => {
-  const { user, session, loading } = useAuth();
+  const { user, session, loading, error, clearError } = useAuth();
   const location = useLocation();
   const isErosRoute = location.pathname.includes('/shorts');
   const isMobile = useIsMobile();
@@ -19,13 +20,28 @@ export const MainLayout = () => {
   console.log("MainLayout - Auth state:", { 
     user: user ? "exists" : "null", 
     session: session ? "exists" : "null",
-    loading 
+    loading,
+    error: error || "none"
   });
   
   // Show loading screen while checking authentication
   if (loading) {
     console.log("MainLayout - Showing loading screen (checking auth)");
     return <LoadingScreen />;
+  }
+  
+  // Show error state if there's an authentication error
+  if (error) {
+    console.log("MainLayout - Showing error state:", error);
+    return (
+      <div className="min-h-screen bg-[#0D1117] flex items-center justify-center">
+        <ErrorState 
+          title="Authentication Error"
+          description={error}
+          onRetry={clearError}
+        />
+      </div>
+    );
   }
   
   // Redirect to login if not authenticated

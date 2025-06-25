@@ -1,4 +1,3 @@
-
 import { useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
@@ -8,9 +7,10 @@ import { BackgroundEffects } from "@/components/layout/BackgroundEffects";
 import { useAuth } from "@/contexts/AuthContext";
 import { SignupForm } from "@/components/auth/signup/SignupForm";
 import { ErosPatternBackground } from "@/components/auth/backgrounds/ErosPatternBackground";
+import { ErrorState } from "@/components/ui/ErrorState";
 
 const Login = () => {
-  const { user, session, loading } = useAuth();
+  const { user, session, loading, error, clearError } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -18,7 +18,8 @@ const Login = () => {
     console.log("Login page - auth state:", { 
       user: user ? "exists" : "null", 
       session: session ? "exists" : "null",
-      loading 
+      loading,
+      error: error || "none"
     });
     
     // If we have a session and not loading, redirect
@@ -27,7 +28,7 @@ const Login = () => {
       console.log("User already authenticated, redirecting to:", from);
       navigate(from, { replace: true });
     }
-  }, [user, session, loading, navigate, location]);
+  }, [user, session, loading, navigate, location, error]);
 
   // Show loading while checking session
   if (loading) {
@@ -42,6 +43,7 @@ const Login = () => {
   }
 
   const handleToggleMode = () => {
+    clearError(); // Clear any existing errors
     navigate("/register");
   };
 
@@ -61,6 +63,16 @@ const Login = () => {
       <ErosPatternBackground />
       
       <div className="relative z-10 w-full max-w-md mx-auto px-4">
+        {error && (
+          <div className="mb-4">
+            <ErrorState 
+              title="Login Error"
+              description={error}
+              onRetry={clearError}
+            />
+          </div>
+        )}
+        
         <AnimatePresence>
           <motion.div
             initial={{ opacity: 0, y: 20 }}

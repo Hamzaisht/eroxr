@@ -3,20 +3,36 @@ import { Navigate } from "react-router-dom";
 import { LoadingScreen } from "@/components/layout/LoadingScreen";
 import Landing from "@/pages/Landing";
 import { useAuth } from "@/contexts/AuthContext";
+import { ErrorState } from "@/components/ui/ErrorState";
 
 const Index = () => {
-  const { user, session, loading } = useAuth();
+  const { user, session, loading, error, clearError } = useAuth();
   
   console.log("Index page - auth state:", { 
     user: user ? "exists" : "null", 
     session: session ? "exists" : "null",
-    loading 
+    loading,
+    error: error || "none"
   });
 
   // Show loading while session is being determined
   if (loading) {
     console.log("Index page - showing loading screen");
     return <LoadingScreen />;
+  }
+
+  // Show error state if there's an authentication error
+  if (error) {
+    console.log("Index page - showing error state:", error);
+    return (
+      <div className="min-h-screen bg-[#0D1117] flex items-center justify-center">
+        <ErrorState 
+          title="Authentication Error"
+          description={error}
+          onRetry={clearError}
+        />
+      </div>
+    );
   }
 
   // If authenticated, redirect to home
