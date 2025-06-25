@@ -8,22 +8,23 @@ import { ErrorState } from "@/components/ui/ErrorState";
 const Index = () => {
   const { user, session, loading, error, clearError } = useAuth();
   
-  console.log("Index page - auth state:", { 
+  console.log("📍 Index page - Current state:", { 
     user: user ? "exists" : "null", 
     session: session ? "exists" : "null",
     loading,
-    error: error || "none"
+    error: error || "none",
+    pathname: window.location.pathname
   });
 
   // Show loading while session is being determined
   if (loading) {
-    console.log("Index page - showing loading screen");
+    console.log("📍 Index page - Showing loading screen (auth loading)");
     return <LoadingScreen />;
   }
 
   // Show error state if there's an authentication error
   if (error) {
-    console.log("Index page - showing error state:", error);
+    console.log("📍 Index page - Showing error state:", error);
     return (
       <div className="min-h-screen bg-[#0D1117] flex items-center justify-center">
         <ErrorState 
@@ -37,12 +38,12 @@ const Index = () => {
 
   // If authenticated, redirect to home
   if (session && user) {
-    console.log("Index page - user authenticated, redirecting to home");
+    console.log("📍 Index page - User authenticated, redirecting to /home");
     return <Navigate to="/home" replace />;
   }
 
   // If not authenticated, show landing page
-  console.log("Index page - showing landing page");
+  console.log("📍 Index page - No auth, showing landing page");
   return <Landing />;
 };
 

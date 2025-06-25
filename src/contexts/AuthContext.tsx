@@ -23,12 +23,54 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    console.log('🔄 AuthProvider: Setting up auth listener');
+    console.log('🔄 AuthProvider: Initializing auth system');
     
-    // Set up auth state listener first
+    let isMounted = true;
+    
+    // Get initial session first
+    const getInitialSession = async () => {
+      try {
+        console.log('🔄 AuthProvider: Getting initial session...');
+        const { data: { session: initialSession }, error } = await supabase.auth.getSession();
+        
+        if (!isMounted) return;
+        
+        console.log('🔄 AuthProvider: Initial session result:', {
+          hasSession: !!initialSession,
+          hasUser: !!initialSession?.user,
+          error: error?.message
+        });
+        
+        if (error) {
+          console.error('❌ AuthProvider: Error getting initial session:', error);
+          setError(error.message);
+        } else {
+          setSession(initialSession);
+          setUser(initialSession?.user ?? null);
+        }
+        
+        // Set loading to false after initial session check
+        setLoading(false);
+        
+      } catch (err: any) {
+        console.error('💥 AuthProvider: Error getting initial session:', err);
+        if (isMounted) {
+          setError(err.message);
+          setLoading(false);
+        }
+      }
+    };
+
+    // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, newSession) => {
-        console.log('🔄 AuthProvider: Auth state change:', event, newSession ? 'session exists' : 'no session');
+        if (!isMounted) return;
+        
+        console.log('🔄 AuthProvider: Auth state change:', {
+          event,
+          hasSession: !!newSession,
+          hasUser: !!newSession?.user
+        });
         
         try {
           if (event === 'SIGNED_IN' && newSession) {
@@ -67,41 +109,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setSession(newSession);
           setUser(newSession?.user ?? null);
           setError(null);
+          
+          // Only set loading to false if we haven't already done so
+          if (loading) {
+            setLoading(false);
+          }
+          
         } catch (err: any) {
           console.error('💥 AuthProvider: Error in auth state change:', err);
           setError(err.message);
-        } finally {
           setLoading(false);
         }
       }
     );
 
     // Get initial session
-    const getInitialSession = async () => {
-      try {
-        const { data: { session: initialSession }, error } = await supabase.auth.getSession();
-        console.log('🔄 AuthProvider: Initial session check:', initialSession ? 'found' : 'none', error);
-        
-        if (error) {
-          console.error('❌ AuthProvider: Error getting initial session:', error);
-          setError(error.message);
-        }
-        
-        // Don't set session here - let onAuthStateChange handle it
-        if (!initialSession) {
-          setLoading(false);
-        }
-      } catch (err: any) {
-        console.error('💥 AuthProvider: Error getting initial session:', err);
-        setError(err.message);
-        setLoading(false);
-      }
-    };
-
     getInitialSession();
 
     return () => {
       console.log('🧹 AuthProvider: Cleaning up auth listener');
+      isMounted = false;
       subscription.unsubscribe();
     };
   }, []);
@@ -190,6 +217,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     signOut,
     clearError
   };
+
+  console.log('🔄 AuthProvider: Current state:', {
+    hasUser: !!user,
+    hasSession: !!session,
+    loading,
+    error: error || 'none'
+  });
 
   return (
     <AuthContext.Provider value={value}>

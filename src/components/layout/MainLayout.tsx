@@ -16,8 +16,8 @@ export const MainLayout = () => {
   const isErosRoute = location.pathname.includes('/shorts');
   const isMobile = useIsMobile();
   
-  console.log("MainLayout - Current path:", location.pathname);
-  console.log("MainLayout - Auth state:", { 
+  console.log("🏗️ MainLayout - Current state:", { 
+    pathname: location.pathname,
     user: user ? "exists" : "null", 
     session: session ? "exists" : "null",
     loading,
@@ -26,13 +26,13 @@ export const MainLayout = () => {
   
   // Show loading screen while checking authentication
   if (loading) {
-    console.log("MainLayout - Showing loading screen (checking auth)");
+    console.log("🏗️ MainLayout - Showing loading screen (checking auth)");
     return <LoadingScreen />;
   }
   
   // Show error state if there's an authentication error
   if (error) {
-    console.log("MainLayout - Showing error state:", error);
+    console.log("🏗️ MainLayout - Showing error state:", error);
     return (
       <div className="min-h-screen bg-[#0D1117] flex items-center justify-center">
         <ErrorState 
@@ -46,11 +46,11 @@ export const MainLayout = () => {
   
   // Redirect to login if not authenticated
   if (!session || !user) {
-    console.log("MainLayout - No session/user, redirecting to login");
+    console.log("🏗️ MainLayout - No session/user, redirecting to /login");
     return <Navigate to="/login" state={{ from: location.pathname }} replace />;
   }
 
-  console.log("MainLayout - Rendering authenticated layout");
+  console.log("🏗️ MainLayout - Rendering authenticated layout");
 
   return (
     <div className="flex min-h-screen w-full bg-luxury-gradient-from overflow-x-hidden">
