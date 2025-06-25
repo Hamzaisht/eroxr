@@ -27,9 +27,9 @@ export const useHomePosts = () => {
     }
   }, [user?.id, cleanupOrphanedAssets]);
 
-  return useQuery({
-    queryKey: ['home-posts', user?.id],
-    queryFn: async () => {
+  return useQuery(
+    ['home-posts', user?.id],
+    async () => {
       console.log("🏠 Home - Fetching posts with optimized RLS...");
       
       const { data: postsData, error: postsError } = await supabase
@@ -128,11 +128,13 @@ export const useHomePosts = () => {
 
       return transformedData;
     },
-    enabled: true, // Always enabled to show public posts
-    staleTime: 30000, // 30 seconds
-    gcTime: 5 * 60 * 1000, // 5 minutes (renamed from cacheTime)
-    refetchOnWindowFocus: false,
-    retry: 3,
-    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
-  });
+    {
+      enabled: true, // Always enabled to show public posts
+      staleTime: 30000, // 30 seconds
+      cacheTime: 5 * 60 * 1000, // 5 minutes
+      refetchOnWindowFocus: false,
+      retry: 3,
+      retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+    }
+  );
 };
