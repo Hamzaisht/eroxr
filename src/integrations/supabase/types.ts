@@ -2330,6 +2330,17 @@ export type Database = {
         Args: { row_id: string; counter_name: string; table_name?: string }
         Returns: undefined
       }
+      update_profile_service: {
+        Args: {
+          p_user_id: string
+          p_avatar_url?: string
+          p_banner_url?: string
+          p_username?: string
+          p_bio?: string
+          p_location?: string
+        }
+        Returns: Json
+      }
       update_trending_score: {
         Args: { p_post_id: string }
         Returns: undefined

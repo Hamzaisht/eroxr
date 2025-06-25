@@ -8,40 +8,34 @@ export interface SafeProfileUpdateParams {
   location?: string;
   avatar_url?: string;
   banner_url?: string;
-  interests?: string[];
-  profile_visibility?: boolean;
-  status?: string;
 }
 
 export const safeProfileUpdate = async (params: SafeProfileUpdateParams) => {
   const { userId, ...updates } = params;
   
   try {
-    console.log('🔒 SafeProfileOperations: Using RLS-bypass profile update for:', userId);
+    console.log('🔒 SafeProfileOperations: Using optimized profile update service for:', userId);
     
-    // Use the new RLS-bypass function - no fallbacks, crystal clear execution
-    const { data: result, error: rpcError } = await supabase.rpc('rls_bypass_profile_update', {
+    // Use the new optimized profile service function with SECURITY DEFINER
+    const { data: result, error: rpcError } = await supabase.rpc('update_profile_service', {
       p_user_id: userId,
       p_username: updates.username || null,
       p_bio: updates.bio || null,
       p_location: updates.location || null,
       p_avatar_url: updates.avatar_url || null,
       p_banner_url: updates.banner_url || null,
-      p_interests: updates.interests || null,
-      p_profile_visibility: updates.profile_visibility || null,
-      p_status: updates.status || null,
     });
 
     if (!rpcError && result?.success) {
-      console.log('✅ SafeProfileOperations: Profile updated successfully via RLS-bypass');
-      return { success: true, data: result.data, method: 'rls_bypass' };
+      console.log('✅ SafeProfileOperations: Profile updated successfully via optimized service');
+      return { success: true, data: result.data, method: 'optimized_service' };
     }
 
-    console.error('❌ SafeProfileOperations: RLS-bypass failed:', rpcError || result?.error);
+    console.error('❌ SafeProfileOperations: Optimized service failed:', rpcError || result?.error);
     return { 
       success: false, 
       error: rpcError?.message || result?.error || 'Profile update failed', 
-      method: 'rls_bypass_failed' 
+      method: 'service_failed' 
     };
     
   } catch (error: any) {
@@ -52,23 +46,25 @@ export const safeProfileUpdate = async (params: SafeProfileUpdateParams) => {
 
 export const safeProfileFetch = async (userId: string) => {
   try {
-    console.log('🔍 SafeProfileOperations: Fetching profile via RLS-bypass for:', userId);
+    console.log('🔍 SafeProfileOperations: Fetching profile with optimized RLS for:', userId);
     
-    // Use the new RLS-bypass fetch function
-    const { data: result, error: rpcError } = await supabase.rpc('rls_bypass_profile_fetch', {
-      p_user_id: userId
-    });
+    // Use direct query - optimized RLS policies handle security automatically
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', userId)
+      .single();
 
-    if (!rpcError && result?.success) {
-      console.log('✅ SafeProfileOperations: Profile fetched successfully via RLS-bypass');
-      return { success: true, data: result.data, method: 'rls_bypass' };
+    if (!error && data) {
+      console.log('✅ SafeProfileOperations: Profile fetched successfully via optimized RLS');
+      return { success: true, data, method: 'optimized_rls' };
     }
 
-    console.error('❌ SafeProfileOperations: RLS-bypass fetch failed:', rpcError || result?.error);
+    console.error('❌ SafeProfileOperations: Profile fetch failed:', error);
     return { 
       success: false, 
-      error: rpcError?.message || result?.error || 'Profile not found', 
-      method: 'rls_bypass_failed' 
+      error: error?.message || 'Profile not found', 
+      method: 'fetch_failed' 
     };
     
   } catch (error: any) {

@@ -1,7 +1,6 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
 
 export interface SimpleProfile {
   id: string;
@@ -22,9 +21,9 @@ export const useSimpleProfile = (profileId: string) => {
   const fetchProfile = async () => {
     try {
       setLoading(true);
-      console.log('🎯 SimpleProfile: Fetching profile for:', profileId);
+      console.log('🎯 SimpleProfile: Fetching profile with optimized RLS for:', profileId);
       
-      // Use direct Supabase query instead of RLS bypass function
+      // Use optimized RLS policies - they handle security automatically
       const { data, error: fetchError } = await supabase
         .from('profiles')
         .select('id, username, bio, location, avatar_url, banner_url, interests, created_at')
@@ -32,13 +31,13 @@ export const useSimpleProfile = (profileId: string) => {
         .single();
 
       if (fetchError) {
-        console.error('❌ SimpleProfile: Fetch failed:', fetchError);
+        console.error('❌ SimpleProfile: Fetch failed with optimized RLS:', fetchError);
         setError(fetchError.message || 'Profile not found');
         setProfile(null);
         return;
       }
 
-      console.log('✅ SimpleProfile: Profile fetched successfully');
+      console.log('✅ SimpleProfile: Profile fetched successfully via optimized RLS');
       setProfile(data as SimpleProfile);
       setError(null);
     } catch (err: any) {
@@ -52,30 +51,24 @@ export const useSimpleProfile = (profileId: string) => {
 
   const updateProfile = async (updates: Partial<SimpleProfile>) => {
     try {
-      console.log('🎯 SimpleProfile: Updating profile with:', updates);
+      console.log('🎯 SimpleProfile: Updating profile via optimized service with:', updates);
       
-      // Use direct Supabase query instead of RLS bypass function
-      const { data, error: updateError } = await supabase
-        .from('profiles')
-        .update({
-          username: updates.username,
-          bio: updates.bio,
-          location: updates.location,
-          avatar_url: updates.avatar_url,
-          banner_url: updates.banner_url,
-          interests: updates.interests,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', profileId)
-        .select()
-        .single();
+      // Use the new optimized profile update service
+      const { data: result, error: rpcError } = await supabase.rpc('update_profile_service', {
+        p_user_id: profileId,
+        p_username: updates.username || null,
+        p_bio: updates.bio || null,
+        p_location: updates.location || null,
+        p_avatar_url: updates.avatar_url || null,
+        p_banner_url: updates.banner_url || null,
+      });
 
-      if (updateError) {
-        console.error('❌ SimpleProfile: Update failed:', updateError);
-        throw new Error(updateError.message || 'Update failed');
+      if (rpcError || !result?.success) {
+        console.error('❌ SimpleProfile: Update failed via optimized service:', rpcError || result?.error);
+        throw new Error(rpcError?.message || result?.error || 'Update failed');
       }
 
-      console.log('✅ SimpleProfile: Profile updated successfully');
+      console.log('✅ SimpleProfile: Profile updated successfully via optimized service');
       setProfile(prev => prev ? { ...prev, ...updates } : null);
       return true;
     } catch (err: any) {
