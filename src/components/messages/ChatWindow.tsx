@@ -4,11 +4,15 @@ import { useSession } from '@supabase/auth-helpers-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Send, Phone, Video, MoreVertical, Smile, Paperclip } from 'lucide-react';
+import { Send, Phone, Video, MoreVertical, Smile, Paperclip, Mic, Calendar } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useToast } from '@/hooks/use-toast';
+import { MediaUploadDialog } from './MediaUploadDialog';
+import { VoiceRecorderDialog } from './VoiceRecorderDialog';
+import { BookingDialog } from './BookingDialog';
+import { MessageActions } from './MessageActions';
 
 export interface ChatWindowProps {
   userId: string;
@@ -34,6 +38,14 @@ export const ChatWindow = ({ userId }: ChatWindowProps) => {
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
+  const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
+  const [editingContent, setEditingContent] = useState('');
+  
+  // Dialog states
+  const [showMediaDialog, setShowMediaDialog] = useState(false);
+  const [showVoiceDialog, setShowVoiceDialog] = useState(false);
+  const [showBookingDialog, setShowBookingDialog] = useState(false);
+  
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const session = useSession();
   const { toast } = useToast();
@@ -158,10 +170,136 @@ export const ChatWindow = ({ userId }: ChatWindowProps) => {
     }
   };
 
+  // New handlers for WhatsApp-like features
+  const handleSendMedia = async (mediaUrl: string, mediaType: string, originalName?: string) => {
+    if (!session?.user?.id) return;
+
+    setSending(true);
+    try {
+      const { error } = await supabase
+        .from('direct_messages')
+        .insert({
+          content: originalName || `${mediaType} file`,
+          sender_id: session.user.id,
+          recipient_id: userId,
+          message_type: mediaType,
+          original_content: mediaUrl
+        });
+
+      if (error) throw error;
+    } catch (error) {
+      console.error('Error sending media:', error);
+      toast({
+        title: "Failed to send media",
+        description: "Please try again",
+        variant: "destructive"
+      });
+    } finally {
+      setSending(false);
+    }
+  };
+
+  const handleSendVoice = async (audioUrl: string) => {
+    if (!session?.user?.id) return;
+
+    setSending(true);
+    try {
+      const { error } = await supabase
+        .from('direct_messages')
+        .insert({
+          content: 'Voice message',
+          sender_id: session.user.id,
+          recipient_id: userId,
+          message_type: 'audio',
+          original_content: audioUrl
+        });
+
+      if (error) throw error;
+    } catch (error) {
+      console.error('Error sending voice:', error);
+      toast({
+        title: "Failed to send voice message",
+        description: "Please try again",
+        variant: "destructive"
+      });
+    } finally {
+      setSending(false);
+    }
+  };
+
+  const handleEditMessage = async (messageId: string, newContent: string) => {
+    try {
+      const { error } = await supabase
+        .from('direct_messages')
+        .update({ content: newContent })
+        .eq('id', messageId)
+        .eq('sender_id', session?.user?.id);
+
+      if (error) throw error;
+
+      setMessages(prev => prev.map(msg => 
+        msg.id === messageId ? { ...msg, content: newContent } : msg
+      ));
+      setEditingMessageId(null);
+      setEditingContent('');
+      
+      toast({
+        title: "Message updated",
+        description: "Your message has been edited",
+      });
+    } catch (error) {
+      console.error('Error editing message:', error);
+      toast({
+        title: "Failed to edit message",
+        description: "Please try again",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleDeleteMessage = async (messageId: string) => {
+    try {
+      const { error } = await supabase
+        .from('direct_messages')
+        .delete()
+        .eq('id', messageId)
+        .eq('sender_id', session?.user?.id);
+
+      if (error) throw error;
+
+      setMessages(prev => prev.filter(msg => msg.id !== messageId));
+      
+      toast({
+        title: "Message deleted",
+        description: "Your message has been removed",
+      });
+    } catch (error) {
+      console.error('Error deleting message:', error);
+      toast({
+        title: "Failed to delete message",
+        description: "Please try again",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const startEditingMessage = (messageId: string, content: string) => {
+    setEditingMessageId(messageId);
+    setEditingContent(content);
+  };
+
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-      sendMessage();
+      if (editingMessageId) {
+        handleEditMessage(editingMessageId, editingContent);
+      } else {
+        sendMessage();
+      }
+    }
+    if (e.key === 'Escape') {
+      setEditingMessageId(null);
+      setEditingContent('');
     }
   };
 
@@ -213,6 +351,13 @@ export const ChatWindow = ({ userId }: ChatWindowProps) => {
         </div>
         
         <div className="flex items-center gap-2">
+          <button 
+            onClick={() => setShowBookingDialog(true)}
+            className="group relative overflow-hidden p-3 rounded-xl bg-white/[0.08] hover:bg-white/[0.15] border border-white/10 transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-green-500/20"
+          >
+            <div className="absolute inset-0 bg-gradient-to-r from-green-500/20 to-teal-500/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+            <Calendar className="h-4 w-4 text-white/70 group-hover:text-white relative z-10" />
+          </button>
           <button className="group relative overflow-hidden p-3 rounded-xl bg-white/[0.08] hover:bg-white/[0.15] border border-white/10 transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-primary/20">
             <div className="absolute inset-0 bg-gradient-to-r from-primary/20 to-purple-500/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
             <Phone className="h-4 w-4 text-white/70 group-hover:text-white relative z-10" />
@@ -258,6 +403,19 @@ export const ChatWindow = ({ userId }: ChatWindowProps) => {
                       isOwn ? 'ml-auto' : 'mr-auto'
                     }`}
                   >
+                    {/* Message Actions */}
+                    {isOwn && (
+                      <div className="absolute -top-2 -right-2 z-20">
+                        <MessageActions 
+                          messageId={message.id}
+                          messageContent={message.content}
+                          isOwnMessage={isOwn}
+                          onEdit={startEditingMessage}
+                          onDelete={handleDeleteMessage}
+                        />
+                      </div>
+                    )}
+
                     {/* Message bubble */}
                     <div
                       className={`relative overflow-hidden px-5 py-3 ${
@@ -266,15 +424,20 @@ export const ChatWindow = ({ userId }: ChatWindowProps) => {
                           : 'bg-white/[0.08] backdrop-blur-xl text-white border border-white/20 shadow-lg shadow-white/10 rounded-3xl rounded-bl-lg'
                       }`}
                     >
-                      {/* Neural transmission effect for own messages */}
-                      {isOwn && (
-                        <div className="absolute inset-0 bg-gradient-to-r from-white/20 via-transparent to-white/20 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000 ease-out" />
+                      {/* Message content */}
+                      {editingMessageId === message.id ? (
+                        <input
+                          value={editingContent}
+                          onChange={(e) => setEditingContent(e.target.value)}
+                          onKeyPress={handleKeyPress}
+                          className="w-full bg-transparent border-none outline-none text-white"
+                          autoFocus
+                        />
+                      ) : (
+                        <p className="text-sm leading-relaxed relative z-10 font-medium">{message.content}</p>
                       )}
                       
-                      {/* Message content */}
-                      <p className="text-sm leading-relaxed relative z-10 font-medium">{message.content}</p>
-                      
-                      {/* Timestamp with enhanced styling */}
+                      {/* Timestamp */}
                       <div className={`flex items-center gap-2 mt-2 ${isOwn ? 'justify-end' : 'justify-start'}`}>
                         <p className={`text-xs font-mono relative z-10 ${
                           isOwn ? 'text-white/80' : 'text-white/60'
@@ -292,11 +455,6 @@ export const ChatWindow = ({ userId }: ChatWindowProps) => {
                         )}
                       </div>
                     </div>
-                    
-                    {/* Quantum transmission indicator */}
-                    {isOwn && (
-                      <div className="absolute -right-2 top-1/2 -translate-y-1/2 w-2 h-2 bg-green-400 rounded-full animate-pulse shadow-lg shadow-green-400/50" />
-                    )}
                   </div>
                 </motion.div>
               );
@@ -317,9 +475,21 @@ export const ChatWindow = ({ userId }: ChatWindowProps) => {
         
         <div className="flex items-end gap-4">
           {/* Attachment button */}
-          <button className="group relative overflow-hidden p-3 rounded-xl bg-white/[0.08] hover:bg-white/[0.15] border border-white/10 transition-all duration-300 hover:scale-105 mb-2">
+          <button 
+            onClick={() => setShowMediaDialog(true)}
+            className="group relative overflow-hidden p-3 rounded-xl bg-white/[0.08] hover:bg-white/[0.15] border border-white/10 transition-all duration-300 hover:scale-105 mb-2"
+          >
             <div className="absolute inset-0 bg-gradient-to-r from-primary/20 to-purple-500/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
             <Paperclip className="h-4 w-4 text-white/70 group-hover:text-white relative z-10" />
+          </button>
+
+          {/* Voice button */}
+          <button 
+            onClick={() => setShowVoiceDialog(true)}
+            className="group relative overflow-hidden p-3 rounded-xl bg-white/[0.08] hover:bg-white/[0.15] border border-white/10 transition-all duration-300 hover:scale-105 mb-2"
+          >
+            <div className="absolute inset-0 bg-gradient-to-r from-green-500/20 to-teal-500/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+            <Mic className="h-4 w-4 text-white/70 group-hover:text-white relative z-10" />
           </button>
           
           {/* Message input container */}
@@ -393,6 +563,26 @@ export const ChatWindow = ({ userId }: ChatWindowProps) => {
           <div className="w-1 h-1 bg-primary/60 rounded-full animate-pulse" style={{ animationDelay: '1s' }} />
         </div>
       </motion.div>
+
+      {/* Dialogs */}
+      <MediaUploadDialog 
+        open={showMediaDialog}
+        onOpenChange={setShowMediaDialog}
+        onSendMedia={handleSendMedia}
+      />
+      
+      <VoiceRecorderDialog 
+        open={showVoiceDialog}
+        onOpenChange={setShowVoiceDialog}
+        onSendVoice={handleSendVoice}
+      />
+      
+      <BookingDialog 
+        open={showBookingDialog}
+        onOpenChange={setShowBookingDialog}
+        recipientId={userId}
+        recipientName={userProfile?.username || 'User'}
+      />
     </div>
   );
 };
