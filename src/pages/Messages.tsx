@@ -34,19 +34,19 @@ const Messages = () => {
         </div>
       </div>
 
-      <div className="relative z-10 container mx-auto px-6 py-12 max-w-7xl">
+      <div className="relative z-10 container mx-auto px-6 pt-6 pb-12 max-w-7xl">
         <motion.div 
-          className="mb-12 text-center"
+          className="mb-8 text-center"
           initial={{ opacity: 0, y: -30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, ease: "easeOut" }}
         >
-          <h1 className="text-6xl font-bold gradient-text mb-4">Messages</h1>
-          <p className="text-xl text-white/70 max-w-lg mx-auto">Connect and chat with your friends and community</p>
+          <h1 className="text-5xl font-bold gradient-text mb-4">Messages</h1>
+          <p className="text-lg text-white/70 max-w-lg mx-auto">Connect and chat with your friends and community</p>
         </motion.div>
         
         <motion.div 
-          className="grid lg:grid-cols-3 gap-8 h-[calc(100vh-300px)] min-h-[600px]"
+          className="grid lg:grid-cols-3 gap-8 h-[calc(100vh-200px)] min-h-[600px]"
           initial={{ opacity: 0, y: 40 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.3 }}
