@@ -164,7 +164,7 @@ export const ProfileEditDialog = ({ isOpen, onClose, profileId }: ProfileEditDia
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-5xl max-h-[95vh] w-[95vw] overflow-hidden bg-black/95 border border-white/10 fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
+      <DialogContent className="max-w-6xl max-h-[90vh] w-[90vw] sm:w-[85vw] lg:w-[80vw] overflow-hidden bg-black/95 border border-white/10">
         <DialogHeader className="border-b border-white/10 pb-4">
           <DialogTitle className="flex items-center gap-3 text-2xl font-light text-white">
             <div className="w-8 h-8 bg-primary/20 rounded-full flex items-center justify-center">
