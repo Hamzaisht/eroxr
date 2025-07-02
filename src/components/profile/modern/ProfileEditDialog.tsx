@@ -164,46 +164,64 @@ export const ProfileEditDialog = ({ isOpen, onClose, profileId }: ProfileEditDia
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[70vh] w-[75vw] overflow-y-auto bg-black/95 border border-white/10">
-        <DialogHeader className="border-b border-white/10 pb-4">
+      <DialogContent className="max-w-2xl max-h-[70vh] w-[75vw] overflow-y-auto bg-black/95 backdrop-blur-2xl border-0 shadow-2xl shadow-primary/20">
+        <DialogHeader className="border-0 pb-6">
           <DialogTitle className="flex items-center gap-3 text-2xl font-light text-white">
-            <div className="w-8 h-8 bg-primary/20 rounded-full flex items-center justify-center">
-              <User className="w-4 h-4 text-primary" />
-            </div>
-            Edit Profile
+            <motion.div 
+              className="w-8 h-8 bg-gradient-to-r from-primary to-purple-500 rounded-full flex items-center justify-center"
+              whileHover={{ scale: 1.1, rotate: 5 }}
+              transition={{ type: "spring", stiffness: 400 }}
+            >
+              <User className="w-4 h-4 text-white" />
+            </motion.div>
+            <motion.span
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.1 }}
+            >
+              Edit Profile
+            </motion.span>
           </DialogTitle>
         </DialogHeader>
 
         <div className="flex-1 overflow-hidden">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col">
-            <TabsList className="grid grid-cols-4 w-fit mx-auto bg-white/5 backdrop-blur-xl rounded-full p-2 mb-6">
+            <TabsList className="grid grid-cols-4 w-full mx-auto bg-white/5 backdrop-blur-xl rounded-2xl p-1 mb-6 border-0">
               <TabsTrigger 
                 value="basic" 
-                className="px-4 py-2 rounded-full transition-all text-sm data-[state=active]:bg-primary data-[state=active]:text-white text-white/60 hover:text-white"
+                className="px-4 py-3 rounded-xl transition-all duration-300 text-sm data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-purple-500 data-[state=active]:text-white text-white/60 hover:text-white hover:bg-white/10 hover:scale-105"
               >
-                <User className="w-4 h-4 mr-2" />
-                Basic Info
+                <motion.div className="flex items-center gap-2" whileHover={{ scale: 1.05 }}>
+                  <User className="w-4 h-4" />
+                  Basic Info
+                </motion.div>
               </TabsTrigger>
               <TabsTrigger 
                 value="media" 
-                className="px-4 py-2 rounded-full transition-all text-sm data-[state=active]:bg-primary data-[state=active]:text-white text-white/60 hover:text-white"
+                className="px-4 py-3 rounded-xl transition-all duration-300 text-sm data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-purple-500 data-[state=active]:text-white text-white/60 hover:text-white hover:bg-white/10 hover:scale-105"
               >
-                <Camera className="w-4 h-4 mr-2" />
-                Photos & Media
+                <motion.div className="flex items-center gap-2" whileHover={{ scale: 1.05 }}>
+                  <Camera className="w-4 h-4" />
+                  Photos & Media
+                </motion.div>
               </TabsTrigger>
               <TabsTrigger 
                 value="verification" 
-                className="px-4 py-2 rounded-full transition-all text-sm data-[state=active]:bg-primary data-[state=active]:text-white text-white/60 hover:text-white"
+                className="px-4 py-3 rounded-xl transition-all duration-300 text-sm data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-purple-500 data-[state=active]:text-white text-white/60 hover:text-white hover:bg-white/10 hover:scale-105"
               >
-                <Shield className="w-4 h-4 mr-2" />
-                Creator Verification
+                <motion.div className="flex items-center gap-2" whileHover={{ scale: 1.05 }}>
+                  <Shield className="w-4 h-4" />
+                  Creator Verification
+                </motion.div>
               </TabsTrigger>
               <TabsTrigger 
                 value="privacy" 
-                className="px-4 py-2 rounded-full transition-all text-sm data-[state=active]:bg-primary data-[state=active]:text-white text-white/60 hover:text-white"
+                className="px-4 py-3 rounded-xl transition-all duration-300 text-sm data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-purple-500 data-[state=active]:text-white text-white/60 hover:text-white hover:bg-white/10 hover:scale-105"
               >
-                <Settings className="w-4 h-4 mr-2" />
-                Privacy & Settings
+                <motion.div className="flex items-center gap-2" whileHover={{ scale: 1.05 }}>
+                  <Settings className="w-4 h-4" />
+                  Privacy & Settings
+                </motion.div>
               </TabsTrigger>
             </TabsList>
 
@@ -221,50 +239,102 @@ export const ProfileEditDialog = ({ isOpen, onClose, profileId }: ProfileEditDia
                   <TabsContent value="basic" className="space-y-8 mt-0">
                     <form onSubmit={handleSubmit} className="space-y-8">
                       {/* Profile Preview */}
-                      <div className="bg-white/5 backdrop-blur-xl rounded-2xl p-6 border border-white/10">
+                       <motion.div 
+                        className="bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-xl rounded-3xl p-6 border-0 shadow-lg shadow-primary/10"
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ delay: 0.2 }}
+                      >
                         <h3 className="text-lg font-medium text-white mb-4 flex items-center gap-2">
-                          <Eye className="w-5 h-5 text-primary" />
+                          <motion.div whileHover={{ rotate: 10 }}>
+                            <Eye className="w-5 h-5 text-primary" />
+                          </motion.div>
                           Live Preview
                         </h3>
                         <div className="flex items-center gap-6">
-                          <div className="relative">
-                            <Avatar className="w-24 h-24 border-2 border-primary/30">
+                          <motion.div 
+                            className="relative"
+                            whileHover={{ scale: 1.05 }}
+                            transition={{ type: "spring", stiffness: 300 }}
+                          >
+                            <Avatar className="w-24 h-24 border-2 border-primary/50 shadow-lg shadow-primary/20">
                               <AvatarImage src={profile.avatar_url || undefined} />
-                              <AvatarFallback className="bg-primary/10 text-primary text-xl">
+                              <AvatarFallback className="bg-gradient-to-br from-primary/20 to-purple-500/20 text-primary text-xl">
                                 <User className="w-8 h-8" />
                               </AvatarFallback>
                             </Avatar>
-                            <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-primary rounded-full flex items-center justify-center">
+                            <motion.div 
+                              className="absolute -bottom-1 -right-1 w-6 h-6 bg-gradient-to-r from-primary to-purple-500 rounded-full flex items-center justify-center shadow-lg"
+                              whileHover={{ scale: 1.2, rotate: 360 }}
+                              transition={{ duration: 0.5 }}
+                            >
                               <Crown className="w-3 h-3 text-white" />
-                            </div>
-                          </div>
+                            </motion.div>
+                          </motion.div>
                           <div className="flex-1">
-                            <h3 className="text-2xl font-light text-white mb-1">
+                            <motion.h3 
+                              className="text-2xl font-light text-white mb-1"
+                              initial={{ opacity: 0, x: -20 }}
+                              animate={{ opacity: 1, x: 0 }}
+                              transition={{ delay: 0.3 }}
+                            >
                               {formData.username || 'Your Username'}
-                            </h3>
-                            <p className="text-white/60 mb-2">
+                            </motion.h3>
+                            <motion.p 
+                              className="text-white/60 mb-2"
+                              initial={{ opacity: 0, x: -20 }}
+                              animate={{ opacity: 1, x: 0 }}
+                              transition={{ delay: 0.4 }}
+                            >
                               {formData.bio || 'Your bio will appear here...'}
-                            </p>
+                            </motion.p>
                             {formData.location && (
-                              <p className="text-white/40 text-sm">📍 {formData.location}</p>
+                              <motion.p 
+                                className="text-white/40 text-sm"
+                                initial={{ opacity: 0, x: -20 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                transition={{ delay: 0.5 }}
+                              >
+                                📍 {formData.location}
+                              </motion.p>
                             )}
                             {formData.interests.length > 0 && (
-                              <div className="flex flex-wrap gap-2 mt-3">
-                                {formData.interests.slice(0, 3).map((interest) => (
-                                  <Badge key={interest} variant="secondary" className="text-xs">
-                                    {interest}
-                                  </Badge>
+                              <motion.div 
+                                className="flex flex-wrap gap-2 mt-3"
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: 0.6 }}
+                              >
+                                {formData.interests.slice(0, 3).map((interest, index) => (
+                                  <motion.div
+                                    key={interest}
+                                    initial={{ opacity: 0, scale: 0.8 }}
+                                    animate={{ opacity: 1, scale: 1 }}
+                                    transition={{ delay: 0.7 + index * 0.1 }}
+                                    whileHover={{ scale: 1.05 }}
+                                  >
+                                    <Badge variant="secondary" className="text-xs bg-primary/20 border-primary/30 hover:bg-primary/30 transition-all duration-200">
+                                      {interest}
+                                    </Badge>
+                                  </motion.div>
                                 ))}
                                 {formData.interests.length > 3 && (
-                                  <Badge variant="outline" className="text-xs">
-                                    +{formData.interests.length - 3} more
-                                  </Badge>
+                                  <motion.div
+                                    initial={{ opacity: 0, scale: 0.8 }}
+                                    animate={{ opacity: 1, scale: 1 }}
+                                    transition={{ delay: 1 }}
+                                    whileHover={{ scale: 1.05 }}
+                                  >
+                                    <Badge variant="outline" className="text-xs border-white/20 hover:border-white/40 transition-all duration-200">
+                                      +{formData.interests.length - 3} more
+                                    </Badge>
+                                  </motion.div>
                                 )}
-                              </div>
+                              </motion.div>
                             )}
                           </div>
                         </div>
-                      </div>
+                      </motion.div>
 
                       {/* Basic Information */}
                       <div className="grid md:grid-cols-2 gap-6">
