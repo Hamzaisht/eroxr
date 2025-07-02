@@ -7,34 +7,34 @@
 
 @layer base {
   :root {
-    --background: 222 84% 5%;
-    --foreground: 210 40% 98%;
-    --card: 222 84% 5%;
-    --card-foreground: 210 40% 98%;
-    --popover: 222 84% 5%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 262 83% 58%;
-    --primary-foreground: 210 40% 98%;
-    --secondary: 217 33% 17%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 217 33% 17%;
-    --muted-foreground: 215 20% 65%;
-    --accent: 217 33% 17%;
-    --accent-foreground: 210 40% 98%;
+    --background: 0 0% 3%;
+    --foreground: 0 0% 98%;
+    --card: 0 0% 5%;
+    --card-foreground: 0 0% 98%;
+    --popover: 0 0% 3%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 271 100% 71%;
+    --primary-foreground: 0 0% 98%;
+    --secondary: 0 0% 8%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 0 0% 8%;
+    --muted-foreground: 0 0% 65%;
+    --accent: 0 0% 8%;
+    --accent-foreground: 0 0% 98%;
     --destructive: 0 84% 60%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 217 33% 17%;
-    --input: 217 33% 17%;
-    --ring: 262 83% 58%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 0 0% 12%;
+    --input: 0 0% 8%;
+    --ring: 271 100% 71%;
     
-    /* Luxury Eros-inspired properties */
-    --gradient-quantum: linear-gradient(135deg, hsl(41, 100%, 76%) 0%, hsl(38, 100%, 66%) 50%, hsl(217, 33%, 17%) 100%);
-    --gradient-neural: linear-gradient(45deg, hsl(222, 84%, 3%) 0%, hsl(217, 33%, 8%) 100%);
-    --gradient-glass: linear-gradient(135deg, rgba(212, 175, 55, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%);
-    --gradient-aurora: linear-gradient(90deg, hsl(41, 100%, 76%), hsl(38, 100%, 66%), hsl(217, 33%, 17%));
-    --glow-primary: 0 0 40px hsl(41, 100%, 76%, 0.3);
-    --glow-secondary: 0 0 25px hsl(38, 100%, 66%, 0.2);
-    --glow-accent: 0 0 30px hsl(217, 33%, 25%, 0.4);
+    /* Futuristic Neon properties */
+    --gradient-quantum: linear-gradient(135deg, hsl(271, 100%, 71%) 0%, hsl(0, 0%, 8%) 50%, hsl(0, 0%, 3%) 100%);
+    --gradient-neural: linear-gradient(45deg, hsl(0, 0%, 0%) 0%, hsl(0, 0%, 3%) 100%);
+    --gradient-glass: linear-gradient(135deg, rgba(220, 38, 238, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%);
+    --gradient-aurora: linear-gradient(90deg, hsl(271, 100%, 71%), hsl(280, 100%, 70%), hsl(0, 0%, 8%));
+    --glow-primary: 0 0 40px hsl(271, 100%, 71%, 0.4);
+    --glow-secondary: 0 0 25px hsl(280, 100%, 70%, 0.3);
+    --glow-accent: 0 0 30px hsl(0, 0%, 20%, 0.5);
     --blur-glass: blur(20px);
     --blur-heavy: blur(40px);
   }
@@ -44,7 +44,7 @@
   }
   body {
     @apply bg-background text-foreground;
-    background: radial-gradient(ellipse at center, hsl(222, 84%, 5%) 0%, hsl(217, 33%, 10%) 100%);
+    background: radial-gradient(ellipse at center, hsl(0, 0%, 0%) 0%, hsl(0, 0%, 3%) 100%);
   }
 }
 
@@ -399,7 +399,7 @@ body.story-viewer-open {
   left: -50%;
   width: 200%;
   height: 200%;
-  background: conic-gradient(from 0deg, transparent, hsl(41, 100%, 76%, 0.05), transparent 30%);
+  background: conic-gradient(from 0deg, transparent, hsl(271, 100%, 71%, 0.08), transparent 30%);
   animation: quantum-rotate 20s linear infinite;
 }
 
@@ -411,9 +411,9 @@ body.story-viewer-open {
   position: absolute;
   inset: 0;
   background-image: 
-    radial-gradient(circle at 20% 20%, hsl(41, 100%, 76%, 0.04) 0%, transparent 50%),
-    radial-gradient(circle at 80% 80%, hsl(38, 100%, 66%, 0.03) 0%, transparent 50%),
-    radial-gradient(circle at 40% 60%, hsl(217, 33%, 25%, 0.05) 0%, transparent 50%);
+    radial-gradient(circle at 20% 20%, hsl(271, 100%, 71%, 0.03) 0%, transparent 50%),
+    radial-gradient(circle at 80% 80%, hsl(280, 100%, 70%, 0.02) 0%, transparent 50%),
+    radial-gradient(circle at 40% 60%, hsl(0, 0%, 8%, 0.4) 0%, transparent 50%);
   animation: neural-pulse 15s ease-in-out infinite alternate;
 }
 
