@@ -12,9 +12,10 @@ import { Search, MessageCircle } from "lucide-react";
 interface ConversationsListProps {
   onSelectUser: (userId: string) => void;
   onNewMessage: () => void;
+  selectedUserId?: string | null;
 }
 
-const ConversationsList = ({ onSelectUser, onNewMessage }: ConversationsListProps) => {
+const ConversationsList = ({ onSelectUser, onNewMessage, selectedUserId }: ConversationsListProps) => {
   const [searchTerm, setSearchTerm] = useState("");
   const session = useSession();
 
@@ -77,68 +78,87 @@ const ConversationsList = ({ onSelectUser, onNewMessage }: ConversationsListProp
   ) || [];
 
   return (
-    <Card className="h-full bg-luxury-darker border-luxury-neutral/10">
-      <CardHeader>
+    <Card className="h-full bg-gradient-to-br from-white/5 to-white/[0.02] backdrop-blur-xl border-white/10">
+      <CardHeader className="border-b border-white/10">
         <CardTitle className="text-white flex items-center justify-between">
-          <span>Messages</span>
+          <span className="text-lg font-light">Messages</span>
           <Button 
             onClick={onNewMessage}
             size="sm"
-            className="bg-luxury-primary hover:bg-luxury-primary/80"
+            className="bg-gradient-to-r from-primary to-purple-500 hover:from-primary/90 hover:to-purple-500/90 border-0 shadow-lg shadow-primary/20"
           >
             <MessageCircle className="h-4 w-4" />
           </Button>
         </CardTitle>
         <div className="relative">
-          <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+          <Search className="absolute left-3 top-3 h-4 w-4 text-white/60" />
           <Input
             placeholder="Search conversations..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10 bg-luxury-neutral/5 border-luxury-neutral/20"
+            className="pl-10 bg-white/5 border-white/10 text-white placeholder:text-white/40 focus:border-primary/50"
           />
         </div>
       </CardHeader>
       <CardContent className="p-0">
         <div className="space-y-1">
           {isLoading ? (
-            <div className="p-4 text-center text-gray-400">Loading...</div>
+            <div className="p-4 text-center text-white/60">
+              <div className="animate-spin h-6 w-6 border-2 border-primary border-t-transparent rounded-full mx-auto mb-2"></div>
+              Loading conversations...
+            </div>
           ) : filteredConversations.length === 0 ? (
-            <div className="p-4 text-center text-gray-400">
-              {searchTerm ? "No conversations found" : "No messages yet"}
+            <div className="p-6 text-center text-white/60">
+              <MessageCircle className="w-12 h-12 mx-auto mb-3 text-white/30" />
+              <p className="text-lg">{searchTerm ? "No conversations found" : "No messages yet"}</p>
+              <p className="text-sm text-white/40 mt-1">Start a conversation to see it here</p>
             </div>
           ) : (
-            filteredConversations.map((conversation) => (
-              <div
-                key={conversation.partnerId}
-                onClick={() => onSelectUser(conversation.partnerId)}
-                className="flex items-center gap-3 p-3 hover:bg-luxury-neutral/5 cursor-pointer transition-colors"
-              >
-                <UserAvatar
-                  userId={conversation.partnerId}
-                  username={conversation.partner?.username}
-                  size="md"
-                />
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between">
-                    <p className="text-white font-medium truncate">
-                      {conversation.partner?.username || 'Unknown'}
+            filteredConversations.map((conversation, index) => {
+              const isSelected = selectedUserId === conversation.partnerId;
+              return (
+                <div
+                  key={conversation.partnerId}
+                  onClick={() => onSelectUser(conversation.partnerId)}
+                  className={`flex items-center gap-3 p-3 cursor-pointer transition-all duration-200 hover:scale-[1.02] ${
+                    isSelected 
+                      ? 'bg-gradient-to-r from-primary/20 to-purple-500/20 border-l-2 border-primary' 
+                      : 'hover:bg-white/5'
+                  }`}
+                  style={{
+                    animationDelay: `${index * 50}ms`
+                  }}
+                >
+                  <UserAvatar
+                    userId={conversation.partnerId}
+                    username={conversation.partner?.username}
+                    size="md"
+                  />
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between">
+                      <p className={`font-medium truncate transition-colors ${
+                        isSelected ? 'text-white' : 'text-white/90'
+                      }`}>
+                        {conversation.partner?.username || 'Unknown'}
+                      </p>
+                      <span className="text-xs text-white/40">
+                        {new Date(conversation.lastMessageTime).toLocaleDateString()}
+                      </span>
+                    </div>
+                    <p className={`text-sm truncate transition-colors ${
+                      isSelected ? 'text-white/80' : 'text-white/60'
+                    }`}>
+                      {conversation.lastMessage || 'No messages'}
                     </p>
-                    <span className="text-xs text-gray-400">
-                      {new Date(conversation.lastMessageTime).toLocaleDateString()}
-                    </span>
                   </div>
-                  <p className="text-sm text-gray-400 truncate">
-                    {conversation.lastMessage || 'No messages'}
-                  </p>
+                  {conversation.unreadCount > 0 && (
+                    <div className="bg-gradient-to-r from-primary to-purple-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center shadow-lg">
+                      {conversation.unreadCount}
+                    </div>
+                  )}
                 </div>
-                {conversation.unreadCount > 0 && (
-                  <div className="bg-luxury-primary text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                    {conversation.unreadCount}
-                  </div>
-                )}
-              </div>
-            ))
+              );
+            })
           )}
         </div>
       </CardContent>
