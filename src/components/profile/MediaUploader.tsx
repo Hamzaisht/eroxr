@@ -36,14 +36,22 @@ export const MediaUploader = ({ type, userId, currentUrl, onUploadSuccess }: Med
         .getPublicUrl(fileName);
 
       if (data.publicUrl) {
-        // Update profile with new URL
-        const updateField = type === 'avatar' ? 'avatar_url' : 'banner_url';
-        const { error: updateError } = await supabase
-          .from('profiles')
-          .update({ [updateField]: data.publicUrl })
-          .eq('id', userId);
+        // Update profile using RLS-bypass function to prevent stack depth issues
+        const { data: result, error: rpcError } = await supabase.rpc('rls_bypass_profile_update', {
+          p_user_id: userId,
+          p_username: null,
+          p_bio: null,
+          p_location: null,
+          p_avatar_url: type === 'avatar' ? data.publicUrl : null,
+          p_banner_url: type === 'banner' ? data.publicUrl : null,
+          p_interests: null,
+          p_profile_visibility: null,
+          p_status: null,
+        });
 
-        if (updateError) throw updateError;
+        if (rpcError || !result?.success) {
+          throw new Error(`Profile update failed: ${rpcError?.message || result?.error || 'Unknown error'}`);
+        }
 
         onUploadSuccess(data.publicUrl);
         setPreviewUrl(null);
