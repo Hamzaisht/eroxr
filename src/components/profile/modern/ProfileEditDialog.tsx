@@ -176,31 +176,31 @@ export const ProfileEditDialog = ({ isOpen, onClose, profileId }: ProfileEditDia
 
         <div className="flex-1 overflow-hidden">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col">
-            <TabsList className="grid grid-cols-4 w-fit mx-auto bg-white/5 backdrop-blur-xl rounded-full p-2">
+            <TabsList className="grid grid-cols-4 w-fit mx-auto bg-white/5 backdrop-blur-xl rounded-full p-2 mb-6">
               <TabsTrigger 
                 value="basic" 
-                className="px-6 py-3 rounded-full transition-all text-sm data-[state=active]:bg-primary data-[state=active]:text-white text-white/60 hover:text-white"
+                className="px-4 py-2 rounded-full transition-all text-sm data-[state=active]:bg-primary data-[state=active]:text-white text-white/60 hover:text-white"
               >
                 <User className="w-4 h-4 mr-2" />
                 Basic Info
               </TabsTrigger>
               <TabsTrigger 
                 value="media" 
-                className="px-6 py-3 rounded-full transition-all text-sm data-[state=active]:bg-primary data-[state=active]:text-white text-white/60 hover:text-white"
+                className="px-4 py-2 rounded-full transition-all text-sm data-[state=active]:bg-primary data-[state=active]:text-white text-white/60 hover:text-white"
               >
                 <Camera className="w-4 h-4 mr-2" />
                 Photos & Media
               </TabsTrigger>
               <TabsTrigger 
                 value="verification" 
-                className="px-6 py-3 rounded-full transition-all text-sm data-[state=active]:bg-primary data-[state=active]:text-white text-white/60 hover:text-white"
+                className="px-4 py-2 rounded-full transition-all text-sm data-[state=active]:bg-primary data-[state=active]:text-white text-white/60 hover:text-white"
               >
                 <Shield className="w-4 h-4 mr-2" />
                 Creator Verification
               </TabsTrigger>
               <TabsTrigger 
-                value="advanced" 
-                className="px-6 py-3 rounded-full transition-all text-sm data-[state=active]:bg-primary data-[state=active]:text-white text-white/60 hover:text-white"
+                value="privacy" 
+                className="px-4 py-2 rounded-full transition-all text-sm data-[state=active]:bg-primary data-[state=active]:text-white text-white/60 hover:text-white"
               >
                 <Settings className="w-4 h-4 mr-2" />
                 Privacy & Settings
@@ -217,6 +217,7 @@ export const ProfileEditDialog = ({ isOpen, onClose, profileId }: ProfileEditDia
                   transition={{ duration: 0.3 }}
                   className="h-full"
                 >
+                  {/* Basic Info Tab */}
                   <TabsContent value="basic" className="space-y-8 mt-0">
                     <form onSubmit={handleSubmit} className="space-y-8">
                       {/* Profile Preview */}
@@ -480,6 +481,7 @@ export const ProfileEditDialog = ({ isOpen, onClose, profileId }: ProfileEditDia
                     </form>
                   </TabsContent>
 
+                  {/* Photos & Media Tab */}
                   <TabsContent value="media" className="space-y-8 mt-0">
                     <div className="grid lg:grid-cols-2 gap-8">
                       {/* Profile Picture */}
@@ -488,13 +490,23 @@ export const ProfileEditDialog = ({ isOpen, onClose, profileId }: ProfileEditDia
                           <User className="w-5 h-5 text-primary" />
                           Profile Picture
                         </h3>
-                        <SimpleMediaUploader
-                          type="avatar"
-                          userId={profileId}
-                          currentUrl={profile.avatar_url}
-                          onUploadSuccess={handleAvatarUpload}
-                        />
-                        <p className="text-white/40 text-sm mt-3">
+                        <div className="space-y-4">
+                          <div className="w-32 h-32 mx-auto">
+                            <Avatar className="w-full h-full border-2 border-primary/30">
+                              <AvatarImage src={profile.avatar_url || undefined} />
+                              <AvatarFallback className="bg-primary/10 text-primary text-4xl">
+                                <User className="w-12 h-12" />
+                              </AvatarFallback>
+                            </Avatar>
+                          </div>
+                          <SimpleMediaUploader
+                            type="avatar"
+                            userId={profileId}
+                            currentUrl={profile.avatar_url}
+                            onUploadSuccess={handleAvatarUpload}
+                          />
+                        </div>
+                        <p className="text-white/40 text-sm mt-3 text-center">
                           Choose a high-quality photo that represents you. Square images work best.
                         </p>
                       </div>
@@ -505,13 +517,37 @@ export const ProfileEditDialog = ({ isOpen, onClose, profileId }: ProfileEditDia
                           <Camera className="w-5 h-5 text-primary" />
                           Cover Banner
                         </h3>
-                        <SimpleMediaUploader
-                          type="banner"
-                          userId={profileId}
-                          currentUrl={profile.banner_url}
-                          onUploadSuccess={handleBannerUpload}
-                        />
-                        <p className="text-white/40 text-sm mt-3">
+                        <div className="space-y-4">
+                          <div className="w-full h-32 bg-white/5 rounded-xl border border-white/10 flex items-center justify-center relative overflow-hidden">
+                            {profile.banner_url ? (
+                              <img 
+                                src={profile.banner_url} 
+                                alt="Banner preview" 
+                                className="w-full h-full object-cover"
+                                onError={(e) => {
+                                  const target = e.target as HTMLImageElement;
+                                  target.style.display = 'none';
+                                  const parent = target.parentElement;
+                                  if (parent) {
+                                    parent.innerHTML = '<div class="text-center"><div class="w-8 h-8 text-white/40 mx-auto mb-2"><svg class="w-full h-full" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg></div><p class="text-white/60 text-sm">Upload a stunning banner</p></div>';
+                                  }
+                                }}
+                              />
+                            ) : (
+                              <div className="text-center">
+                                <Camera className="w-8 h-8 text-white/40 mx-auto mb-2" />
+                                <p className="text-white/60 text-sm">Upload a stunning banner</p>
+                              </div>
+                            )}
+                          </div>
+                          <SimpleMediaUploader
+                            type="banner"
+                            userId={profileId}
+                            currentUrl={profile.banner_url}
+                            onUploadSuccess={handleBannerUpload}
+                          />
+                        </div>
+                        <p className="text-white/40 text-sm mt-3 text-center">
                           Upload a stunning banner to make your profile stand out. 16:9 ratio recommended.
                         </p>
                       </div>
@@ -530,12 +566,13 @@ export const ProfileEditDialog = ({ isOpen, onClose, profileId }: ProfileEditDia
                           </div>
                         ))}
                       </div>
-                      <p className="text-white/40 text-sm mt-4">
+                      <p className="text-white/40 text-sm mt-4 text-center">
                         Coming soon: Upload photos and videos to showcase your content
                       </p>
                     </div>
                   </TabsContent>
 
+                  {/* Creator Verification Tab */}
                   <TabsContent value="verification" className="space-y-8 mt-0">
                     {/* Verification Status */}
                     <div className="bg-gradient-to-r from-primary/10 to-purple-500/10 backdrop-blur-xl rounded-2xl p-6 border border-primary/20">
@@ -609,78 +646,6 @@ export const ProfileEditDialog = ({ isOpen, onClose, profileId }: ProfileEditDia
                             </Button>
                           </div>
                         </div>
-
-                        <div>
-                          <label className="text-sm font-medium text-white/80 mb-2 block">
-                            Selfie Verification *
-                          </label>
-                          <div className="border-2 border-dashed border-white/20 rounded-xl p-8 text-center">
-                            <Camera className="w-12 h-12 text-white/40 mx-auto mb-4" />
-                            <p className="text-white/60 mb-2">Take a selfie holding your ID next to your face</p>
-                            <p className="text-xs text-white/40">Ensure your face and ID are clearly visible</p>
-                            <Button variant="outline" className="mt-4 border-white/10 text-white hover:bg-white/5">
-                              <Camera className="w-4 h-4 mr-2" />
-                              Take Selfie
-                            </Button>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Creator Application */}
-                    <div className="bg-white/5 backdrop-blur-xl rounded-2xl p-6 border border-white/10">
-                      <h3 className="text-lg font-medium text-white mb-6 flex items-center gap-2">
-                        <Star className="w-5 h-5 text-primary" />
-                        Creator Application
-                      </h3>
-                      <div className="space-y-6">
-                        <div>
-                          <label className="text-sm font-medium text-white/80 mb-2 block">
-                            Content Category *
-                          </label>
-                          <Select>
-                            <SelectTrigger className="bg-white/5 border-white/10 text-white">
-                              <SelectValue placeholder="Select your primary content type" />
-                            </SelectTrigger>
-                            <SelectContent className="bg-black border-white/10">
-                              <SelectItem value="fitness" className="text-white">Fitness & Wellness</SelectItem>
-                              <SelectItem value="lifestyle" className="text-white">Lifestyle & Fashion</SelectItem>
-                              <SelectItem value="art" className="text-white">Art & Photography</SelectItem>
-                              <SelectItem value="music" className="text-white">Music & Performance</SelectItem>
-                              <SelectItem value="gaming" className="text-white">Gaming & Entertainment</SelectItem>
-                              <SelectItem value="adult" className="text-white">Adult Content (18+)</SelectItem>
-                              <SelectItem value="other" className="text-white">Other</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-
-                        <div>
-                          <label className="text-sm font-medium text-white/80 mb-2 block">
-                            Content Description *
-                          </label>
-                          <Textarea
-                            placeholder="Describe the type of content you plan to create and share..."
-                            rows={4}
-                            className="bg-white/5 border-white/10 text-white resize-none"
-                          />
-                        </div>
-
-                        <div>
-                          <label className="text-sm font-medium text-white/80 mb-2 block">
-                            Expected Content Frequency
-                          </label>
-                          <Select>
-                            <SelectTrigger className="bg-white/5 border-white/10 text-white">
-                              <SelectValue placeholder="How often will you post?" />
-                            </SelectTrigger>
-                            <SelectContent className="bg-black border-white/10">
-                              <SelectItem value="daily" className="text-white">Daily</SelectItem>
-                              <SelectItem value="weekly" className="text-white">Weekly</SelectItem>
-                              <SelectItem value="biweekly" className="text-white">Bi-weekly</SelectItem>
-                              <SelectItem value="monthly" className="text-white">Monthly</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
                       </div>
                     </div>
 
@@ -719,129 +684,6 @@ export const ProfileEditDialog = ({ isOpen, onClose, profileId }: ProfileEditDia
                             <p className="text-xs text-white/40 mt-1">Encourage yearly subscriptions</p>
                           </div>
                         </div>
-
-                        <div>
-                          <label className="text-sm font-medium text-white/80 mb-3 block">
-                            Premium Perks & Benefits
-                          </label>
-                          <div className="space-y-3">
-                            {[
-                              'Exclusive content access',
-                              'Direct messaging privileges',
-                              'Custom content requests',
-                              'Live stream access',
-                              'Priority customer support',
-                              'Monthly bonus content'
-                            ].map((perk, index) => (
-                              <div key={index} className="flex items-center gap-3">
-                                <div className="w-5 h-5 bg-primary/20 rounded border border-primary/30 flex items-center justify-center">
-                                  <div className="w-2 h-2 bg-primary rounded"></div>
-                                </div>
-                                <span className="text-white/80 text-sm">{perk}</span>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Payment Setup */}
-                    <div className="bg-white/5 backdrop-blur-xl rounded-2xl p-6 border border-white/10">
-                      <h3 className="text-lg font-medium text-white mb-6 flex items-center gap-2">
-                        <Lock className="w-5 h-5 text-primary" />
-                        Payment & Banking Information
-                      </h3>
-                      <div className="space-y-6">
-                        <div className="grid md:grid-cols-2 gap-6">
-                          <div>
-                            <label className="text-sm font-medium text-white/80 mb-2 block">
-                              Bank Account Holder Name
-                            </label>
-                            <Input
-                              placeholder="Account holder's full name"
-                              className="bg-white/5 border-white/10 text-white"
-                            />
-                          </div>
-                          
-                          <div>
-                            <label className="text-sm font-medium text-white/80 mb-2 block">
-                              Bank Account Number
-                            </label>
-                            <Input
-                              placeholder="Account number"
-                              className="bg-white/5 border-white/10 text-white"
-                            />
-                          </div>
-                        </div>
-
-                        <div className="grid md:grid-cols-2 gap-6">
-                          <div>
-                            <label className="text-sm font-medium text-white/80 mb-2 block">
-                              Bank Routing Number
-                            </label>
-                            <Input
-                              placeholder="Routing number"
-                              className="bg-white/5 border-white/10 text-white"
-                            />
-                          </div>
-                          
-                          <div>
-                            <label className="text-sm font-medium text-white/80 mb-2 block">
-                              Tax ID / SSN
-                            </label>
-                            <Input
-                              placeholder="Tax identification number"
-                              className="bg-white/5 border-white/10 text-white"
-                            />
-                          </div>
-                        </div>
-
-                        <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-4">
-                          <div className="flex items-start gap-3">
-                            <Shield className="w-5 h-5 text-yellow-500 mt-0.5" />
-                            <div>
-                              <p className="text-yellow-500 font-medium text-sm">Secure & Encrypted</p>
-                              <p className="text-yellow-500/80 text-xs mt-1">All payment information is encrypted and securely stored. We never store your full banking details.</p>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Terms & Agreement */}
-                    <div className="bg-white/5 backdrop-blur-xl rounded-2xl p-6 border border-white/10">
-                      <h3 className="text-lg font-medium text-white mb-6 flex items-center gap-2">
-                        <FileText className="w-5 h-5 text-primary" />
-                        Terms & Agreement
-                      </h3>
-                      <div className="space-y-4">
-                        <div className="flex items-start gap-3">
-                          <input type="checkbox" className="mt-1" />
-                          <p className="text-white/80 text-sm">
-                            I confirm that I am at least 18 years old and legally able to enter into this agreement.
-                          </p>
-                        </div>
-                        
-                        <div className="flex items-start gap-3">
-                          <input type="checkbox" className="mt-1" />
-                          <p className="text-white/80 text-sm">
-                            I agree to the <span className="text-primary underline cursor-pointer">Creator Terms of Service</span> and understand the content guidelines.
-                          </p>
-                        </div>
-                        
-                        <div className="flex items-start gap-3">
-                          <input type="checkbox" className="mt-1" />
-                          <p className="text-white/80 text-sm">
-                            I understand that verification may take 3-5 business days and additional documentation may be required.
-                          </p>
-                        </div>
-                        
-                        <div className="flex items-start gap-3">
-                          <input type="checkbox" className="mt-1" />
-                          <p className="text-white/80 text-sm">
-                            I agree to the revenue sharing model (Platform takes 20%, Creator keeps 80% of subscription revenue).
-                          </p>
-                        </div>
                       </div>
                     </div>
 
@@ -865,7 +707,8 @@ export const ProfileEditDialog = ({ isOpen, onClose, profileId }: ProfileEditDia
                     </div>
                   </TabsContent>
 
-                  <TabsContent value="advanced" className="space-y-8 mt-0">
+                  {/* Privacy & Settings Tab */}
+                  <TabsContent value="privacy" className="space-y-8 mt-0">
                     {/* Privacy Settings */}
                     <div className="bg-white/5 backdrop-blur-xl rounded-2xl p-6 border border-white/10">
                       <h3 className="text-lg font-medium text-white mb-6 flex items-center gap-2">
@@ -875,7 +718,7 @@ export const ProfileEditDialog = ({ isOpen, onClose, profileId }: ProfileEditDia
                       <div className="space-y-6">
                         <div className="flex items-center justify-between">
                           <div>
-                            <p className="text-white font-medium">Public Profile</p>
+                            <label className="text-white font-medium">Profile Visibility</label>
                             <p className="text-white/60 text-sm">Make your profile visible to everyone</p>
                           </div>
                           <Switch 
@@ -885,10 +728,10 @@ export const ProfileEditDialog = ({ isOpen, onClose, profileId }: ProfileEditDia
                             }
                           />
                         </div>
-                        
+
                         <div className="flex items-center justify-between">
                           <div>
-                            <p className="text-white font-medium">Show Online Status</p>
+                            <label className="text-white font-medium">Show Online Status</label>
                             <p className="text-white/60 text-sm">Let others see when you're online</p>
                           </div>
                           <Switch 
@@ -901,8 +744,8 @@ export const ProfileEditDialog = ({ isOpen, onClose, profileId }: ProfileEditDia
 
                         <div className="flex items-center justify-between">
                           <div>
-                            <p className="text-white font-medium">Allow Messages</p>
-                            <p className="text-white/60 text-sm">Enable direct messages from other users</p>
+                            <label className="text-white font-medium">Allow Messages</label>
+                            <p className="text-white/60 text-sm">Allow users to send you direct messages</p>
                           </div>
                           <Switch 
                             checked={advancedSettings.allow_messages}
@@ -914,7 +757,7 @@ export const ProfileEditDialog = ({ isOpen, onClose, profileId }: ProfileEditDia
 
                         <div className="flex items-center justify-between">
                           <div>
-                            <p className="text-white font-medium">Show Location</p>
+                            <label className="text-white font-medium">Show Location</label>
                             <p className="text-white/60 text-sm">Display your location on your profile</p>
                           </div>
                           <Switch 
@@ -933,25 +776,30 @@ export const ProfileEditDialog = ({ isOpen, onClose, profileId }: ProfileEditDia
                         <Eye className="w-5 h-5 text-primary" />
                         Content Rating
                       </h3>
-                      <div className="grid gap-3">
-                        {contentRatingOptions.map((option) => (
-                          <div
-                            key={option.value}
-                            className={`p-4 rounded-xl border cursor-pointer transition-all ${
-                              advancedSettings.content_rating === option.value
-                                ? 'border-primary bg-primary/10'
-                                : 'border-white/10 hover:border-white/20'
-                            }`}
-                            onClick={() => setAdvancedSettings(prev => ({ ...prev, content_rating: option.value }))}
-                          >
-                            <div className="flex items-center gap-3">
-                              <option.icon className="w-5 h-5 text-primary" />
+                      <div className="space-y-4">
+                        {contentRatingOptions.map(({ value, label, icon: Icon }) => (
+                          <div key={value} className="flex items-center gap-4">
+                            <input
+                              type="radio"
+                              id={value}
+                              name="content_rating"
+                              value={value}
+                              checked={advancedSettings.content_rating === value}
+                              onChange={(e) => 
+                                setAdvancedSettings(prev => ({ ...prev, content_rating: e.target.value }))
+                              }
+                              className="text-primary"
+                            />
+                            <div className="flex items-center gap-3 flex-1">
+                              <Icon className="w-5 h-5 text-primary" />
                               <div>
-                                <p className="text-white font-medium">{option.label}</p>
+                                <label htmlFor={value} className="text-white font-medium cursor-pointer">
+                                  {label}
+                                </label>
                                 <p className="text-white/60 text-sm">
-                                  {option.value === 'general' && 'Suitable for all audiences'}
-                                  {option.value === 'mature' && 'May contain mature themes'}
-                                  {option.value === 'adult' && 'Adult content - 18+ only'}
+                                  {value === 'general' && 'Suitable for all audiences'}
+                                  {value === 'mature' && 'Contains mature themes (18+)'}
+                                  {value === 'adult' && 'Explicit adult content (21+)'}
                                 </p>
                               </div>
                             </div>
@@ -960,40 +808,96 @@ export const ProfileEditDialog = ({ isOpen, onClose, profileId }: ProfileEditDia
                       </div>
                     </div>
 
-                    {/* Notifications */}
+                    {/* Notification Preferences */}
                     <div className="bg-white/5 backdrop-blur-xl rounded-2xl p-6 border border-white/10">
                       <h3 className="text-lg font-medium text-white mb-6 flex items-center gap-2">
                         <Bell className="w-5 h-5 text-primary" />
                         Notification Preferences
                       </h3>
-                      <div className="space-y-4">
-                        {Object.entries(advancedSettings.notification_preferences).map(([key, value]) => (
-                          <div key={key} className="flex items-center justify-between">
-                            <div>
-                              <p className="text-white font-medium capitalize">
-                                {key.replace('_', ' ')}
-                              </p>
-                              <p className="text-white/60 text-sm">
-                                Get notified when someone {key === 'likes' ? 'likes your content' : 
-                                key === 'comments' ? 'comments on your posts' : 
-                                key === 'follows' ? 'follows you' : 'sends you a message'}
-                              </p>
-                            </div>
-                            <Switch 
-                              checked={value}
-                              onCheckedChange={(checked) => 
-                                setAdvancedSettings(prev => ({
-                                  ...prev,
-                                  notification_preferences: {
-                                    ...prev.notification_preferences,
-                                    [key]: checked
-                                  }
-                                }))
-                              }
-                            />
+                      <div className="space-y-6">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <label className="text-white font-medium">New Likes</label>
+                            <p className="text-white/60 text-sm">Get notified when someone likes your content</p>
                           </div>
-                        ))}
+                          <Switch 
+                            checked={advancedSettings.notification_preferences.likes}
+                            onCheckedChange={(checked) => 
+                              setAdvancedSettings(prev => ({ 
+                                ...prev, 
+                                notification_preferences: { ...prev.notification_preferences, likes: checked }
+                              }))
+                            }
+                          />
+                        </div>
+
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <label className="text-white font-medium">New Comments</label>
+                            <p className="text-white/60 text-sm">Get notified when someone comments on your posts</p>
+                          </div>
+                          <Switch 
+                            checked={advancedSettings.notification_preferences.comments}
+                            onCheckedChange={(checked) => 
+                              setAdvancedSettings(prev => ({ 
+                                ...prev, 
+                                notification_preferences: { ...prev.notification_preferences, comments: checked }
+                              }))
+                            }
+                          />
+                        </div>
+
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <label className="text-white font-medium">New Followers</label>
+                            <p className="text-white/60 text-sm">Get notified when someone follows you</p>
+                          </div>
+                          <Switch 
+                            checked={advancedSettings.notification_preferences.follows}
+                            onCheckedChange={(checked) => 
+                              setAdvancedSettings(prev => ({ 
+                                ...prev, 
+                                notification_preferences: { ...prev.notification_preferences, follows: checked }
+                              }))
+                            }
+                          />
+                        </div>
+
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <label className="text-white font-medium">Direct Messages</label>
+                            <p className="text-white/60 text-sm">Get notified when you receive a message</p>
+                          </div>
+                          <Switch 
+                            checked={advancedSettings.notification_preferences.messages}
+                            onCheckedChange={(checked) => 
+                              setAdvancedSettings(prev => ({ 
+                                ...prev, 
+                                notification_preferences: { ...prev.notification_preferences, messages: checked }
+                              }))
+                            }
+                          />
+                        </div>
                       </div>
+                    </div>
+
+                    {/* Save Settings */}
+                    <div className="flex gap-4 pt-6 border-t border-white/10">
+                      <Button 
+                        type="button" 
+                        variant="outline" 
+                        onClick={onClose} 
+                        className="flex-1 border-white/10 text-white hover:bg-white/5"
+                      >
+                        Cancel
+                      </Button>
+                      <Button 
+                        type="button"
+                        className="flex-1 bg-primary hover:bg-primary/90 text-white"
+                      >
+                        <Save className="w-4 h-4 mr-2" />
+                        Save Settings
+                      </Button>
                     </div>
                   </TabsContent>
                 </motion.div>
