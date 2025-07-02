@@ -2331,17 +2331,29 @@ export type Database = {
         Returns: undefined
       }
       rls_bypass_profile_update: {
-        Args: {
-          p_user_id: string
-          p_username?: string
-          p_bio?: string
-          p_location?: string
-          p_avatar_url?: string
-          p_banner_url?: string
-          p_interests?: string[]
-          p_profile_visibility?: string
-          p_status?: string
-        }
+        Args:
+          | {
+              p_user_id: string
+              p_username?: string
+              p_bio?: string
+              p_location?: string
+              p_avatar_url?: string
+              p_banner_url?: string
+              p_interests?: string[]
+              p_profile_visibility?: boolean
+              p_status?: string
+            }
+          | {
+              p_user_id: string
+              p_username?: string
+              p_bio?: string
+              p_location?: string
+              p_avatar_url?: string
+              p_banner_url?: string
+              p_interests?: string[]
+              p_profile_visibility?: string
+              p_status?: string
+            }
         Returns: Json
       }
       update_profile_service: {
