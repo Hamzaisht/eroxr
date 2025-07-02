@@ -1,16 +1,15 @@
 
-import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ProfileViewer } from "@/components/profile/ProfileViewer";
-import { ProfileEditor } from "@/components/profile/ProfileEditor";
+import { ModernProfileViewer } from "@/components/profile/modern/ModernProfileViewer";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { User, ArrowLeft } from "lucide-react";
 
 export default function Profile() {
   const { userId } = useParams();
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [isEditing, setIsEditing] = useState(false);
 
   console.log('Profile - userId:', userId);
   console.log('Profile - user:', user?.id);
@@ -31,19 +30,32 @@ export default function Profile() {
     } else {
       // If it's not a UUID, show helpful error with navigation options
       return (
-        <div className="min-h-screen bg-gradient-to-br from-slate-900 via-gray-900 to-slate-800 flex items-center justify-center">
-          <div className="text-center">
-            <p className="text-slate-400 text-xl mb-4">Invalid profile identifier</p>
-            <p className="text-slate-500 mb-6">"{userId}" is not a valid user ID</p>
-            <div className="space-y-3">
-              <Button onClick={() => navigate('/profile')} className="block mx-auto">
-                View Your Profile
-              </Button>
-              <p className="text-slate-600 text-sm">
-                Profile IDs must be valid UUIDs (like: 12345678-1234-1234-1234-123456789abc)
+        <div className="min-h-screen bg-background flex items-center justify-center p-4">
+          <Card className="max-w-md w-full">
+            <CardContent className="p-8 text-center">
+              <User className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+              <h3 className="text-xl font-semibold mb-2">Invalid Profile ID</h3>
+              <p className="text-muted-foreground mb-4">
+                "{userId}" is not a valid user identifier
               </p>
-            </div>
-          </div>
+              <div className="space-y-3">
+                <Button onClick={() => navigate('/profile')} className="w-full">
+                  View Your Profile
+                </Button>
+                <Button 
+                  variant="outline" 
+                  onClick={() => navigate('/')} 
+                  className="w-full"
+                >
+                  <ArrowLeft className="w-4 h-4 mr-2" />
+                  Go Home
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground mt-4">
+                Profile IDs must be valid UUIDs
+              </p>
+            </CardContent>
+          </Card>
         </div>
       );
     }
@@ -54,31 +66,37 @@ export default function Profile() {
 
   if (!profileId) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-gray-900 to-slate-800 flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-slate-400 text-xl mb-4">Profile not found</p>
-          <p className="text-slate-500 mb-6">You need to be logged in to view profiles</p>
-          <Button onClick={() => navigate('/login')} className="block mx-auto">
-            Login
-          </Button>
-        </div>
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+        <Card className="max-w-md w-full">
+          <CardContent className="p-8 text-center">
+            <User className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+            <h3 className="text-xl font-semibold mb-2">Profile Not Found</h3>
+            <p className="text-muted-foreground mb-4">
+              You need to be logged in to view profiles
+            </p>
+            <div className="space-y-3">
+              <Button onClick={() => navigate('/login')} className="w-full">
+                Login to Continue
+              </Button>
+              <Button 
+                variant="outline" 
+                onClick={() => navigate('/')} 
+                className="w-full"
+              >
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Go Home
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     );
   }
 
   return (
-    <>
-      {isEditing ? (
-        <ProfileEditor 
-          profileId={profileId}
-          onClose={() => setIsEditing(false)}
-        />
-      ) : (
-        <ProfileViewer 
-          profileId={profileId}
-          onEditClick={() => setIsEditing(true)}
-        />
-      )}
-    </>
+    <ModernProfileViewer 
+      profileId={profileId}
+      onBack={() => navigate('/')}
+    />
   );
 }
