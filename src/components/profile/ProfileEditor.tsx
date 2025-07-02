@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { X, Save, Loader2, Upload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -19,13 +19,25 @@ export const ProfileEditor = ({ profileId, onClose }: ProfileEditorProps) => {
   const { profile, updateProfile, loading } = useProfile(profileId);
   const [isUpdating, setIsUpdating] = useState(false);
   const [formData, setFormData] = useState({
-    username: profile?.username || '',
-    bio: profile?.bio || '',
-    location: profile?.location || '',
-    interests: profile?.interests || []
+    username: '',
+    bio: '',
+    location: '',
+    interests: [] as string[]
   });
   const [newInterest, setNewInterest] = useState('');
   const { toast } = useToast();
+
+  // Update form data when profile loads
+  useEffect(() => {
+    if (profile) {
+      setFormData({
+        username: profile.username || '',
+        bio: profile.bio || '',
+        location: profile.location || '',
+        interests: profile.interests || []
+      });
+    }
+  }, [profile]);
 
   const handleSave = async () => {
     try {

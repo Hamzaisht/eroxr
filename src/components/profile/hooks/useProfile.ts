@@ -27,11 +27,18 @@ export const useProfile = (profileId: string) => {
         .from('profiles')
         .select('id, username, bio, location, avatar_url, banner_url, interests, created_at')
         .eq('id', profileId)
-        .single();
+        .maybeSingle();
 
       if (fetchError) {
         console.error('❌ Profile: Fetch failed:', fetchError);
         setError(fetchError.message || 'Profile not found');
+        setProfile(null);
+        return;
+      }
+
+      if (!data) {
+        console.log('📭 Profile: No profile found for ID:', profileId);
+        setError('Profile not found');
         setProfile(null);
         return;
       }
@@ -65,7 +72,7 @@ export const useProfile = (profileId: string) => {
         })
         .eq('id', profileId)
         .select()
-        .single();
+        .maybeSingle();
 
       if (updateError) {
         console.error('❌ Profile: Update failed:', updateError);
