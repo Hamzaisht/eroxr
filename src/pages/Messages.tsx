@@ -23,63 +23,120 @@ const Messages = () => {
   };
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-7xl">
-      <motion.div 
-        className="mb-8"
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-      >
-        <h1 className="text-3xl font-bold text-white mb-2">Messages</h1>
-        <p className="text-white/60">Stay connected with your conversations</p>
-      </motion.div>
-      
-      <motion.div 
-        className="grid md:grid-cols-3 gap-6 h-[calc(100vh-200px)]"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.5, delay: 0.2 }}
-      >
-        <div className="md:col-span-1">
-          <ConversationsList 
-            onSelectUser={handleSelectUser}
-            onNewMessage={handleNewMessage}
-            selectedUserId={selectedUserId}
-          />
+    <div className="relative min-h-screen overflow-hidden">
+      {/* Quantum Background */}
+      <div className="absolute inset-0 quantum-profile-container">
+        <div className="neural-mesh" />
+        <div className="floating-elements">
+          <div className="floating-element w-32 h-32 top-20 left-20" style={{ animationDelay: '0s' }} />
+          <div className="floating-element w-24 h-24 top-60 right-32" style={{ animationDelay: '2s' }} />
+          <div className="floating-element w-16 h-16 bottom-40 left-1/3" style={{ animationDelay: '4s' }} />
         </div>
-        <div className="md:col-span-2">
-          {selectedUserId ? (
-            <ChatWindow userId={selectedUserId} />
-          ) : (
-            <motion.div 
-              className="flex items-center justify-center h-full bg-gradient-to-br from-white/5 to-white/[0.02] backdrop-blur-xl rounded-2xl border border-white/10"
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.3 }}
-            >
-              <div className="text-center">
-                <motion.div
-                  className="w-16 h-16 bg-gradient-to-r from-primary to-purple-500 rounded-full flex items-center justify-center mx-auto mb-4"
-                  whileHover={{ scale: 1.1 }}
-                  transition={{ type: "spring", stiffness: 400 }}
-                >
-                  <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                  </svg>
-                </motion.div>
-                <p className="text-white/60 text-lg">Select a conversation to start chatting</p>
-                <p className="text-white/40 text-sm mt-2">or create a new message</p>
-              </div>
-            </motion.div>
-          )}
-        </div>
-      </motion.div>
+      </div>
 
-      <NewMessageDialog 
-        open={showNewMessageDialog}
-        onOpenChange={setShowNewMessageDialog}
-        onSelectUser={handleNewMessageUserSelect}
-      />
+      <div className="relative z-10 container mx-auto px-6 py-12 max-w-7xl">
+        <motion.div 
+          className="mb-12 text-center"
+          initial={{ opacity: 0, y: -30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, ease: "easeOut" }}
+        >
+          <h1 className="text-6xl font-bold gradient-text mb-4">Messages</h1>
+          <p className="text-xl text-white/70 max-w-lg mx-auto">Connect across dimensions with quantum-encrypted conversations</p>
+        </motion.div>
+        
+        <motion.div 
+          className="grid lg:grid-cols-3 gap-8 h-[calc(100vh-300px)] min-h-[600px]"
+          initial={{ opacity: 0, y: 40 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, delay: 0.3 }}
+        >
+          <div className="lg:col-span-1">
+            <ConversationsList 
+              onSelectUser={handleSelectUser}
+              onNewMessage={handleNewMessage}
+              selectedUserId={selectedUserId}
+            />
+          </div>
+          <div className="lg:col-span-2">
+            {selectedUserId ? (
+              <ChatWindow userId={selectedUserId} />
+            ) : (
+              <motion.div 
+                className="flex items-center justify-center h-full holographic-card relative group"
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.6, delay: 0.5 }}
+              >
+                {/* Ambient glow effect */}
+                <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-purple-500/5 rounded-[20px] blur-xl group-hover:blur-2xl transition-all duration-700" />
+                
+                <div className="relative text-center z-10">
+                  <motion.div
+                    className="relative w-24 h-24 mx-auto mb-8"
+                    whileHover={{ scale: 1.1, rotate: 360 }}
+                    transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                  >
+                    <div className="absolute inset-0 bg-gradient-to-r from-primary via-purple-500 to-primary rounded-full animate-spin-slow opacity-20" />
+                    <div className="absolute inset-2 glass-morphism-extreme rounded-full flex items-center justify-center">
+                      <svg className="w-10 h-10 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                      </svg>
+                    </div>
+                  </motion.div>
+                  
+                  <motion.h3 
+                    className="text-2xl font-semibold text-white mb-3"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.8 }}
+                  >
+                    Quantum Communication Hub
+                  </motion.h3>
+                  <motion.p 
+                    className="text-white/60 text-lg leading-relaxed"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 1 }}
+                  >
+                    Select a conversation to engage in<br />
+                    <span className="text-primary/80">secure neural networking</span>
+                  </motion.p>
+                  
+                  {/* Floating particles */}
+                  <div className="absolute inset-0 pointer-events-none">
+                    {[...Array(6)].map((_, i) => (
+                      <motion.div
+                        key={i}
+                        className="absolute w-1 h-1 bg-primary/40 rounded-full"
+                        style={{
+                          left: `${20 + i * 15}%`,
+                          top: `${30 + (i % 2) * 40}%`,
+                        }}
+                        animate={{
+                          y: [-10, 10, -10],
+                          opacity: [0.2, 0.8, 0.2]
+                        }}
+                        transition={{
+                          duration: 3 + i * 0.5,
+                          repeat: Infinity,
+                          ease: "easeInOut"
+                        }}
+                      />
+                    ))}
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </div>
+        </motion.div>
+
+        <NewMessageDialog 
+          open={showNewMessageDialog}
+          onOpenChange={setShowNewMessageDialog}
+          onSelectUser={handleNewMessageUserSelect}
+        />
+      </div>
     </div>
   );
 };
