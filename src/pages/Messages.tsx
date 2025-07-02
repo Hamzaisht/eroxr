@@ -42,7 +42,7 @@ const Messages = () => {
           transition={{ duration: 0.8, ease: "easeOut" }}
         >
           <h1 className="text-6xl font-bold gradient-text mb-4">Messages</h1>
-          <p className="text-xl text-white/70 max-w-lg mx-auto">Connect across dimensions with quantum-encrypted conversations</p>
+          <p className="text-xl text-white/70 max-w-lg mx-auto">Connect and chat with your friends and community</p>
         </motion.div>
         
         <motion.div 
@@ -91,7 +91,7 @@ const Messages = () => {
                     animate={{ opacity: 1 }}
                     transition={{ delay: 0.8 }}
                   >
-                    Quantum Communication Hub
+                    Message Center
                   </motion.h3>
                   <motion.p 
                     className="text-white/60 text-lg leading-relaxed"
@@ -99,8 +99,8 @@ const Messages = () => {
                     animate={{ opacity: 1 }}
                     transition={{ delay: 1 }}
                   >
-                    Select a conversation to engage in<br />
-                    <span className="text-primary/80">secure neural networking</span>
+                    Select a conversation to start chatting<br />
+                    <span className="text-primary/80">with your friends</span>
                   </motion.p>
                   
                   {/* Floating particles */}

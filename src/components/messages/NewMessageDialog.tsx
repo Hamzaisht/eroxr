@@ -79,8 +79,8 @@ export const NewMessageDialog = ({ open, onOpenChange, onSelectUser }: NewMessag
                 <div className="absolute inset-0 bg-gradient-to-r from-white/20 to-white/5 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
               </motion.div>
               <div>
-                <h2 className="text-xl font-semibold">Neural Connection</h2>
-                <p className="text-sm text-white/60 font-normal">Initialize new communication channel</p>
+                <h2 className="text-xl font-semibold">New Message</h2>
+                <p className="text-sm text-white/60 font-normal">Start a new conversation</p>
               </div>
             </DialogTitle>
           </DialogHeader>
@@ -90,7 +90,7 @@ export const NewMessageDialog = ({ open, onOpenChange, onSelectUser }: NewMessag
             <div className="relative group">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-white/50 transition-colors group-focus-within:text-primary" />
               <input
-                placeholder="Search neural entities..."
+                placeholder="Search for users..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full pl-12 pr-4 py-4 bg-white/[0.08] backdrop-blur-xl border border-white/20 rounded-xl text-white placeholder:text-white/40 focus:border-primary/50 focus:bg-white/[0.12] transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:shadow-lg focus:shadow-primary/20"
@@ -119,7 +119,7 @@ export const NewMessageDialog = ({ open, onOpenChange, onSelectUser }: NewMessag
                       <div className="absolute inset-0 border-2 border-primary/30 rounded-full animate-spin border-t-primary" />
                       <div className="absolute inset-2 border-2 border-purple-500/30 rounded-full animate-spin animate-reverse border-t-purple-500" />
                     </div>
-                    <p className="text-white/60">Scanning neural networks...</p>
+                    <p className="text-white/60">Searching for users...</p>
                   </motion.div>
                 ) : !searchTerm.trim() ? (
                   <motion.div
@@ -133,8 +133,8 @@ export const NewMessageDialog = ({ open, onOpenChange, onSelectUser }: NewMessag
                         <MessageSquare className="w-6 h-6 text-white/60" />
                       </div>
                     </div>
-                    <h3 className="text-lg font-semibold text-white mb-2">Neural Discovery</h3>
-                    <p className="text-white/50">Search for entities to establish communication</p>
+                    <h3 className="text-lg font-semibold text-white mb-2">Find People</h3>
+                    <p className="text-white/50">Search for users to start chatting</p>
                   </motion.div>
                 ) : users && users.length > 0 ? (
                   <motion.div
@@ -190,8 +190,8 @@ export const NewMessageDialog = ({ open, onOpenChange, onSelectUser }: NewMessag
                         <Search className="w-6 h-6 text-white/60" />
                       </div>
                     </div>
-                    <h3 className="text-lg font-semibold text-white mb-2">No Neural Links Found</h3>
-                    <p className="text-white/50">Try adjusting your search parameters</p>
+                    <h3 className="text-lg font-semibold text-white mb-2">No Users Found</h3>
+                    <p className="text-white/50">Try a different search term</p>
                   </motion.div>
                 ) : null}
               </AnimatePresence>

@@ -94,7 +94,7 @@ const ConversationsList = ({ onSelectUser, onNewMessage, selectedUserId }: Conve
               <div className="w-8 h-8 rounded-full bg-gradient-to-r from-primary to-purple-500 flex items-center justify-center">
                 <MessageCircle className="w-4 h-4 text-white" />
               </div>
-              Neural Network
+              Messages
             </h2>
             <button 
               onClick={onNewMessage}
@@ -107,7 +107,7 @@ const ConversationsList = ({ onSelectUser, onNewMessage, selectedUserId }: Conve
           <div className="relative">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-white/50" />
             <input
-              placeholder="Search neural pathways..."
+              placeholder="Search conversations..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full pl-12 pr-4 py-3 bg-white/[0.08] border border-white/20 rounded-xl text-white placeholder:text-white/40 focus:border-primary/50 focus:bg-white/[0.12] transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-primary/20"
@@ -124,7 +124,7 @@ const ConversationsList = ({ onSelectUser, onNewMessage, selectedUserId }: Conve
                   <div className="absolute inset-0 border-2 border-primary/30 rounded-full animate-spin border-t-primary" />
                   <div className="absolute inset-2 border-2 border-purple-500/30 rounded-full animate-spin animate-reverse border-t-purple-500" />
                 </div>
-                <p className="text-white/60">Syncing neural pathways...</p>
+                <p className="text-white/60">Loading conversations...</p>
               </div>
             ) : filteredConversations.length === 0 ? (
               <div className="p-8 text-center">
@@ -135,9 +135,9 @@ const ConversationsList = ({ onSelectUser, onNewMessage, selectedUserId }: Conve
                   </div>
                 </div>
                 <h3 className="text-xl font-semibold text-white mb-2">
-                  {searchTerm ? "No neural links found" : "Neural network offline"}
+                  {searchTerm ? "No conversations found" : "No messages yet"}
                 </h3>
-                <p className="text-white/50">Initialize a connection to establish communication</p>
+                <p className="text-white/50">Start a conversation to see it here</p>
               </div>
             ) : (
               <div className="space-y-2 p-2">
@@ -180,7 +180,7 @@ const ConversationsList = ({ onSelectUser, onNewMessage, selectedUserId }: Conve
                             <h4 className={`font-semibold truncate transition-colors ${
                               isSelected ? 'text-white' : 'text-white/90'
                             }`}>
-                              {conversation.partner?.username || 'Unknown Entity'}
+                              {conversation.partner?.username || 'Unknown User'}
                             </h4>
                             <span className="text-xs text-white/40 font-mono">
                               {new Date(conversation.lastMessageTime).toLocaleTimeString([], {
@@ -192,7 +192,7 @@ const ConversationsList = ({ onSelectUser, onNewMessage, selectedUserId }: Conve
                           <p className={`text-sm truncate transition-colors ${
                             isSelected ? 'text-white/80' : 'text-white/60'
                           }`}>
-                            {conversation.lastMessage || 'Connection established...'}
+                            {conversation.lastMessage || 'No messages yet'}
                           </p>
                         </div>
                         

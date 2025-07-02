@@ -204,10 +204,10 @@ export const ChatWindow = ({ userId }: ChatWindowProps) => {
             <div className="absolute -top-1 -right-1 w-4 h-4 bg-green-400/30 rounded-full animate-ping" />
           </div>
           <div>
-            <h3 className="text-lg font-semibold text-white mb-1">{userProfile?.username || 'Unknown Entity'}</h3>
+            <h3 className="text-lg font-semibold text-white mb-1">{userProfile?.username || 'Unknown User'}</h3>
             <div className="flex items-center gap-2">
               <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-              <p className="text-sm text-green-400/80 font-medium">Neural link active</p>
+              <p className="text-sm text-green-400/80 font-medium">Online</p>
             </div>
           </div>
         </div>
@@ -327,7 +327,7 @@ export const ChatWindow = ({ userId }: ChatWindowProps) => {
             <div className="relative group">
               {/* Input field */}
               <textarea
-                placeholder="Transmit neural message..."
+                placeholder="Type your message..."
                 value={newMessage}
                 onChange={(e) => setNewMessage(e.target.value)}
                 onKeyPress={handleKeyPress}
