@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/contexts/AuthContext';
 import { useProfile } from './hooks/useProfile';
+import { ProfilePosts } from './container/ProfilePosts';
 
 interface ProfileViewerProps {
   profileId: string;
@@ -180,14 +181,18 @@ export const ProfileViewer = ({ profileId, onEditClick }: ProfileViewerProps) =>
           <motion.div
             initial={{ y: 20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
-            className="text-center py-12"
+            className="space-y-8"
           >
-            <h3 className="text-2xl font-semibold text-slate-200 mb-4">
-              Welcome to {profile.username || 'this user'}'s profile
-            </h3>
-            <p className="text-slate-400 max-w-2xl mx-auto">
-              This is where content and activities will be displayed.
-            </p>
+            <div className="text-center">
+              <h3 className="text-2xl font-semibold text-slate-200 mb-2">
+                Posts by {profile.username || 'this user'}
+              </h3>
+              <p className="text-slate-400">
+                Latest content and activities
+              </p>
+            </div>
+            
+            <ProfilePosts profileId={profileId} />
           </motion.div>
         </div>
       </div>
