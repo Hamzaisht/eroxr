@@ -50,314 +50,247 @@ export const QuantumProfileViewer = ({ profileId, onBack }: QuantumProfileViewer
   }
 
   return (
-    <div className="min-h-screen quantum-profile-container relative">
-      {/* Neural Mesh Background */}
-      <div className="neural-mesh" />
-      
-      {/* Floating Quantum Elements */}
-      <FloatingQuantumElements />
-
-      {/* Interactive Cursor Glow */}
-      <motion.div
-        className="fixed w-96 h-96 rounded-full pointer-events-none z-0"
-        style={{
-          background: 'radial-gradient(circle, rgba(139, 92, 246, 0.03) 0%, transparent 70%)',
-          left: mousePosition.x - 192,
-          top: mousePosition.y - 192,
-        }}
-        animate={{
-          scale: [1, 1.2, 1],
-          opacity: [0.3, 0.5, 0.3],
-        }}
-        transition={{
-          duration: 3,
-          repeat: Infinity,
-          ease: "easeInOut"
-        }}
-      />
+    <div className="min-h-screen bg-black relative overflow-hidden">
+      {/* Subtle background elements */}
+      <div className="fixed inset-0 opacity-[0.02]">
+        <div className="absolute top-20 left-20 w-96 h-96 bg-primary/20 rounded-full blur-3xl" />
+        <div className="absolute bottom-20 right-20 w-80 h-80 bg-primary/10 rounded-full blur-3xl" />
+      </div>
 
       {/* Navigation Header */}
       {onBack && (
         <motion.div
           initial={{ y: -20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
-          className="sticky top-0 z-50 glass-morphism-extreme backdrop-blur-md border-b border-white/10"
+          className="fixed top-0 left-0 right-0 z-50 bg-black/80 backdrop-blur-xl"
         >
-          <div className="container mx-auto px-6 py-4">
+          <div className="container mx-auto px-8 py-6">
             <Button 
               variant="ghost" 
               size="sm" 
               onClick={onBack}
-              className="neural-button text-white/80 hover:text-white"
+              className="text-white/60 hover:text-primary transition-colors"
             >
               <ArrowLeft className="w-4 h-4 mr-2" />
-              Back to Discovery
+              Back
             </Button>
           </div>
         </motion.div>
       )}
 
-      {/* Quantum Banner Section */}
-      <QuantumBanner 
-        profile={profile} 
-        isOwnProfile={isOwnProfile}
-        onEditClick={() => setIsEditDialogOpen(true)}
-      />
+      {/* Hero Banner Section */}
+      <div className="relative h-[60vh] overflow-hidden">
+        {profile.banner_url ? (
+          <div className="absolute inset-0">
+            {profile.banner_url.includes('.mp4') || profile.banner_url.includes('.webm') ? (
+              <video
+                src={profile.banner_url}
+                className="w-full h-full object-cover"
+                muted
+                loop
+                autoPlay
+              />
+            ) : (
+              <img
+                src={profile.banner_url}
+                alt="Profile banner"
+                className="w-full h-full object-cover"
+              />
+            )}
+          </div>
+        ) : (
+          <div className="absolute inset-0 bg-gradient-to-br from-black via-primary/5 to-black" />
+        )}
+        
+        {/* Gradient overlay */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent" />
+      </div>
 
-      {/* Main Profile Content */}
-      <div className="container mx-auto px-6 -mt-20 relative z-20">
-        {/* Holographic Profile Card */}
-        <motion.div
-          initial={{ y: 40, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ duration: 0.8, type: "spring", bounce: 0.3 }}
-          className="mb-12"
-        >
-          <div className="holographic-card p-8">
-            <div className="flex flex-col xl:flex-row gap-8">
-              {/* Quantum Avatar Section */}
-              <div className="flex flex-col items-center xl:items-start">
-                <motion.div
-                  whileHover={{ scale: 1.05, rotateY: 5 }}
-                  className="relative mb-6"
-                >
-                  <div className="quantum-avatar w-40 h-40 rounded-3xl overflow-hidden">
-                    <Avatar className="w-full h-full">
-                      <AvatarImage src={profile.avatar_url || undefined} className="object-cover" />
-                      <AvatarFallback className="bg-gradient-to-br from-primary/20 to-secondary/20 text-3xl">
-                        <User className="w-16 h-16" />
-                      </AvatarFallback>
-                    </Avatar>
-                  </div>
-                  
-                  {/* Online Status Indicator */}
-                  <motion.div
-                    className="absolute -top-2 -right-2 w-8 h-8 bg-green-400 rounded-full border-4 border-background"
-                    animate={{ scale: [1, 1.2, 1] }}
-                    transition={{ duration: 2, repeat: Infinity }}
-                  />
-                  
-                  {isOwnProfile && (
-                    <motion.button
-                      whileHover={{ scale: 1.1 }}
-                      whileTap={{ scale: 0.95 }}
-                      className="absolute -bottom-3 -right-3 neural-button p-3 rounded-full"
-                      onClick={() => setIsEditDialogOpen(true)}
-                    >
-                      <Camera className="w-5 h-5" />
-                    </motion.button>
-                  )}
-                </motion.div>
-
-                {/* Action Buttons */}
-                <div className="flex flex-wrap gap-3 w-full max-w-md justify-center xl:justify-start">
-                  {isOwnProfile ? (
-                    <motion.button
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                      onClick={() => setIsEditDialogOpen(true)}
-                      className="neural-button flex-1 xl:flex-none min-w-[140px]"
-                    >
-                      <Edit className="w-4 h-4 mr-2" />
-                      Edit Profile
-                    </motion.button>
-                  ) : (
-                    <>
-                      <FollowButton profileId={profileId} />
-                      <motion.button
-                        whileHover={{ scale: 1.02 }}
-                        className="neural-button px-6"
-                      >
-                        <MessageCircle className="w-4 h-4 mr-2" />
-                        Message
-                      </motion.button>
-                      <motion.button
-                        whileHover={{ scale: 1.1 }}
-                        className="stats-orb p-3 rounded-full"
-                      >
-                        <Share className="w-4 h-4" />
-                      </motion.button>
-                    </>
-                  )}
-                </div>
+      {/* Profile Content - Seamless Layout */}
+      <div className="relative -mt-32 z-30">
+        <div className="max-w-7xl mx-auto px-8">
+          {/* Profile Header */}
+          <motion.div
+            initial={{ y: 60, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ duration: 0.6 }}
+            className="flex flex-col lg:flex-row items-start gap-8 mb-16"
+          >
+            {/* Avatar */}
+            <motion.div
+              whileHover={{ scale: 1.02 }}
+              className="relative"
+            >
+              <div className="w-48 h-48 rounded-full overflow-hidden bg-black/20 backdrop-blur-xl border border-white/10">
+                <Avatar className="w-full h-full">
+                  <AvatarImage src={profile.avatar_url || undefined} className="object-cover" />
+                  <AvatarFallback className="bg-primary/10 text-4xl">
+                    <User className="w-20 h-20 text-primary" />
+                  </AvatarFallback>
+                </Avatar>
               </div>
-
-              {/* Profile Information */}
-              <div className="flex-1 space-y-6">
-                <motion.div
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.2 }}
+              
+              {/* Status */}
+              <div className="absolute -bottom-2 -right-2 w-12 h-12 bg-primary rounded-full flex items-center justify-center border-4 border-black">
+                <div className="w-4 h-4 bg-white rounded-full animate-pulse" />
+              </div>
+              
+              {isOwnProfile && (
+                <motion.button
+                  whileHover={{ scale: 1.1 }}
+                  onClick={() => setIsEditDialogOpen(true)}
+                  className="absolute top-4 right-4 w-12 h-12 bg-black/60 backdrop-blur-xl rounded-full flex items-center justify-center text-white hover:bg-primary/20 transition-colors"
                 >
-                  {/* Name and Verification */}
-                  <div className="flex items-center gap-3 mb-4">
-                    <h1 className="text-4xl font-bold bg-gradient-to-r from-white to-white/70 bg-clip-text text-transparent">
-                      {profile.username || 'Anonymous User'}
-                    </h1>
-                    <motion.div
-                      animate={{ rotate: [0, 10, -10, 0] }}
-                      transition={{ duration: 3, repeat: Infinity }}
-                    >
-                      <Crown className="w-8 h-8 text-yellow-400" />
-                    </motion.div>
-                  </div>
-                  
-                  {/* Meta Information */}
-                  <div className="flex flex-wrap items-center gap-6 text-white/60 mb-6">
-                    {profile.location && (
-                      <motion.div 
-                        className="flex items-center gap-2"
-                        whileHover={{ scale: 1.05 }}
-                      >
-                        <MapPin className="w-4 h-4" />
-                        <span>{profile.location}</span>
-                      </motion.div>
-                    )}
-                    <motion.div 
-                      className="flex items-center gap-2"
-                      whileHover={{ scale: 1.05 }}
-                    >
-                      <Calendar className="w-4 h-4" />
-                      <span>Joined {new Date(profile.created_at).toLocaleDateString()}</span>
-                    </motion.div>
-                    <motion.div 
-                      className="flex items-center gap-2"
-                      whileHover={{ scale: 1.05 }}
-                    >
-                      <Globe className="w-4 h-4" />
-                      <span>Online</span>
-                    </motion.div>
-                  </div>
+                  <Camera className="w-5 h-5" />
+                </motion.button>
+              )}
+            </motion.div>
 
-                  {/* Bio */}
-                  {profile.bio && (
-                    <motion.div
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      transition={{ delay: 0.4 }}
-                      className="mb-6"
-                    >
-                      <p className="text-lg text-white/80 leading-relaxed max-w-3xl">
-                        {profile.bio}
-                      </p>
-                    </motion.div>
-                  )}
-
-                  {/* Interests */}
-                  {profile.interests && profile.interests.length > 0 && (
-                    <motion.div
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.6 }}
-                      className="space-y-3"
-                    >
-                      <h3 className="font-semibold text-white/60 uppercase tracking-wide text-sm flex items-center gap-2">
-                        <Sparkles className="w-4 h-4" />
-                        Interests & Expertise
-                      </h3>
-                      <div className="flex flex-wrap gap-3">
-                        {profile.interests.map((interest, index) => (
-                          <motion.div
-                            key={interest}
-                            initial={{ opacity: 0, scale: 0.8 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            transition={{ delay: index * 0.1 + 0.6 }}
-                            whileHover={{ scale: 1.05 }}
-                            className="interest-tag cursor-pointer"
-                          >
-                            <span className="relative z-10 text-white/90 font-medium">{interest}</span>
-                          </motion.div>
-                        ))}
-                      </div>
-                    </motion.div>
-                  )}
-                </motion.div>
-
-                {/* Enhanced Stats */}
-                <motion.div
+            {/* Profile Info */}
+            <div className="flex-1 lg:mt-4">
+              <motion.h1 
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2 }}
+                className="text-6xl font-light text-white mb-2 tracking-tight"
+              >
+                {profile.username || 'Anonymous'}
+              </motion.h1>
+              
+              {profile.bio && (
+                <motion.p 
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.8 }}
+                  transition={{ delay: 0.3 }}
+                  className="text-xl text-white/60 mb-6 max-w-2xl leading-relaxed"
                 >
-                  <ProfileStats profileId={profileId} />
-                </motion.div>
-              </div>
-            </div>
-          </div>
-        </motion.div>
+                  {profile.bio}
+                </motion.p>
+              )}
 
-        {/* Quantum Content Tabs */}
+              {/* Meta Info */}
+              <motion.div 
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.4 }}
+                className="flex flex-wrap gap-6 text-white/40 mb-8"
+              >
+                {profile.location && (
+                  <div className="flex items-center gap-2">
+                    <MapPin className="w-4 h-4" />
+                    <span>{profile.location}</span>
+                  </div>
+                )}
+                <div className="flex items-center gap-2">
+                  <Calendar className="w-4 h-4" />
+                  <span>Joined {new Date(profile.created_at).getFullYear()}</span>
+                </div>
+              </motion.div>
+
+              {/* Action Buttons */}
+              <motion.div 
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.5 }}
+                className="flex gap-4"
+              >
+                {isOwnProfile ? (
+                  <button
+                    onClick={() => setIsEditDialogOpen(true)}
+                    className="px-8 py-3 bg-white text-black font-medium rounded-full hover:bg-white/90 transition-colors"
+                  >
+                    Edit Profile
+                  </button>
+                ) : (
+                  <>
+                    <FollowButton profileId={profileId} />
+                    <button className="px-8 py-3 bg-primary text-white font-medium rounded-full hover:bg-primary/90 transition-colors">
+                      Message
+                    </button>
+                    <button className="p-3 bg-white/10 backdrop-blur-xl text-white rounded-full hover:bg-white/20 transition-colors">
+                      <Share className="w-5 h-5" />
+                    </button>
+                  </>
+                )}
+              </motion.div>
+            </div>
+          </motion.div>
+
+          {/* Stats */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.6 }}
+            className="mb-16"
+          >
+            <ProfileStats profileId={profileId} />
+          </motion.div>
+        </div>
+      </div>
+
+      {/* Content Tabs - Borderless Design */}
+      <div className="max-w-7xl mx-auto px-8">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 1 }}
+          transition={{ delay: 0.7 }}
+          className="mb-8"
         >
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-8">
-            <div className="flex justify-center">
-              <div className="quantum-tabs">
-                <TabsList className="bg-transparent p-2">
-                  <TabsTrigger value="posts" className="quantum-tab flex items-center gap-2">
-                    <Grid className="w-4 h-4" />
-                    <span className="hidden sm:inline">Posts</span>
-                  </TabsTrigger>
-                  <TabsTrigger value="media" className="quantum-tab flex items-center gap-2">
-                    <Camera className="w-4 h-4" />
-                    <span className="hidden sm:inline">Media</span>
-                  </TabsTrigger>
-                  <TabsTrigger value="likes" className="quantum-tab flex items-center gap-2">
-                    <Heart className="w-4 h-4" />
-                    <span className="hidden sm:inline">Likes</span>
-                  </TabsTrigger>
-                  <TabsTrigger value="saved" className="quantum-tab flex items-center gap-2">
-                    <Bookmark className="w-4 h-4" />
-                    <span className="hidden sm:inline">Saved</span>
-                  </TabsTrigger>
-                </TabsList>
-              </div>
+          <div className="flex justify-center mb-12">
+            <div className="flex gap-1 bg-white/5 backdrop-blur-xl rounded-full p-2">
+              {['posts', 'media', 'likes', 'saved'].map((tab) => (
+                <button
+                  key={tab}
+                  onClick={() => setActiveTab(tab)}
+                  className={`px-8 py-3 rounded-full transition-all capitalize ${
+                    activeTab === tab 
+                      ? 'bg-primary text-white' 
+                      : 'text-white/60 hover:text-white hover:bg-white/5'
+                  }`}
+                >
+                  {tab}
+                </button>
+              ))}
             </div>
+          </div>
 
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={activeTab}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-                transition={{ duration: 0.3 }}
-              >
-                <TabsContent value="posts" className="space-y-6">
-                  <ProfilePosts profileId={profileId} />
-                </TabsContent>
-
-                <TabsContent value="media" className="space-y-6">
-                  <QuantumEmptyState
-                    icon={Image}
-                    title="Media Galaxy"
-                    description="Your visual universe awaits discovery"
-                  />
-                </TabsContent>
-
-                <TabsContent value="likes" className="space-y-6">
-                  <QuantumEmptyState
-                    icon={Heart}
-                    title="Liked Cosmos"
-                    description="Your appreciation constellation"
-                  />
-                </TabsContent>
-
-                <TabsContent value="saved" className="space-y-6">
-                  <QuantumEmptyState
-                    icon={Bookmark}
-                    title="Saved Dimensions"
-                    description="Your curated collection"
-                  />
-                </TabsContent>
-              </motion.div>
-            </AnimatePresence>
-          </Tabs>
+          {/* Content Grid */}
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={activeTab}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.3 }}
+              className="min-h-[400px]"
+            >
+              {activeTab === 'posts' && <ProfilePosts profileId={profileId} />}
+              {activeTab === 'media' && (
+                <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2">
+                  {/* Media grid placeholder */}
+                  {Array.from({ length: 12 }).map((_, i) => (
+                    <div key={i} className="aspect-square bg-white/5 rounded-lg" />
+                  ))}
+                </div>
+              )}
+              {activeTab === 'likes' && (
+                <div className="text-center py-20">
+                  <Heart className="w-16 h-16 text-primary/40 mx-auto mb-4" />
+                  <p className="text-white/40 text-lg">No liked content yet</p>
+                </div>
+              )}
+              {activeTab === 'saved' && (
+                <div className="text-center py-20">
+                  <Bookmark className="w-16 h-16 text-primary/40 mx-auto mb-4" />
+                  <p className="text-white/40 text-lg">No saved content yet</p>
+                </div>
+              )}
+            </motion.div>
+          </AnimatePresence>
         </motion.div>
       </div>
 
-      {/* Quantum Edit Dialog */}
+      {/* Profile Edit Dialog */}
       <ProfileEditDialog
         isOpen={isEditDialogOpen}
         onClose={() => setIsEditDialogOpen(false)}

@@ -140,7 +140,7 @@ export const ProfileStats = ({ profileId }: ProfileStatsProps) => {
   };
 
   return (
-    <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+    <div className="grid grid-cols-2 lg:grid-cols-5 gap-8">
       {statItems.map((item, index) => (
         <motion.div
           key={item.label}
@@ -157,28 +157,26 @@ export const ProfileStats = ({ profileId }: ProfileStatsProps) => {
           }}
           className="text-center"
         >
-          <div className="stats-orb cursor-pointer group">
-            <div className="relative z-10">
-              <motion.div
-                animate={{ 
-                  rotate: [0, 10, -10, 0],
-                  scale: [1, 1.1, 1]
-                }}
-                transition={{ 
-                  duration: 3,
-                  repeat: Infinity,
-                  ease: "easeInOut",
-                  delay: index * 0.5
-                }}
-              >
-                <item.icon className={`w-6 h-6 ${item.color} mx-auto mb-3`} />
-              </motion.div>
-              <div className="text-2xl font-bold text-white mb-1">
-                {formatNumber(item.value)}
-              </div>
-              <div className="text-sm text-white/60 font-medium">
-                {item.label}
-              </div>
+          <div className="group cursor-pointer">
+            <motion.div
+              animate={{ 
+                rotate: [0, 5, -5, 0],
+              }}
+              transition={{ 
+                duration: 4,
+                repeat: Infinity,
+                ease: "easeInOut",
+                delay: index * 0.5
+              }}
+              className="mb-3"
+            >
+              <item.icon className={`w-8 h-8 ${item.color} mx-auto`} />
+            </motion.div>
+            <div className="text-3xl font-light text-white mb-1">
+              {formatNumber(item.value)}
+            </div>
+            <div className="text-sm text-white/40 font-medium uppercase tracking-wider">
+              {item.label}
             </div>
           </div>
         </motion.div>
