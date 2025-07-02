@@ -38,27 +38,40 @@ export const ChatWindow = ({ userId }: ChatWindowProps) => {
   const session = useSession();
   const { toast } = useToast();
 
+  const [userScrolled, setUserScrolled] = useState(false);
+
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (!userScrolled) {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }
   };
 
   useEffect(() => {
     scrollToBottom();
-  }, [messages]);
+  }, [messages, userScrolled]);
 
   useEffect(() => {
+    if (!userId || !session?.user?.id) {
+      setLoading(false);
+      return;
+    }
+
     const fetchUserProfile = async () => {
       try {
         const { data, error } = await supabase
           .from('profiles')
           .select('id, username, avatar_url')
           .eq('id', userId)
-          .single();
+          .maybeSingle();
 
-        if (error) throw error;
-        setUserProfile(data);
+        if (error && error.code !== 'PGRST116') {
+          console.error('Error fetching user profile:', error);
+          return;
+        }
+        setUserProfile(data || { id: userId, username: 'Unknown User' });
       } catch (error) {
-        console.error('Error fetching user profile:', error);
+        console.error('Network error fetching user profile:', error);
+        setUserProfile({ id: userId, username: 'Unknown User' });
       }
     };
 
@@ -67,28 +80,25 @@ export const ChatWindow = ({ userId }: ChatWindowProps) => {
         const { data, error } = await supabase
           .from('direct_messages')
           .select('id, content, created_at, sender_id, recipient_id')
-          .or(`and(sender_id.eq.${session?.user?.id},recipient_id.eq.${userId}),and(sender_id.eq.${userId},recipient_id.eq.${session?.user?.id})`)
+          .or(`and(sender_id.eq.${session.user.id},recipient_id.eq.${userId}),and(sender_id.eq.${userId},recipient_id.eq.${session.user.id})`)
           .order('created_at', { ascending: true });
 
-        if (error) throw error;
+        if (error && error.code !== 'PGRST116') {
+          console.error('Error fetching messages:', error);
+          return;
+        }
         setMessages(data || []);
       } catch (error) {
-        console.error('Error fetching messages:', error);
-        toast({
-          title: "Error loading messages",
-          description: "Failed to load conversation history",
-          variant: "destructive"
-        });
+        console.error('Network error fetching messages:', error);
+        setMessages([]);
       } finally {
         setLoading(false);
       }
     };
 
-    if (userId && session?.user?.id) {
-      fetchUserProfile();
-      fetchMessages();
-    }
-  }, [userId, session?.user?.id, toast]);
+    fetchUserProfile();
+    fetchMessages();
+  }, [userId, session?.user?.id]);
 
   // Real-time message subscription
   useEffect(() => {
@@ -220,7 +230,14 @@ export const ChatWindow = ({ userId }: ChatWindowProps) => {
 
       {/* Messages */}
       <div className="flex-1 relative overflow-hidden">
-        <div className="h-full overflow-y-auto custom-scrollbar p-6 space-y-6">
+        <div 
+          className="h-full overflow-y-auto custom-scrollbar p-6 space-y-6"
+          onScroll={(e) => {
+            const element = e.currentTarget;
+            const isScrolledToBottom = element.scrollHeight - element.scrollTop <= element.clientHeight + 50;
+            setUserScrolled(!isScrolledToBottom);
+          }}
+        >
           <AnimatePresence initial={false}>
             {messages.map((message, index) => {
               const isOwn = message.sender_id === session?.user?.id;
