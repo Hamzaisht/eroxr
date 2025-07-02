@@ -144,37 +144,37 @@ export const FollowButton = ({ profileId, initialIsFollowing = false, onFollowCh
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.6 }}
-      whileHover={{ scale: 1.05, y: -2 }}
-      whileTap={{ scale: 0.95 }}
-      className="flex flex-col items-center gap-1"
+      transition={{ delay: 0.3 }}
+      whileHover={{ scale: 1.02 }}
+      whileTap={{ scale: 0.98 }}
+      className="flex flex-col items-center gap-2"
     >
       <Button
         variant={isFollowing ? "outline" : "default"}
         className={
           isFollowing 
-            ? "bg-transparent border-luxury-primary text-luxury-primary hover:bg-luxury-primary/10 font-semibold px-6 py-3 rounded-xl transition-all duration-300 group" 
-            : "bg-button-gradient hover:bg-hover-gradient text-white font-semibold px-6 py-3 rounded-xl shadow-button hover:shadow-button-hover transition-all duration-300 group"
+            ? "bg-white/10 border-white/20 text-white hover:bg-white/20 font-medium px-8 py-3 rounded-full transition-all duration-300 group backdrop-blur-xl" 
+            : "bg-primary hover:bg-primary/90 text-white font-medium px-8 py-3 rounded-full transition-all duration-300 group"
         }
         onClick={handleFollowToggle}
         disabled={isLoading}
       >
         {isLoading ? (
-          <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
         ) : isFollowing ? (
-          <UserMinus className="h-5 w-5 mr-2 group-hover:scale-110 transition-transform duration-300" />
+          <UserMinus className="h-4 w-4 mr-2 group-hover:scale-110 transition-transform duration-300" />
         ) : (
-          <UserPlus className="h-5 w-5 mr-2 group-hover:scale-110 transition-transform duration-300" />
+          <UserPlus className="h-4 w-4 mr-2 group-hover:scale-110 transition-transform duration-300" />
         )}
         {!isLoggedIn ? "Sign in to Follow" : isFollowing ? "Following" : "Follow"}
       </Button>
       {followerCount > 0 && (
         <motion.span 
-          animate={{ scale: [1, 1.1, 1] }}
-          transition={{ duration: 0.5 }}
-          className="text-xs text-luxury-muted"
+          animate={{ scale: [1, 1.05, 1] }}
+          transition={{ duration: 0.8, repeat: Infinity, repeatDelay: 3 }}
+          className="text-xs text-white/40 font-medium"
         >
-          {followerCount} followers
+          {followerCount} {followerCount === 1 ? 'follower' : 'followers'}
         </motion.span>
       )}
     </motion.div>
