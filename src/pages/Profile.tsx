@@ -1,6 +1,6 @@
 
 import { useParams, useNavigate } from "react-router-dom";
-import { ModernProfileViewer } from "@/components/profile/modern/ModernProfileViewer";
+import { QuantumProfileViewer } from "@/components/profile/modern/QuantumProfileViewer";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -94,7 +94,7 @@ export default function Profile() {
   }
 
   return (
-    <ModernProfileViewer 
+    <QuantumProfileViewer 
       profileId={profileId}
       onBack={() => navigate('/')}
     />

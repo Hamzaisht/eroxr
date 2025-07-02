@@ -144,25 +144,43 @@ export const ProfileStats = ({ profileId }: ProfileStatsProps) => {
       {statItems.map((item, index) => (
         <motion.div
           key={item.label}
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: index * 0.1 }}
+          initial={{ opacity: 0, y: 20, scale: 0.9 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          transition={{ 
+            delay: index * 0.1,
+            type: "spring",
+            bounce: 0.3 
+          }}
+          whileHover={{ 
+            scale: 1.05,
+            transition: { duration: 0.2 }
+          }}
           className="text-center"
         >
-          <Button
-            variant="ghost"
-            className="h-auto p-3 flex flex-col items-center gap-2 hover:bg-muted/50 w-full"
-          >
-            <item.icon className={`w-4 h-4 ${item.color}`} />
-            <div>
-              <div className="text-xl font-bold text-foreground">
+          <div className="stats-orb cursor-pointer group">
+            <div className="relative z-10">
+              <motion.div
+                animate={{ 
+                  rotate: [0, 10, -10, 0],
+                  scale: [1, 1.1, 1]
+                }}
+                transition={{ 
+                  duration: 3,
+                  repeat: Infinity,
+                  ease: "easeInOut",
+                  delay: index * 0.5
+                }}
+              >
+                <item.icon className={`w-6 h-6 ${item.color} mx-auto mb-3`} />
+              </motion.div>
+              <div className="text-2xl font-bold text-white mb-1">
                 {formatNumber(item.value)}
               </div>
-              <div className="text-xs text-muted-foreground">
+              <div className="text-sm text-white/60 font-medium">
                 {item.label}
               </div>
             </div>
-          </Button>
+          </div>
         </motion.div>
       ))}
     </div>

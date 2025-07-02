@@ -6,11 +6,45 @@
 @tailwind utilities;
 
 @layer base {
+  :root {
+    --background: 222 84% 5%;
+    --foreground: 210 40% 98%;
+    --card: 222 84% 5%;
+    --card-foreground: 210 40% 98%;
+    --popover: 222 84% 5%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 262 83% 58%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 217 33% 17%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 217 33% 17%;
+    --muted-foreground: 215 20% 65%;
+    --accent: 217 33% 17%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 217 33% 17%;
+    --input: 217 33% 17%;
+    --ring: 262 83% 58%;
+    
+    /* Award-worthy custom properties */
+    --gradient-quantum: linear-gradient(135deg, hsl(262, 83%, 58%) 0%, hsl(301, 77%, 56%) 25%, hsl(198, 93%, 60%) 50%, hsl(262, 83%, 58%) 100%);
+    --gradient-neural: linear-gradient(45deg, hsl(222, 84%, 5%) 0%, hsl(217, 33%, 17%) 100%);
+    --gradient-glass: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
+    --gradient-aurora: linear-gradient(90deg, hsl(262, 83%, 58%), hsl(301, 77%, 56%), hsl(198, 93%, 60%), hsl(142, 76%, 36%));
+    --glow-primary: 0 0 50px hsl(262, 83%, 58%);
+    --glow-secondary: 0 0 30px hsl(301, 77%, 56%);
+    --glow-accent: 0 0 40px hsl(198, 93%, 60%);
+    --blur-glass: blur(20px);
+    --blur-heavy: blur(40px);
+  }
+
   * {
     @apply border-border;
   }
   body {
     @apply bg-background text-foreground;
+    background: radial-gradient(ellipse at center, hsl(222, 84%, 5%) 0%, hsl(217, 33%, 10%) 100%);
   }
 }
 
@@ -348,4 +382,307 @@ body.story-viewer-open {
   border-color: rgba(139, 92, 246, 0.8);
   background: rgba(139, 92, 246, 0.15);
   transform: scale(1.03);
+}
+
+/* 2025 Award-Worthy Styles */
+.quantum-profile-container {
+  background: var(--gradient-neural);
+  backdrop-filter: var(--blur-heavy);
+  position: relative;
+  overflow: hidden;
+}
+
+.quantum-profile-container::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: conic-gradient(from 0deg, transparent, hsl(262, 83%, 58%, 0.1), transparent 30%);
+  animation: quantum-rotate 20s linear infinite;
+}
+
+@keyframes quantum-rotate {
+  to { transform: rotate(360deg); }
+}
+
+.neural-mesh {
+  position: absolute;
+  inset: 0;
+  background-image: 
+    radial-gradient(circle at 20% 20%, hsl(262, 83%, 58%, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 80% 80%, hsl(301, 77%, 56%, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 40% 60%, hsl(198, 93%, 60%, 0.1) 0%, transparent 50%);
+  animation: neural-pulse 15s ease-in-out infinite alternate;
+}
+
+@keyframes neural-pulse {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 0.7; }
+}
+
+.floating-elements {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.floating-element {
+  position: absolute;
+  background: var(--gradient-aurora);
+  border-radius: 50%;
+  filter: blur(1px);
+  animation: float-quantum 10s ease-in-out infinite;
+}
+
+@keyframes float-quantum {
+  0%, 100% { 
+    transform: translateY(0) scale(0.8) rotate(0deg);
+    opacity: 0.3;
+  }
+  25% { 
+    transform: translateY(-20px) scale(1.2) rotate(90deg);
+    opacity: 0.6;
+  }
+  50% { 
+    transform: translateY(-40px) scale(0.9) rotate(180deg);
+    opacity: 0.8;
+  }
+  75% { 
+    transform: translateY(-20px) scale(1.1) rotate(270deg);
+    opacity: 0.5;
+  }
+}
+
+.glass-morphism-extreme {
+  background: rgba(255, 255, 255, 0.02);
+  backdrop-filter: blur(30px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 24px;
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    0 0 0 1px rgba(255, 255, 255, 0.05);
+}
+
+.holographic-card {
+  background: linear-gradient(135deg, 
+    rgba(255, 255, 255, 0.05) 0%,
+    rgba(255, 255, 255, 0.01) 100%);
+  backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.holographic-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: conic-gradient(
+    from 0deg,
+    transparent 0deg,
+    hsl(262, 83%, 58%, 0.1) 60deg,
+    hsl(301, 77%, 56%, 0.1) 120deg,
+    hsl(198, 93%, 60%, 0.1) 180deg,
+    transparent 240deg
+  );
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+
+.holographic-card:hover::before {
+  opacity: 1;
+  animation: holographic-rotate 3s linear infinite;
+}
+
+@keyframes holographic-rotate {
+  to { transform: rotate(360deg); }
+}
+
+.quantum-avatar {
+  position: relative;
+  background: var(--gradient-glass);
+  backdrop-filter: var(--blur-glass);
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.quantum-avatar::before {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  background: var(--gradient-aurora);
+  border-radius: inherit;
+  z-index: -1;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  animation: quantum-glow 3s ease-in-out infinite;
+}
+
+.quantum-avatar:hover::before {
+  opacity: 0.7;
+}
+
+@keyframes quantum-glow {
+  0%, 100% { filter: blur(8px) brightness(1); }
+  50% { filter: blur(12px) brightness(1.3); }
+}
+
+.neural-button {
+  background: var(--gradient-quantum);
+  border: none;
+  border-radius: 16px;
+  padding: 12px 24px;
+  font-weight: 600;
+  color: white;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+.neural-button::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+  transform: translateX(-100%);
+  transition: transform 0.6s ease;
+}
+
+.neural-button:hover::before {
+  transform: translateX(100%);
+}
+
+.neural-button:hover {
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 8px 30px rgba(139, 92, 246, 0.4);
+}
+
+.quantum-tabs {
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  padding: 8px;
+}
+
+.quantum-tab {
+  background: transparent;
+  border: none;
+  border-radius: 16px;
+  padding: 12px 24px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.quantum-tab::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--gradient-quantum);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  border-radius: 16px;
+}
+
+.quantum-tab[data-state="active"]::before {
+  opacity: 1;
+}
+
+.quantum-tab[data-state="active"] {
+  color: white;
+  font-weight: 600;
+}
+
+.stats-orb {
+  background: var(--gradient-glass);
+  backdrop-filter: var(--blur-glass);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  padding: 20px;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.stats-orb::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: conic-gradient(from 0deg, transparent, rgba(255, 255, 255, 0.05), transparent);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.stats-orb:hover::before {
+  opacity: 1;
+  animation: orb-rotate 2s linear infinite;
+}
+
+@keyframes orb-rotate {
+  to { transform: rotate(360deg); }
+}
+
+.stats-orb:hover {
+  transform: scale(1.05);
+  box-shadow: 0 10px 40px rgba(139, 92, 246, 0.2);
+}
+
+.interest-tag {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  padding: 8px 16px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.interest-tag::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--gradient-aurora);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  border-radius: 20px;
+}
+
+.interest-tag:hover::before {
+  opacity: 0.1;
+}
+
+.interest-tag:hover {
+  transform: translateY(-2px);
+  border-color: rgba(255, 255, 255, 0.3);
+  box-shadow: 0 4px 20px rgba(139, 92, 246, 0.2);
+}
+
+.quantum-banner {
+  position: relative;
+  overflow: hidden;
+  border-radius: 0 0 40px 40px;
+}
+
+.quantum-banner::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, 
+    rgba(139, 92, 246, 0.1) 0%,
+    transparent 30%,
+    transparent 70%,
+    rgba(217, 70, 239, 0.1) 100%);
+  backdrop-filter: blur(2px);
 }
