@@ -176,37 +176,29 @@ export const ProfileEditDialog = ({ isOpen, onClose, profileId }: ProfileEditDia
 
         <div className="flex-1 overflow-hidden">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col">
-            <div className="flex justify-center py-4">
-              <div className="flex gap-1 bg-white/5 backdrop-blur-xl rounded-full p-2">
-                <TabsTrigger 
-                  value="basic" 
-                  className={`px-6 py-3 rounded-full transition-all text-sm ${
-                    activeTab === 'basic' ? 'bg-primary text-white' : 'text-white/60 hover:text-white'
-                  }`}
-                >
-                  <User className="w-4 h-4 mr-2" />
-                  Basic Info
-                </TabsTrigger>
-                <TabsTrigger 
-                  value="media" 
-                  className={`px-6 py-3 rounded-full transition-all text-sm ${
-                    activeTab === 'media' ? 'bg-primary text-white' : 'text-white/60 hover:text-white'
-                  }`}
-                >
-                  <Camera className="w-4 h-4 mr-2" />
-                  Photos & Media
-                </TabsTrigger>
-                <TabsTrigger 
-                  value="advanced" 
-                  className={`px-6 py-3 rounded-full transition-all text-sm ${
-                    activeTab === 'advanced' ? 'bg-primary text-white' : 'text-white/60 hover:text-white'
-                  }`}
-                >
-                  <Settings className="w-4 h-4 mr-2" />
-                  Privacy & Settings
-                </TabsTrigger>
-              </div>
-            </div>
+            <TabsList className="grid grid-cols-3 w-fit mx-auto bg-white/5 backdrop-blur-xl rounded-full p-2">
+              <TabsTrigger 
+                value="basic" 
+                className="px-6 py-3 rounded-full transition-all text-sm data-[state=active]:bg-primary data-[state=active]:text-white text-white/60 hover:text-white"
+              >
+                <User className="w-4 h-4 mr-2" />
+                Basic Info
+              </TabsTrigger>
+              <TabsTrigger 
+                value="media" 
+                className="px-6 py-3 rounded-full transition-all text-sm data-[state=active]:bg-primary data-[state=active]:text-white text-white/60 hover:text-white"
+              >
+                <Camera className="w-4 h-4 mr-2" />
+                Photos & Media
+              </TabsTrigger>
+              <TabsTrigger 
+                value="advanced" 
+                className="px-6 py-3 rounded-full transition-all text-sm data-[state=active]:bg-primary data-[state=active]:text-white text-white/60 hover:text-white"
+              >
+                <Settings className="w-4 h-4 mr-2" />
+                Privacy & Settings
+              </TabsTrigger>
+            </TabsList>
 
             <div className="flex-1 overflow-y-auto px-6 pb-6">
               <AnimatePresence mode="wait">
