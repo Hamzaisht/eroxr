@@ -176,7 +176,7 @@ export const ProfileEditDialog = ({ isOpen, onClose, profileId }: ProfileEditDia
 
         <div className="flex-1 overflow-hidden">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col">
-            <TabsList className="grid grid-cols-3 w-fit mx-auto bg-white/5 backdrop-blur-xl rounded-full p-2">
+            <TabsList className="grid grid-cols-4 w-fit mx-auto bg-white/5 backdrop-blur-xl rounded-full p-2">
               <TabsTrigger 
                 value="basic" 
                 className="px-6 py-3 rounded-full transition-all text-sm data-[state=active]:bg-primary data-[state=active]:text-white text-white/60 hover:text-white"
@@ -190,6 +190,13 @@ export const ProfileEditDialog = ({ isOpen, onClose, profileId }: ProfileEditDia
               >
                 <Camera className="w-4 h-4 mr-2" />
                 Photos & Media
+              </TabsTrigger>
+              <TabsTrigger 
+                value="verification" 
+                className="px-6 py-3 rounded-full transition-all text-sm data-[state=active]:bg-primary data-[state=active]:text-white text-white/60 hover:text-white"
+              >
+                <Shield className="w-4 h-4 mr-2" />
+                Creator Verification
               </TabsTrigger>
               <TabsTrigger 
                 value="advanced" 
@@ -526,6 +533,335 @@ export const ProfileEditDialog = ({ isOpen, onClose, profileId }: ProfileEditDia
                       <p className="text-white/40 text-sm mt-4">
                         Coming soon: Upload photos and videos to showcase your content
                       </p>
+                    </div>
+                  </TabsContent>
+
+                  <TabsContent value="verification" className="space-y-8 mt-0">
+                    {/* Verification Status */}
+                    <div className="bg-gradient-to-r from-primary/10 to-purple-500/10 backdrop-blur-xl rounded-2xl p-6 border border-primary/20">
+                      <h3 className="text-lg font-medium text-white mb-4 flex items-center gap-2">
+                        <Crown className="w-5 h-5 text-primary" />
+                        Creator Verification Status
+                      </h3>
+                      <div className="flex items-center gap-4 mb-6">
+                        <div className="w-16 h-16 bg-primary/20 rounded-full flex items-center justify-center">
+                          <Shield className="w-8 h-8 text-primary" />
+                        </div>
+                        <div>
+                          <p className="text-white font-medium">Not Verified</p>
+                          <p className="text-white/60 text-sm">Complete verification to unlock premium features and start earning</p>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-3 gap-4 text-center">
+                        <div className="bg-white/5 rounded-lg p-3">
+                          <p className="text-2xl font-light text-white">🔒</p>
+                          <p className="text-xs text-white/60 mt-1">Identity</p>
+                        </div>
+                        <div className="bg-white/5 rounded-lg p-3">
+                          <p className="text-2xl font-light text-white">💳</p>
+                          <p className="text-xs text-white/60 mt-1">Payments</p>
+                        </div>
+                        <div className="bg-white/5 rounded-lg p-3">
+                          <p className="text-2xl font-light text-white">✨</p>
+                          <p className="text-xs text-white/60 mt-1">Premium</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Identity Verification */}
+                    <div className="bg-white/5 backdrop-blur-xl rounded-2xl p-6 border border-white/10">
+                      <h3 className="text-lg font-medium text-white mb-6 flex items-center gap-2">
+                        <FileText className="w-5 h-5 text-primary" />
+                        Identity Verification
+                      </h3>
+                      <div className="space-y-6">
+                        <div>
+                          <label className="text-sm font-medium text-white/80 mb-2 block">
+                            Full Legal Name *
+                          </label>
+                          <Input
+                            placeholder="Enter your full legal name"
+                            className="bg-white/5 border-white/10 text-white"
+                          />
+                        </div>
+                        
+                        <div>
+                          <label className="text-sm font-medium text-white/80 mb-2 block">
+                            Date of Birth *
+                          </label>
+                          <Input
+                            type="date"
+                            className="bg-white/5 border-white/10 text-white"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="text-sm font-medium text-white/80 mb-2 block">
+                            Government ID Upload *
+                          </label>
+                          <div className="border-2 border-dashed border-white/20 rounded-xl p-8 text-center">
+                            <Upload className="w-12 h-12 text-white/40 mx-auto mb-4" />
+                            <p className="text-white/60 mb-2">Upload a clear photo of your government ID</p>
+                            <p className="text-xs text-white/40">Accepted: Driver's License, Passport, National ID</p>
+                            <Button variant="outline" className="mt-4 border-white/10 text-white hover:bg-white/5">
+                              <Upload className="w-4 h-4 mr-2" />
+                              Choose File
+                            </Button>
+                          </div>
+                        </div>
+
+                        <div>
+                          <label className="text-sm font-medium text-white/80 mb-2 block">
+                            Selfie Verification *
+                          </label>
+                          <div className="border-2 border-dashed border-white/20 rounded-xl p-8 text-center">
+                            <Camera className="w-12 h-12 text-white/40 mx-auto mb-4" />
+                            <p className="text-white/60 mb-2">Take a selfie holding your ID next to your face</p>
+                            <p className="text-xs text-white/40">Ensure your face and ID are clearly visible</p>
+                            <Button variant="outline" className="mt-4 border-white/10 text-white hover:bg-white/5">
+                              <Camera className="w-4 h-4 mr-2" />
+                              Take Selfie
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Creator Application */}
+                    <div className="bg-white/5 backdrop-blur-xl rounded-2xl p-6 border border-white/10">
+                      <h3 className="text-lg font-medium text-white mb-6 flex items-center gap-2">
+                        <Star className="w-5 h-5 text-primary" />
+                        Creator Application
+                      </h3>
+                      <div className="space-y-6">
+                        <div>
+                          <label className="text-sm font-medium text-white/80 mb-2 block">
+                            Content Category *
+                          </label>
+                          <Select>
+                            <SelectTrigger className="bg-white/5 border-white/10 text-white">
+                              <SelectValue placeholder="Select your primary content type" />
+                            </SelectTrigger>
+                            <SelectContent className="bg-black border-white/10">
+                              <SelectItem value="fitness" className="text-white">Fitness & Wellness</SelectItem>
+                              <SelectItem value="lifestyle" className="text-white">Lifestyle & Fashion</SelectItem>
+                              <SelectItem value="art" className="text-white">Art & Photography</SelectItem>
+                              <SelectItem value="music" className="text-white">Music & Performance</SelectItem>
+                              <SelectItem value="gaming" className="text-white">Gaming & Entertainment</SelectItem>
+                              <SelectItem value="adult" className="text-white">Adult Content (18+)</SelectItem>
+                              <SelectItem value="other" className="text-white">Other</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+
+                        <div>
+                          <label className="text-sm font-medium text-white/80 mb-2 block">
+                            Content Description *
+                          </label>
+                          <Textarea
+                            placeholder="Describe the type of content you plan to create and share..."
+                            rows={4}
+                            className="bg-white/5 border-white/10 text-white resize-none"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="text-sm font-medium text-white/80 mb-2 block">
+                            Expected Content Frequency
+                          </label>
+                          <Select>
+                            <SelectTrigger className="bg-white/5 border-white/10 text-white">
+                              <SelectValue placeholder="How often will you post?" />
+                            </SelectTrigger>
+                            <SelectContent className="bg-black border-white/10">
+                              <SelectItem value="daily" className="text-white">Daily</SelectItem>
+                              <SelectItem value="weekly" className="text-white">Weekly</SelectItem>
+                              <SelectItem value="biweekly" className="text-white">Bi-weekly</SelectItem>
+                              <SelectItem value="monthly" className="text-white">Monthly</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Subscription Pricing Setup */}
+                    <div className="bg-white/5 backdrop-blur-xl rounded-2xl p-6 border border-white/10">
+                      <h3 className="text-lg font-medium text-white mb-6 flex items-center gap-2">
+                        <Zap className="w-5 h-5 text-primary" />
+                        Subscription Pricing
+                      </h3>
+                      <div className="space-y-6">
+                        <div className="grid md:grid-cols-2 gap-6">
+                          <div>
+                            <label className="text-sm font-medium text-white/80 mb-2 block">
+                              Monthly Subscription Price
+                            </label>
+                            <div className="relative">
+                              <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/60">$</span>
+                              <Input
+                                type="number"
+                                placeholder="9.99"
+                                className="bg-white/5 border-white/10 text-white pl-8"
+                              />
+                            </div>
+                            <p className="text-xs text-white/40 mt-1">Recommended: $5-50/month</p>
+                          </div>
+                          
+                          <div>
+                            <label className="text-sm font-medium text-white/80 mb-2 block">
+                              Annual Discount (%)
+                            </label>
+                            <Input
+                              type="number"
+                              placeholder="20"
+                              className="bg-white/5 border-white/10 text-white"
+                            />
+                            <p className="text-xs text-white/40 mt-1">Encourage yearly subscriptions</p>
+                          </div>
+                        </div>
+
+                        <div>
+                          <label className="text-sm font-medium text-white/80 mb-3 block">
+                            Premium Perks & Benefits
+                          </label>
+                          <div className="space-y-3">
+                            {[
+                              'Exclusive content access',
+                              'Direct messaging privileges',
+                              'Custom content requests',
+                              'Live stream access',
+                              'Priority customer support',
+                              'Monthly bonus content'
+                            ].map((perk, index) => (
+                              <div key={index} className="flex items-center gap-3">
+                                <div className="w-5 h-5 bg-primary/20 rounded border border-primary/30 flex items-center justify-center">
+                                  <div className="w-2 h-2 bg-primary rounded"></div>
+                                </div>
+                                <span className="text-white/80 text-sm">{perk}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Payment Setup */}
+                    <div className="bg-white/5 backdrop-blur-xl rounded-2xl p-6 border border-white/10">
+                      <h3 className="text-lg font-medium text-white mb-6 flex items-center gap-2">
+                        <Lock className="w-5 h-5 text-primary" />
+                        Payment & Banking Information
+                      </h3>
+                      <div className="space-y-6">
+                        <div className="grid md:grid-cols-2 gap-6">
+                          <div>
+                            <label className="text-sm font-medium text-white/80 mb-2 block">
+                              Bank Account Holder Name
+                            </label>
+                            <Input
+                              placeholder="Account holder's full name"
+                              className="bg-white/5 border-white/10 text-white"
+                            />
+                          </div>
+                          
+                          <div>
+                            <label className="text-sm font-medium text-white/80 mb-2 block">
+                              Bank Account Number
+                            </label>
+                            <Input
+                              placeholder="Account number"
+                              className="bg-white/5 border-white/10 text-white"
+                            />
+                          </div>
+                        </div>
+
+                        <div className="grid md:grid-cols-2 gap-6">
+                          <div>
+                            <label className="text-sm font-medium text-white/80 mb-2 block">
+                              Bank Routing Number
+                            </label>
+                            <Input
+                              placeholder="Routing number"
+                              className="bg-white/5 border-white/10 text-white"
+                            />
+                          </div>
+                          
+                          <div>
+                            <label className="text-sm font-medium text-white/80 mb-2 block">
+                              Tax ID / SSN
+                            </label>
+                            <Input
+                              placeholder="Tax identification number"
+                              className="bg-white/5 border-white/10 text-white"
+                            />
+                          </div>
+                        </div>
+
+                        <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-4">
+                          <div className="flex items-start gap-3">
+                            <Shield className="w-5 h-5 text-yellow-500 mt-0.5" />
+                            <div>
+                              <p className="text-yellow-500 font-medium text-sm">Secure & Encrypted</p>
+                              <p className="text-yellow-500/80 text-xs mt-1">All payment information is encrypted and securely stored. We never store your full banking details.</p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Terms & Agreement */}
+                    <div className="bg-white/5 backdrop-blur-xl rounded-2xl p-6 border border-white/10">
+                      <h3 className="text-lg font-medium text-white mb-6 flex items-center gap-2">
+                        <FileText className="w-5 h-5 text-primary" />
+                        Terms & Agreement
+                      </h3>
+                      <div className="space-y-4">
+                        <div className="flex items-start gap-3">
+                          <input type="checkbox" className="mt-1" />
+                          <p className="text-white/80 text-sm">
+                            I confirm that I am at least 18 years old and legally able to enter into this agreement.
+                          </p>
+                        </div>
+                        
+                        <div className="flex items-start gap-3">
+                          <input type="checkbox" className="mt-1" />
+                          <p className="text-white/80 text-sm">
+                            I agree to the <span className="text-primary underline cursor-pointer">Creator Terms of Service</span> and understand the content guidelines.
+                          </p>
+                        </div>
+                        
+                        <div className="flex items-start gap-3">
+                          <input type="checkbox" className="mt-1" />
+                          <p className="text-white/80 text-sm">
+                            I understand that verification may take 3-5 business days and additional documentation may be required.
+                          </p>
+                        </div>
+                        
+                        <div className="flex items-start gap-3">
+                          <input type="checkbox" className="mt-1" />
+                          <p className="text-white/80 text-sm">
+                            I agree to the revenue sharing model (Platform takes 20%, Creator keeps 80% of subscription revenue).
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Submit Application */}
+                    <div className="flex gap-4 pt-6 border-t border-white/10">
+                      <Button 
+                        type="button" 
+                        variant="outline" 
+                        onClick={onClose} 
+                        className="flex-1 border-white/10 text-white hover:bg-white/5"
+                      >
+                        Save Draft
+                      </Button>
+                      <Button 
+                        type="button"
+                        className="flex-1 bg-gradient-to-r from-primary to-purple-500 hover:from-primary/90 hover:to-purple-500/90 text-white font-medium"
+                      >
+                        <Crown className="w-4 h-4 mr-2" />
+                        Submit for Verification
+                      </Button>
                     </div>
                   </TabsContent>
 
