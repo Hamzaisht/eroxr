@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useSession } from '@supabase/auth-helpers-react';
 import { supabase } from '@/integrations/supabase/client';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Phone, Video, Info, Search, MoreVertical, Smile, Paperclip, Mic, Send, Camera, Calendar } from 'lucide-react';
+import { Phone, Video, Info, Search, MoreVertical, Smile, Paperclip, Mic, Send, Camera, Calendar, Edit3, Trash2 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -10,6 +10,8 @@ import { useToast } from '@/hooks/use-toast';
 import { MediaUploadDialog } from './MediaUploadDialog';
 import { VoiceRecorderDialog } from './VoiceRecorderDialog';
 import { BookingDialog } from './BookingDialog';
+import { EmojiPicker } from './chat/EmojiPicker';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
 interface Message {
   id: string;
@@ -37,6 +39,8 @@ export const ChatArea = ({ conversationId, onShowDetails }: ChatAreaProps) => {
   const [showMediaDialog, setShowMediaDialog] = useState(false);
   const [showVoiceDialog, setShowVoiceDialog] = useState(false);
   const [showBookingDialog, setShowBookingDialog] = useState(false);
+  const [editingMessage, setEditingMessage] = useState<string | null>(null);
+  const [editContent, setEditContent] = useState('');
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const session = useSession();
@@ -160,6 +164,73 @@ export const ChatArea = ({ conversationId, onShowDetails }: ChatAreaProps) => {
     }
   };
 
+  const handleEmojiSelect = (emoji: string) => {
+    setNewMessage(prev => prev + emoji);
+  };
+
+  const handleEditMessage = async (messageId: string) => {
+    if (!editContent.trim()) return;
+
+    try {
+      const { error } = await supabase
+        .from('direct_messages')
+        .update({ 
+          content: editContent,
+          original_content: messages.find(m => m.id === messageId)?.content,
+          is_edited: true 
+        })
+        .eq('id', messageId);
+
+      if (error) throw error;
+
+      setMessages(prev => prev.map(msg => 
+        msg.id === messageId 
+          ? { ...msg, content: editContent, is_edited: true }
+          : msg
+      ));
+
+      setEditingMessage(null);
+      setEditContent('');
+      
+      toast({
+        title: "Message updated",
+        description: "Your message has been updated"
+      });
+    } catch (error) {
+      console.error('Error editing message:', error);
+      toast({
+        title: "Failed to edit message",
+        description: "Please try again",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleDeleteMessage = async (messageId: string) => {
+    try {
+      const { error } = await supabase
+        .from('direct_messages')
+        .delete()
+        .eq('id', messageId);
+
+      if (error) throw error;
+
+      setMessages(prev => prev.filter(msg => msg.id !== messageId));
+      
+      toast({
+        title: "Message deleted",
+        description: "Your message has been deleted"
+      });
+    } catch (error) {
+      console.error('Error deleting message:', error);
+      toast({
+        title: "Failed to delete message",
+        description: "Please try again",
+        variant: "destructive"
+      });
+    }
+  };
+
   const formatTime = (dateString: string) => {
     return new Date(dateString).toLocaleTimeString([], { 
       hour: '2-digit', 
@@ -260,77 +331,158 @@ export const ChatArea = ({ conversationId, onShowDetails }: ChatAreaProps) => {
                 whileHover={{ scale: 1.02 }}
                 className={`flex ${isOwn ? 'justify-end' : 'justify-start'}`}
               >
-                <div className={`max-w-xs lg:max-w-md ${isOwn ? 'order-2' : 'order-1'}`}>
-                  {!isOwn && (
-                    <motion.div 
-                      className="flex items-center gap-2 mb-1"
-                      initial={{ opacity: 0, x: -10 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: 0.1 }}
-                    >
-                      <Avatar className="h-6 w-6">
-                        <AvatarImage src={userProfile?.avatar_url} />
-                        <AvatarFallback className="text-xs bg-primary/20">
-                          {userProfile?.username?.[0]?.toUpperCase()}
-                        </AvatarFallback>
-                      </Avatar>
-                       <span className="text-xs text-white/60">{userProfile?.username}</span>
-                     </motion.div>
-                  )}
-                  
-                  <motion.div
-                    className={`px-4 py-3 rounded-2xl relative overflow-hidden group ${
-                      isOwn
-                        ? 'bg-gradient-to-r from-primary to-purple-500 text-white rounded-br-lg shadow-lg shadow-primary/30'
-                        : 'bg-white/10 backdrop-blur-xl text-white border border-white/20 rounded-bl-lg'
-                    }`}
-                    whileHover={{ 
-                      scale: 1.02,
-                      transition: { type: "spring", stiffness: 400, damping: 17 }
-                    }}
-                    whileTap={{ scale: 0.98 }}
-                  >
-                    {/* Shimmer effect on hover */}
-                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-out" />
-                    
-                    <motion.p 
-                      className="text-sm leading-relaxed relative z-10"
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      transition={{ delay: 0.2 }}
-                    >
-                      {message.content}
-                    </motion.p>
-                    
-                    <div className={`flex items-center gap-1 mt-2 ${isOwn ? 'justify-end' : 'justify-start'}`}>
-                      <motion.span 
-                        className={`text-xs ${isOwn ? 'text-white/80' : 'text-white/60'}`}
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        transition={{ delay: 0.3 }}
-                      >
-                        {formatTime(message.created_at)}
-                      </motion.span>
-                      {isOwn && (
-                        <motion.div 
-                          className="flex gap-1"
-                          initial={{ opacity: 0, scale: 0 }}
-                          animate={{ opacity: 1, scale: 1 }}
-                          transition={{ delay: 0.4, type: "spring" }}
-                        >
-                          <div className={`w-1 h-1 rounded-full ${
-                            message.delivery_status === 'seen' ? 'bg-blue-400' : 
-                            message.delivery_status === 'delivered' ? 'bg-white/60' :
-                            'bg-white/40'
-                          }`} />
-                          <div className={`w-1 h-1 rounded-full ${
-                            message.delivery_status === 'seen' ? 'bg-blue-400' : 
-                            'bg-white/40'
-                          }`} />
-                         </motion.div>
+                 <div className={`max-w-xs lg:max-w-md ${isOwn ? 'order-2' : 'order-1'}`}>
+                   {!isOwn && (
+                     <motion.div 
+                       className="flex items-center gap-2 mb-1"
+                       initial={{ opacity: 0, x: -10 }}
+                       animate={{ opacity: 1, x: 0 }}
+                       transition={{ delay: 0.1 }}
+                     >
+                       <Avatar className="h-6 w-6">
+                         <AvatarImage src={userProfile?.avatar_url} />
+                         <AvatarFallback className="text-xs bg-primary/20">
+                           {userProfile?.username?.[0]?.toUpperCase()}
+                         </AvatarFallback>
+                       </Avatar>
+                        <span className="text-xs text-white/60">{userProfile?.username}</span>
+                      </motion.div>
+                   )}
+                   
+                   <div className="relative group">
+                     <motion.div
+                       className={`px-4 py-3 rounded-2xl relative overflow-hidden ${
+                         isOwn
+                           ? 'bg-gradient-to-r from-primary to-purple-500 text-white rounded-br-lg shadow-lg shadow-primary/30'
+                           : 'bg-white/10 backdrop-blur-xl text-white border border-white/20 rounded-bl-lg'
+                       }`}
+                       whileHover={{ 
+                         scale: 1.02,
+                         transition: { type: "spring", stiffness: 400, damping: 17 }
+                       }}
+                       whileTap={{ scale: 0.98 }}
+                     >
+                       {/* Shimmer effect on hover */}
+                       <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-out" />
+                       
+                       {editingMessage === message.id ? (
+                         <div className="relative z-10">
+                           <Input
+                             value={editContent}
+                             onChange={(e) => setEditContent(e.target.value)}
+                             onKeyPress={(e) => {
+                               if (e.key === 'Enter') {
+                                 handleEditMessage(message.id);
+                               } else if (e.key === 'Escape') {
+                                 setEditingMessage(null);
+                                 setEditContent('');
+                               }
+                             }}
+                             className="bg-transparent border-white/30 text-white text-sm"
+                             autoFocus
+                           />
+                           <div className="flex gap-2 mt-2">
+                             <Button
+                               size="sm"
+                               onClick={() => handleEditMessage(message.id)}
+                               className="bg-green-500/20 hover:bg-green-500/30 text-green-400 border border-green-400/30"
+                             >
+                               Save
+                             </Button>
+                             <Button
+                               size="sm"
+                               variant="ghost"
+                               onClick={() => {
+                                 setEditingMessage(null);
+                                 setEditContent('');
+                               }}
+                               className="text-white/70 hover:text-white"
+                             >
+                               Cancel
+                             </Button>
+                           </div>
+                         </div>
+                       ) : (
+                         <motion.p 
+                           className="text-sm leading-relaxed relative z-10"
+                           initial={{ opacity: 0 }}
+                           animate={{ opacity: 1 }}
+                           transition={{ delay: 0.2 }}
+                         >
+                           {message.content}
+                           {message.is_edited && (
+                             <span className="text-xs text-white/50 ml-2">(edited)</span>
+                           )}
+                         </motion.p>
                        )}
-                     </div>
-                   </motion.div>
+                     </motion.div>
+                     
+                     {/* Message Actions - Only show for own messages */}
+                     {isOwn && editingMessage !== message.id && (
+                       <DropdownMenu>
+                         <DropdownMenuTrigger asChild>
+                           <Button
+                             variant="ghost"
+                             size="icon"
+                             className="absolute -right-2 top-0 opacity-0 group-hover:opacity-100 transition-opacity duration-200 text-white/70 hover:text-white hover:bg-white/10 w-8 h-8"
+                           >
+                             <MoreVertical className="h-4 w-4" />
+                           </Button>
+                         </DropdownMenuTrigger>
+                         <DropdownMenuContent 
+                           align="end" 
+                           className="holographic-card border-white/20 bg-black/80 backdrop-blur-xl"
+                         >
+                           <DropdownMenuItem
+                             onClick={() => {
+                               setEditingMessage(message.id);
+                               setEditContent(message.content);
+                             }}
+                             className="text-white hover:bg-white/10 cursor-pointer"
+                           >
+                             <Edit3 className="h-4 w-4 mr-2" />
+                             Edit
+                           </DropdownMenuItem>
+                           <DropdownMenuItem
+                             onClick={() => handleDeleteMessage(message.id)}
+                             className="text-red-400 hover:bg-red-400/10 cursor-pointer"
+                           >
+                             <Trash2 className="h-4 w-4 mr-2" />
+                             Delete
+                           </DropdownMenuItem>
+                         </DropdownMenuContent>
+                       </DropdownMenu>
+                     )}
+                     
+                     <div className={`flex items-center gap-1 mt-2 ${isOwn ? 'justify-end' : 'justify-start'}`}>
+                       <motion.span 
+                         className={`text-xs ${isOwn ? 'text-white/80' : 'text-white/60'}`}
+                         initial={{ opacity: 0 }}
+                         animate={{ opacity: 1 }}
+                         transition={{ delay: 0.3 }}
+                       >
+                         {formatTime(message.created_at)}
+                       </motion.span>
+                       {isOwn && (
+                         <motion.div 
+                           className="flex gap-1"
+                           initial={{ opacity: 0, scale: 0 }}
+                           animate={{ opacity: 1, scale: 1 }}
+                           transition={{ delay: 0.4, type: "spring" }}
+                         >
+                           <div className={`w-1 h-1 rounded-full ${
+                             message.delivery_status === 'seen' ? 'bg-blue-400' : 
+                             message.delivery_status === 'delivered' ? 'bg-white/60' :
+                             'bg-white/40'
+                           }`} />
+                           <div className={`w-1 h-1 rounded-full ${
+                             message.delivery_status === 'seen' ? 'bg-blue-400' : 
+                             'bg-white/40'
+                           }`} />
+                          </motion.div>
+                        )}
+                      </div>
+                   </div>
                  </div>
                </motion.div>
             );
@@ -389,13 +541,9 @@ export const ChatArea = ({ conversationId, onShowDetails }: ChatAreaProps) => {
               className="pr-16 bg-white/10 border-white/20 text-white placeholder:text-white/50 focus:border-primary/50 rounded-full"
             />
             
-            <Button
-              variant="ghost"
-              size="icon"
-              className="absolute right-2 top-1/2 transform -translate-y-1/2 text-white/70 hover:text-white"
-            >
-              <Smile className="h-5 w-5" />
-            </Button>
+            <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
+              <EmojiPicker onEmojiSelect={handleEmojiSelect} />
+            </div>
           </div>
 
           {newMessage.trim() ? (

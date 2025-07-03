@@ -13,17 +13,17 @@ export const EmojiPicker = ({ onEmojiSelect }: EmojiPickerProps) => {
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <Button variant="ghost" size="icon" className="h-9 w-9 rounded-full">
-          <Smile className="h-5 w-5 text-muted-foreground" />
+        <Button variant="ghost" size="icon" className="h-9 w-9 rounded-full text-white/70 hover:text-white hover:bg-white/10">
+          <Smile className="h-5 w-5" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-64 p-2">
+      <PopoverContent className="w-64 p-2 holographic-card border-white/20 bg-black/80 backdrop-blur-xl" side="top">
         <div className="grid grid-cols-5 gap-2">
           {COMMON_EMOJIS.map((emoji) => (
             <button
               key={emoji}
               onClick={() => onEmojiSelect(emoji)}
-              className="text-2xl hover:bg-accent/50 p-2 rounded-lg transition-colors"
+              className="text-2xl hover:bg-white/10 p-2 rounded-lg transition-colors"
             >
               {emoji}
             </button>

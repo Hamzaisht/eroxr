@@ -81,7 +81,7 @@ export const MediaUploadDialog = ({ open, onOpenChange, onSendMedia }: MediaUplo
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md holographic-card border-white/20 p-0 overflow-hidden">
+      <DialogContent className="max-w-md holographic-card border-white/20 p-0 overflow-hidden fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-50">
         <div className="absolute inset-0 opacity-30">
           <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-purple-500/10" />
         </div>
