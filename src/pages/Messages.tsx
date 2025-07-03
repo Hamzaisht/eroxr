@@ -23,7 +23,7 @@ const Messages = () => {
   };
 
   return (
-    <div className="relative min-h-screen overflow-hidden">
+    <div className="relative overflow-hidden">
       {/* Quantum Background */}
       <div className="absolute inset-0 quantum-profile-container">
         <div className="neural-mesh" />
@@ -34,7 +34,7 @@ const Messages = () => {
         </div>
       </div>
 
-      <div className="relative z-10 container mx-auto px-4 py-4 max-w-7xl h-screen flex flex-col">
+      <div className="relative z-10 container mx-auto px-4 py-6 max-w-7xl min-h-[calc(100vh-5rem)]">
         <motion.div 
           className="mb-6 text-center"
           initial={{ opacity: 0, y: -30 }}
@@ -46,7 +46,7 @@ const Messages = () => {
         </motion.div>
         
         <motion.div 
-          className="grid lg:grid-cols-3 gap-6 flex-1 min-h-0"
+          className="grid lg:grid-cols-3 gap-6 h-[calc(100vh-12rem)]"
           initial={{ opacity: 0, y: 40 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.3 }}
