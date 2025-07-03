@@ -1,141 +1,76 @@
-
-import ConversationsList from "@/components/messages/ConversationsList";
-import { ChatWindow } from "@/components/messages/ChatWindow";
-import { NewMessageDialog } from "@/components/messages/NewMessageDialog";
-import { useState } from "react";
-import { motion } from "framer-motion";
+import { useState } from 'react';
+import { motion } from 'framer-motion';
+import { ConversationSidebar } from '@/components/messages/ConversationSidebar';
+import { ChatArea } from '@/components/messages/ChatArea';
+import { ChatDetails } from '@/components/messages/ChatDetails';
 
 const Messages = () => {
-  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
-  const [showNewMessageDialog, setShowNewMessageDialog] = useState(false);
-
-  const handleSelectUser = (userId: string) => {
-    setSelectedUserId(userId);
-  };
-
-  const handleNewMessage = () => {
-    setShowNewMessageDialog(true);
-  };
-
-  const handleNewMessageUserSelect = (userId: string) => {
-    setSelectedUserId(userId);
-    setShowNewMessageDialog(false);
-  };
+  const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
+  const [showDetails, setShowDetails] = useState(false);
 
   return (
-    <div className="relative overflow-hidden">
-      {/* Quantum Background */}
-      <div className="absolute inset-0 quantum-profile-container">
-        <div className="neural-mesh" />
-        <div className="floating-elements">
-          <div className="floating-element w-32 h-32 top-20 left-20" style={{ animationDelay: '0s' }} />
-          <div className="floating-element w-24 h-24 top-60 right-32" style={{ animationDelay: '2s' }} />
-          <div className="floating-element w-16 h-16 bottom-40 left-1/3" style={{ animationDelay: '4s' }} />
-        </div>
+    <div className="h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 overflow-hidden">
+      {/* Greek pattern overlay */}
+      <div className="absolute inset-0 opacity-5">
+        <div 
+          className="w-full h-full"
+          style={{
+            backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
+          }}
+        />
       </div>
 
-      <div className="relative z-10 container mx-auto px-4 py-6 max-w-7xl min-h-[calc(100vh-5rem)]">
-        <motion.div 
-          className="mb-6 text-center"
-          initial={{ opacity: 0, y: -30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, ease: "easeOut" }}
-        >
-          <h1 className="text-4xl font-bold gradient-text mb-2">Messages</h1>
-          <p className="text-sm text-white/70">Connect and chat with your friends and community</p>
-        </motion.div>
-        
-        <motion.div 
-          className="grid lg:grid-cols-3 gap-6 h-[calc(100vh-12rem)]"
-          initial={{ opacity: 0, y: 40 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.3 }}
-        >
-          <div className="lg:col-span-1">
-            <ConversationsList 
-              onSelectUser={handleSelectUser}
-              onNewMessage={handleNewMessage}
-              selectedUserId={selectedUserId}
-            />
-          </div>
-          <div className="lg:col-span-2">
-            {selectedUserId ? (
-              <ChatWindow userId={selectedUserId} />
+      <div className="relative z-10 flex h-full">
+        {/* Conversations Sidebar */}
+        <div className="w-80 border-r border-white/10 bg-black/20 backdrop-blur-xl">
+          <ConversationSidebar 
+            selectedConversationId={selectedConversationId}
+            onSelectConversation={setSelectedConversationId}
+          />
+        </div>
+
+        {/* Chat Area */}
+        <div className="flex-1 flex">
+          <div className="flex-1">
+            {selectedConversationId ? (
+              <ChatArea 
+                conversationId={selectedConversationId}
+                onShowDetails={() => setShowDetails(!showDetails)}
+              />
             ) : (
               <motion.div 
-                className="flex items-center justify-center h-full holographic-card relative group"
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.6, delay: 0.5 }}
+                className="h-full flex items-center justify-center bg-black/10"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
               >
-                {/* Ambient glow effect */}
-                <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-purple-500/5 rounded-[20px] blur-xl group-hover:blur-2xl transition-all duration-700" />
-                
-                <div className="relative text-center z-10">
-                  <motion.div
-                    className="relative w-24 h-24 mx-auto mb-8"
-                    whileHover={{ scale: 1.1, rotate: 360 }}
-                    transition={{ type: "spring", stiffness: 300, damping: 20 }}
-                  >
-                    <div className="absolute inset-0 bg-gradient-to-r from-primary via-purple-500 to-primary rounded-full animate-spin-slow opacity-20" />
-                    <div className="absolute inset-2 glass-morphism-extreme rounded-full flex items-center justify-center">
-                      <svg className="w-10 h-10 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                      </svg>
-                    </div>
-                  </motion.div>
-                  
-                  <motion.h3 
-                    className="text-2xl font-semibold text-white mb-3"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 0.8 }}
-                  >
-                    Message Center
-                  </motion.h3>
-                  <motion.p 
-                    className="text-white/60 text-lg leading-relaxed"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 1 }}
-                  >
-                    Select a conversation to start chatting<br />
-                    <span className="text-primary/80">with your friends</span>
-                  </motion.p>
-                  
-                  {/* Floating particles */}
-                  <div className="absolute inset-0 pointer-events-none">
-                    {[...Array(6)].map((_, i) => (
-                      <motion.div
-                        key={i}
-                        className="absolute w-1 h-1 bg-primary/40 rounded-full"
-                        style={{
-                          left: `${20 + i * 15}%`,
-                          top: `${30 + (i % 2) * 40}%`,
-                        }}
-                        animate={{
-                          y: [-10, 10, -10],
-                          opacity: [0.2, 0.8, 0.2]
-                        }}
-                        transition={{
-                          duration: 3 + i * 0.5,
-                          repeat: Infinity,
-                          ease: "easeInOut"
-                        }}
-                      />
-                    ))}
+                <div className="text-center">
+                  <div className="w-32 h-32 mx-auto mb-8 rounded-full bg-gradient-to-br from-primary/20 to-purple-500/20 flex items-center justify-center backdrop-blur-xl border border-white/10">
+                    <svg className="w-16 h-16 text-white/60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                    </svg>
                   </div>
+                  <h3 className="text-2xl font-bold text-white mb-4">Welcome to Eroxr Messages</h3>
+                  <p className="text-white/60 text-lg">Select a conversation to start messaging</p>
                 </div>
               </motion.div>
             )}
           </div>
-        </motion.div>
 
-        <NewMessageDialog 
-          open={showNewMessageDialog}
-          onOpenChange={setShowNewMessageDialog}
-          onSelectUser={handleNewMessageUserSelect}
-        />
+          {/* Chat Details Sidebar */}
+          {showDetails && selectedConversationId && (
+            <motion.div 
+              className="w-80 border-l border-white/10 bg-black/20 backdrop-blur-xl"
+              initial={{ x: 320 }}
+              animate={{ x: 0 }}
+              exit={{ x: 320 }}
+            >
+              <ChatDetails 
+                conversationId={selectedConversationId}
+                onClose={() => setShowDetails(false)}
+              />
+            </motion.div>
+          )}
+        </div>
       </div>
     </div>
   );
