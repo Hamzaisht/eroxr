@@ -41,7 +41,11 @@ export const MessagesList = ({
 
   const scrollToBottom = () => {
     if (!userScrolled) {
-      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+      messagesEndRef.current?.scrollIntoView({ 
+        behavior: 'smooth',
+        block: 'end',
+        inline: 'nearest'
+      });
     }
   };
 
