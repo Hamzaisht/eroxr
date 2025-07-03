@@ -1,0 +1,50 @@
+/* Auto-hiding scrollbars */
+.scrollbar-hidden {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.scrollbar-hidden::-webkit-scrollbar {
+  display: none;
+}
+
+.scrollbar-auto {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
+}
+
+.scrollbar-auto::-webkit-scrollbar {
+  width: 6px;
+}
+
+.scrollbar-auto::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scrollbar-auto::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 3px;
+}
+
+.scrollbar-auto::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.5);
+}
+
+/* Fade out scrollbars after scrolling stops */
+.fade-scrollbar {
+  transition: scrollbar-color 0.3s ease-out;
+}
+
+.fade-scrollbar:not(:hover) {
+  scrollbar-color: transparent transparent;
+}
+
+.fade-scrollbar:not(:hover)::-webkit-scrollbar-thumb {
+  background: transparent;
+  transition: background 0.3s ease-out;
+}
+
+.fade-scrollbar:hover::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.3);
+  transition: background 0.1s ease-in;
+}

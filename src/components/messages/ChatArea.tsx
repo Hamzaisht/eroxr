@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useSession } from '@supabase/auth-helpers-react';
 import { supabase } from '@/integrations/supabase/client';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Phone, Video, Info, Search, MoreVertical, Smile, Paperclip, Mic, Send, Camera, Calendar, Edit3, Trash2 } from 'lucide-react';
+import { Phone, Video, Info, Search, MoreVertical, Smile, Paperclip, Mic, Send, Camera, Calendar, Edit3, Trash2, Heart, HeartOff } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -10,8 +10,10 @@ import { useToast } from '@/hooks/use-toast';
 import { MediaUploadDialog } from './MediaUploadDialog';
 import { VoiceRecorderDialog } from './VoiceRecorderDialog';
 import { BookingDialog } from './BookingDialog';
+import { CameraDialog } from './CameraDialog';
 import { EmojiPicker } from './chat/EmojiPicker';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import '../../styles/scrollbar.css';
 
 interface Message {
   id: string;
@@ -41,6 +43,8 @@ export const ChatArea = ({ conversationId, onShowDetails }: ChatAreaProps) => {
   const [showBookingDialog, setShowBookingDialog] = useState(false);
   const [editingMessage, setEditingMessage] = useState<string | null>(null);
   const [editContent, setEditContent] = useState('');
+  const [savedMessages, setSavedMessages] = useState<Set<string>>(new Set());
+  const [showCameraDialog, setShowCameraDialog] = useState(false);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const session = useSession();
@@ -166,6 +170,40 @@ export const ChatArea = ({ conversationId, onShowDetails }: ChatAreaProps) => {
 
   const handleEmojiSelect = (emoji: string) => {
     setNewMessage(prev => prev + emoji);
+  };
+
+  const isMessageEditable = (message: Message): boolean => {
+    const messageAge = new Date().getTime() - new Date(message.created_at).getTime();
+    const twoHours = 2 * 60 * 60 * 1000;
+    return messageAge < twoHours && message.delivery_status !== 'seen';
+  };
+
+  const isMessageDeletable = (message: Message): boolean => {
+    const messageAge = new Date().getTime() - new Date(message.created_at).getTime();
+    const twentyFourHours = 24 * 60 * 60 * 1000;
+    return messageAge < twentyFourHours;
+  };
+
+  const handleSaveMessage = async (messageId: string) => {
+    const newSavedMessages = new Set(savedMessages);
+    if (savedMessages.has(messageId)) {
+      newSavedMessages.delete(messageId);
+      toast({
+        title: "Message unsaved",
+        description: "Message removed from saved items"
+      });
+    } else {
+      newSavedMessages.add(messageId);
+      toast({
+        title: "Message saved",
+        description: "Message saved to chat"
+      });
+    }
+    setSavedMessages(newSavedMessages);
+  };
+
+  const handleCameraCapture = () => {
+    setShowCameraDialog(true);
   };
 
   const handleEditMessage = async (messageId: string) => {
@@ -311,7 +349,7 @@ export const ChatArea = ({ conversationId, onShowDetails }: ChatAreaProps) => {
       </motion.div>
 
       {/* Messages Area */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+      <div className="flex-1 overflow-y-auto p-4 space-y-4 fade-scrollbar">
         <AnimatePresence>
           {messages.map((message) => {
             const isOwn = message.sender_id === session?.user?.id;
@@ -417,42 +455,58 @@ export const ChatArea = ({ conversationId, onShowDetails }: ChatAreaProps) => {
                        )}
                      </motion.div>
                      
-                     {/* Message Actions - Only show for own messages */}
-                     {isOwn && editingMessage !== message.id && (
-                       <DropdownMenu>
-                         <DropdownMenuTrigger asChild>
-                           <Button
-                             variant="ghost"
-                             size="icon"
-                             className="absolute -right-2 top-0 opacity-0 group-hover:opacity-100 transition-opacity duration-200 text-white/70 hover:text-white hover:bg-white/10 w-8 h-8"
-                           >
-                             <MoreVertical className="h-4 w-4" />
-                           </Button>
-                         </DropdownMenuTrigger>
-                         <DropdownMenuContent 
-                           align="end" 
-                           className="holographic-card border-white/20 bg-black/80 backdrop-blur-xl"
-                         >
-                           <DropdownMenuItem
-                             onClick={() => {
-                               setEditingMessage(message.id);
-                               setEditContent(message.content);
-                             }}
-                             className="text-white hover:bg-white/10 cursor-pointer"
-                           >
-                             <Edit3 className="h-4 w-4 mr-2" />
-                             Edit
-                           </DropdownMenuItem>
-                           <DropdownMenuItem
-                             onClick={() => handleDeleteMessage(message.id)}
-                             className="text-red-400 hover:bg-red-400/10 cursor-pointer"
-                           >
-                             <Trash2 className="h-4 w-4 mr-2" />
-                             Delete
-                           </DropdownMenuItem>
-                         </DropdownMenuContent>
-                       </DropdownMenu>
-                     )}
+                      {/* Message Actions */}
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="absolute -right-2 top-0 opacity-0 group-hover:opacity-100 transition-opacity duration-200 text-white/70 hover:text-white hover:bg-white/10 w-8 h-8"
+                          >
+                            <MoreVertical className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent 
+                          align="end" 
+                          className="z-50 bg-slate-900/95 backdrop-blur-xl border border-white/20 shadow-xl"
+                          sideOffset={8}
+                        >
+                          <DropdownMenuItem
+                            onClick={() => handleSaveMessage(message.id)}
+                            className="text-white hover:bg-white/10 cursor-pointer"
+                          >
+                            {savedMessages.has(message.id) ? (
+                              <HeartOff className="h-4 w-4 mr-2 text-red-400" />
+                            ) : (
+                              <Heart className="h-4 w-4 mr-2 text-pink-400" />
+                            )}
+                            {savedMessages.has(message.id) ? 'Unsave' : 'Save'}
+                          </DropdownMenuItem>
+                          
+                          {isOwn && isMessageEditable(message) && editingMessage !== message.id && (
+                            <DropdownMenuItem
+                              onClick={() => {
+                                setEditingMessage(message.id);
+                                setEditContent(message.content);
+                              }}
+                              className="text-white hover:bg-white/10 cursor-pointer"
+                            >
+                              <Edit3 className="h-4 w-4 mr-2" />
+                              Edit
+                            </DropdownMenuItem>
+                          )}
+                          
+                          {isOwn && isMessageDeletable(message) && (
+                            <DropdownMenuItem
+                              onClick={() => handleDeleteMessage(message.id)}
+                              className="text-red-400 hover:bg-red-400/10 cursor-pointer"
+                            >
+                              <Trash2 className="h-4 w-4 mr-2" />
+                              Delete
+                            </DropdownMenuItem>
+                          )}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                      
                      <div className={`flex items-center gap-1 mt-2 ${isOwn ? 'justify-end' : 'justify-start'}`}>
                        <motion.span 
@@ -528,6 +582,7 @@ export const ChatArea = ({ conversationId, onShowDetails }: ChatAreaProps) => {
             variant="ghost"
             size="icon"
             className="text-white/70 hover:text-white hover:bg-white/10"
+            onClick={handleCameraCapture}
           >
             <Camera className="h-5 w-5" />
           </Button>
@@ -587,6 +642,15 @@ export const ChatArea = ({ conversationId, onShowDetails }: ChatAreaProps) => {
         onSendVoice={(url) => {
           // Handle voice send
           setShowVoiceDialog(false);
+        }}
+      />
+      
+      <CameraDialog 
+        open={showCameraDialog}
+        onOpenChange={setShowCameraDialog}
+        onSendCapture={(captureUrl, type) => {
+          // Handle camera capture send
+          setShowCameraDialog(false);
         }}
       />
       
