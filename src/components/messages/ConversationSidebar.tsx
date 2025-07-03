@@ -39,58 +39,66 @@ export const ConversationSidebar = ({ selectedConversationId, onSelectConversati
     if (!session?.user?.id) return;
 
     const fetchConversations = async () => {
-      // Mock data for now - replace with real Supabase query
-      const mockConversations: Conversation[] = [
-        {
-          id: '1',
-          user: {
-            id: 'user1',
-            username: 'Aphrodite',
-            avatar_url: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=150'
-          },
-          lastMessage: {
-            content: 'Hey! How are you doing today? 💫',
-            created_at: new Date().toISOString(),
-            sender_id: 'user1'
-          },
-          unreadCount: 2,
-          isOnline: true
-        },
-        {
-          id: '2',
-          user: {
-            id: 'user2',
-            username: 'Apollo',
-            avatar_url: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150'
-          },
-          lastMessage: {
-            content: 'That sounds amazing! Let me know when you are free',
-            created_at: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
-            sender_id: session.user.id
-          },
-          unreadCount: 0,
-          isOnline: false
-        },
-        {
-          id: '3',
-          user: {
-            id: 'user3',
-            username: 'Artemis',
-            avatar_url: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150'
-          },
-          lastMessage: {
-            content: 'Perfect! See you tomorrow ✨',
-            created_at: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(),
-            sender_id: 'user3'
-          },
-          unreadCount: 1,
-          isOnline: true
-        }
-      ];
-      setConversations(mockConversations);
+      try {
+        // Get all conversations for this user
+        const { data: messages, error } = await supabase
+          .from('direct_messages')
+          .select(`
+            *,
+            sender:profiles!direct_messages_sender_id_fkey(id, username, avatar_url),
+            recipient:profiles!direct_messages_recipient_id_fkey(id, username, avatar_url)
+          `)
+          .or(`sender_id.eq.${session.user.id},recipient_id.eq.${session.user.id}`)
+          .order('created_at', { ascending: false });
+
+        if (error) throw error;
+
+        // Group messages by conversation partner
+        const conversationMap = new Map();
+        
+        messages?.forEach(message => {
+          const isOwn = message.sender_id === session.user.id;
+          const partner = isOwn ? message.recipient : message.sender;
+          
+          if (!conversationMap.has(partner.id)) {
+            conversationMap.set(partner.id, {
+              id: partner.id,
+              user: partner,
+              lastMessage: message,
+              unreadCount: isOwn ? 0 : 1, // Simple unread logic
+              isOnline: Math.random() > 0.5 // Mock online status for now
+            });
+          }
+        });
+
+        setConversations(Array.from(conversationMap.values()));
+      } catch (error) {
+        console.error('Error fetching conversations:', error);
+      }
     };
 
     fetchConversations();
+
+    // Set up real-time subscription for new messages
+    const channel = supabase
+      .channel('direct_messages')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'direct_messages',
+          filter: `or(sender_id.eq.${session.user.id},recipient_id.eq.${session.user.id})`
+        },
+        () => {
+          fetchConversations(); // Refresh conversations when new message arrives
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [session?.user?.id]);
 
   const filteredConversations = conversations.filter(conv =>

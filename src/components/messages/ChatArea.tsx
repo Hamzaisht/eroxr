@@ -43,51 +43,70 @@ export const ChatArea = ({ conversationId, onShowDetails }: ChatAreaProps) => {
   const { toast } = useToast();
 
   useEffect(() => {
-    // Mock user profile - replace with real data
-    setUserProfile({
-      id: 'user1',
-      username: 'Aphrodite',
-      avatar_url: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=150',
-      isOnline: true,
-      lastSeen: new Date()
-    });
+    if (!conversationId || !session?.user?.id) return;
 
-    // Mock messages - replace with real Supabase query
-    const mockMessages: Message[] = [
-      {
-        id: '1',
-        content: 'Hey! How are you doing today? 💫',
-        created_at: new Date(Date.now() - 1000 * 60 * 60).toISOString(),
-        sender_id: 'user1',
-        recipient_id: session?.user?.id || '',
-        delivery_status: 'seen'
-      },
-      {
-        id: '2',
-        content: 'I am doing great! Just finished an amazing photoshoot. How about you?',
-        created_at: new Date(Date.now() - 1000 * 60 * 45).toISOString(),
-        sender_id: session?.user?.id || '',
-        recipient_id: 'user1',
-        delivery_status: 'seen'
-      },
-      {
-        id: '3',
-        content: 'That sounds amazing! I would love to see some of the photos',
-        created_at: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
-        sender_id: 'user1',
-        recipient_id: session?.user?.id || '',
-        delivery_status: 'seen'
-      },
-      {
-        id: '4',
-        content: 'Sure! Let me share a few with you. They turned out really beautiful ✨',
-        created_at: new Date(Date.now() - 1000 * 60 * 25).toISOString(),
-        sender_id: session?.user?.id || '',
-        recipient_id: 'user1',
-        delivery_status: 'delivered'
+    const fetchUserProfile = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('id, username, avatar_url')
+          .eq('id', conversationId)
+          .single();
+
+        if (error) throw error;
+        setUserProfile({
+          ...data,
+          isOnline: Math.random() > 0.5, // Mock online status
+          lastSeen: new Date()
+        });
+      } catch (error) {
+        console.error('Error fetching user profile:', error);
       }
-    ];
-    setMessages(mockMessages);
+    };
+
+    const fetchMessages = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('direct_messages')
+          .select('*')
+          .or(`and(sender_id.eq.${session.user.id},recipient_id.eq.${conversationId}),and(sender_id.eq.${conversationId},recipient_id.eq.${session.user.id})`)
+          .order('created_at', { ascending: true });
+
+        if (error) throw error;
+        setMessages(data || []);
+      } catch (error) {
+        console.error('Error fetching messages:', error);
+      }
+    };
+
+    fetchUserProfile();
+    fetchMessages();
+  }, [conversationId, session?.user?.id]);
+
+  // Real-time message subscription
+  useEffect(() => {
+    if (!conversationId || !session?.user?.id) return;
+
+    const channel = supabase
+      .channel(`chat-${conversationId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'direct_messages',
+          filter: `or(and(sender_id.eq.${session.user.id},recipient_id.eq.${conversationId}),and(sender_id.eq.${conversationId},recipient_id.eq.${session.user.id}))`
+        },
+        (payload) => {
+          const newMessage = payload.new as Message;
+          setMessages(prev => [...prev, newMessage]);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [conversationId, session?.user?.id]);
 
   useEffect(() => {
@@ -99,43 +118,36 @@ export const ChatArea = ({ conversationId, onShowDetails }: ChatAreaProps) => {
   };
 
   const sendMessage = async () => {
-    if (!newMessage.trim() || sending) return;
+    if (!newMessage.trim() || sending || !session?.user?.id) return;
 
     setSending(true);
     const messageContent = newMessage;
     setNewMessage('');
 
-    // Optimistic update
-    const optimisticMessage: Message = {
-      id: Date.now().toString(),
-      content: messageContent,
-      created_at: new Date().toISOString(),
-      sender_id: session?.user?.id || '',
-      recipient_id: userProfile?.id || '',
-      delivery_status: 'sending'
-    };
-
-    setMessages(prev => [...prev, optimisticMessage]);
+    // Add typing animation
+    setIsTyping(true);
+    setTimeout(() => setIsTyping(false), 500);
 
     try {
-      // Replace with real Supabase insert
-      await new Promise(resolve => setTimeout(resolve, 1000)); // Mock delay
-      
-      // Update message status
-      setMessages(prev => prev.map(msg => 
-        msg.id === optimisticMessage.id 
-          ? { ...msg, delivery_status: 'sent' }
-          : msg
-      ));
+      const { error } = await supabase
+        .from('direct_messages')
+        .insert({
+          content: messageContent,
+          sender_id: session.user.id,
+          recipient_id: conversationId,
+          message_type: 'text'
+        });
+
+      if (error) throw error;
+
+      // Message will be added via real-time subscription
     } catch (error) {
+      console.error('Error sending message:', error);
       toast({
         title: "Failed to send message",
         description: "Please try again",
         variant: "destructive"
       });
-      
-      // Remove failed message
-      setMessages(prev => prev.filter(msg => msg.id !== optimisticMessage.id));
     } finally {
       setSending(false);
     }
@@ -236,55 +248,91 @@ export const ChatArea = ({ conversationId, onShowDetails }: ChatAreaProps) => {
             return (
               <motion.div
                 key={message.id}
-                initial={{ opacity: 0, y: 20, scale: 0.95 }}
+                initial={{ opacity: 0, y: 20, scale: 0.8 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: -20, scale: 0.95 }}
+                exit={{ opacity: 0, y: -20, scale: 0.8 }}
+                transition={{ 
+                  type: "spring", 
+                  stiffness: 500, 
+                  damping: 30,
+                  mass: 0.8 
+                }}
+                whileHover={{ scale: 1.02 }}
                 className={`flex ${isOwn ? 'justify-end' : 'justify-start'}`}
               >
                 <div className={`max-w-xs lg:max-w-md ${isOwn ? 'order-2' : 'order-1'}`}>
                   {!isOwn && (
-                    <div className="flex items-center gap-2 mb-1">
+                    <motion.div 
+                      className="flex items-center gap-2 mb-1"
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.1 }}
+                    >
                       <Avatar className="h-6 w-6">
                         <AvatarImage src={userProfile?.avatar_url} />
                         <AvatarFallback className="text-xs bg-primary/20">
                           {userProfile?.username?.[0]?.toUpperCase()}
                         </AvatarFallback>
                       </Avatar>
-                      <span className="text-xs text-white/60">{userProfile?.username}</span>
-                    </div>
+                       <span className="text-xs text-white/60">{userProfile?.username}</span>
+                     </motion.div>
                   )}
                   
-                  <div
-                    className={`px-4 py-3 rounded-2xl ${
+                  <motion.div
+                    className={`px-4 py-3 rounded-2xl relative overflow-hidden group ${
                       isOwn
-                        ? 'bg-gradient-to-r from-primary to-purple-500 text-white rounded-br-lg'
+                        ? 'bg-gradient-to-r from-primary to-purple-500 text-white rounded-br-lg shadow-lg shadow-primary/30'
                         : 'bg-white/10 backdrop-blur-xl text-white border border-white/20 rounded-bl-lg'
                     }`}
+                    whileHover={{ 
+                      scale: 1.02,
+                      transition: { type: "spring", stiffness: 400, damping: 17 }
+                    }}
+                    whileTap={{ scale: 0.98 }}
                   >
-                    <p className="text-sm leading-relaxed">{message.content}</p>
+                    {/* Shimmer effect on hover */}
+                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-out" />
+                    
+                    <motion.p 
+                      className="text-sm leading-relaxed relative z-10"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ delay: 0.2 }}
+                    >
+                      {message.content}
+                    </motion.p>
                     
                     <div className={`flex items-center gap-1 mt-2 ${isOwn ? 'justify-end' : 'justify-start'}`}>
-                      <span className={`text-xs ${isOwn ? 'text-white/80' : 'text-white/60'}`}>
+                      <motion.span 
+                        className={`text-xs ${isOwn ? 'text-white/80' : 'text-white/60'}`}
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ delay: 0.3 }}
+                      >
                         {formatTime(message.created_at)}
-                      </span>
+                      </motion.span>
                       {isOwn && (
-                        <div className="flex gap-1">
-                          <div className={`w-1 h-1 rounded-full ${
-                            message.delivery_status === 'seen' ? 'bg-blue-400' : 
-                            message.delivery_status === 'delivered' ? 'bg-white/60' :
-                            message.delivery_status === 'sent' ? 'bg-white/60' : 'bg-white/40'
-                          }`} />
+                        <motion.div 
+                          className="flex gap-1"
+                          initial={{ opacity: 0, scale: 0 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          transition={{ delay: 0.4, type: "spring" }}
+                        >
                           <div className={`w-1 h-1 rounded-full ${
                             message.delivery_status === 'seen' ? 'bg-blue-400' : 
                             message.delivery_status === 'delivered' ? 'bg-white/60' :
                             'bg-white/40'
                           }`} />
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </motion.div>
+                          <div className={`w-1 h-1 rounded-full ${
+                            message.delivery_status === 'seen' ? 'bg-blue-400' : 
+                            'bg-white/40'
+                          }`} />
+                         </motion.div>
+                       )}
+                     </div>
+                   </motion.div>
+                 </div>
+               </motion.div>
             );
           })}
         </AnimatePresence>
