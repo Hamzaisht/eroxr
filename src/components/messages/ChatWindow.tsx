@@ -315,7 +315,7 @@ export const ChatWindow = ({ userId }: ChatWindowProps) => {
   }
 
   return (
-    <div className="flex flex-col h-full holographic-card relative overflow-hidden group">
+    <div className="flex flex-col h-screen holographic-card relative overflow-hidden group">
       {/* Quantum background effects */}
       <div className="absolute inset-0 opacity-20">
         <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-purple-500/10" />
