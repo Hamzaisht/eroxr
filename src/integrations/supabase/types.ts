@@ -506,6 +506,7 @@ export type Database = {
         Row: {
           about_me: string | null
           age_range: unknown
+          avatar_url: string | null
           body_type: string | null
           city: string
           click_count: number | null
@@ -537,12 +538,14 @@ export type Database = {
           updated_at: string | null
           user_id: string | null
           user_type: string
+          video_url: string | null
           view_count: number | null
           views_count: number | null
         }
         Insert: {
           about_me?: string | null
           age_range: unknown
+          avatar_url?: string | null
           body_type?: string | null
           city: string
           click_count?: number | null
@@ -574,12 +577,14 @@ export type Database = {
           updated_at?: string | null
           user_id?: string | null
           user_type: string
+          video_url?: string | null
           view_count?: number | null
           views_count?: number | null
         }
         Update: {
           about_me?: string | null
           age_range?: unknown
+          avatar_url?: string | null
           body_type?: string | null
           city?: string
           click_count?: number | null
@@ -611,6 +616,7 @@ export type Database = {
           updated_at?: string | null
           user_id?: string | null
           user_type?: string
+          video_url?: string | null
           view_count?: number | null
           views_count?: number | null
         }
