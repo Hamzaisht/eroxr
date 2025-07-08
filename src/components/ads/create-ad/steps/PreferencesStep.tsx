@@ -5,7 +5,23 @@ import { StepProps } from '../types';
 import { Heart, Users, Star, Coffee, Music, Camera, Gamepad2, Book, Plane, Dumbbell } from 'lucide-react';
 
 const LOOKING_FOR_OPTIONS = [
-  'Casual Dating', 'Serious Relationship', 'Friends', 'Networking', 'Travel Partner', 'Activity Partner'
+  'Female Looking for Male (F4M)',
+  'Male Looking for Couple (M4MF)', 
+  'Female Looking for Couple (F4MF)',
+  'Looking for Female (F)',
+  'Couple Looking for Threesome (MF4M)',
+  'Couple Looking for Threesome (MF4F)',
+  'Looking for Anyone (A)',
+  'Couple looking for Couple (MF4MF)',
+  'Couple looking for orgy (MF4MF+)',
+  'Couple looking for Audience (MF4AU)',
+  'Male looking for Male (M4M)',
+  'Female looking for Female (F4F)',
+  'Female looking for Massage',
+  'Female looking for Audience (online/offline)',
+  'Couple looking for Audience (Online/Offline)',
+  'Male looking for Audience (online/offline)',
+  'Other Looking for Other'
 ];
 
 const INTEREST_OPTIONS = [
