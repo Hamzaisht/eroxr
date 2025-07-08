@@ -134,8 +134,8 @@ export const GridViewMode = ({
         style={{ minHeight: '200px' }}
       >
         {visibleAds.map((ad, index) => {
-          // Create a unique key that doesn't conflict
-          const uniqueKey = ad.id || `temp-ad-${index}-${Date.now()}`;
+          // Create a truly unique key combining id, index and a random component
+          const uniqueKey = `${ad.id || 'no-id'}-${index}-${ad.created_at || 'no-date'}`;
           return (
             <div key={uniqueKey} ref={index === visibleAds.length - 4 ? lastElementRef : undefined}>
               <GridItem 

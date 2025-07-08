@@ -63,8 +63,11 @@ export const AdActions = ({ ad }: AdActionsProps) => {
   };
 
   const handleEdit = () => {
-    // Navigate to edit page
-    window.location.href = `/dating/edit/${ad.id}`;
+    // For now, show a toast indicating edit functionality will be available
+    toast({
+      title: "Edit functionality",
+      description: "Edit functionality will be available soon!",
+    });
   };
 
   const handleRetryDelete = () => {

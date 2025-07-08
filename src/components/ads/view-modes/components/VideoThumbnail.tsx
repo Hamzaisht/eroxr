@@ -53,7 +53,7 @@ export const VideoThumbnail = ({ videoUrl, isHovered, isMobile, className = "" }
             <Play className="w-8 h-8 text-luxury-neutral" />
           </div>
           <p className="text-luxury-neutral text-sm font-medium">Video Preview</p>
-          <p className="text-luxury-neutral/70 text-xs">Hover to play</p>
+          <p className="text-luxury-neutral/70 text-xs">Click to view profile</p>
         </div>
       )}
     </div>

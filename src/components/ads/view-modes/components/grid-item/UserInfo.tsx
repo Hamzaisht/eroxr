@@ -32,9 +32,9 @@ export const UserInfo = ({ ad }: UserInfoProps) => {
     <div className="flex items-center justify-between">
       <div className="flex items-center space-x-2">
         <Avatar className="h-8 w-8 border border-luxury-primary/20">
-          <AvatarImage src={ad.avatarUrl || ad.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${ad.title}&backgroundColor=6366f1`} />
+          <AvatarImage src={ad.avatarUrl || ad.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(ad.title || 'User')}&backgroundColor=6366f1`} />
           <AvatarFallback className="bg-luxury-darker text-luxury-neutral">
-            {ad.title?.charAt(0).toUpperCase() || ad.username?.charAt(0).toUpperCase() || '?'}
+            {ad.title?.charAt(0).toUpperCase() || ad.username?.charAt(0).toUpperCase() || 'U'}
           </AvatarFallback>
         </Avatar>
         <div>
