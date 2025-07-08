@@ -20,11 +20,11 @@ export const BasicInfoStep = ({ data, updateData, onNext }: StepProps) => {
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: -20 }}
       transition={{ duration: 0.5 }}
-      className="space-y-8"
+      className="space-y-6"
     >
-      <div className="text-center space-y-4">
+      <div className="text-center space-y-2">
         <motion.h2 
-          className="text-4xl font-bold bg-gradient-to-r from-white via-purple-200 to-pink-200 bg-clip-text text-transparent"
+          className="text-3xl font-bold bg-gradient-to-r from-white via-purple-200 to-pink-200 bg-clip-text text-transparent"
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
@@ -32,7 +32,7 @@ export const BasicInfoStep = ({ data, updateData, onNext }: StepProps) => {
           Tell us about yourself
         </motion.h2>
         <motion.p 
-          className="text-lg text-white/70"
+          className="text-base text-white/70"
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
@@ -41,10 +41,10 @@ export const BasicInfoStep = ({ data, updateData, onNext }: StepProps) => {
         </motion.p>
       </div>
 
-      <div className="grid gap-6">
+      <div className="grid gap-4">
         {/* Title Field */}
         <GlassmorphicCard variant="gradient" hoverable>
-          <div className="p-6 space-y-3">
+          <div className="p-4 space-y-2">
             <Label htmlFor="title" className="text-white/90 font-medium flex items-center gap-2">
               <User className="w-4 h-4" />
               Profile Title
@@ -61,7 +61,7 @@ export const BasicInfoStep = ({ data, updateData, onNext }: StepProps) => {
 
         {/* Description Field */}
         <GlassmorphicCard variant="gradient" hoverable>
-          <div className="p-6 space-y-3">
+          <div className="p-4 space-y-2">
             <Label htmlFor="description" className="text-white/90 font-medium">
               About You
             </Label>
@@ -70,16 +70,16 @@ export const BasicInfoStep = ({ data, updateData, onNext }: StepProps) => {
               value={data.description}
               onChange={(e) => updateData({ description: e.target.value })}
               placeholder="Share what makes you unique and what you're looking for..."
-              rows={4}
+              rows={3}
               className="bg-white/10 border-white/20 text-white placeholder:text-white/50 focus:border-purple-400 focus:ring-purple-400/30 transition-all duration-300 resize-none"
             />
           </div>
         </GlassmorphicCard>
 
         {/* Location and Age Row */}
-        <div className="grid md:grid-cols-2 gap-6">
+        <div className="grid md:grid-cols-2 gap-4">
           <GlassmorphicCard variant="gradient" hoverable>
-            <div className="p-6 space-y-3">
+            <div className="p-4 space-y-2">
               <Label htmlFor="location" className="text-white/90 font-medium flex items-center gap-2">
                 <MapPin className="w-4 h-4" />
                 Location
@@ -95,7 +95,7 @@ export const BasicInfoStep = ({ data, updateData, onNext }: StepProps) => {
           </GlassmorphicCard>
 
           <GlassmorphicCard variant="gradient" hoverable>
-            <div className="p-6 space-y-3">
+            <div className="p-4 space-y-2">
               <Label htmlFor="age" className="text-white/90 font-medium flex items-center gap-2">
                 <Calendar className="w-4 h-4" />
                 Age
@@ -117,9 +117,9 @@ export const BasicInfoStep = ({ data, updateData, onNext }: StepProps) => {
         </div>
 
         {/* Personal Details Row */}
-        <div className="grid md:grid-cols-3 gap-6">
+        <div className="grid md:grid-cols-3 gap-4">
           <GlassmorphicCard variant="gradient" hoverable>
-            <div className="p-6 space-y-3">
+            <div className="p-4 space-y-2">
               <Label className="text-white/90 font-medium">Gender</Label>
               <Select value={data.gender} onValueChange={(value: any) => updateData({ gender: value })}>
                 <SelectTrigger className="bg-white/10 border-white/20 text-white focus:border-purple-400 focus:ring-purple-400/30">
@@ -136,7 +136,7 @@ export const BasicInfoStep = ({ data, updateData, onNext }: StepProps) => {
           </GlassmorphicCard>
 
           <GlassmorphicCard variant="gradient" hoverable>
-            <div className="p-6 space-y-3">
+            <div className="p-4 space-y-2">
               <Label className="text-white/90 font-medium">Body Type</Label>
               <Select value={data.bodyType} onValueChange={(value: any) => updateData({ bodyType: value })}>
                 <SelectTrigger className="bg-white/10 border-white/20 text-white focus:border-purple-400 focus:ring-purple-400/30">
@@ -154,7 +154,7 @@ export const BasicInfoStep = ({ data, updateData, onNext }: StepProps) => {
           </GlassmorphicCard>
 
           <GlassmorphicCard variant="gradient" hoverable>
-            <div className="p-6 space-y-3">
+            <div className="p-4 space-y-2">
               <Label className="text-white/90 font-medium">Relationship Status</Label>
               <Select value={data.relationshipStatus} onValueChange={(value: any) => updateData({ relationshipStatus: value })}>
                 <SelectTrigger className="bg-white/10 border-white/20 text-white focus:border-purple-400 focus:ring-purple-400/30">
@@ -174,7 +174,7 @@ export const BasicInfoStep = ({ data, updateData, onNext }: StepProps) => {
 
       {/* Next Button */}
       <motion.div 
-        className="flex justify-end pt-6"
+        className="flex justify-end pt-4"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.5 }}
@@ -182,7 +182,7 @@ export const BasicInfoStep = ({ data, updateData, onNext }: StepProps) => {
         <motion.button
           onClick={handleNext}
           disabled={!data.title || !data.description || !data.location || !data.age}
-          className="px-8 py-4 bg-gradient-to-r from-purple-500 to-pink-500 text-white font-semibold rounded-2xl disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 hover:shadow-[0_0_30px_rgba(139,92,246,0.5)] hover:scale-105"
+          className="px-6 py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white font-semibold rounded-xl disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 hover:shadow-[0_0_20px_rgba(139,92,246,0.5)] hover:scale-105"
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
         >

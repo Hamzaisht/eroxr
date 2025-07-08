@@ -61,8 +61,8 @@ export const CreateAdDialog = ({ open, onOpenChange, onSuccess }: CreateAdDialog
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-6xl max-h-[95vh] p-0 bg-transparent border-none overflow-hidden">
-        <div className="relative min-h-[90vh] w-full">
+      <DialogContent className="max-w-5xl h-[90vh] p-0 bg-transparent border-none overflow-hidden">
+        <div className="relative h-full w-full flex flex-col">
           {/* Animated Background */}
           <AnimatedBackground />
           
@@ -70,16 +70,16 @@ export const CreateAdDialog = ({ open, onOpenChange, onSuccess }: CreateAdDialog
           <div className="relative z-10 flex flex-col h-full">
             {/* Header */}
             <motion.div 
-              className="flex items-center justify-between p-8 pb-4"
+              className="flex items-center justify-between p-6 pb-3"
               initial={{ opacity: 0, y: -20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
             >
               <div>
-                <h1 className="text-3xl font-bold bg-gradient-to-r from-white via-purple-200 to-pink-200 bg-clip-text text-transparent">
+                <h1 className="text-2xl font-bold bg-gradient-to-r from-white via-purple-200 to-pink-200 bg-clip-text text-transparent">
                   Create Your Dating Profile
                 </h1>
-                <p className="text-white/60 mt-1">Step {currentStep + 1} of {totalSteps}</p>
+                <p className="text-white/60 mt-1 text-sm">Step {currentStep + 1} of {totalSteps}</p>
               </div>
               
               <motion.button
@@ -94,12 +94,12 @@ export const CreateAdDialog = ({ open, onOpenChange, onSuccess }: CreateAdDialog
 
             {/* Progress Bar */}
             <motion.div 
-              className="px-8 pb-6"
+              className="px-6 pb-3"
               initial={{ opacity: 0, scaleX: 0 }}
               animate={{ opacity: 1, scaleX: 1 }}
               transition={{ duration: 0.7, delay: 0.2 }}
             >
-              <div className="w-full h-2 bg-white/10 rounded-full overflow-hidden backdrop-blur-xl">
+              <div className="w-full h-1.5 bg-white/10 rounded-full overflow-hidden backdrop-blur-xl">
                 <motion.div
                   className="h-full bg-gradient-to-r from-purple-500 to-pink-500 rounded-full"
                   initial={{ width: 0 }}
@@ -107,7 +107,7 @@ export const CreateAdDialog = ({ open, onOpenChange, onSuccess }: CreateAdDialog
                   transition={{ duration: 0.5, ease: "easeOut" }}
                 />
               </div>
-              <div className="flex justify-between mt-2 text-sm text-white/50">
+              <div className="flex justify-between mt-1 text-xs text-white/50">
                 <span>Getting Started</span>
                 <span>{getProgress()}% Complete</span>
                 <span>Ready to Launch</span>
@@ -115,7 +115,7 @@ export const CreateAdDialog = ({ open, onOpenChange, onSuccess }: CreateAdDialog
             </motion.div>
 
             {/* Step Indicator */}
-            <div className="px-8">
+            <div className="px-6 pb-4">
               <StepIndicator 
                 currentStep={currentStep} 
                 totalSteps={totalSteps} 
@@ -124,7 +124,7 @@ export const CreateAdDialog = ({ open, onOpenChange, onSuccess }: CreateAdDialog
             </div>
 
             {/* Step Content */}
-            <div className="flex-1 px-8 pb-8 overflow-y-auto">
+            <div className="flex-1 px-6 overflow-y-auto min-h-0">
               <AnimatePresence mode="wait">
                 <motion.div
                   key={currentStep}
@@ -140,7 +140,7 @@ export const CreateAdDialog = ({ open, onOpenChange, onSuccess }: CreateAdDialog
 
             {/* Navigation */}
             <motion.div 
-              className="flex items-center justify-between p-8 pt-4 border-t border-white/10"
+              className="flex items-center justify-between p-6 pt-3 border-t border-white/10 mt-auto"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3 }}

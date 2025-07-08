@@ -13,7 +13,7 @@ const stepTitles = ['Basic Info', 'Preferences', 'Media', 'Review'];
 
 export const StepIndicator = ({ currentStep, totalSteps, onStepClick }: StepIndicatorProps) => {
   return (
-    <div className="flex items-center justify-center space-x-8 mb-12">
+    <div className="flex items-center justify-center space-x-6 mb-6">
       {Array.from({ length: totalSteps }).map((_, index) => {
         const Icon = stepIcons[index];
         const isCompleted = index < currentStep;
@@ -23,7 +23,7 @@ export const StepIndicator = ({ currentStep, totalSteps, onStepClick }: StepIndi
         return (
           <motion.div
             key={index}
-            className="flex flex-col items-center space-y-3"
+            className="flex flex-col items-center space-y-2"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: index * 0.1 }}
@@ -33,7 +33,7 @@ export const StepIndicator = ({ currentStep, totalSteps, onStepClick }: StepIndi
               onClick={() => isClickable && onStepClick(index)}
               disabled={!isClickable}
               className={cn(
-                "relative flex items-center justify-center w-16 h-16 rounded-full border-2 transition-all duration-300",
+                "relative flex items-center justify-center w-12 h-12 rounded-full border-2 transition-all duration-300",
                 isCompleted 
                   ? "bg-gradient-to-r from-purple-500 to-pink-500 border-purple-400 text-white" 
                   : isCurrent
@@ -60,10 +60,10 @@ export const StepIndicator = ({ currentStep, totalSteps, onStepClick }: StepIndi
                   animate={{ scale: 1 }}
                   transition={{ type: "spring", stiffness: 500, damping: 30 }}
                 >
-                  <Check className="w-6 h-6" />
+                  <Check className="w-4 h-4" />
                 </motion.div>
               ) : (
-                <Icon className="w-6 h-6" />
+                <Icon className="w-4 h-4" />
               )}
               
               {/* Ripple effect on click */}
@@ -92,7 +92,7 @@ export const StepIndicator = ({ currentStep, totalSteps, onStepClick }: StepIndi
             {/* Progress line to next step */}
             {index < totalSteps - 1 && (
               <motion.div
-                className="absolute top-8 left-20 w-16 h-0.5 -z-10"
+                className="absolute top-6 left-14 w-12 h-0.5 -z-10"
                 initial={{ scaleX: 0 }}
                 animate={{ 
                   scaleX: isCompleted ? 1 : 0,
