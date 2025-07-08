@@ -3,7 +3,7 @@ import { useState, useEffect, useMemo } from "react";
 import { DatingFiltersPanel } from "../components/dating/DatingFiltersPanel";
 import { DatingContent } from "../components/dating/DatingContent";
 import { DatingHeader } from "../components/dating/DatingHeader";
-import { CreateDatingAdDialog } from "../components/ads/dating/CreateDatingAdDialog";
+import { CreateBodyContactDialog } from "../components/ads/body-contact/CreateBodyContactDialog";
 import { DatingAd } from "@/types/dating";
 import { useToast } from "@/hooks/use-toast";
 
@@ -345,11 +345,11 @@ export default function DatingMainContent(props: any) {
       </div>
 
       {/* Create Ad Dialog */}
-      <CreateDatingAdDialog 
-        isOpen={showCreateAdDialog}
-        onClose={() => setShowCreateAdDialog(false)}
-        onAdCreationSuccess={handleAdCreationSuccess}
-      />
+      {showCreateAdDialog && (
+        <CreateBodyContactDialog 
+          onSuccess={handleAdCreationSuccess}
+        />
+      )}
     </div>
   );
 }
