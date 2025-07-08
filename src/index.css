@@ -153,6 +153,30 @@
   border: 2px solid white;
 }
 
+/* Custom Scrollbar for Create Ad Dialog */
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(139, 92, 246, 0.5) transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: linear-gradient(to bottom, rgb(139, 92, 246), rgb(236, 72, 153));
+  border-radius: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(to bottom, rgb(124, 58, 237), rgb(219, 39, 119));
+}
+
 .slider::-moz-range-track {
   background: rgba(255, 255, 255, 0.2);
   height: 8px;

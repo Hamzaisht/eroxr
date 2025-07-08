@@ -2,6 +2,9 @@ import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { AnimatedBackground } from './components/AnimatedBackground';
 import { StepIndicator } from './components/StepIndicator';
 import { BasicInfoStep } from './steps/BasicInfoStep';
+import { PreferencesStep } from './steps/PreferencesStep';
+import { MediaStep } from './steps/MediaStep';
+import { ReviewStep } from './steps/ReviewStep';
 import { useCreateAdForm } from './hooks/useCreateAdForm';
 import { CreateAdDialogProps } from './types';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -49,11 +52,11 @@ export const CreateAdDialog = ({ open, onOpenChange, onSuccess }: CreateAdDialog
       case 0:
         return <BasicInfoStep {...stepProps} />;
       case 1:
-        return <div className="text-white text-center py-20">Preferences Step - Coming Soon</div>;
+        return <PreferencesStep {...stepProps} />;
       case 2:
-        return <div className="text-white text-center py-20">Media Step - Coming Soon</div>;
+        return <MediaStep {...stepProps} />;
       case 3:
-        return <div className="text-white text-center py-20">Review Step - Coming Soon</div>;
+        return <ReviewStep {...stepProps} isSubmitting={isSubmitting} onSubmit={() => submitForm(handleSuccess)} />;
       default:
         return <BasicInfoStep {...stepProps} />;
     }
@@ -124,7 +127,7 @@ export const CreateAdDialog = ({ open, onOpenChange, onSuccess }: CreateAdDialog
             </div>
 
             {/* Step Content */}
-            <div className="flex-1 px-6 overflow-y-auto min-h-0">
+            <div className="flex-1 px-6 overflow-y-auto min-h-0 custom-scrollbar">
               <AnimatePresence mode="wait">
                 <motion.div
                   key={currentStep}
