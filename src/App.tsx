@@ -14,6 +14,7 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Home from "./pages/Home";
 import Profile from "./pages/Profile";
+import Dating from "./pages/Dating";
 import Messages from "./pages/Messages";
 import { MainLayout } from "@/components/layout/MainLayout";
 
@@ -35,6 +36,7 @@ const App = () => (
                   <Route path="/register" element={<Register />} />
                   <Route element={<MainLayout />}>
                     <Route path="/home" element={<Home />} />
+                    <Route path="/dating" element={<Dating />} />
                     <Route path="/messages" element={<Messages />} />
                     <Route path="/profile" element={<Profile />} />
                     <Route path="/profile/:userId" element={<Profile />} />
