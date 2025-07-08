@@ -250,7 +250,7 @@ export function DatingFiltersPanel({
                   <SelectValue placeholder="Select city" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Any city</SelectItem>
+                  <SelectItem value="any">Any city</SelectItem>
                   <SelectItem value="Copenhagen">Copenhagen</SelectItem>
                   <SelectItem value="Stockholm">Stockholm</SelectItem>
                   <SelectItem value="Oslo">Oslo</SelectItem>
