@@ -3,7 +3,7 @@ import { useState, useEffect, useMemo } from "react";
 import { DatingFiltersPanel } from "../components/dating/DatingFiltersPanel";
 import { DatingContent } from "../components/dating/DatingContent";
 import { DatingHeader } from "../components/dating/DatingHeader";
-// import { CreateBodyContactDialog } from "../components/ads/body-contact/CreateBodyContactDialog"; // REMOVED - to be rebuilt
+import { CreateAdDialog } from "../components/ads/create-ad";
 import { DatingAd } from "@/types/dating";
 import { useToast } from "@/hooks/use-toast";
 
@@ -344,12 +344,12 @@ export default function DatingMainContent(props: any) {
         </div>
       </div>
 
-      {/* Create Ad Dialog - TO BE REBUILT */}
-      {showCreateAdDialog && (
-        <div>
-          <p>Create Ad Dialog - Coming Soon (to be rebuilt from scratch)</p>
-        </div>
-      )}
+      {/* Create Ad Dialog - NEW FUTURISTIC VERSION */}
+      <CreateAdDialog 
+        open={showCreateAdDialog}
+        onOpenChange={setShowCreateAdDialog}
+        onSuccess={handleAdCreationSuccess}
+      />
     </div>
   );
 }
