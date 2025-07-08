@@ -6,6 +6,7 @@ import { DatingHeader } from "../components/dating/DatingHeader";
 import { CreateAdDialog } from "../components/ads/create-ad";
 import { DatingAd } from "@/types/dating";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 export interface DatingFiltersPanelProps {
   // Define all required props to match what's being passed
@@ -82,9 +83,39 @@ export default function DatingMainContent(props: any) {
   const fetchDatingAds = async () => {
     setIsLoading(true);
     try {
-      // Simulate fetching dating ads from an API
-      const ads = await simulateApiCall();
-      setDatingAds(ads);
+      const { data: ads, error } = await supabase
+        .from('dating_ads')
+        .select('*')
+        .eq('is_active', true)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error("Supabase error:", error);
+        throw error;
+      }
+
+      // Transform the data to match the DatingAd interface
+      const transformedAds = ads?.map(ad => ({
+        id: ad.id,
+        user_id: ad.user_id,
+        title: ad.title,
+        description: ad.description,
+        username: `User${ad.user_id?.slice(-4)}`, // Placeholder username
+        avatarUrl: "https://source.unsplash.com/random/50x50", // Placeholder avatar
+        videoUrl: "", // Placeholder video
+        isVerified: false,
+        isPremium: false,
+        views: ad.view_count || 0,
+        tags: ad.tags || [],
+        location: ad.city,
+        age: ad.age_range ? parseInt(ad.age_range.split(',')[0].replace('[', '')) : 25,
+        gender: ad.user_type,
+        seeking: ad.looking_for || [],
+        country: ad.country,
+        city: ad.city,
+      })) || [];
+
+      setDatingAds(transformedAds);
     } catch (error) {
       console.error("Failed to fetch dating ads:", error);
       toast({
@@ -189,73 +220,6 @@ export default function DatingMainContent(props: any) {
     });
   }, [datingAds, selectedGender, minAge, maxAge, selectedLookingFor, selectedTag, selectedCity, selectedVerified, selectedPremium]);
 
-  // Simulate API call for dating ads
-  const simulateApiCall = (): Promise<DatingAd[]> => {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        const ads: DatingAd[] = [
-          {
-            id: "1",
-            user_id: "101",
-            title: "Adventurous soul seeking companion",
-            description: "Love hiking, travel, and trying new things. Looking for someone to share adventures with.",
-            username: "AdventureLover",
-            avatarUrl: "https://source.unsplash.com/random/50x50",
-            videoUrl: "https://sample-videos.com/video123.mp4",
-            isVerified: true,
-            isPremium: false,
-            views: 1234,
-            tags: ["travel", "hiking", "adventure"],
-            location: "Copenhagen",
-            age: 32,
-            gender: "female",
-            seeking: ["male"],
-            country: "denmark",
-            city: "Copenhagen",
-          },
-          {
-            id: "2",
-            user_id: "102",
-            title: "Looking for serious relationship",
-            description: "I enjoy cozy nights in, reading, and deep conversations. Seeking a partner for a long-term relationship.",
-            username: "Bookworm88",
-            avatarUrl: "https://source.unsplash.com/random/51x51",
-            videoUrl: "https://sample-videos.com/video123.mp4",
-            isVerified: true,
-            isPremium: true,
-            views: 5678,
-            tags: ["reading", "cozy", "serious"],
-            location: "Stockholm",
-            age: 28,
-            gender: "male",
-            seeking: ["female"],
-            country: "sweden",
-            city: "Stockholm",
-          },
-          {
-            id: "3",
-            user_id: "103",
-            title: "Fun-loving and outgoing",
-            description: "I'm a social butterfly who loves meeting new people. Looking for someone to have fun with.",
-            username: "SocialButterfly",
-            avatarUrl: "https://source.unsplash.com/random/52x52",
-            videoUrl: "https://sample-videos.com/video123.mp4",
-            isVerified: false,
-            isPremium: false,
-            views: 9101,
-            tags: ["social", "outgoing", "fun"],
-            location: "Oslo",
-            age: 25,
-            gender: "female",
-            seeking: ["male", "female"],
-            country: "norway",
-            city: "Oslo",
-          },
-        ];
-        resolve(ads);
-      }, 500);
-    });
-  };
 
   // Simulate API call for user profile
   const simulateUserProfileApiCall = (): Promise<DatingAd> => {
