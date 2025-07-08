@@ -133,18 +133,22 @@ export const GridViewMode = ({
         className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"
         style={{ minHeight: '200px' }}
       >
-        {visibleAds.map((ad, index) => (
-          <div key={ad.id || index} ref={index === visibleAds.length - 4 ? lastElementRef : undefined}>
-            <GridItem 
-              ad={ad}
-              isHovered={hoveredId === ad.id}
-              onHover={setHoveredId}
-              onSelect={handleSelectAd}
-              isMobile={isMobile}
-              userProfile={userProfile}
-            />
-          </div>
-        ))}
+        {visibleAds.map((ad, index) => {
+          // Create a unique key that doesn't conflict
+          const uniqueKey = ad.id || `temp-ad-${index}-${Date.now()}`;
+          return (
+            <div key={uniqueKey} ref={index === visibleAds.length - 4 ? lastElementRef : undefined}>
+              <GridItem 
+                ad={ad}
+                isHovered={hoveredId === ad.id}
+                onHover={setHoveredId}
+                onSelect={handleSelectAd}
+                isMobile={isMobile}
+                userProfile={userProfile}
+              />
+            </div>
+          );
+        })}
       </div>
       
       {loadingMore && (

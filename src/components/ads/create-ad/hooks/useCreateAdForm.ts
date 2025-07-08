@@ -1,5 +1,7 @@
 import { useState, useCallback } from 'react';
 import { CreateAdFormData } from '../types';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 
 const initialFormData: CreateAdFormData = {
   title: '',
@@ -24,6 +26,7 @@ export const useCreateAdForm = () => {
   const [currentStep, setCurrentStep] = useState(0);
   const [formData, setFormData] = useState<CreateAdFormData>(initialFormData);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { toast } = useToast();
 
   const updateData = useCallback((updates: Partial<CreateAdFormData>) => {
     setFormData(prev => ({ ...prev, ...updates }));
@@ -50,10 +53,61 @@ export const useCreateAdForm = () => {
   const submitForm = useCallback(async (onSuccess?: () => void) => {
     setIsSubmitting(true);
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast({
+          title: "Authentication Error",
+          description: "You must be logged in to create an ad.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Prepare ad data
+      const adData = {
+        user_id: user.id,
+        title: formData.title,
+        description: formData.description,
+        city: formData.location,
+        country: 'NO', // Default to Norway - you can make this configurable
+        age_range: `[${formData.age},${formData.age + 5}]`, // Age range
+        relationship_status: formData.relationshipStatus,
+        looking_for: formData.lookingFor,
+        tags: formData.tags,
+        interests: formData.interests,
+        body_type: formData.bodyType,
+        height: formData.height ? parseInt(formData.height) : null,
+        user_type: formData.gender,
+        is_active: true,
+        view_count: 0,
+        message_count: 0,
+        click_count: 0,
+      };
+
+      // Insert the ad
+      const { data: insertedAd, error } = await supabase
+        .from('dating_ads')
+        .insert([adData])
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error creating ad:', error);
+        toast({
+          title: "Error Creating Ad",
+          description: error.message,
+          variant: "destructive",
+        });
+        return;
+      }
+
+      console.log('Ad created successfully:', insertedAd);
       
-      console.log('Form submitted:', formData);
+      toast({
+        title: "Success!",
+        description: "Your body contact ad has been created successfully.",
+      });
       
       if (onSuccess) {
         onSuccess();
@@ -62,10 +116,15 @@ export const useCreateAdForm = () => {
       resetForm();
     } catch (error) {
       console.error('Form submission error:', error);
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred. Please try again.",
+        variant: "destructive",
+      });
     } finally {
       setIsSubmitting(false);
     }
-  }, [formData, resetForm]);
+  }, [formData, resetForm, toast]);
 
   const getProgress = useCallback(() => {
     const totalSteps = 4; // We'll have 4 steps
