@@ -1,6 +1,9 @@
+
 import { useState, useEffect, useMemo } from "react";
 import { DatingFiltersPanel } from "../components/dating/DatingFiltersPanel";
 import { DatingContent } from "../components/dating/DatingContent";
+import { DatingHeader } from "../components/dating/DatingHeader";
+import { CreateDatingAdDialog } from "../components/ads/dating/CreateDatingAdDialog";
 import { DatingAd } from "@/types/dating";
 import { useToast } from "@/hooks/use-toast";
 
@@ -64,6 +67,8 @@ export default function DatingMainContent(props: any) {
   const [selectedPremium, setSelectedPremium] = useState(false);
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
   const [distanceRange, setDistanceRange] = useState<[number, number]>([0, 100]);
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [showCreateAdDialog, setShowCreateAdDialog] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -109,7 +114,7 @@ export default function DatingMainContent(props: any) {
 
   const handleTagClick = (tag: string) => {
     console.log("Tag clicked:", tag);
-    // Implement tag click logic here
+    setSelectedTag(selectedTag === tag ? null : tag);
   };
 
   const toggleFilters = () => {
@@ -119,6 +124,10 @@ export default function DatingMainContent(props: any) {
   const handleApplyFilters = () => {
     setIsFilterApplied(!isFilterApplied);
     setIsFilterCollapsed(true);
+    toast({
+      title: "Filters Applied",
+      description: "Your search filters have been updated",
+    });
   };
 
   const handleResetFilters = () => {
@@ -128,8 +137,29 @@ export default function DatingMainContent(props: any) {
     setSelectedTags([]);
     setSelectedLookingFor([]);
     setIsFilterApplied(false);
-    setIsFilterCollapsed(true);
+    setIsFilterCollapsed(false);
     setSelectedCity(undefined);
+    setSelectedVerified(false);
+    setSelectedPremium(false);
+    setSelectedTag(null);
+    setDistanceRange([0, 100]);
+    toast({
+      title: "Filters Reset",
+      description: "All filters have been cleared",
+    });
+  };
+
+  const handleCreateAd = () => {
+    setShowCreateAdDialog(true);
+  };
+
+  const handleAdCreationSuccess = () => {
+    setShowCreateAdDialog(false);
+    fetchDatingAds(); // Refresh the ads list
+    toast({
+      title: "Success!",
+      description: "Your dating ad has been created",
+    });
   };
 
   const filteredAds = useMemo(() => {
@@ -143,9 +173,21 @@ export default function DatingMainContent(props: any) {
       if (selectedLookingFor.length > 0 && !selectedLookingFor.every((item) => ad.seeking?.includes(item))) {
         return false;
       }
+      if (selectedTag && !ad.tags?.includes(selectedTag)) {
+        return false;
+      }
+      if (selectedCity && ad.city !== selectedCity) {
+        return false;
+      }
+      if (selectedVerified && !ad.isVerified) {
+        return false;
+      }
+      if (selectedPremium && !ad.isPremium) {
+        return false;
+      }
       return true;
     });
-  }, [datingAds, selectedGender, minAge, maxAge, selectedLookingFor]);
+  }, [datingAds, selectedGender, minAge, maxAge, selectedLookingFor, selectedTag, selectedCity, selectedVerified, selectedPremium]);
 
   // Simulate API call for dating ads
   const simulateApiCall = (): Promise<DatingAd[]> => {
@@ -245,50 +287,68 @@ export default function DatingMainContent(props: any) {
 
   return (
     <div className="container mx-auto py-6">
-      <h1 className="text-3xl font-bold bg-gradient-to-r from-luxury-primary to-luxury-accent bg-clip-text text-transparent mb-6">
-        Dating
-      </h1>
-      
-      {/* Filter Section */}
-      <DatingFiltersPanel
-        isFilterCollapsed={props.isFilterCollapsed || isFilterCollapsed}
-        setIsFilterCollapsed={props.setIsFilterCollapsed || setIsFilterCollapsed}
-        showFilters={props.showFilters || showFilters}
-        selectedCountry={props.selectedCountry || selectedCountry}
-        setSelectedCountry={props.setSelectedCountry || setSelectedCountry}
-        selectedGender={props.selectedGender || selectedGender}
-        setSelectedGender={props.setSelectedGender || setSelectedGender}
-        minAge={props.minAge || minAge}
-        setMinAge={props.setMinAge || setMinAge}
-        maxAge={props.maxAge || maxAge}
-        setMaxAge={props.setMaxAge || setMaxAge}
-        selectedTag={props.selectedTag || selectedTag}
-        setSelectedTag={props.setSelectedTag || setSelectedTag}
-        selectedLookingFor={props.selectedLookingFor || selectedLookingFor}
-        setSelectedLookingFor={props.setSelectedLookingFor || setSelectedLookingFor}
-        isFilterApplied={props.isFilterApplied || isFilterApplied}
-        handleApplyFilters={props.handleApplyFilters || handleApplyFilters}
-        handleResetFilters={props.handleResetFilters || handleResetFilters}
-        selectedCity={props.selectedCity || selectedCity}
-        setSelectedCity={props.setSelectedCity || setSelectedCity}
-        selectedVerified={props.selectedVerified || selectedVerified}
-        setSelectedVerified={props.setSelectedVerified || setSelectedVerified}
-        selectedPremium={props.selectedPremium || selectedPremium}
-        setSelectedPremium={props.setSelectedPremium || setSelectedPremium}
-        distanceRange={props.distanceRange || distanceRange}
-        setDistanceRange={props.setDistanceRange || setDistanceRange}
+      {/* Header with tabs and create button */}
+      <DatingHeader 
+        activeTab={selectedTab}
+        onTabChange={setSelectedTab}
+        viewMode={viewMode}
+        onViewModeChange={setViewMode}
+        onCreateAd={handleCreateAd}
       />
       
-      {/* Content Section */}
-      <DatingContent 
-        datingAds={props.datingAds || filteredAds || []}
-        isLoading={props.isLoading || isLoading}
-        activeTab={props.activeTab || selectedTab}
-        userProfile={props.userProfile || userProfile}
-        handleAdCreationSuccess={props.handleAdCreationSuccess || fetchDatingAds}
-        handleTagClick={props.handleTagClick || handleTagClick}
-        handleTabChange={props.setActiveTab || setSelectedTab}
-        handleFilterToggle={props.handleFilterToggle || toggleFilters}
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        {/* Filter Section */}
+        <div className="lg:col-span-1">
+          <DatingFiltersPanel
+            isFilterCollapsed={props.isFilterCollapsed || isFilterCollapsed}
+            setIsFilterCollapsed={props.setIsFilterCollapsed || setIsFilterCollapsed}
+            showFilters={props.showFilters || showFilters}
+            selectedCountry={props.selectedCountry || selectedCountry}
+            setSelectedCountry={props.setSelectedCountry || setSelectedCountry}
+            selectedGender={props.selectedGender || selectedGender}
+            setSelectedGender={props.setSelectedGender || setSelectedGender}
+            minAge={props.minAge || minAge}
+            setMinAge={props.setMinAge || setMinAge}
+            maxAge={props.maxAge || maxAge}
+            setMaxAge={props.setMaxAge || setMaxAge}
+            selectedTag={props.selectedTag || selectedTag}
+            setSelectedTag={props.setSelectedTag || setSelectedTag}
+            selectedLookingFor={props.selectedLookingFor || selectedLookingFor}
+            setSelectedLookingFor={props.setSelectedLookingFor || setSelectedLookingFor}
+            isFilterApplied={props.isFilterApplied || isFilterApplied}
+            handleApplyFilters={props.handleApplyFilters || handleApplyFilters}
+            handleResetFilters={props.handleResetFilters || handleResetFilters}
+            selectedCity={props.selectedCity || selectedCity}
+            setSelectedCity={props.setSelectedCity || setSelectedCity}
+            selectedVerified={props.selectedVerified || selectedVerified}
+            setSelectedVerified={props.setSelectedVerified || setSelectedVerified}
+            selectedPremium={props.selectedPremium || selectedPremium}
+            setSelectedPremium={props.setSelectedPremium || setSelectedPremium}
+            distanceRange={props.distanceRange || distanceRange}
+            setDistanceRange={props.setDistanceRange || setDistanceRange}
+          />
+        </div>
+        
+        {/* Content Section */}
+        <div className="lg:col-span-3">
+          <DatingContent 
+            datingAds={props.datingAds || filteredAds || []}
+            isLoading={props.isLoading || isLoading}
+            activeTab={props.activeTab || selectedTab}
+            userProfile={props.userProfile || userProfile}
+            handleAdCreationSuccess={props.handleAdCreationSuccess || handleAdCreationSuccess}
+            handleTagClick={props.handleTagClick || handleTagClick}
+            handleTabChange={props.setActiveTab || setSelectedTab}
+            handleFilterToggle={props.handleFilterToggle || toggleFilters}
+          />
+        </div>
+      </div>
+
+      {/* Create Ad Dialog */}
+      <CreateDatingAdDialog 
+        isOpen={showCreateAdDialog}
+        onClose={() => setShowCreateAdDialog(false)}
+        onAdCreationSuccess={handleAdCreationSuccess}
       />
     </div>
   );

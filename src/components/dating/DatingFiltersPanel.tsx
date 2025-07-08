@@ -243,8 +243,8 @@ export function DatingFiltersPanel({
             <div className="space-y-2">
               <Label>City</Label>
               <Select 
-                value={selectedCity || ''} 
-                onValueChange={(value: string) => setSelectedCity(value)}
+                value={selectedCity || 'any'} 
+                onValueChange={(value: string) => setSelectedCity(value === 'any' ? undefined : value)}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select city" />
@@ -260,6 +260,24 @@ export function DatingFiltersPanel({
               </Select>
             </div>
           )}
+
+          {/* Filter Action Buttons */}
+          <div className="flex gap-2 pt-4 border-t border-luxury-neutral/20">
+            <Button 
+              onClick={handleApplyFilters}
+              className="flex-1"
+              variant="default"
+            >
+              Apply Filters
+            </Button>
+            <Button 
+              onClick={handleResetFilters}
+              variant="outline"
+              className="flex-1"
+            >
+              Reset
+            </Button>
+          </div>
         </div>
       )}
     </div>
