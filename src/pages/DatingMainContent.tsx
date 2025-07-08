@@ -48,10 +48,10 @@ export interface DatingContentProps {
 export default function DatingMainContent(props: any) {
   const [datingAds, setDatingAds] = useState<DatingAd[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [selectedTab, setSelectedTab] = useState("all");
+  const [selectedTab, setSelectedTab] = useState("browse");
   const [userProfile, setUserProfile] = useState<DatingAd | null>(null);
-  const [showFilters, setShowFilters] = useState(false);
-  const [isFilterCollapsed, setIsFilterCollapsed] = useState(true);
+  const [showFilters, setShowFilters] = useState(true);
+  const [isFilterCollapsed, setIsFilterCollapsed] = useState(false);
   const [selectedCountry, setSelectedCountry] = useState<"denmark" | "finland" | "iceland" | "norway" | "sweden">("denmark");
   const [selectedGender, setSelectedGender] = useState("");
   const [minAge, setMinAge] = useState(18);
