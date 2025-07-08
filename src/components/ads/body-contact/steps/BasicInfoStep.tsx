@@ -13,8 +13,6 @@ interface BasicInfoStepProps {
 }
 
 export const BasicInfoStep = ({ values, onUpdateValues }: BasicInfoStepProps) => {
-  console.log("BasicInfoStep rendering with values:", values);
-  
   const handleImageUpload = (file: File | null, preview: string) => {
     onUpdateValues({ avatarFile: file });
   };

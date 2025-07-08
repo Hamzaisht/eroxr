@@ -106,6 +106,14 @@ export const useImmersiveCreation = (onSuccess?: () => void, onClose?: () => voi
     return () => window.removeEventListener('keydown', handleEscKey);
   }, [onClose]);
 
+  // Reset to first step when dialog opens
+  useEffect(() => {
+    setCurrentStep(0);
+    setDirection(0);
+    setIsExiting(false);
+    setShowSuccess(false);
+  }, []);
+
   const jumpToStep = (index: number) => {
     if (isNavigating.current || isExiting || index === currentStep) return;
     
