@@ -127,7 +127,7 @@ export const CreateAdDialog = ({ open, onOpenChange, onSuccess }: CreateAdDialog
             </div>
 
             {/* Step Content */}
-            <div className="flex-1 px-6 overflow-y-auto min-h-0 custom-scrollbar">
+            <div className="flex-1 px-6 overflow-y-auto min-h-0 custom-scrollbar max-h-[60vh]">
               <AnimatePresence mode="wait">
                 <motion.div
                   key={currentStep}
@@ -135,6 +135,7 @@ export const CreateAdDialog = ({ open, onOpenChange, onSuccess }: CreateAdDialog
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: -20 }}
                   transition={{ duration: 0.3 }}
+                  className="pb-4"
                 >
                   {renderStep()}
                 </motion.div>
