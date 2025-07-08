@@ -4,7 +4,7 @@ import { Home, Heart, MessageSquare, Play, Film } from "lucide-react";
 import { motion } from "framer-motion";
 import { useState } from "react";
 import { useLocation } from "react-router-dom";
-import { CreateBodyContactDialog } from "@/components/ads/body-contact";
+// import { CreateBodyContactDialog } from "@/components/ads/body-contact"; // REMOVED - to be rebuilt
 
 interface NavItemProps {
   to: string;
@@ -79,9 +79,12 @@ export const NavLinks = () => {
       </nav>
       
       {showBodyContactDialog && (
-        <CreateBodyContactDialog 
-          onSuccess={handleSuccessfulAdCreation} 
-        />
+        <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center">
+          <div className="bg-white p-6 rounded-lg">
+            <p>Create BD Ad Dialog - Coming Soon (to be rebuilt from scratch)</p>
+            <button onClick={() => setShowBodyContactDialog(false)}>Close</button>
+          </div>
+        </div>
       )}
     </>
   );

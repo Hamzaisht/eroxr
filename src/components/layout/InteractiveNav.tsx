@@ -12,7 +12,7 @@ import { cn } from "@/lib/utils";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
 import { useSuperAdminCheck } from "@/hooks/useSuperAdminCheck";
 import { useGhostMode } from "@/hooks/useGhostMode";
-import { CreateBodyContactDialog } from "@/components/ads/body-contact"; 
+// import { CreateBodyContactDialog } from "@/components/ads/body-contact"; // REMOVED - to be rebuilt 
 import { useUser } from "@/hooks/useUser";
 
 const menuItems = [
@@ -201,9 +201,14 @@ export const InteractiveNav = () => {
         </>
       )}
       
-      {/* Add the dialog for creating body contact ads */}
+      {/* Create BD Dialog - TO BE REBUILT */}
       {showBodyContactDialog && (
-        <CreateBodyContactDialog onSuccess={handleSuccessfulAdCreation} />
+        <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center">
+          <div className="bg-white p-6 rounded-lg">
+            <p>Create BD Ad Dialog - Coming Soon (to be rebuilt from scratch)</p>
+            <button onClick={() => setShowBodyContactDialog(false)}>Close</button>
+          </div>
+        </div>
       )}
     </>
   );

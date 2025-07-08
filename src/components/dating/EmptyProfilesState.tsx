@@ -2,7 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useSession } from "@supabase/auth-helpers-react";
-import { CreateBodyContactDialog } from "@/components/ads/body-contact";
+// import { CreateBodyContactDialog } from "@/components/ads/body-contact"; // REMOVED - to be rebuilt
 
 interface EmptyProfilesStateProps {
   canAccessBodyContact: boolean;
@@ -30,7 +30,7 @@ export const EmptyProfilesState = ({
       </p>
       {session?.user ? (
         canAccessBodyContact ? (
-          <CreateBodyContactDialog onSuccess={onAdCreationSuccess} />
+          <div>Create BD Ad Dialog - Coming Soon (to be rebuilt from scratch)</div>
         ) : (
           <Button 
             onClick={() => navigate('/subscription')}

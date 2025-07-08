@@ -3,7 +3,7 @@ import { Plus } from "lucide-react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
-import { CreateBodyContactDialog } from "@/components/ads/body-contact";
+// import { CreateBodyContactDialog } from "@/components/ads/body-contact"; // REMOVED - to be rebuilt
 import { useToast } from "@/hooks/use-toast";
 
 interface FloatingActionButtonProps {

@@ -4,8 +4,8 @@ import { useSession } from "@supabase/auth-helpers-react";
 import { useNavigate } from "react-router-dom";
 import { MessageSquare, Heart, Share2, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { ReportAdDialog } from "../body-contact/components/ReportAdDialog";
-import { useBodyContactAccess } from "../body-contact/hooks/useBodyContactAccess";
+// import { ReportAdDialog } from "../body-contact/components/ReportAdDialog"; // REMOVED - to be rebuilt
+// import { useBodyContactAccess } from "../body-contact/hooks/useBodyContactAccess"; // REMOVED - to be rebuilt
 
 interface ProfileActionsProps {
   userId?: string;
@@ -22,7 +22,7 @@ export const ProfileActions = ({
 }: ProfileActionsProps) => {
   const session = useSession();
   const navigate = useNavigate();
-  const accessResult = useBodyContactAccess();
+  // const accessResult = useBodyContactAccess(); // REMOVED - to be rebuilt
   const [reportDialogOpen, setReportDialogOpen] = useState(false);
 
   const handleMessageClick = () => {
@@ -31,10 +31,10 @@ export const ProfileActions = ({
       return;
     }
 
-    if (!accessResult.canAccess) {
-      // Show access restriction toast or modal
-      return;
-    }
+    // if (!accessResult.canAccess) {
+    //   // Show access restriction toast or modal
+    //   return;
+    // }
 
     // Navigate to messages with this user pre-selected
     navigate(`/messages?userId=${userId}`);
@@ -78,13 +78,14 @@ export const ProfileActions = ({
         )}
       </div>
 
-      {userId && adId && (
-        <ReportAdDialog 
-          adId={adId}
-          userId={userId}
-          open={reportDialogOpen}
-          onOpenChange={setReportDialogOpen}
-        />
+      {/* Report Dialog - TO BE REBUILT */}
+      {userId && adId && reportDialogOpen && (
+        <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center">
+          <div className="bg-white p-6 rounded-lg">
+            <p>Report Ad Dialog - Coming Soon (to be rebuilt from scratch)</p>
+            <button onClick={() => setReportDialogOpen(false)}>Close</button>
+          </div>
+        </div>
       )}
     </>
   );

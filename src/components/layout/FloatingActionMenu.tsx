@@ -8,7 +8,7 @@ import { FloatingMenuItem } from "./menu/FloatingMenuItem";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { UploadVideoDialog } from "../home/UploadVideoDialog";
-import { CreateBodyContactDialog } from "../ads/body-contact";
+// import { CreateBodyContactDialog } from "../ads/body-contact"; // REMOVED - to be rebuilt
 
 interface FloatingActionMenuProps {
   currentPath: string;
@@ -148,11 +148,14 @@ export const FloatingActionMenu = ({ currentPath }: FloatingActionMenuProps) => 
         onOpenChange={setIsVideoDialogOpen}
       />
       
-      {/* Body Contact Dialog - only show when explicitly opened */}
+      {/* Body Contact Dialog - TO BE REBUILT */}
       {isBodyContactDialogOpen && (
-        <CreateBodyContactDialog 
-          onSuccess={handleBodyContactSuccess} 
-        />
+        <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center">
+          <div className="bg-white p-6 rounded-lg">
+            <p>Create BD Ad Dialog - Coming Soon (to be rebuilt from scratch)</p>
+            <button onClick={() => setIsBodyContactDialogOpen(false)}>Close</button>
+          </div>
+        </div>
       )}
     </div>
   );
