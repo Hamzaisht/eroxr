@@ -13,6 +13,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { DeleteConfirmDialog } from "@/components/feed/DeleteConfirmDialog";
+import { EditAdDialog } from "../create-ad/EditAdDialog";
 import { DatingAd } from "../types/dating";
 
 interface AdActionsProps {
@@ -24,6 +25,7 @@ export const AdActions = ({ ad }: AdActionsProps) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
   
@@ -63,10 +65,14 @@ export const AdActions = ({ ad }: AdActionsProps) => {
   };
 
   const handleEdit = () => {
-    // For now, show a toast indicating edit functionality will be available
+    setIsEditDialogOpen(true);
+  };
+
+  const handleEditSuccess = () => {
+    queryClient.invalidateQueries({ queryKey: ["dating_ads"] });
     toast({
-      title: "Edit functionality",
-      description: "Edit functionality will be available soon!",
+      title: "Ad updated",
+      description: "Your ad has been successfully updated.",
     });
   };
 
@@ -104,6 +110,13 @@ export const AdActions = ({ ad }: AdActionsProps) => {
         isDeleting={isDeleting}
         error={deleteError}
         onRetry={handleRetryDelete}
+      />
+
+      <EditAdDialog
+        open={isEditDialogOpen}
+        onOpenChange={setIsEditDialogOpen}
+        ad={ad}
+        onSuccess={handleEditSuccess}
       />
     </>
   );

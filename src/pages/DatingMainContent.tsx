@@ -100,19 +100,27 @@ export default function DatingMainContent(props: any) {
         user_id: ad.user_id,
         title: ad.title,
         description: ad.description,
-        username: `User${ad.user_id?.slice(-4)}`, // Placeholder username
-        avatarUrl: "https://source.unsplash.com/random/50x50", // Placeholder avatar
-        videoUrl: "", // Placeholder video
-        isVerified: false,
-        isPremium: false,
+        username: ad.title || `User${ad.user_id?.slice(-4)}`,
+        avatarUrl: ad.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(ad.title || 'User')}&backgroundColor=6366f1`,
+        videoUrl: ad.video_url || null,
+        video_url: ad.video_url || null,
+        avatar_url: ad.avatar_url || null,
+        isVerified: ad.is_verified || false,
+        isPremium: ad.is_premium || false,
+        is_verified: ad.is_verified || false,
+        is_premium: ad.is_premium || false,
         views: ad.view_count || 0,
+        view_count: ad.view_count || 0,
         tags: ad.tags || [],
         location: ad.city,
         age: ad.age_range ? parseInt(ad.age_range.split(',')[0].replace('[', '')) : 25,
         gender: ad.user_type,
         seeking: ad.looking_for || [],
+        looking_for: ad.looking_for || [],
         country: ad.country,
         city: ad.city,
+        created_at: ad.created_at,
+        last_active: ad.last_active,
       })) || [];
 
       setDatingAds(transformedAds);
