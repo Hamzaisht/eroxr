@@ -107,7 +107,8 @@ export const CreationLayout = ({
               />
               
               {/* Main Content */}
-              <div className="col-span-1 lg:col-span-4 px-4 md:px-12 py-8 flex flex-col">
+              <div className="col-span-1 lg:col-span-4 px-4 md:px-12 py-8 flex flex-col min-h-full">
+                <div className="text-white text-sm mb-4 opacity-50">Debug: Step {currentStep + 1} content should render here</div>
                 {steps[currentStep].component}
               </div>
             </div>
