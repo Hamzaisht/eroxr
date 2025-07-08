@@ -77,6 +77,15 @@ export const ImmersiveAdCreation = ({ onClose, onSuccess }: ImmersiveAdCreationP
     }
   ];
 
+  console.log("ImmersiveAdCreation render:", { 
+    session: !!session, 
+    canAccess: accessResult.canAccess, 
+    isSuperAdmin, 
+    showSuccess,
+    currentStep,
+    stepsLength: steps.length 
+  });
+
   if (!session) {
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm">

@@ -3,7 +3,8 @@ import { useState, useEffect } from "react";
 import { ImmersiveAdCreation } from "./immersive-creation";
 import { Button } from "@/components/ui/button";
 import { Heart, X } from "lucide-react";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { VisuallyHidden } from "@/components/ui/visually-hidden";
 import "./styles.css";
 
 interface CreateBodyContactDialogProps {
@@ -48,7 +49,14 @@ export const CreateBodyContactDialog = ({ onSuccess }: CreateBodyContactDialogPr
           boxShadow: "0 8px 40px 0 rgba(155,135,245,0.22), 0 1.5px 0 0 rgba(217,70,239,0.09), 0 0 0 1px rgba(255,255,255,0.07) inset",
           backdropFilter: "blur(24px)",
         }}
+        aria-describedby="create-dating-profile-description"
       >
+        <VisuallyHidden>
+          <DialogTitle>Create Dating Profile</DialogTitle>
+          <DialogDescription id="create-dating-profile-description">
+            Create your dating profile with basic information, preferences, and media uploads
+          </DialogDescription>
+        </VisuallyHidden>
         <div className="flex-1 min-h-0 flex flex-col">
           <div className="flex items-center justify-between px-14 pt-9 pb-2 border-b border-white/10 bg-gradient-to-r from-transparent via-luxury-primary/10 to-transparent rounded-t-2xl">
             <span className="text-xl md:text-3xl font-bold text-white/80 tracking-tight select-none">

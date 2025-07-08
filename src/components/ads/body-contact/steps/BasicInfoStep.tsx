@@ -3,6 +3,8 @@ import { motion } from "framer-motion";
 import { TitleDescriptionInputs } from "./components/TitleDescriptionInputs";
 import { StatusBodyTypeSelects } from "./components/StatusBodyTypeSelects";
 import { ProfileImageUploader } from "./components/ProfileImageUploader";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { AdFormValues } from "../types";
 
 interface BasicInfoStepProps {
@@ -49,6 +51,22 @@ export const BasicInfoStep = ({ values, onUpdateValues }: BasicInfoStepProps) =>
             bodyType: value as "slim" | "average" | "curvy" | "athletic" 
           })}
         />
+
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 }}
+          className="space-y-2"
+        >
+          <Label htmlFor="location" className="text-luxury-neutral">Location</Label>
+          <Input
+            id="location"
+            value={values.location}
+            onChange={(e) => onUpdateValues({ location: e.target.value })}
+            placeholder="Enter your location..."
+            className="bg-black/20 border-luxury-primary/20 focus:border-luxury-primary/50 text-white"
+          />
+        </motion.div>
       </div>
     </motion.div>
   );
