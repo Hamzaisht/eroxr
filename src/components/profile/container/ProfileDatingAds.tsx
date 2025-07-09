@@ -154,14 +154,6 @@ export const ProfileDatingAds = ({ profileId }: ProfileDatingAdsProps) => {
     return 'Age not specified';
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'approved': return 'bg-green-500/20 text-green-400 border-green-500/30';
-      case 'pending': return 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30';
-      case 'rejected': return 'bg-red-500/20 text-red-400 border-red-500/30';
-      default: return 'bg-gray-500/20 text-gray-400 border-gray-500/30';
-    }
-  };
 
   if (isLoading) {
     return (
@@ -385,17 +377,14 @@ export const ProfileDatingAds = ({ profileId }: ProfileDatingAdsProps) => {
 
             {/* Card Content */}
             <div className="p-6 pt-0">
-              {/* Status Badges */}
-              <div className="flex gap-2 mb-4">
-                <Badge className={`text-xs font-medium ${getStatusColor(ad.moderation_status || 'pending')}`}>
-                  {ad.moderation_status || 'Pending'}
-                </Badge>
-                {!ad.is_active && (
+              {/* Status Badges - Only show if inactive */}
+              {!ad.is_active && (
+                <div className="flex gap-2 mb-4">
                   <Badge className="text-xs bg-gray-500/20 text-gray-400 border-gray-500/30 font-medium">
                     Inactive
                   </Badge>
-                )}
-              </div>
+                </div>
+              )}
 
               {/* Description */}
               <div className="mb-6">
