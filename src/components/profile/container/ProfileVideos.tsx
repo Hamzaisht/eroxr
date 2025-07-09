@@ -178,110 +178,89 @@ export const ProfileVideos = ({ profileId }: ProfileVideosProps) => {
   }
 
   return (
-    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+    <div className="h-screen overflow-y-auto snap-y snap-mandatory">
       {videos.map((video, index) => (
         <motion.div
           key={video.id}
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
           transition={{ delay: index * 0.1 }}
-          className="group relative aspect-[9/16] bg-black rounded-xl overflow-hidden cursor-pointer"
-          onClick={() => handleVideoClick(video)}
+          className="h-screen w-full snap-start bg-black flex flex-col items-center relative"
         >
-          {/* Video Thumbnail */}
-          <div className="absolute inset-0">
-            {video.thumbnail_url ? (
-              <img
-                src={video.thumbnail_url}
-                alt={video.title}
-                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-              />
-            ) : (
-              <video
-                src={video.video_url}
-                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                muted
-                playsInline
-                preload="metadata"
-                onLoadedData={(e) => {
-                  // Set video time to get a frame for thumbnail
-                  const videoElement = e.target as HTMLVideoElement;
-                  videoElement.currentTime = 1;
-                }}
-              />
-            )}
-          </div>
-
-          {/* Dark overlay on hover */}
-          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-
-          {/* Play button */}
-          <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-            <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center border border-white/30">
-              <Play className="w-8 h-8 text-white ml-1" />
+          <div className="w-full h-full flex items-center justify-center relative overflow-hidden">
+            <div className="w-full h-full flex items-center justify-center bg-gray-900">
+              {video.video_url ? (
+                <video
+                  src={video.video_url}
+                  className="w-full h-full object-cover"
+                  controls
+                  playsInline
+                  preload="metadata"
+                />
+              ) : (
+                <p className="text-white">Content Coming Soon</p>
+              )}
             </div>
-          </div>
-
-          {/* Content Actions (only for own profile) */}
-          {isOwnProfile && (
-            <div 
-              className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="w-8 h-8 bg-black/50 hover:bg-black/70 backdrop-blur-sm rounded-full border border-white/20"
-                  >
-                    <MoreHorizontal className="h-4 w-4 text-white" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent 
-                  align="end" 
-                  className="bg-black/90 backdrop-blur-md border-white/20 text-white"
-                >
-                  <DropdownMenuItem 
-                    onClick={() => handleEditVideo(video.id)}
-                    className="hover:bg-white/10 focus:bg-white/10 cursor-pointer"
-                  >
-                    <Edit3 className="w-4 h-4 mr-2" />
-                    Edit Video
-                  </DropdownMenuItem>
-                  <DropdownMenuItem 
-                    onClick={() => setDeleteVideoId(video.id)}
-                    className="hover:bg-red-500/20 focus:bg-red-500/20 text-red-400 cursor-pointer"
-                  >
-                    <Trash2 className="w-4 h-4 mr-2" />
-                    Delete Video
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
-          )}
-
-          {/* Video Info */}
-          <div className="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black/80 to-transparent">
-            <h4 className="text-white font-medium text-sm mb-1 line-clamp-2">
-              {formatVideoTitle(video.title)}
-            </h4>
             
-            {/* Stats */}
-            <div className="flex items-center justify-between text-white/70 text-xs">
-              <div className="flex items-center gap-3">
-                <div className="flex items-center gap-1">
-                  <Eye className="w-3 h-3" />
-                  <span>{video.view_count || 0}</span>
+            <div className="absolute bottom-16 left-4 right-12 bg-gradient-to-t from-black/70 to-transparent p-4 rounded-lg">
+              <h3 className="font-medium text-white mb-2">@creator</h3>
+              <p className="text-white/90 text-sm line-clamp-2">{formatVideoTitle(video.title)}</p>
+              <p className="text-white/60 text-xs mt-1">
+                {new Date(video.created_at).toLocaleDateString()}
+              </p>
+            </div>
+            
+            <div className="absolute right-4 bottom-32 flex flex-col items-center gap-6">
+              <button className="flex flex-col items-center">
+                <div className="w-12 h-12 bg-black/30 rounded-full flex items-center justify-center">
+                  <Heart className="h-6 w-6 text-white" />
                 </div>
-                <div className="flex items-center gap-1">
-                  <Heart className="w-3 h-3" />
-                  <span>{video.like_count || 0}</span>
-                </div>
-              </div>
+                <span className="text-white text-xs mt-1">{video.like_count || 0}</span>
+              </button>
               
-              {video.visibility === 'private' && (
-                <div className="text-yellow-400 text-xs">Private</div>
+              <button className="flex flex-col items-center">
+                <div className="w-12 h-12 bg-black/30 rounded-full flex items-center justify-center">
+                  <MessageCircle className="h-6 w-6 text-white" />
+                </div>
+                <span className="text-white text-xs mt-1">{video.comment_count || 0}</span>
+              </button>
+              
+              <button className="flex flex-col items-center">
+                <div className="w-12 h-12 bg-black/30 rounded-full flex items-center justify-center">
+                  <Eye className="h-6 w-6 text-white" />
+                </div>
+                <span className="text-white text-xs mt-1">{video.view_count || 0}</span>
+              </button>
+
+              {isOwnProfile && (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button className="flex flex-col items-center">
+                      <div className="w-12 h-12 bg-black/30 rounded-full flex items-center justify-center">
+                        <MoreHorizontal className="h-6 w-6 text-white" />
+                      </div>
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent 
+                    align="end" 
+                    className="bg-black/90 backdrop-blur-md border-white/20 text-white"
+                  >
+                    <DropdownMenuItem 
+                      onClick={() => handleEditVideo(video.id)}
+                      className="hover:bg-white/10 focus:bg-white/10 cursor-pointer"
+                    >
+                      <Edit3 className="w-4 h-4 mr-2" />
+                      Edit Video
+                    </DropdownMenuItem>
+                    <DropdownMenuItem 
+                      onClick={() => setDeleteVideoId(video.id)}
+                      className="hover:bg-red-500/20 focus:bg-red-500/20 text-red-400 cursor-pointer"
+                    >
+                      <Trash2 className="w-4 h-4 mr-2" />
+                      Delete Video
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               )}
             </div>
           </div>
