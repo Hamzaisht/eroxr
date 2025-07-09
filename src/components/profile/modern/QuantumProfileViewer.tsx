@@ -14,6 +14,8 @@ import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { useAuth } from '@/contexts/AuthContext';
 import { useProfile } from '../hooks/useProfile';
 import { ProfilePosts } from '../container/ProfilePosts';
+import { ProfileVideos } from '../container/ProfileVideos';
+import { ProfileDatingAds } from '../container/ProfileDatingAds';
 import { ProfileStats } from '../stats/ProfileStats';
 import { FollowButton } from '../FollowButton';
 import { ProfileEditDialog } from './ProfileEditDialog';
@@ -238,17 +240,22 @@ export const QuantumProfileViewer = ({ profileId, onBack }: QuantumProfileViewer
         >
           <div className="flex justify-center mb-12">
             <div className="flex gap-1 bg-white/5 backdrop-blur-xl rounded-full p-2">
-              {['posts', 'media', 'likes', 'saved'].map((tab) => (
+              {[
+                { key: 'posts', label: 'Posts', icon: Grid },
+                { key: 'eros', label: 'Eros', icon: Video },
+                { key: 'bodycontact', label: 'BD/BodyContact', icon: Heart }
+              ].map((tab) => (
                 <button
-                  key={tab}
-                  onClick={() => setActiveTab(tab)}
-                  className={`px-8 py-3 rounded-full transition-all capitalize ${
-                    activeTab === tab 
+                  key={tab.key}
+                  onClick={() => setActiveTab(tab.key)}
+                  className={`px-6 py-3 rounded-full transition-all capitalize flex items-center gap-2 ${
+                    activeTab === tab.key 
                       ? 'bg-primary text-white' 
                       : 'text-white/60 hover:text-white hover:bg-white/5'
                   }`}
                 >
-                  {tab}
+                  <tab.icon className="w-4 h-4" />
+                  {tab.label}
                 </button>
               ))}
             </div>
@@ -265,26 +272,8 @@ export const QuantumProfileViewer = ({ profileId, onBack }: QuantumProfileViewer
               className="min-h-[400px]"
             >
               {activeTab === 'posts' && <ProfilePosts profileId={profileId} />}
-              {activeTab === 'media' && (
-                <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2">
-                  {/* Media grid placeholder */}
-                  {Array.from({ length: 12 }).map((_, i) => (
-                    <div key={i} className="aspect-square bg-white/5 rounded-lg" />
-                  ))}
-                </div>
-              )}
-              {activeTab === 'likes' && (
-                <div className="text-center py-20">
-                  <Heart className="w-16 h-16 text-primary/40 mx-auto mb-4" />
-                  <p className="text-white/40 text-lg">No liked content yet</p>
-                </div>
-              )}
-              {activeTab === 'saved' && (
-                <div className="text-center py-20">
-                  <Bookmark className="w-16 h-16 text-primary/40 mx-auto mb-4" />
-                  <p className="text-white/40 text-lg">No saved content yet</p>
-                </div>
-              )}
+              {activeTab === 'eros' && <ProfileVideos profileId={profileId} />}
+              {activeTab === 'bodycontact' && <ProfileDatingAds profileId={profileId} />}
             </motion.div>
           </AnimatePresence>
         </motion.div>
