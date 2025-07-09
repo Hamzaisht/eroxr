@@ -43,6 +43,7 @@ export const ProfileVideos = ({ profileId }: ProfileVideosProps) => {
   const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
   const [showCreateFolder, setShowCreateFolder] = useState(false);
   const [newFolderName, setNewFolderName] = useState('');
+  const [hoveredVideoId, setHoveredVideoId] = useState<string | null>(null);
 
   // Helper function to format video titles
   const formatVideoTitle = (title: string) => {
@@ -58,6 +59,41 @@ export const ProfileVideos = ({ profileId }: ProfileVideosProps) => {
     }
     
     return title;
+  };
+
+  // Track video views per device
+  const trackVideoView = async (videoId: string) => {
+    const viewedVideosKey = 'eros_viewed_videos';
+    const viewedVideos = JSON.parse(localStorage.getItem(viewedVideosKey) || '[]');
+    
+    if (!viewedVideos.includes(videoId)) {
+      // Add to viewed list
+      viewedVideos.push(videoId);
+      localStorage.setItem(viewedVideosKey, JSON.stringify(viewedVideos));
+      
+      // Increment view count in database
+      try {
+        await supabase.rpc('increment_counter', { 
+          row_id: videoId, 
+          counter_name: 'view_count',
+          table_name: 'videos'
+        });
+        
+        // Refresh video data to show updated count
+        queryClient.invalidateQueries({ queryKey: ['profile-videos', profileId, selectedFolderId] });
+      } catch (error) {
+        console.error('Error tracking view:', error);
+      }
+    }
+  };
+
+  const handleVideoHover = (videoId: string, isHovering: boolean) => {
+    setHoveredVideoId(isHovering ? videoId : null);
+    
+    if (isHovering) {
+      // Track view when user hovers
+      trackVideoView(videoId);
+    }
   };
 
   const handleVideoClick = (video: any) => {
@@ -287,32 +323,50 @@ export const ProfileVideos = ({ profileId }: ProfileVideosProps) => {
             transition={{ delay: index * 0.05 }}
             className="group relative aspect-[9/16] bg-black rounded cursor-pointer overflow-hidden"
             onClick={() => handleVideoClick(video)}
+            onMouseEnter={() => handleVideoHover(video.id, true)}
+            onMouseLeave={() => handleVideoHover(video.id, false)}
           >
-            {/* Video Thumbnail */}
+            {/* Video Element - Always Present for Hover Play */}
             <div className="absolute inset-0">
-              {video.thumbnail_url ? (
+              <video
+                src={video.video_url}
+                className="w-full h-full object-cover"
+                muted
+                playsInline
+                preload="metadata"
+                loop
+                ref={(el) => {
+                  if (el) {
+                    // Set thumbnail frame
+                    el.currentTime = 1;
+                    
+                    // Play/pause based on hover state
+                    if (hoveredVideoId === video.id) {
+                      el.play().catch(console.error);
+                    } else {
+                      el.pause();
+                      el.currentTime = 1; // Reset to thumbnail frame
+                    }
+                  }
+                }}
+                onLoadedData={(e) => {
+                  const videoElement = e.target as HTMLVideoElement;
+                  videoElement.currentTime = 1;
+                }}
+              />
+
+              {/* Thumbnail Overlay (hidden when playing) */}
+              {video.thumbnail_url && hoveredVideoId !== video.id && (
                 <img
                   src={video.thumbnail_url}
                   alt={video.title}
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <video
-                  src={video.video_url}
-                  className="w-full h-full object-cover"
-                  muted
-                  playsInline
-                  preload="metadata"
-                  onLoadedData={(e) => {
-                    const videoElement = e.target as HTMLVideoElement;
-                    videoElement.currentTime = 1;
-                  }}
+                  className="absolute inset-0 w-full h-full object-cover"
                 />
               )}
             </div>
 
             {/* View Count Overlay */}
-            <div className="absolute bottom-1 left-1 flex items-center gap-1 bg-black/60 rounded px-1 py-0.5">
+            <div className="absolute bottom-1 left-1 flex items-center gap-1 bg-black/60 rounded px-1 py-0.5 z-10">
               <Play className="w-3 h-3 text-white" />
               <span className="text-white text-xs font-medium">
                 {video.view_count ? (
@@ -324,12 +378,19 @@ export const ProfileVideos = ({ profileId }: ProfileVideosProps) => {
             </div>
 
             {/* Hover Overlay */}
-            <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
+            <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10" />
+
+            {/* Playing Indicator */}
+            {hoveredVideoId === video.id && (
+              <div className="absolute top-1 left-1 bg-red-500 text-white text-xs px-1 py-0.5 rounded text-center z-20">
+                LIVE
+              </div>
+            )}
 
             {/* Actions Menu (Own Profile Only) */}
             {isOwnProfile && (
               <div 
-                className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-20"
                 onClick={(e) => e.stopPropagation()}
               >
                 <DropdownMenu>
