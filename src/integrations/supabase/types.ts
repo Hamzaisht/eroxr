@@ -2263,6 +2263,39 @@ export type Database = {
           },
         ]
       }
+      view_tracking: {
+        Row: {
+          content_id: string
+          content_type: string
+          created_at: string | null
+          id: string
+          user_id: string | null
+          viewed_at: string | null
+          viewer_fingerprint: string
+          viewer_ip: string | null
+        }
+        Insert: {
+          content_id: string
+          content_type: string
+          created_at?: string | null
+          id?: string
+          user_id?: string | null
+          viewed_at?: string | null
+          viewer_fingerprint: string
+          viewer_ip?: string | null
+        }
+        Update: {
+          content_id?: string
+          content_type?: string
+          created_at?: string | null
+          id?: string
+          user_id?: string | null
+          viewed_at?: string | null
+          viewer_fingerprint?: string
+          viewer_ip?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       user_bookmarks: {
@@ -2323,6 +2356,10 @@ export type Database = {
       }
       detect_stack_depth: {
         Args: Record<PropertyKey, never>
+        Returns: number
+      }
+      get_content_view_count: {
+        Args: { p_content_id: string; p_content_type: string }
         Returns: number
       }
       get_current_user_id: {

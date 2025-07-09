@@ -7,6 +7,7 @@ import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
+import { trackView } from '@/utils/viewTracking';
 
 interface ProfilePostsProps {
   profileId: string;
@@ -77,20 +78,34 @@ export const ProfilePosts = ({ profileId }: ProfilePostsProps) => {
     enabled: !!user && !!posts,
   });
 
-  // View tracking mutation
-  const viewMutation = useMutation({
-    mutationFn: async (postId: string) => {
-      const { error } = await supabase.rpc('increment_counter', {
-        row_id: postId,
-        counter_name: 'view_count',
-        table_name: 'posts'
+  // Secure view tracking with the new system
+  const handlePostClick = async (postId: string) => {
+    console.log('🎯 Tracking view for post:', postId);
+    
+    const result = await trackView({
+      contentId: postId,
+      contentType: 'post',
+      userId: user?.id
+    });
+
+    if (result.tracked) {
+      toast({
+        title: "👁️ View counted!",
+        description: "This view has been recorded",
+        duration: 1500,
       });
-      if (error) throw error;
-    },
-    onSuccess: () => {
+      // Refresh the posts to show updated view count
       queryClient.invalidateQueries({ queryKey: ['profile-posts', profileId] });
-    },
-  });
+    } else if (result.nextAllowedView) {
+      const nextViewTime = new Date(result.nextAllowedView);
+      const minutes = Math.ceil((nextViewTime.getTime() - Date.now()) / (1000 * 60));
+      toast({
+        title: "⏰ View cooldown active",
+        description: `You can view this again in ${minutes} minutes`,
+        duration: 2000,
+      });
+    }
+  };
 
   // Like toggle mutation
   const likeMutation = useMutation({
@@ -127,10 +142,6 @@ export const ProfilePosts = ({ profileId }: ProfilePostsProps) => {
       });
     },
   });
-
-  const handlePostClick = (postId: string) => {
-    viewMutation.mutate(postId);
-  };
 
   const handleLike = (e: React.MouseEvent, postId: string) => {
     e.stopPropagation();
