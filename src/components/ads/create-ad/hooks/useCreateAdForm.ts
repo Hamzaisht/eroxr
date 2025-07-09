@@ -50,6 +50,26 @@ export const useCreateAdForm = () => {
     setIsSubmitting(false);
   }, []);
 
+  const uploadMedia = useCallback(async (file: File, bucket: string, path: string) => {
+    const { data, error } = await supabase.storage
+      .from(bucket)
+      .upload(path, file, {
+        cacheControl: '3600',
+        upsert: true
+      });
+
+    if (error) {
+      console.error('Upload error:', error);
+      throw error;
+    }
+
+    const { data: { publicUrl } } = supabase.storage
+      .from(bucket)
+      .getPublicUrl(path);
+
+    return publicUrl;
+  }, []);
+
   const submitForm = useCallback(async (onSuccess?: () => void) => {
     setIsSubmitting(true);
     try {
@@ -64,13 +84,48 @@ export const useCreateAdForm = () => {
         return;
       }
 
+      let avatarUrl = null;
+      let videoUrl = null;
+
+      // Upload profile image if provided
+      if (formData.profileImage) {
+        try {
+          const imagePath = `${user.id}/${Date.now()}_avatar.${formData.profileImage.name.split('.').pop()}`;
+          avatarUrl = await uploadMedia(formData.profileImage, 'avatars', imagePath);
+        } catch (error) {
+          console.error('Error uploading profile image:', error);
+          toast({
+            title: "Upload Error",
+            description: "Failed to upload profile image. Please try again.",
+            variant: "destructive",
+          });
+          return;
+        }
+      }
+
+      // Upload profile video if provided
+      if (formData.profileVideo) {
+        try {
+          const videoPath = `${user.id}/${Date.now()}_video.${formData.profileVideo.name.split('.').pop()}`;
+          videoUrl = await uploadMedia(formData.profileVideo, 'dating-videos', videoPath);
+        } catch (error) {
+          console.error('Error uploading profile video:', error);
+          toast({
+            title: "Upload Error",
+            description: "Failed to upload profile video. Please try again.",
+            variant: "destructive",
+          });
+          return;
+        }
+      }
+
       // Prepare ad data
       const adData = {
         user_id: user.id,
         title: formData.title,
         description: formData.description,
         city: formData.location,
-        country: 'NO', // Default to Norway - you can make this configurable
+        country: 'norway', // Default to Norway - you can make this configurable
         age_range: `[${formData.age},${formData.age + 5}]`, // Age range
         relationship_status: formData.relationshipStatus,
         looking_for: formData.lookingFor,
@@ -79,6 +134,8 @@ export const useCreateAdForm = () => {
         body_type: formData.bodyType,
         height: formData.height ? parseInt(formData.height) : null,
         user_type: formData.gender,
+        avatar_url: avatarUrl,
+        video_url: videoUrl,
         is_active: true,
         view_count: 0,
         message_count: 0,
@@ -106,7 +163,7 @@ export const useCreateAdForm = () => {
       
       toast({
         title: "Success!",
-        description: "Your body contact ad has been created successfully.",
+        description: "Your dating ad has been created successfully.",
       });
       
       if (onSuccess) {
@@ -124,7 +181,7 @@ export const useCreateAdForm = () => {
     } finally {
       setIsSubmitting(false);
     }
-  }, [formData, resetForm, toast]);
+  }, [formData, resetForm, toast, uploadMedia]);
 
   const getProgress = useCallback(() => {
     const totalSteps = 4; // We'll have 4 steps

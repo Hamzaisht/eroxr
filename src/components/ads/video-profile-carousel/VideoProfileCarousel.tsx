@@ -30,9 +30,11 @@ export const VideoProfileCarousel = () => {
           title,
           description,
           video_url,
-          profiles:user_id(username, avatar_url)
+          avatar_url,
+          user_id
         `)
-        .neq("video_url", null)
+        .not("video_url", "is", null)
+        .eq("is_active", true)
         .order("created_at", { ascending: false })
         .limit(10);
       
@@ -118,14 +120,14 @@ export const VideoProfileCarousel = () => {
                 <div className="absolute bottom-0 left-0 right-0 p-4 text-white">
                   <div className="flex items-center gap-3">
                     <Avatar className="h-10 w-10 border-2 border-white/50">
-                      <AvatarImage src={profile.profiles ? (profile.profiles as any).avatar_url : ''} />
+                      <AvatarImage src={profile.avatar_url || ''} />
                       <AvatarFallback>
-                        {profile.profiles ? (profile.profiles as any).username?.charAt(0) : "U"}
+                        {profile.title?.charAt(0) || "U"}
                       </AvatarFallback>
                     </Avatar>
                     <div>
-                      <h3 className="font-bold">{profile.profiles ? (profile.profiles as any).username : "User"}</h3>
-                      <p className="text-sm opacity-90">{profile.title}</p>
+                      <h3 className="font-bold">{profile.title}</h3>
+                      <p className="text-sm opacity-90">Active now</p>
                     </div>
                   </div>
                   
