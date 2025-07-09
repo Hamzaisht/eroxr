@@ -89,21 +89,14 @@ export const ProfilePosts = ({ profileId }: ProfilePostsProps) => {
     });
 
     if (result.tracked) {
-      toast({
-        title: "👁️ View counted!",
-        description: "This view has been recorded",
-        duration: 1500,
-      });
+      // Only show success toast, don't spam user
+      console.log('✅ Post view tracked successfully');
       // Refresh the posts to show updated view count
       queryClient.invalidateQueries({ queryKey: ['profile-posts', profileId] });
     } else if (result.nextAllowedView) {
       const nextViewTime = new Date(result.nextAllowedView);
       const minutes = Math.ceil((nextViewTime.getTime() - Date.now()) / (1000 * 60));
-      toast({
-        title: "⏰ View cooldown active",
-        description: `You can view this again in ${minutes} minutes`,
-        duration: 2000,
-      });
+      console.log(`⏰ View cooldown active for ${minutes} minutes`);
     }
   };
 

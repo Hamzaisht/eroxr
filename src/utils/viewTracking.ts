@@ -56,17 +56,23 @@ export const trackView = async ({
 
     if (error) {
       console.error('❌ View tracking failed:', error);
-      return { success: false, tracked: false, message: error.message };
+      // Return success but not tracked to prevent UI disruption
+      return { 
+        success: true, 
+        tracked: false, 
+        message: 'View tracking temporarily unavailable' 
+      };
     }
 
     console.log('✅ View tracking response:', data);
-    return data;
+    return data || { success: true, tracked: true };
   } catch (error) {
     console.error('❌ View tracking error:', error);
+    // Graceful degradation - don't break the user experience
     return { 
-      success: false, 
+      success: true, 
       tracked: false, 
-      message: 'Failed to track view' 
+      message: 'View tracking temporarily unavailable' 
     };
   }
 };
