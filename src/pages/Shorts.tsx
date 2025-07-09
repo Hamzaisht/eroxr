@@ -22,12 +22,11 @@ interface ShortVideo {
   creator_id: string;
   like_count: number;
   view_count: number;
+  share_count: number;
+  comment_count: number;
   created_at: string;
-  profiles: {
-    id: string;
-    username: string;
-    avatar_url?: string;
-  }[];
+  username: string;
+  avatar_url?: string;
 }
 
 const Shorts = () => {
@@ -51,10 +50,11 @@ const Shorts = () => {
           creator_id,
           like_count,
           view_count,
+          share_count,
+          comment_count,
           created_at,
           visibility,
           profiles!creator_id (
-            id,
             username,
             avatar_url
           )
@@ -64,7 +64,17 @@ const Shorts = () => {
         .limit(50);
 
       if (error) throw error;
-      return data as ShortVideo[];
+      
+      // Transform the data to flatten the profiles relationship
+      const transformedData = data?.map(video => ({
+        ...video,
+        username: (video.profiles as any)?.username || 'Unknown',
+        avatar_url: (video.profiles as any)?.avatar_url,
+        // Remove the profiles array since we've flattened it
+        profiles: undefined
+      }));
+
+      return transformedData as ShortVideo[];
     }
   });
 
@@ -206,22 +216,16 @@ const Shorts = () => {
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
     >
-      {/* Header */}
-      <div className="absolute top-0 left-0 right-0 z-30 bg-gradient-to-b from-black/80 to-transparent p-4">
-        <div className="flex items-center justify-between">
-          <Button 
-            variant="ghost" 
-            size="icon"
-            onClick={() => navigate(-1)}
-            className="text-white hover:bg-white/20"
-          >
-            <ArrowLeft className="h-6 w-6" />
-          </Button>
-          <h1 className="text-white font-semibold text-lg tracking-wide">
-            Eros Shorts
-          </h1>
-          <div className="w-10" /> {/* Spacer */}
-        </div>
+      {/* Minimal Header - only back button */}
+      <div className="absolute top-4 left-4 z-30">
+        <Button 
+          variant="ghost" 
+          size="icon"
+          onClick={() => navigate(-1)}
+          className="text-white hover:bg-white/20 bg-black/30 backdrop-blur-sm"
+        >
+          <ArrowLeft className="h-6 w-6" />
+        </Button>
       </div>
 
       {/* Video Container */}
@@ -246,18 +250,53 @@ const Shorts = () => {
             {/* Creator */}
             <div className="flex items-center gap-3">
               <Avatar className="h-12 w-12 border-2 border-primary shadow-lg shadow-primary/20">
-                <AvatarImage src={currentVideo.profiles[0]?.avatar_url} />
+                <AvatarImage src={currentVideo.avatar_url} />
                 <AvatarFallback className="bg-primary text-black font-bold">
-                  {currentVideo.profiles[0]?.username?.[0]?.toUpperCase() || "U"}
+                  {currentVideo.username?.[0]?.toUpperCase() || "U"}
                 </AvatarFallback>
               </Avatar>
-              <div>
+              <div className="flex-1">
                 <p className="text-white font-semibold text-lg">
-                  @{currentVideo.profiles[0]?.username || 'Unknown'}
+                  @{currentVideo.username || 'Unknown'}
                 </p>
                 <p className="text-muted-foreground text-sm">
                   {currentVideo.view_count?.toLocaleString() || 0} views
                 </p>
+              </div>
+              
+              {/* Edit/Delete buttons for creator */}
+              <div className="flex gap-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-white hover:bg-white/20 bg-black/30"
+                  onClick={() => {
+                    // TODO: Navigate to edit page
+                    toast({
+                      title: "Edit Video",
+                      description: "Edit functionality coming soon!",
+                    });
+                  }}
+                >
+                  Edit
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-red-400 hover:bg-red-500/20 bg-black/30"
+                  onClick={() => {
+                    if (window.confirm('Are you sure you want to delete this video?')) {
+                      // TODO: Implement delete functionality
+                      toast({
+                        title: "Deleted",
+                        description: "Video deleted successfully",
+                        variant: "destructive",
+                      });
+                    }
+                  }}
+                >
+                  Delete
+                </Button>
               </div>
             </div>
 
@@ -281,7 +320,8 @@ const Shorts = () => {
             hasLiked={false} // TODO: Implement actual like state from database
             hasSaved={false} // TODO: Implement actual save state from database
             likesCount={currentVideo.like_count || 0}
-            commentsCount={0} // TODO: Get from comments table
+            commentsCount={currentVideo.comment_count || 0}
+            sharesCount={currentVideo.share_count || 0}
             onLike={() => handleLike(currentVideo.id)}
             onComment={handleComment}
             onShare={() => handleShare(currentVideo)}
@@ -290,19 +330,11 @@ const Shorts = () => {
           />
         </div>
 
-        {/* Navigation */}
-        <ShortNavigationButtons
-          currentVideoIndex={currentVideoIndex}
-          totalShorts={shorts.length}
-          onNextClick={handleNext}
-          onPrevClick={handlePrev}
-        />
-
-        {/* Progress Indicator */}
-        <div className="absolute top-20 right-4 z-20">
-          <div className="bg-black/40 backdrop-blur-sm rounded-full px-3 py-1">
+        {/* Progress Indicator - minimal */}
+        <div className="absolute top-16 right-4 z-20">
+          <div className="bg-black/40 backdrop-blur-sm rounded-full px-2 py-1">
             <span className="text-white text-xs font-medium">
-              {currentVideoIndex + 1} / {shorts.length}
+              {currentVideoIndex + 1}/{shorts.length}
             </span>
           </div>
         </div>

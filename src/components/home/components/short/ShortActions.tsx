@@ -9,6 +9,7 @@ interface ShortActionsProps {
   hasSaved: boolean;
   likesCount: number;
   commentsCount: number;
+  sharesCount: number;
   onLike: () => void;
   onComment: () => void;
   onShare: () => void;
@@ -22,6 +23,7 @@ export const ShortActions = ({
   hasSaved,
   likesCount,
   commentsCount,
+  sharesCount,
   onLike,
   onComment,
   onShare,
@@ -64,78 +66,99 @@ export const ShortActions = ({
   };
   
   return (
-    <div className="flex flex-col gap-4">
-      <Button
-        variant="ghost"
-        size="icon"
-        className="w-12 h-12 rounded-full bg-black/30 hover:bg-black/50"
-        onClick={handleLike}
-        disabled={isLiking}
-      >
-        {isLiking ? (
-          <Loader2 className="h-6 w-6 animate-spin" />
-        ) : (
-          <Heart 
-            className={cn("h-6 w-6", hasLiked ? "fill-red-500 text-red-500" : "text-white")} 
-          />
-        )}
-      </Button>
-      <span className="text-center text-white text-sm">{likesCount}</span>
-      
-      <Button
-        variant="ghost"
-        size="icon"
-        className="w-12 h-12 rounded-full bg-black/30 hover:bg-black/50"
-        onClick={onComment}
-      >
-        <MessageCircle className="h-6 w-6 text-white" />
-      </Button>
-      <span className="text-center text-white text-sm">{commentsCount}</span>
-      
-      <Button
-        variant="ghost"
-        size="icon"
-        className="w-12 h-12 rounded-full bg-black/30 hover:bg-black/50"
-        onClick={handleShare}
-        disabled={isSharing}
-      >
-        {isSharing ? (
-          <Loader2 className="h-6 w-6 animate-spin" />
-        ) : (
-          <Share2 className="h-6 w-6 text-white" />
-        )}
-      </Button>
-      
-      <Button
-        variant="ghost"
-        size="icon"
-        className="w-12 h-12 rounded-full bg-black/30 hover:bg-black/50"
-        onClick={handleSave}
-        disabled={isSaving}
-      >
-        {isSaving ? (
-          <Loader2 className="h-6 w-6 animate-spin" />
-        ) : (
-          <Bookmark 
-            className={cn("h-6 w-6", hasSaved ? "fill-luxury-primary text-luxury-primary" : "text-white")} 
-          />
-        )}
-      </Button>
-      
-      {onDelete && (
+    <div className="flex flex-col gap-6">
+      {/* Like Button */}
+      <div className="flex flex-col items-center">
         <Button
           variant="ghost"
           size="icon"
-          className="w-12 h-12 rounded-full bg-black/30 hover:bg-red-500/30"
-          onClick={onDelete}
-          disabled={isDeleting}
+          className="w-12 h-12 rounded-full bg-black/30 hover:bg-black/50 backdrop-blur-sm"
+          onClick={handleLike}
+          disabled={isLiking}
         >
-          {isDeleting ? (
+          {isLiking ? (
             <Loader2 className="h-6 w-6 animate-spin" />
           ) : (
-            <Trash2 className="h-6 w-6 text-white" />
+            <Heart 
+              className={cn("h-6 w-6", hasLiked ? "fill-red-500 text-red-500" : "text-white")} 
+            />
           )}
         </Button>
+        <span className="text-center text-white text-xs mt-1 font-medium">
+          {likesCount > 0 ? likesCount.toLocaleString() : ''}
+        </span>
+      </div>
+      
+      {/* Comment Button */}
+      <div className="flex flex-col items-center">
+        <Button
+          variant="ghost"
+          size="icon"
+          className="w-12 h-12 rounded-full bg-black/30 hover:bg-black/50 backdrop-blur-sm"
+          onClick={onComment}
+        >
+          <MessageCircle className="h-6 w-6 text-white" />
+        </Button>
+        <span className="text-center text-white text-xs mt-1 font-medium">
+          {commentsCount > 0 ? commentsCount.toLocaleString() : ''}
+        </span>
+      </div>
+      
+      {/* Share Button */}
+      <div className="flex flex-col items-center">
+        <Button
+          variant="ghost"
+          size="icon"
+          className="w-12 h-12 rounded-full bg-black/30 hover:bg-black/50 backdrop-blur-sm"
+          onClick={handleShare}
+          disabled={isSharing}
+        >
+          {isSharing ? (
+            <Loader2 className="h-6 w-6 animate-spin" />
+          ) : (
+            <Share2 className="h-6 w-6 text-white" />
+          )}
+        </Button>
+        <span className="text-center text-white text-xs mt-1 font-medium">
+          {sharesCount > 0 ? sharesCount.toLocaleString() : ''}
+        </span>
+      </div>
+      
+      {/* Save/Bookmark Button */}
+      <div className="flex flex-col items-center">
+        <Button
+          variant="ghost"
+          size="icon"
+          className="w-12 h-12 rounded-full bg-black/30 hover:bg-black/50 backdrop-blur-sm"
+          onClick={handleSave}
+          disabled={isSaving}
+        >
+          {isSaving ? (
+            <Loader2 className="h-6 w-6 animate-spin" />
+          ) : (
+            <Bookmark 
+              className={cn("h-6 w-6", hasSaved ? "fill-primary text-primary" : "text-white")} 
+            />
+          )}
+        </Button>
+      </div>
+      
+      {onDelete && (
+        <div className="flex flex-col items-center">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="w-12 h-12 rounded-full bg-black/30 hover:bg-red-500/30 backdrop-blur-sm"
+            onClick={onDelete}
+            disabled={isDeleting}
+          >
+            {isDeleting ? (
+              <Loader2 className="h-6 w-6 animate-spin" />
+            ) : (
+              <Trash2 className="h-6 w-6 text-white" />
+            )}
+          </Button>
+        </div>
       )}
     </div>
   );
