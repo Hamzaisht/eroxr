@@ -59,12 +59,7 @@ export const NavLinks = () => {
   // Ensure these match routes in App.tsx
   const navItems: NavItemProps[] = [
     { to: "/home", icon: Home, label: "Home" },
-    { 
-      to: "/dating", 
-      icon: Heart, 
-      label: "Create a BD",
-      onClick: handleCreateBD
-    },
+    { to: "/dating", icon: Heart, label: "Dating" },
     { to: "/messages", icon: MessageSquare, label: "Messages" },
     { to: "/eroboard", icon: Play, label: "Eroboard" },
     { to: "/shorts", icon: Film, label: "Eros" }

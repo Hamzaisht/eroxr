@@ -17,7 +17,7 @@ import { useUser } from "@/hooks/useUser";
 
 const menuItems = [
   { icon: Home, label: "Home", path: "/home" },
-  { icon: Heart, label: "Create a BD", path: "/dating" },
+  { icon: Heart, label: "Dating", path: "/dating" },
   { icon: MessageSquare, label: "Messages", path: "/messages" },
   { icon: Play, label: "Eroboard", path: "/eroboard" },
   { icon: Film, label: "Eros", path: "/shorts" }
@@ -42,16 +42,11 @@ export const InteractiveNav = () => {
     setShowBodyContactDialog(false);
   };
   
-  // Modified to handle the BD creation
   const handleItemClick = (path: string, label: string) => {
-    if (label === "Create a BD") {
-      setShowBodyContactDialog(true);
-    } else {
-      navigate(path);
-      // Close mobile menu if it's open
-      const closeButton = document.querySelector('[data-radix-collection-item]') as HTMLElement;
-      if (closeButton && isMobile) closeButton.click();
-    }
+    navigate(path);
+    // Close mobile menu if it's open
+    const closeButton = document.querySelector('[data-radix-collection-item]') as HTMLElement;
+    if (closeButton && isMobile) closeButton.click();
   };
 
   const MobileNav = () => (
