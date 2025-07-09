@@ -83,7 +83,160 @@ export function useEroboardData() {
         to: new Date()
       };
 
-      // Fetch creator rankings from creator_metrics table
+      // Use the new database functions for real-time analytics
+      const { data: analyticsData, error: analyticsError } = await supabase
+        .rpc('get_creator_analytics', {
+          p_creator_id: session.user.id,
+          p_start_date: format(effectiveDateRange.from, 'yyyy-MM-dd'),
+          p_end_date: format(effectiveDateRange.to, 'yyyy-MM-dd')
+        });
+
+      if (analyticsError) {
+        console.error("Error fetching analytics:", analyticsError);
+      }
+
+      const analytics = analyticsData?.[0] || {
+        total_earnings: 0,
+        total_views: 0,
+        total_likes: 0,
+        total_comments: 0,
+        total_posts: 0,
+        engagement_rate: 0,
+        top_post_id: null,
+        top_post_earnings: 0
+      };
+
+      // Fetch revenue breakdown using real data
+      const { data: revenueData, error: revenueError } = await supabase
+        .rpc('get_revenue_breakdown', {
+          p_creator_id: session.user.id,
+          p_start_date: format(effectiveDateRange.from, 'yyyy-MM-dd'),
+          p_end_date: format(effectiveDateRange.to, 'yyyy-MM-dd')
+        });
+
+      if (revenueError) {
+        console.error("Error fetching revenue breakdown:", revenueError);
+      }
+
+      const dbBreakdown = revenueData?.[0] || {
+        subscriptions: 0,
+        tips: 0,
+        ppv_content: 0,
+        live_streams: 0
+      };
+
+      const breakdown: RevenueBreakdown = {
+        subscriptions: Number(dbBreakdown.subscriptions) || 0,
+        tips: Number(dbBreakdown.tips) || 0,
+        liveStreamPurchases: Number(dbBreakdown.live_streams) || 0,
+        messages: Number(dbBreakdown.ppv_content) || 0
+      };
+
+      setRevenueBreakdown(breakdown);
+
+      // Fetch earnings timeline using real data
+      const { data: timelineData, error: timelineError } = await supabase
+        .rpc('get_earnings_timeline', {
+          p_creator_id: session.user.id,
+          p_days: 30
+        });
+
+      if (timelineError) {
+        console.error("Error fetching earnings timeline:", timelineError);
+      }
+
+      const chartEarningsData = timelineData?.map((item: any) => ({
+        date: item.date,
+        amount: Number(item.amount) * 0.92 // Apply revenue share
+      })) || [];
+
+      setEarningsData(chartEarningsData);
+
+      // Fetch subscriber analytics using real data
+      const { data: subscriberData, error: subscriberError } = await supabase
+        .rpc('get_subscriber_analytics', {
+          p_creator_id: session.user.id
+        });
+
+      if (subscriberError) {
+        console.error("Error fetching subscriber analytics:", subscriberError);
+      }
+
+      const subAnalytics = subscriberData?.[0] || {
+        total_subscribers: 0,
+        new_this_month: 0,
+        growth_rate: 0,
+        top_countries: [],
+        retention_rate: 0
+      };
+
+      // Fetch content performance using real data
+      const { data: contentData, error: contentError } = await supabase
+        .rpc('get_content_performance', {
+          p_creator_id: session.user.id,
+          p_limit: 20
+        });
+
+      if (contentError) {
+        console.error("Error fetching content performance:", contentError);
+      }
+
+      const contentPerformance = contentData?.map((item: any) => ({
+        id: item.post_id,
+        earnings: Number(item.earnings),
+        likes: item.likes,
+        comments: item.comments,
+        views: item.views,
+        engagement: item.engagement_score,
+        created_at: item.created_at,
+        type: item.content_type,
+        content: item.content
+      })) || [];
+
+      setContentPerformanceData(contentPerformance);
+
+      // Calculate content type distribution from real data
+      const typeDistribution = contentData?.reduce(
+        (acc: { photos: number; videos: number; stories: number }, item: any) => {
+          if (item.content_type === 'image') acc.photos += 1;
+          else if (item.content_type === 'video') acc.videos += 1;
+          else acc.stories += 1;
+          return acc;
+        },
+        { photos: 0, videos: 0, stories: 0 }
+      ) || { photos: 0, videos: 0, stories: 0 };
+
+      setContentTypeData([
+        { name: 'Photos', value: typeDistribution.photos },
+        { name: 'Videos', value: typeDistribution.videos },
+        { name: 'Stories', value: typeDistribution.stories }
+      ]);
+
+      // Fetch real engagement data
+      const { data: engagementActionData, error: engagementError } = await supabase
+        .from('post_media_actions')
+        .select('created_at, action_type, post_id')
+        .gte('created_at', format(effectiveDateRange.from, 'yyyy-MM-dd'))
+        .lte('created_at', format(effectiveDateRange.to, 'yyyy-MM-dd'));
+
+      if (engagementError) {
+        console.error("Error fetching engagement data:", engagementError);
+      }
+
+      const engagementByDate = engagementActionData?.reduce((acc: any, action) => {
+        const date = format(new Date(action.created_at), 'yyyy-MM-dd');
+        if (!acc[date]) acc[date] = 0;
+        acc[date] += 1;
+        return acc;
+      }, {}) || {};
+
+      const engagementChartData = Object.entries(engagementByDate).map(
+        ([date, count]) => ({ date, count })
+      ).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+      setEngagementData(engagementChartData);
+
+      // Fetch creator rankings from real data
       const { data: rankingsData, error: rankingsError } = await supabase
         .from('creator_metrics')
         .select(`
@@ -105,11 +258,11 @@ export function useEroboardData() {
 
       if (rankingsError) {
         console.error("Error fetching creator rankings:", rankingsError);
-        setError("Error fetching creator rankings");
       } else {
         setCreatorRankings(rankingsData || []);
       }
 
+      // Fetch earnings ranking for current user
       const { data: creatorEarnings, error: creatorEarningsError } = await supabase
         .from("top_creators_by_earnings")
         .select("total_earnings, earnings_percentile")
@@ -117,242 +270,10 @@ export function useEroboardData() {
         .single();
 
       if (creatorEarningsError && !creatorEarningsError.message.includes('No rows found')) {
-        console.error("Error fetching creator earnings:", creatorEarningsError);
-        setError("Error fetching earnings data");
+        console.error("Error fetching creator earnings ranking:", creatorEarningsError);
       }
 
-      // Fetch actual creator metrics for the current user
-      const { data: userMetrics, error: userMetricsError } = await supabase
-        .from('creator_metrics')
-        .select('*')
-        .eq('user_id', session.user.id)
-        .single();
-        
-      if (userMetricsError && !userMetricsError.message.includes('No rows found')) {
-        console.error("Error fetching user metrics:", userMetricsError);
-      }
-
-      const { data: earningsData, error: earningsError } = await supabase
-        .from('post_purchases')
-        .select(`
-          id,
-          created_at,
-          amount,
-          post_id,
-          posts!inner (creator_id)
-        `)
-        .eq('posts.creator_id', session.user.id)
-        .gte('created_at', format(effectiveDateRange.from, 'yyyy-MM-dd'))
-        .lte('created_at', format(effectiveDateRange.to, 'yyyy-MM-dd'));
-
-      if (earningsError) {
-        console.error("Error fetching earnings data:", earningsError);
-        setError("Error fetching earnings breakdown");
-      }
-
-      const breakdown: RevenueBreakdown = {
-        subscriptions: 0,
-        tips: 0,
-        liveStreamPurchases: 0,
-        messages: 0
-      };
-
-      if (earningsData && earningsData.length > 0) {
-        earningsData.forEach((purchase: any) => {
-          const amount = Number(purchase.amount);
-          
-          if (amount > 20) {
-            breakdown.subscriptions += amount;
-          } else if (amount < 5) {
-            breakdown.tips += amount;
-          } else if (amount >= 10 && amount <= 15) {
-            breakdown.liveStreamPurchases += amount;
-          } else {
-            breakdown.messages += amount;
-          }
-        });
-      }
-
-      setRevenueBreakdown(breakdown);
-
-      const processedEarningsData = earningsData?.reduce((acc: any, purchase: any) => {
-        const date = format(new Date(purchase.created_at), 'yyyy-MM-dd');
-        acc[date] = (acc[date] || 0) + purchase.amount;
-        return acc;
-      }, {}) || {};
-
-      const chartEarningsData = Object.entries(processedEarningsData).map(
-        ([date, amount]) => ({
-          date,
-          amount: Number(amount) * stats.revenueShare
-        })
-      ).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-
-      setEarningsData(chartEarningsData);
-
-      const totalEarnings = chartEarningsData.reduce((sum, item) => sum + Number(item.amount), 0);
-
-      const { data: subscriptionsData, error: subscriptionsError } = await supabase
-        .from('creator_subscriptions')
-        .select('created_at, user_id')
-        .eq('creator_id', session.user.id);
-
-      if (subscriptionsError) {
-        console.error("Error fetching subscriber data:", subscriptionsError);
-        setError("Error fetching subscriber metrics");
-      }
-
-      const subscribers = subscriptionsData || [];
-      const subscribersInRange = subscribers.filter(sub => {
-        const subDate = new Date(sub.created_at);
-        return isAfter(subDate, effectiveDateRange.from) && 
-               !isAfter(subDate, effectiveDateRange.to);
-      });
-
-      const totalSubscribersCount = subscribers.length;
-      const newSubscribersCount = subscribersInRange.length;
-      
-      const userSubscriptionDates = subscribers.reduce((acc: Record<string, Date[]>, sub) => {
-        if (!acc[sub.user_id]) acc[sub.user_id] = [];
-        acc[sub.user_id].push(new Date(sub.created_at));
-        return acc;
-      }, {});
-      
-      const returningSubscribersCount = Object.values(userSubscriptionDates)
-        .filter(dates => 
-          dates.length > 1 && 
-          dates.some(date => 
-            isAfter(date, effectiveDateRange.from) && 
-            !isAfter(date, effectiveDateRange.to)
-          )
-        ).length;
-      
-      const lastMonthSubscribers = subscribers.filter(sub => 
-        isAfter(new Date(sub.created_at), subMonths(effectiveDateRange.from, 1)) && 
-        !isAfter(new Date(sub.created_at), effectiveDateRange.from)
-      ).length;
-      
-      const previousMonthUsers = new Set();
-      const currentMonthUsers = new Set();
-      
-      subscribers.forEach(sub => {
-        const date = new Date(sub.created_at);
-        if (isAfter(date, subMonths(effectiveDateRange.from, 1)) && 
-            !isAfter(date, effectiveDateRange.from)) {
-          previousMonthUsers.add(sub.user_id);
-        }
-        if (isAfter(date, effectiveDateRange.from) && 
-            !isAfter(date, effectiveDateRange.to)) {
-          currentMonthUsers.add(sub.user_id);
-        }
-      });
-      
-      const renewedUsers = [...previousMonthUsers].filter(id => currentMonthUsers.has(id)).length;
-      const churnRate = previousMonthUsers.size > 0 
-        ? Math.min(100, Math.round(100 * (1 - renewedUsers / previousMonthUsers.size)))
-        : 0;
-
-      const { data: vipFansData, error: vipFansError } = await supabase
-        .from('post_purchases')
-        .select('user_id')
-        .eq('posts.creator_id', session.user.id)
-        .gte('created_at', format(subMonths(new Date(), 3), 'yyyy-MM-dd'));
-
-      if (vipFansError) {
-        console.error("Error fetching VIP fans data:", vipFansError);
-      }
-
-      let vipFansCount = 0;
-      
-      if (vipFansData && vipFansData.length > 0) {
-        const purchasesByUser: Record<string, number> = {};
-        
-        vipFansData.forEach(purchase => {
-          const userId = purchase.user_id;
-          purchasesByUser[userId] = (purchasesByUser[userId] || 0) + 1;
-        });
-        
-        vipFansCount = Object.values(purchasesByUser).filter(count => count > 5).length;
-      }
-
-      const { data: postsData, error: postsError } = await supabase
-        .from('posts')
-        .select(`
-          id, 
-          media_url, 
-          video_urls, 
-          created_at, 
-          likes_count, 
-          comments_count, 
-          view_count,
-          earnings:post_purchases(amount)
-        `)
-        .eq('creator_id', session.user.id)
-        .gte('created_at', format(effectiveDateRange.from, 'yyyy-MM-dd'))
-        .lte('created_at', format(effectiveDateRange.to, 'yyyy-MM-dd'));
-
-      if (postsError) {
-        console.error("Error fetching posts data:", postsError);
-        setError("Error fetching content performance data");
-      }
-
-      const distribution = postsData?.reduce(
-        (acc: { photos: number; videos: number; stories: number }, post) => {
-          if (post.media_url?.length) acc.photos += 1;
-          if (post.video_urls?.length) acc.videos += 1;
-          return acc;
-        },
-        { photos: 0, videos: 0, stories: 0 }
-      );
-
-      setContentTypeData([
-        { name: 'Photos', value: distribution?.photos || 0 },
-        { name: 'Videos', value: distribution?.videos || 0 },
-        { name: 'Stories', value: distribution?.stories || 0 }
-      ]);
-
-      const contentPerformance = postsData?.map(post => {
-        const postEarnings = post.earnings?.reduce((sum: number, purchase: any) => sum + Number(purchase.amount), 0) || 0;
-        
-        return {
-          id: post.id,
-          earnings: postEarnings,
-          likes: post.likes_count || 0,
-          comments: post.comments_count || 0,
-          views: post.view_count || 0,
-          engagement: (post.likes_count || 0) + (post.comments_count || 0) * 2,
-          created_at: post.created_at,
-          type: post.video_urls?.length ? 'video' : 'photo'
-        };
-      }) || [];
-
-      setContentPerformanceData(contentPerformance);
-
-      const { data: engagementActionData, error: engagementError } = await supabase
-        .from('post_media_actions')
-        .select('created_at, action_type')
-        .eq('posts.creator_id', session.user.id)
-        .gte('created_at', format(effectiveDateRange.from, 'yyyy-MM-dd'))
-        .lte('created_at', format(effectiveDateRange.to, 'yyyy-MM-dd'));
-
-      if (engagementError) {
-        console.error("Error fetching engagement data:", engagementError);
-      }
-
-      const engagementByDate = engagementActionData?.reduce((acc: any, action) => {
-        const date = format(new Date(action.created_at), 'yyyy-MM-dd');
-        if (!acc[date]) acc[date] = 0;
-        acc[date] += 1;
-        return acc;
-      }, {}) || {};
-
-      const engagementChartData = Object.entries(engagementByDate).map(
-        ([date, count]) => ({ date, count })
-      ).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-
-      // Only use real engagement data if available, otherwise don't use mock data
-      setEngagementData(engagementChartData.length > 0 ? engagementChartData : []);
-
+      // Fetch latest payout info
       const { data: payoutData, error: payoutError } = await supabase
         .from('payout_requests')
         .select('status, processed_at')
@@ -365,6 +286,7 @@ export function useEroboardData() {
         setLatestPayout(payoutData);
       }
 
+      // Fetch follower count
       const { count: followerCount, error: followerError } = await supabase
         .from("followers")
         .select("*", { count: 'exact', head: true })
@@ -374,28 +296,22 @@ export function useEroboardData() {
         console.error("Error fetching follower count:", followerError);
       }
 
-      const { count: postCount, error: postCountError } = await supabase
-        .from("posts")
-        .select("*", { count: 'exact', head: true })
-        .eq("creator_id", session.user.id);
+      // Calculate VIP fans (users with multiple high-value purchases)
+      const vipFansCount = contentPerformance.filter(item => item.earnings > 50).length;
 
-      if (postCountError) {
-        console.error("Error fetching post count:", postCountError);
-      }
-
-      // Use the userMetrics data if available
+      // Set all stats using real data
       setStats({
-        totalEarnings: userMetrics?.earnings || creatorEarnings?.total_earnings || totalEarnings || 0,
+        totalEarnings: Number(analytics.total_earnings) || 0,
         earningsPercentile: creatorEarnings?.earnings_percentile || null,
-        totalSubscribers: totalSubscribersCount,
-        newSubscribers: newSubscribersCount,
-        returningSubscribers: returningSubscribersCount,
-        churnRate: churnRate,
+        totalSubscribers: subAnalytics.total_subscribers,
+        newSubscribers: subAnalytics.new_this_month,
+        returningSubscribers: Math.max(0, subAnalytics.total_subscribers - subAnalytics.new_this_month),
+        churnRate: Math.max(0, 100 - subAnalytics.retention_rate),
         vipFans: vipFansCount,
-        followers: userMetrics?.followers || followerCount || 0,
-        totalContent: postCount || 0,
-        totalViews: userMetrics?.views || postsData?.reduce((sum, post) => sum + (post.view_count || 0), 0) || 0, 
-        engagementRate: userMetrics?.engagement_score || calculateEngagementRate(postsData),
+        followers: followerCount || 0,
+        totalContent: analytics.total_posts,
+        totalViews: analytics.total_views,
+        engagementRate: Number(analytics.engagement_rate) || 0,
         timeOnPlatform: calculateTimeOnPlatform(session.user.id),
         revenueShare: 0.92
       });
@@ -411,7 +327,7 @@ export function useEroboardData() {
     } finally {
       setLoading(false);
     }
-  }, [session?.user?.id, toast, stats.revenueShare]);
+  }, [session?.user?.id, toast]);
 
   const calculateEngagementRate = (posts: any[] = []) => {
     if (!posts || posts.length === 0) return 0;

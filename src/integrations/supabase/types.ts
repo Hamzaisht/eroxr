@@ -141,6 +141,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "blacklisted_content_added_by_fkey"
+            columns: ["added_by"]
+            isOneToOne: false
+            referencedRelation: "top_creators_by_earnings"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "blacklisted_content_related_dmca_id_fkey"
             columns: ["related_dmca_id"]
             isOneToOne: false
@@ -201,6 +208,13 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "booking_slots_creator_id_fkey"
+            columns: ["creator_id"]
+            isOneToOne: false
+            referencedRelation: "top_creators_by_earnings"
+            referencedColumns: ["id"]
+          },
         ]
       }
       bookings: {
@@ -255,10 +269,24 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "bookings_creator_id_fkey"
+            columns: ["creator_id"]
+            isOneToOne: false
+            referencedRelation: "top_creators_by_earnings"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "bookings_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bookings_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "top_creators_by_earnings"
             referencedColumns: ["id"]
           },
         ]
@@ -294,6 +322,13 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "comments_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "top_creators_by_earnings"
             referencedColumns: ["id"]
           },
         ]
@@ -471,6 +506,13 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "content_classifications_classified_by_fkey"
+            columns: ["classified_by"]
+            isOneToOne: false
+            referencedRelation: "top_creators_by_earnings"
+            referencedColumns: ["id"]
+          },
         ]
       }
       content_recommendations: {
@@ -542,6 +584,13 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "creator_content_prices_creator_id_fkey"
+            columns: ["creator_id"]
+            isOneToOne: false
+            referencedRelation: "top_creators_by_earnings"
+            referencedColumns: ["id"]
+          },
         ]
       }
       creator_likes: {
@@ -569,6 +618,13 @@ export type Database = {
             columns: ["creator_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "creator_likes_creator_id_fkey"
+            columns: ["creator_id"]
+            isOneToOne: false
+            referencedRelation: "top_creators_by_earnings"
             referencedColumns: ["id"]
           },
         ]
@@ -615,6 +671,13 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "creator_metrics_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "top_creators_by_earnings"
+            referencedColumns: ["id"]
+          },
         ]
       }
       creator_subscriptions: {
@@ -642,6 +705,13 @@ export type Database = {
             columns: ["creator_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "creator_subscriptions_creator_id_fkey"
+            columns: ["creator_id"]
+            isOneToOne: false
+            referencedRelation: "top_creators_by_earnings"
             referencedColumns: ["id"]
           },
         ]
@@ -821,10 +891,24 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "direct_messages_recipient_id_fkey"
+            columns: ["recipient_id"]
+            isOneToOne: false
+            referencedRelation: "top_creators_by_earnings"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "direct_messages_sender_id_fkey"
             columns: ["sender_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "direct_messages_sender_id_fkey"
+            columns: ["sender_id"]
+            isOneToOne: false
+            referencedRelation: "top_creators_by_earnings"
             referencedColumns: ["id"]
           },
         ]
@@ -881,10 +965,24 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "dmca_requests_handled_by_fkey"
+            columns: ["handled_by"]
+            isOneToOne: false
+            referencedRelation: "top_creators_by_earnings"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "dmca_requests_reporter_id_fkey"
             columns: ["reporter_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dmca_requests_reporter_id_fkey"
+            columns: ["reporter_id"]
+            isOneToOne: false
+            referencedRelation: "top_creators_by_earnings"
             referencedColumns: ["id"]
           },
         ]
@@ -962,10 +1060,24 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "followers_follower_id_fkey"
+            columns: ["follower_id"]
+            isOneToOne: false
+            referencedRelation: "top_creators_by_earnings"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "followers_following_id_fkey"
             columns: ["following_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "followers_following_id_fkey"
+            columns: ["following_id"]
+            isOneToOne: false
+            referencedRelation: "top_creators_by_earnings"
             referencedColumns: ["id"]
           },
         ]
@@ -1034,6 +1146,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "live_stream_chat_sender_id_fkey"
+            columns: ["sender_id"]
+            isOneToOne: false
+            referencedRelation: "top_creators_by_earnings"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "live_stream_chat_stream_id_fkey"
             columns: ["stream_id"]
             isOneToOne: false
@@ -1077,6 +1196,13 @@ export type Database = {
             columns: ["viewer_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "live_stream_viewers_viewer_id_fkey"
+            columns: ["viewer_id"]
+            isOneToOne: false
+            referencedRelation: "top_creators_by_earnings"
             referencedColumns: ["id"]
           },
         ]
@@ -1133,6 +1259,13 @@ export type Database = {
             columns: ["creator_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "live_streams_creator_id_fkey"
+            columns: ["creator_id"]
+            isOneToOne: false
+            referencedRelation: "top_creators_by_earnings"
             referencedColumns: ["id"]
           },
         ]
@@ -1494,12 +1627,14 @@ export type Database = {
           last_engagement_at: string | null
           last_modified_by: string | null
           likes_count: number | null
+          media_url: string[] | null
           metadata: Json | null
           ppv_amount: number | null
           screenshots_count: number | null
           share_count: number | null
           tags: string[] | null
           updated_at: string
+          video_urls: string[] | null
           view_count: number | null
           visibility: string | null
         }
@@ -1517,12 +1652,14 @@ export type Database = {
           last_engagement_at?: string | null
           last_modified_by?: string | null
           likes_count?: number | null
+          media_url?: string[] | null
           metadata?: Json | null
           ppv_amount?: number | null
           screenshots_count?: number | null
           share_count?: number | null
           tags?: string[] | null
           updated_at?: string
+          video_urls?: string[] | null
           view_count?: number | null
           visibility?: string | null
         }
@@ -1540,12 +1677,14 @@ export type Database = {
           last_engagement_at?: string | null
           last_modified_by?: string | null
           likes_count?: number | null
+          media_url?: string[] | null
           metadata?: Json | null
           ppv_amount?: number | null
           screenshots_count?: number | null
           share_count?: number | null
           tags?: string[] | null
           updated_at?: string
+          video_urls?: string[] | null
           view_count?: number | null
           visibility?: string | null
         }
@@ -1558,10 +1697,24 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "fk_posts_creator_id"
+            columns: ["creator_id"]
+            isOneToOne: false
+            referencedRelation: "top_creators_by_earnings"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "posts_creator_id_fkey"
             columns: ["creator_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "posts_creator_id_fkey"
+            columns: ["creator_id"]
+            isOneToOne: false
+            referencedRelation: "top_creators_by_earnings"
             referencedColumns: ["id"]
           },
         ]
@@ -1750,8 +1903,29 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "reports_reported_id_fkey"
+            columns: ["reported_id"]
+            isOneToOne: false
+            referencedRelation: "top_creators_by_earnings"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "reports_reporter_id_fkey"
             columns: ["reporter_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reports_reporter_id_fkey"
+            columns: ["reporter_id"]
+            isOneToOne: false
+            referencedRelation: "top_creators_by_earnings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reports_resolved_by_fkey"
+            columns: ["resolved_by"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
@@ -1760,7 +1934,7 @@ export type Database = {
             foreignKeyName: "reports_resolved_by_fkey"
             columns: ["resolved_by"]
             isOneToOne: false
-            referencedRelation: "profiles"
+            referencedRelation: "top_creators_by_earnings"
             referencedColumns: ["id"]
           },
         ]
@@ -1852,6 +2026,13 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "sounds_creator_id_fkey"
+            columns: ["creator_id"]
+            isOneToOne: false
+            referencedRelation: "top_creators_by_earnings"
+            referencedColumns: ["id"]
+          },
         ]
       }
       stories: {
@@ -1906,6 +2087,13 @@ export type Database = {
             columns: ["creator_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stories_creator_id_fkey"
+            columns: ["creator_id"]
+            isOneToOne: false
+            referencedRelation: "top_creators_by_earnings"
             referencedColumns: ["id"]
           },
         ]
@@ -2126,6 +2314,13 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "user_roles_profile_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "top_creators_by_earnings"
+            referencedColumns: ["id"]
+          },
         ]
       }
       user_subscriptions: {
@@ -2219,6 +2414,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "video_comments_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "top_creators_by_earnings"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "video_comments_video_id_fkey"
             columns: ["video_id"]
             isOneToOne: false
@@ -2302,6 +2504,13 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "video_folders_creator_id_fkey"
+            columns: ["creator_id"]
+            isOneToOne: false
+            referencedRelation: "top_creators_by_earnings"
+            referencedColumns: ["id"]
+          },
         ]
       }
       video_likes: {
@@ -2329,6 +2538,13 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "video_likes_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "top_creators_by_earnings"
             referencedColumns: ["id"]
           },
           {
@@ -2425,10 +2641,24 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "video_reports_reporter_id_fkey"
+            columns: ["reporter_id"]
+            isOneToOne: false
+            referencedRelation: "top_creators_by_earnings"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "video_reports_resolved_by_fkey"
             columns: ["resolved_by"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "video_reports_resolved_by_fkey"
+            columns: ["resolved_by"]
+            isOneToOne: false
+            referencedRelation: "top_creators_by_earnings"
             referencedColumns: ["id"]
           },
           {
@@ -2468,6 +2698,13 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "video_views_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "top_creators_by_earnings"
             referencedColumns: ["id"]
           },
           {
@@ -2551,6 +2788,13 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "videos_creator_id_fkey"
+            columns: ["creator_id"]
+            isOneToOne: false
+            referencedRelation: "top_creators_by_earnings"
+            referencedColumns: ["id"]
+          },
         ]
       }
       view_tracking: {
@@ -2588,6 +2832,16 @@ export type Database = {
       }
     }
     Views: {
+      top_creators_by_earnings: {
+        Row: {
+          avatar_url: string | null
+          earnings_percentile: number | null
+          id: string | null
+          total_earnings: number | null
+          username: string | null
+        }
+        Relationships: []
+      }
       user_bookmarks: {
         Row: {
           comments_count: number | null
@@ -2626,10 +2880,24 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "fk_posts_creator_id"
+            columns: ["creator_id"]
+            isOneToOne: false
+            referencedRelation: "top_creators_by_earnings"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "posts_creator_id_fkey"
             columns: ["creator_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "posts_creator_id_fkey"
+            columns: ["creator_id"]
+            isOneToOne: false
+            referencedRelation: "top_creators_by_earnings"
             referencedColumns: ["id"]
           },
         ]
@@ -2648,9 +2916,40 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: number
       }
+      get_content_performance: {
+        Args: { p_creator_id: string; p_limit?: number }
+        Returns: {
+          post_id: string
+          content: string
+          created_at: string
+          views: number
+          likes: number
+          comments: number
+          earnings: number
+          engagement_score: number
+          content_type: string
+        }[]
+      }
       get_content_view_count: {
         Args: { p_content_id: string; p_content_type: string }
         Returns: number
+      }
+      get_creator_analytics: {
+        Args: {
+          p_creator_id: string
+          p_start_date?: string
+          p_end_date?: string
+        }
+        Returns: {
+          total_earnings: number
+          total_views: number
+          total_likes: number
+          total_comments: number
+          total_posts: number
+          engagement_rate: number
+          top_post_id: string
+          top_post_earnings: number
+        }[]
       }
       get_current_user_id: {
         Args: Record<PropertyKey, never>
@@ -2659,6 +2958,36 @@ export type Database = {
       get_current_user_role: {
         Args: Record<PropertyKey, never>
         Returns: string
+      }
+      get_earnings_timeline: {
+        Args: { p_creator_id: string; p_days?: number }
+        Returns: {
+          date: string
+          amount: number
+        }[]
+      }
+      get_revenue_breakdown: {
+        Args: {
+          p_creator_id: string
+          p_start_date?: string
+          p_end_date?: string
+        }
+        Returns: {
+          subscriptions: number
+          tips: number
+          ppv_content: number
+          live_streams: number
+        }[]
+      }
+      get_subscriber_analytics: {
+        Args: { p_creator_id: string }
+        Returns: {
+          total_subscribers: number
+          new_this_month: number
+          growth_rate: number
+          top_countries: string[]
+          retention_rate: number
+        }[]
       }
       get_top_trending_hashtags: {
         Args: Record<PropertyKey, never>
