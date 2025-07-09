@@ -1,7 +1,7 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { motion } from 'framer-motion';
-import { Video, Eye, Heart, MessageCircle, Play, Edit3, Trash2, MoreHorizontal, Plus, Folder, Bookmark } from 'lucide-react';
+import { Video, Eye, Heart, MessageCircle, Play, Edit3, Trash2, MoreHorizontal, Plus, Folder, Bookmark, Settings, EyeOff } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
@@ -48,6 +48,9 @@ export const ProfileVideos = ({ profileId }: ProfileVideosProps) => {
   const [showBookmarkDialog, setShowBookmarkDialog] = useState(false);
   const [showCreateInBookmark, setShowCreateInBookmark] = useState(false);
   const [newBookmarkFolderName, setNewBookmarkFolderName] = useState('');
+  const [editingFolderId, setEditingFolderId] = useState<string | null>(null);
+  const [editFolderName, setEditFolderName] = useState('');
+  const [deleteFolderId, setDeleteFolderId] = useState<string | null>(null);
 
   // Helper function to format video titles
   const formatVideoTitle = (title: string) => {
@@ -335,6 +338,102 @@ export const ProfileVideos = ({ profileId }: ProfileVideosProps) => {
     }
   };
 
+  const handleEditFolder = async () => {
+    if (!editingFolderId || !editFolderName.trim()) return;
+
+    try {
+      const { error } = await supabase
+        .from('video_folders')
+        .update({ name: editFolderName.trim() })
+        .eq('id', editingFolderId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Folder updated",
+        description: `Folder renamed to "${editFolderName}" successfully.`,
+      });
+
+      setEditingFolderId(null);
+      setEditFolderName('');
+      queryClient.invalidateQueries({ queryKey: ['video-folders', profileId] });
+    } catch (error) {
+      console.error('Error updating folder:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update folder. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleToggleFolderVisibility = async (folderId: string, isPublic: boolean) => {
+    try {
+      const { error } = await supabase
+        .from('video_folders')
+        .update({ is_public: !isPublic })
+        .eq('id', folderId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Folder visibility updated",
+        description: `Folder is now ${!isPublic ? 'public' : 'private'}.`,
+      });
+
+      queryClient.invalidateQueries({ queryKey: ['video-folders', profileId] });
+    } catch (error) {
+      console.error('Error updating folder visibility:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update folder visibility. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleDeleteFolder = async () => {
+    if (!deleteFolderId) return;
+
+    try {
+      // First delete all folder items
+      await supabase
+        .from('video_folder_items')
+        .delete()
+        .eq('folder_id', deleteFolderId);
+
+      // Then delete the folder
+      const { error } = await supabase
+        .from('video_folders')
+        .delete()
+        .eq('id', deleteFolderId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Folder deleted",
+        description: "Folder and all its contents have been removed.",
+      });
+
+      // Reset selected folder if it was the deleted one
+      if (selectedFolderId === deleteFolderId) {
+        setSelectedFolderId(null);
+      }
+
+      setDeleteFolderId(null);
+      queryClient.invalidateQueries({ queryKey: ['video-folders', profileId] });
+      queryClient.invalidateQueries({ queryKey: ['profile-videos', profileId] });
+    } catch (error) {
+      console.error('Error deleting folder:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete folder. Please try again.",
+        variant: "destructive",
+      });
+      setDeleteFolderId(null);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="space-y-4">
@@ -385,19 +484,65 @@ export const ProfileVideos = ({ profileId }: ProfileVideosProps) => {
         </Button>
         
         {folders?.map((folder) => (
-          <Button
-            key={folder.id}
-            variant={selectedFolderId === folder.id ? "default" : "outline"}
-            size="sm"
-            onClick={() => {
-              console.log('🔄 Setting folder to:', folder.id, folder.name);
-              setSelectedFolderId(folder.id);
-            }}
-            className="whitespace-nowrap"
-          >
-            <Folder className="w-3 h-3 mr-1" />
-            {folder.name}
-          </Button>
+          <div key={folder.id} className="flex items-center gap-1">
+            <Button
+              variant={selectedFolderId === folder.id ? "default" : "outline"}
+              size="sm"
+              onClick={() => {
+                console.log('🔄 Setting folder to:', folder.id, folder.name);
+                setSelectedFolderId(folder.id);
+              }}
+              className="whitespace-nowrap"
+            >
+              <Folder className="w-3 h-3 mr-1" />
+              {folder.name}
+              {!folder.is_public && <EyeOff className="w-3 h-3 ml-1" />}
+            </Button>
+            
+            {isOwnProfile && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 text-white/60 hover:text-white hover:bg-white/10"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <Settings className="w-3 h-3" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent 
+                  align="end" 
+                  className="bg-black/90 backdrop-blur-md border-white/20 text-white z-50"
+                >
+                  <DropdownMenuItem 
+                    onClick={() => {
+                      setEditingFolderId(folder.id);
+                      setEditFolderName(folder.name);
+                    }}
+                    className="hover:bg-white/10 focus:bg-white/10 cursor-pointer"
+                  >
+                    <Edit3 className="w-4 h-4 mr-2" />
+                    Edit Name
+                  </DropdownMenuItem>
+                  <DropdownMenuItem 
+                    onClick={() => handleToggleFolderVisibility(folder.id, folder.is_public)}
+                    className="hover:bg-white/10 focus:bg-white/10 cursor-pointer"
+                  >
+                    {folder.is_public ? <EyeOff className="w-4 h-4 mr-2" /> : <Eye className="w-4 h-4 mr-2" />}
+                    {folder.is_public ? 'Make Private' : 'Make Public'}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem 
+                    onClick={() => setDeleteFolderId(folder.id)}
+                    className="hover:bg-red-500/20 focus:bg-red-500/20 text-red-400 cursor-pointer"
+                  >
+                    <Trash2 className="w-4 h-4 mr-2" />
+                    Delete Folder
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
+          </div>
         ))}
 
         {isOwnProfile && (
@@ -708,6 +853,74 @@ export const ProfileVideos = ({ profileId }: ProfileVideosProps) => {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Edit Folder Dialog */}
+      <Dialog open={!!editingFolderId} onOpenChange={() => {
+        setEditingFolderId(null);
+        setEditFolderName('');
+      }}>
+        <DialogContent className="bg-black/95 backdrop-blur-md border-white/20 text-white">
+          <DialogHeader>
+            <DialogTitle>Edit Folder Name</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <input
+              type="text"
+              placeholder="Folder name"
+              value={editFolderName}
+              onChange={(e) => setEditFolderName(e.target.value)}
+              className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded text-white placeholder-white/50"
+              onKeyPress={(e) => e.key === 'Enter' && handleEditFolder()}
+              autoFocus
+            />
+            <div className="flex gap-2 justify-end">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setEditingFolderId(null);
+                  setEditFolderName('');
+                }}
+                className="bg-transparent border-white/20 text-white hover:bg-white/10"
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleEditFolder}
+                disabled={!editFolderName.trim()}
+                className="bg-luxury-primary hover:bg-luxury-primary/80"
+              >
+                Update Folder
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Folder Confirmation Dialog */}
+      <AlertDialog open={!!deleteFolderId} onOpenChange={() => setDeleteFolderId(null)}>
+        <AlertDialogContent className="bg-black/95 backdrop-blur-md border-white/20 text-white">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-white">Delete Folder</AlertDialogTitle>
+            <AlertDialogDescription className="text-white/70">
+              Are you sure you want to delete this folder? This action cannot be undone and all videos in this folder will be removed from it (but not deleted).
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel 
+              onClick={() => setDeleteFolderId(null)}
+              className="bg-white/10 hover:bg-white/20 text-white border-white/20"
+            >
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleDeleteFolder}
+              className="bg-red-600 hover:bg-red-700 text-white"
+            >
+              Delete Folder
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

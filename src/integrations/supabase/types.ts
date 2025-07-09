@@ -1980,6 +1980,7 @@ export type Database = {
           description: string | null
           id: string
           is_default: boolean | null
+          is_public: boolean | null
           name: string
           updated_at: string
         }
@@ -1989,6 +1990,7 @@ export type Database = {
           description?: string | null
           id?: string
           is_default?: boolean | null
+          is_public?: boolean | null
           name: string
           updated_at?: string
         }
@@ -1998,6 +2000,7 @@ export type Database = {
           description?: string | null
           id?: string
           is_default?: boolean | null
+          is_public?: boolean | null
           name?: string
           updated_at?: string
         }
