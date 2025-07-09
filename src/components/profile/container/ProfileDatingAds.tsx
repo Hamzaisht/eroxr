@@ -1,11 +1,14 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { motion } from 'framer-motion';
-import { Heart, MapPin, Edit3, Trash2, MoreHorizontal, Calendar, Eye, Play } from 'lucide-react';
+import { Heart, MapPin, Edit3, Trash2, MoreHorizontal, Calendar, Eye, Play, Check, X, Edit } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { useState } from 'react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -21,6 +24,8 @@ export const ProfileDatingAds = ({ profileId }: ProfileDatingAdsProps) => {
   const { user } = useAuth();
   const { toast } = useToast();
   const isOwnProfile = user?.id === profileId;
+  const [editingField, setEditingField] = useState<{adId: string, field: string} | null>(null);
+  const [editValue, setEditValue] = useState('');
 
   const { data: datingAds, isLoading, refetch } = useQuery({
     queryKey: ['profile-dating-ads', profileId],
@@ -91,12 +96,50 @@ export const ProfileDatingAds = ({ profileId }: ProfileDatingAdsProps) => {
     }
   };
 
+  const startEditing = (adId: string, field: string, currentValue: string) => {
+    setEditingField({ adId, field });
+    setEditValue(currentValue);
+  };
+
+  const cancelEditing = () => {
+    setEditingField(null);
+    setEditValue('');
+  };
+
+  const saveEdit = async () => {
+    if (!editingField) return;
+
+    try {
+      const updateData: any = {};
+      updateData[editingField.field] = editValue;
+
+      const { error } = await supabase
+        .from('dating_ads')
+        .update(updateData)
+        .eq('id', editingField.adId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Ad updated",
+        description: "Your dating ad has been successfully updated.",
+      });
+
+      refetch();
+      setEditingField(null);
+      setEditValue('');
+    } catch (error) {
+      console.error('Error updating dating ad:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update dating ad. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
   const handleEditAd = (adId: string) => {
-    toast({
-      title: "Edit dating ad",
-      description: "Redirecting to edit page...",
-    });
-    // TODO: Navigate to edit page when implemented
+    // This function is now replaced by inline editing
     console.log('Edit ad:', adId);
   };
 
@@ -261,8 +304,37 @@ export const ProfileDatingAds = ({ profileId }: ProfileDatingAdsProps) => {
                       <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center border-2 border-white/20">
                         <Heart className="w-6 h-6 text-white" />
                       </div>
-                      <div>
-                        <h4 className="text-xl font-bold text-white mb-1 drop-shadow-lg">{ad.title}</h4>
+                       <div className="flex-1">
+                         {editingField?.adId === ad.id && editingField?.field === 'title' ? (
+                           <div className="flex items-center gap-2">
+                             <Input
+                               value={editValue}
+                               onChange={(e) => setEditValue(e.target.value)}
+                               className="bg-black/40 border-white/20 text-white text-lg font-bold"
+                               autoFocus
+                             />
+                             <Button size="sm" onClick={saveEdit} className="h-8 w-8 p-0 bg-green-500 hover:bg-green-600">
+                               <Check className="w-4 h-4" />
+                             </Button>
+                             <Button size="sm" onClick={cancelEditing} className="h-8 w-8 p-0 bg-red-500 hover:bg-red-600">
+                               <X className="w-4 h-4" />
+                             </Button>
+                           </div>
+                         ) : (
+                           <div className="flex items-center gap-2 group/title">
+                             <h4 className="text-xl font-bold text-white mb-1 drop-shadow-lg">{ad.title}</h4>
+                             {isOwnProfile && (
+                               <Button
+                                 size="sm"
+                                 variant="ghost"
+                                 onClick={() => startEditing(ad.id, 'title', ad.title)}
+                                 className="opacity-0 group-hover/title:opacity-100 transition-opacity h-6 w-6 p-0 hover:bg-white/20"
+                               >
+                                 <Edit className="w-3 h-3 text-white" />
+                               </Button>
+                             )}
+                           </div>
+                         )}
                         <div className="flex items-center gap-2 text-white/90 text-sm">
                           <MapPin className="w-4 h-4" />
                           <span>{ad.city}, {ad.country}</span>
@@ -327,9 +399,44 @@ export const ProfileDatingAds = ({ profileId }: ProfileDatingAdsProps) => {
 
               {/* Description */}
               <div className="mb-6">
-                <p className="text-white/90 text-base leading-relaxed line-clamp-3">
-                  {ad.description}
-                </p>
+                {editingField?.adId === ad.id && editingField?.field === 'description' ? (
+                  <div className="space-y-2">
+                    <Textarea
+                      value={editValue}
+                      onChange={(e) => setEditValue(e.target.value)}
+                      className="bg-black/40 border-white/20 text-white min-h-[100px]"
+                      autoFocus
+                    />
+                    <div className="flex gap-2">
+                      <Button size="sm" onClick={saveEdit} className="bg-green-500 hover:bg-green-600">
+                        <Check className="w-4 h-4 mr-1" />
+                        Save
+                      </Button>
+                      <Button size="sm" onClick={cancelEditing} className="bg-red-500 hover:bg-red-600">
+                        <X className="w-4 h-4 mr-1" />
+                        Cancel
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="group/description">
+                    <div className="flex items-start gap-2">
+                      <p className="text-white/90 text-base leading-relaxed line-clamp-3 flex-1">
+                        {ad.description}
+                      </p>
+                      {isOwnProfile && (
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => startEditing(ad.id, 'description', ad.description)}
+                          className="opacity-0 group-hover/description:opacity-100 transition-opacity h-6 w-6 p-0 hover:bg-white/20 mt-1"
+                        >
+                          <Edit className="w-3 h-3 text-white" />
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Looking For */}
