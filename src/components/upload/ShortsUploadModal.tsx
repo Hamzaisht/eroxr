@@ -197,8 +197,8 @@ export const ShortsUploadModal = ({ isOpen, onClose, onUploadComplete }: ShortsU
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl h-[90vh] p-0 bg-black border-primary/20 overflow-hidden">
-        <div className="flex h-full">
+      <DialogContent className="max-w-4xl max-h-[95vh] p-0 bg-black border-primary/20 overflow-hidden">
+        <div className="flex h-full max-h-[95vh]">
           {/* Video Preview Section */}
           <div className="flex-1 bg-black relative overflow-hidden">
             <AnimatePresence mode="wait">
@@ -329,7 +329,7 @@ export const ShortsUploadModal = ({ isOpen, onClose, onUploadComplete }: ShortsU
           </div>
 
           {/* Form Section */}
-          <div className="w-96 bg-gray-900/95 backdrop-blur-xl border-l border-gray-800 p-6 overflow-y-auto fade-scrollbar">
+          <div className="w-96 bg-gray-900/95 backdrop-blur-xl border-l border-gray-800 p-6 overflow-y-auto fade-scrollbar max-h-[95vh]">
             <div className="space-y-6">
               {/* Header */}
               <div className="flex items-center justify-between">
