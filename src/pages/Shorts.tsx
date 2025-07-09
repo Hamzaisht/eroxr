@@ -240,7 +240,25 @@ const Shorts = () => {
     );
   }
 
-  const currentVideo = shorts[currentVideoIndex];
+  const currentVideo = shorts?.[currentVideoIndex];
+  
+  if (!currentVideo) {
+    return (
+      <div className="fixed inset-0 bg-black flex items-center justify-center z-50">
+        <div className="text-center">
+          <p className="text-luxury-neutral mb-4">No video available</p>
+          <Button 
+            variant="outline" 
+            onClick={() => navigate(-1)}
+            className="border-luxury-primary text-luxury-primary hover:bg-luxury-primary hover:text-black"
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Go Back
+          </Button>
+        </div>
+      </div>
+    );
+  }
   const isCreator = user?.id === currentVideo?.creator_id;
 
   // Load user interactions when video changes
