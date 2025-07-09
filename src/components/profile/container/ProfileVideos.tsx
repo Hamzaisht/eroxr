@@ -1,7 +1,7 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { motion } from 'framer-motion';
-import { Video, Eye, Heart, MessageCircle, Play, Edit3, Trash2, MoreHorizontal } from 'lucide-react';
+import { Video, Eye, Heart, MessageCircle, Play, Edit3, Trash2, MoreHorizontal, Plus, Folder } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
@@ -40,17 +40,18 @@ export const ProfileVideos = ({ profileId }: ProfileVideosProps) => {
   const isOwnProfile = user?.id === profileId;
   const [deleteVideoId, setDeleteVideoId] = useState<string | null>(null);
   const [playingVideoId, setPlayingVideoId] = useState<string | null>(null);
+  const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
+  const [showCreateFolder, setShowCreateFolder] = useState(false);
+  const [newFolderName, setNewFolderName] = useState('');
 
   // Helper function to format video titles
   const formatVideoTitle = (title: string) => {
     if (!title) return 'Untitled Video';
     
-    // If it's a filename, clean it up
     if (title.includes('.mp4') || title.includes('-')) {
-      // Remove file extension and timestamp-like patterns
       return title
         .replace(/\.(mp4|mov|avi|mkv)$/i, '')
-        .replace(/^\d+-/, '') // Remove timestamp prefix
+        .replace(/^\d+-/, '')
         .replace(/[_-]/g, ' ')
         .replace(/\w+/g, word => word.charAt(0).toUpperCase() + word.slice(1))
         .trim() || 'Eros Video';
@@ -63,38 +64,75 @@ export const ProfileVideos = ({ profileId }: ProfileVideosProps) => {
     setPlayingVideoId(video.id);
   };
 
-  const { data: videos, isLoading, refetch } = useQuery({
-    queryKey: ['profile-videos', profileId],
+  // Fetch video folders
+  const { data: folders } = useQuery({
+    queryKey: ['video-folders', profileId],
     queryFn: async () => {
-      console.log('🎯 ProfileVideos: Fetching videos for:', profileId);
-      
       const { data, error } = await supabase
-        .from('videos')
-        .select(`
-          id,
-          title,
-          description,
-          video_url,
-          thumbnail_url,
-          created_at,
-          like_count,
-          comment_count,
-          view_count,
-          visibility
-        `)
+        .from('video_folders')
+        .select('*')
         .eq('creator_id', profileId)
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: true });
 
-      if (error) {
-        console.error('❌ ProfileVideos: Fetch failed:', error);
-        throw error;
-      }
-      
-      console.log('✅ ProfileVideos: Found videos:', data?.length || 0);
+      if (error) throw error;
       return data || [];
     },
-    staleTime: 30000, // Reduced for faster updates
-    refetchOnWindowFocus: false, // Prevent unnecessary refetches
+  });
+
+  // Fetch videos based on selected folder
+  const { data: videos, isLoading, refetch } = useQuery({
+    queryKey: ['profile-videos', profileId, selectedFolderId],
+    queryFn: async () => {
+      console.log('🎯 ProfileVideos: Fetching videos for folder:', selectedFolderId);
+      
+      if (selectedFolderId) {
+        // Fetch videos in specific folder
+        const { data, error } = await supabase
+          .from('video_folder_items')
+          .select(`
+            video_id,
+            videos (
+              id,
+              title,
+              description,
+              video_url,
+              thumbnail_url,
+              created_at,
+              like_count,
+              comment_count,
+              view_count,
+              visibility
+            )
+          `)
+          .eq('folder_id', selectedFolderId);
+
+        if (error) throw error;
+        return data?.map((item: any) => item.videos).filter(Boolean) || [];
+      } else {
+        // Fetch all videos
+        const { data, error } = await supabase
+          .from('videos')
+          .select(`
+            id,
+            title,
+            description,
+            video_url,
+            thumbnail_url,
+            created_at,
+            like_count,
+            comment_count,
+            view_count,
+            visibility
+          `)
+          .eq('creator_id', profileId)
+          .order('created_at', { ascending: false });
+
+        if (error) throw error;
+        return data || [];
+      }
+    },
+    staleTime: 30000,
+    refetchOnWindowFocus: false,
   });
 
   const handleDeleteVideo = async () => {
@@ -103,8 +141,7 @@ export const ProfileVideos = ({ profileId }: ProfileVideosProps) => {
     try {
       console.log('🗑️ ProfileVideos: Deleting video:', deleteVideoId);
 
-      // Optimistic update - immediately remove from UI
-      queryClient.setQueryData(['profile-videos', profileId], (oldData: any[]) => 
+      queryClient.setQueryData(['profile-videos', profileId, selectedFolderId], (oldData: any[]) => 
         oldData?.filter(video => video.id !== deleteVideoId) || []
       );
 
@@ -115,12 +152,9 @@ export const ProfileVideos = ({ profileId }: ProfileVideosProps) => {
 
       if (error) {
         console.error('❌ ProfileVideos: Delete failed:', error);
-        // Revert optimistic update on error
         await refetch();
         throw error;
       }
-
-      console.log('✅ ProfileVideos: Video deleted successfully');
 
       toast({
         title: "Video deleted",
@@ -128,8 +162,6 @@ export const ProfileVideos = ({ profileId }: ProfileVideosProps) => {
       });
 
       setDeleteVideoId(null);
-      
-      // Invalidate cache to ensure consistency
       queryClient.invalidateQueries({ queryKey: ['profile-videos', profileId] });
     } catch (error) {
       console.error('Error deleting video:', error);
@@ -142,21 +174,50 @@ export const ProfileVideos = ({ profileId }: ProfileVideosProps) => {
     }
   };
 
-  const handleEditVideo = (videoId: string) => {
-    // Navigate to edit page or open edit modal
-    // This would be implemented based on your edit flow
-    toast({
-      title: "Edit video",
-      description: "Edit functionality coming soon!",
-    });
+  const handleCreateFolder = async () => {
+    if (!newFolderName.trim()) return;
+
+    try {
+      const { error } = await supabase
+        .from('video_folders')
+        .insert({
+          creator_id: profileId,
+          name: newFolderName.trim(),
+        });
+
+      if (error) throw error;
+
+      toast({
+        title: "Folder created",
+        description: `"${newFolderName}" has been created successfully.`,
+      });
+
+      setNewFolderName('');
+      setShowCreateFolder(false);
+      queryClient.invalidateQueries({ queryKey: ['video-folders', profileId] });
+    } catch (error) {
+      console.error('Error creating folder:', error);
+      toast({
+        title: "Error",
+        description: "Failed to create folder. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   if (isLoading) {
     return (
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-        {[...Array(8)].map((_, i) => (
-          <div key={i} className="aspect-[9/16] bg-white/5 rounded-xl animate-pulse" />
-        ))}
+      <div className="space-y-4">
+        <div className="flex gap-2 mb-6">
+          {[...Array(3)].map((_, i) => (
+            <div key={i} className="h-8 w-20 bg-white/5 rounded animate-pulse" />
+          ))}
+        </div>
+        <div className="grid grid-cols-3 gap-1">
+          {[...Array(9)].map((_, i) => (
+            <div key={i} className="aspect-[9/16] bg-white/5 rounded animate-pulse" />
+          ))}
+        </div>
       </div>
     );
   }
@@ -178,80 +239,113 @@ export const ProfileVideos = ({ profileId }: ProfileVideosProps) => {
   }
 
   return (
-    <div className="h-screen overflow-y-auto snap-y snap-mandatory">
-      {videos.map((video, index) => (
-        <motion.div
-          key={video.id}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: index * 0.1 }}
-          className="h-screen w-full snap-start bg-black flex flex-col items-center relative"
+    <div className="space-y-4">
+      {/* Folder Navigation */}
+      <div className="flex items-center gap-2 mb-6 overflow-x-auto">
+        <Button
+          variant={selectedFolderId === null ? "default" : "outline"}
+          size="sm"
+          onClick={() => setSelectedFolderId(null)}
+          className="whitespace-nowrap"
         >
-          <div className="w-full h-full flex items-center justify-center relative overflow-hidden">
-            <div className="w-full h-full flex items-center justify-center bg-gray-900">
-              {video.video_url ? (
+          All Videos
+        </Button>
+        
+        {folders?.map((folder) => (
+          <Button
+            key={folder.id}
+            variant={selectedFolderId === folder.id ? "default" : "outline"}
+            size="sm"
+            onClick={() => setSelectedFolderId(folder.id)}
+            className="whitespace-nowrap"
+          >
+            <Folder className="w-3 h-3 mr-1" />
+            {folder.name}
+          </Button>
+        ))}
+
+        {isOwnProfile && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowCreateFolder(true)}
+            className="whitespace-nowrap"
+          >
+            <Plus className="w-3 h-3 mr-1" />
+            New Folder
+          </Button>
+        )}
+      </div>
+
+      {/* Video Grid - TikTok Style */}
+      <div className="grid grid-cols-3 gap-1">
+        {videos.map((video, index) => (
+          <motion.div
+            key={video.id}
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: index * 0.05 }}
+            className="group relative aspect-[9/16] bg-black rounded cursor-pointer overflow-hidden"
+            onClick={() => handleVideoClick(video)}
+          >
+            {/* Video Thumbnail */}
+            <div className="absolute inset-0">
+              {video.thumbnail_url ? (
+                <img
+                  src={video.thumbnail_url}
+                  alt={video.title}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
                 <video
                   src={video.video_url}
                   className="w-full h-full object-cover"
-                  controls
+                  muted
                   playsInline
                   preload="metadata"
+                  onLoadedData={(e) => {
+                    const videoElement = e.target as HTMLVideoElement;
+                    videoElement.currentTime = 1;
+                  }}
                 />
-              ) : (
-                <p className="text-white">Content Coming Soon</p>
               )}
             </div>
-            
-            <div className="absolute bottom-16 left-4 right-12 bg-gradient-to-t from-black/70 to-transparent p-4 rounded-lg">
-              <h3 className="font-medium text-white mb-2">@creator</h3>
-              <p className="text-white/90 text-sm line-clamp-2">{formatVideoTitle(video.title)}</p>
-              <p className="text-white/60 text-xs mt-1">
-                {new Date(video.created_at).toLocaleDateString()}
-              </p>
-            </div>
-            
-            <div className="absolute right-4 bottom-32 flex flex-col items-center gap-6">
-              <button className="flex flex-col items-center">
-                <div className="w-12 h-12 bg-black/30 rounded-full flex items-center justify-center">
-                  <Heart className="h-6 w-6 text-white" />
-                </div>
-                <span className="text-white text-xs mt-1">{video.like_count || 0}</span>
-              </button>
-              
-              <button className="flex flex-col items-center">
-                <div className="w-12 h-12 bg-black/30 rounded-full flex items-center justify-center">
-                  <MessageCircle className="h-6 w-6 text-white" />
-                </div>
-                <span className="text-white text-xs mt-1">{video.comment_count || 0}</span>
-              </button>
-              
-              <button className="flex flex-col items-center">
-                <div className="w-12 h-12 bg-black/30 rounded-full flex items-center justify-center">
-                  <Eye className="h-6 w-6 text-white" />
-                </div>
-                <span className="text-white text-xs mt-1">{video.view_count || 0}</span>
-              </button>
 
-              {isOwnProfile && (
+            {/* View Count Overlay */}
+            <div className="absolute bottom-1 left-1 flex items-center gap-1 bg-black/60 rounded px-1 py-0.5">
+              <Play className="w-3 h-3 text-white" />
+              <span className="text-white text-xs font-medium">
+                {video.view_count ? (
+                  video.view_count > 1000 
+                    ? `${(video.view_count / 1000).toFixed(1)}K`
+                    : video.view_count
+                ) : '0'}
+              </span>
+            </div>
+
+            {/* Hover Overlay */}
+            <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
+
+            {/* Actions Menu (Own Profile Only) */}
+            {isOwnProfile && (
+              <div 
+                className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                onClick={(e) => e.stopPropagation()}
+              >
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <button className="flex flex-col items-center">
-                      <div className="w-12 h-12 bg-black/30 rounded-full flex items-center justify-center">
-                        <MoreHorizontal className="h-6 w-6 text-white" />
-                      </div>
-                    </button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="w-6 h-6 bg-black/60 hover:bg-black/80 text-white border-none"
+                    >
+                      <MoreHorizontal className="w-3 h-3" />
+                    </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent 
                     align="end" 
                     className="bg-black/90 backdrop-blur-md border-white/20 text-white"
                   >
-                    <DropdownMenuItem 
-                      onClick={() => handleEditVideo(video.id)}
-                      className="hover:bg-white/10 focus:bg-white/10 cursor-pointer"
-                    >
-                      <Edit3 className="w-4 h-4 mr-2" />
-                      Edit Video
-                    </DropdownMenuItem>
                     <DropdownMenuItem 
                       onClick={() => setDeleteVideoId(video.id)}
                       className="hover:bg-red-500/20 focus:bg-red-500/20 text-red-400 cursor-pointer"
@@ -261,11 +355,46 @@ export const ProfileVideos = ({ profileId }: ProfileVideosProps) => {
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
-              )}
+              </div>
+            )}
+          </motion.div>
+        ))}
+      </div>
+
+      {/* Create Folder Dialog */}
+      <Dialog open={showCreateFolder} onOpenChange={setShowCreateFolder}>
+        <DialogContent className="bg-black/95 backdrop-blur-md border-white/20 text-white">
+          <DialogHeader>
+            <DialogTitle>Create New Folder</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <input
+              type="text"
+              placeholder="Folder name"
+              value={newFolderName}
+              onChange={(e) => setNewFolderName(e.target.value)}
+              className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded text-white placeholder-white/50"
+              onKeyPress={(e) => e.key === 'Enter' && handleCreateFolder()}
+            />
+            <div className="flex gap-2 justify-end">
+              <Button
+                variant="outline"
+                onClick={() => setShowCreateFolder(false)}
+                className="bg-transparent border-white/20 text-white hover:bg-white/10"
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleCreateFolder}
+                disabled={!newFolderName.trim()}
+                className="bg-luxury-primary hover:bg-luxury-primary/80"
+              >
+                Create Folder
+              </Button>
             </div>
           </div>
-        </motion.div>
-      ))}
+        </DialogContent>
+      </Dialog>
 
       {/* Delete Confirmation Dialog */}
       <AlertDialog open={!!deleteVideoId} onOpenChange={() => setDeleteVideoId(null)}>
@@ -298,21 +427,25 @@ export const ProfileVideos = ({ profileId }: ProfileVideosProps) => {
         <DialogContent className="max-w-4xl bg-black/95 backdrop-blur-md border-white/20 p-0">
           <DialogHeader className="p-6 pb-0">
             <DialogTitle className="text-white">
-              {playingVideoId && videos?.find(v => v.id === playingVideoId) && 
-                formatVideoTitle(videos.find(v => v.id === playingVideoId)!.title)
-              }
+              {(() => {
+                const currentVideo = videos?.find((v: any) => v.id === playingVideoId);
+                return currentVideo ? formatVideoTitle(currentVideo.title) : '';
+              })()}
             </DialogTitle>
           </DialogHeader>
           <div className="aspect-video w-full">
-            {playingVideoId && videos?.find(v => v.id === playingVideoId) && (
-              <video
-                src={videos.find(v => v.id === playingVideoId)!.video_url}
-                className="w-full h-full rounded-b-lg"
-                controls
-                autoPlay
-                playsInline
-              />
-            )}
+            {(() => {
+              const currentVideo = videos?.find((v: any) => v.id === playingVideoId);
+              return currentVideo ? (
+                <video
+                  src={currentVideo.video_url}
+                  className="w-full h-full rounded-b-lg"
+                  controls
+                  autoPlay
+                  playsInline
+                />
+              ) : null;
+            })()}
           </div>
         </DialogContent>
       </Dialog>
