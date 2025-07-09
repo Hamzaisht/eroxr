@@ -2296,6 +2296,10 @@ export type Database = {
         }
         Returns: Json
       }
+      sync_uploaded_videos: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       update_profile_service: {
         Args: {
           p_user_id: string
