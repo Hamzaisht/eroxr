@@ -66,9 +66,6 @@ export const useHomePosts = () => {
             post_id,
             file_size,
             access_level
-          ),
-          post_likes(
-            user_id
           )
         `)
         .eq('visibility', 'public')
@@ -102,9 +99,6 @@ export const useHomePosts = () => {
         // Ensure creator data is properly structured
         const creator = Array.isArray(post.creator) ? post.creator[0] : post.creator;
         
-        // Check if current user has liked this post
-        const isLiked = user?.id ? post.post_likes?.some((like: any) => like.user_id === user.id) : false;
-        
         return {
           ...post,
           creator: creator || {
@@ -115,7 +109,7 @@ export const useHomePosts = () => {
             location: null
           },
           media_assets: Array.isArray(post.media_assets) ? post.media_assets.filter(asset => asset && asset.storage_path) : [],
-          isLiked,
+          isLiked: false, // Will be updated by post actions hook
           isSaved: false // TODO: Add saved posts functionality
         };
       });
