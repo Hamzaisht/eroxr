@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { motion } from 'framer-motion';
 import { Video, Eye, Heart, MessageCircle, Play, Edit3, Trash2, MoreHorizontal } from 'lucide-react';
@@ -30,6 +30,7 @@ interface ProfileVideosProps {
 export const ProfileVideos = ({ profileId }: ProfileVideosProps) => {
   const { user } = useAuth();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const isOwnProfile = user?.id === profileId;
   const [deleteVideoId, setDeleteVideoId] = useState<string | null>(null);
 
@@ -63,19 +64,34 @@ export const ProfileVideos = ({ profileId }: ProfileVideosProps) => {
       console.log('✅ ProfileVideos: Found videos:', data?.length || 0);
       return data || [];
     },
-    staleTime: 60000,
+    staleTime: 30000, // Reduced for faster updates
+    refetchOnWindowFocus: false, // Prevent unnecessary refetches
   });
 
   const handleDeleteVideo = async () => {
     if (!deleteVideoId) return;
 
     try {
+      console.log('🗑️ ProfileVideos: Deleting video:', deleteVideoId);
+
+      // Optimistic update - immediately remove from UI
+      queryClient.setQueryData(['profile-videos', profileId], (oldData: any[]) => 
+        oldData?.filter(video => video.id !== deleteVideoId) || []
+      );
+
       const { error } = await supabase
         .from('videos')
         .delete()
         .eq('id', deleteVideoId);
 
-      if (error) throw error;
+      if (error) {
+        console.error('❌ ProfileVideos: Delete failed:', error);
+        // Revert optimistic update on error
+        await refetch();
+        throw error;
+      }
+
+      console.log('✅ ProfileVideos: Video deleted successfully');
 
       toast({
         title: "Video deleted",
@@ -83,7 +99,9 @@ export const ProfileVideos = ({ profileId }: ProfileVideosProps) => {
       });
 
       setDeleteVideoId(null);
-      refetch();
+      
+      // Invalidate cache to ensure consistency
+      queryClient.invalidateQueries({ queryKey: ['profile-videos', profileId] });
     } catch (error) {
       console.error('Error deleting video:', error);
       toast({
