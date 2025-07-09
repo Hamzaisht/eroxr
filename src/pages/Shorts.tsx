@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2, ArrowLeft } from "lucide-react";
+import { Loader2, ArrowLeft, MoreHorizontal, Edit3, Trash2 } from "lucide-react";
 import { ShortVideoPlayer } from "@/components/home/components/ShortVideoPlayer";
 import { ShortActions } from "@/components/home/components/short/ShortActions";
 import { ShortNavigationButtons } from "@/components/home/components/ShortNavigationButtons";
@@ -13,6 +13,13 @@ import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { CommentsModal } from "@/components/home/components/CommentsModal";
+import { useAuth } from "@/contexts/AuthContext";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface ShortVideo {
   id: string;
@@ -36,6 +43,7 @@ const Shorts = () => {
   const [showComments, setShowComments] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { user } = useAuth();
   const { likeShort, unlikeShort, saveShort, unsaveShort } = useShortActions();
 
   const { data: shorts, isLoading, error, refetch } = useQuery({
@@ -177,6 +185,27 @@ const Shorts = () => {
     }
   };
 
+  const handleProfileClick = (creatorId: string) => {
+    navigate(`/profile/${creatorId}`);
+  };
+
+  const handleEdit = () => {
+    toast({
+      title: "Edit Video",
+      description: "Edit functionality coming soon!",
+    });
+  };
+
+  const handleDelete = () => {
+    if (window.confirm('Are you sure you want to delete this video?')) {
+      toast({
+        title: "Deleted",
+        description: "Video deleted successfully",
+        variant: "destructive",
+      });
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="fixed inset-0 bg-black flex items-center justify-center z-50">
@@ -207,6 +236,7 @@ const Shorts = () => {
   }
 
   const currentVideo = shorts[currentVideoIndex];
+  const isCreator = user?.id === currentVideo?.creator_id;
 
   return (
     <div 
@@ -233,70 +263,87 @@ const Shorts = () => {
         />
 
         {/* Creator Info Overlay */}
-        <div className="absolute bottom-0 left-0 right-16 bg-gradient-to-t from-black/90 via-black/50 to-transparent p-6">
-          <div className="space-y-3">
+        <div className="absolute bottom-0 left-0 right-16 bg-gradient-to-t from-black/90 via-black/50 to-transparent p-6 backdrop-blur-sm">
+          <div className="space-y-4">
             {/* Creator */}
-            <div className="flex items-center gap-3">
-              <Avatar className="h-12 w-12 border-2 border-primary shadow-lg shadow-primary/20">
-                <AvatarImage src={currentVideo.avatar_url} />
-                <AvatarFallback className="bg-primary text-black font-bold">
-                  {currentVideo.username?.[0]?.toUpperCase() || "U"}
-                </AvatarFallback>
-              </Avatar>
-              <div className="flex-1">
-                <p className="text-white font-semibold text-lg">
-                  @{currentVideo.username || 'Unknown'}
-                </p>
-                <p className="text-muted-foreground text-sm">
-                  {currentVideo.view_count?.toLocaleString() || 0} views
-                </p>
+            <div className="flex items-center gap-4">
+              <div 
+                className="flex items-center gap-3 cursor-pointer group transition-all duration-300 hover:scale-105"
+                onClick={() => handleProfileClick(currentVideo.creator_id)}
+              >
+                <div className="relative">
+                  <Avatar className="h-14 w-14 border-2 border-white/20 shadow-xl shadow-black/40 transition-all duration-300 group-hover:border-primary group-hover:shadow-primary/30">
+                    <AvatarImage src={currentVideo.avatar_url} className="object-cover" />
+                    <AvatarFallback className="bg-gradient-to-br from-primary to-primary/70 text-black font-bold text-lg">
+                      {currentVideo.username?.[0]?.toUpperCase() || "U"}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-black"></div>
+                </div>
+                <div className="flex-1">
+                  <p className="text-white font-semibold text-lg transition-colors group-hover:text-primary">
+                    @{currentVideo.username || 'Unknown'}
+                  </p>
+                  <p className="text-white/70 text-sm">
+                    {currentVideo.view_count?.toLocaleString() || 0} views
+                  </p>
+                </div>
               </div>
               
-              {/* Edit/Delete buttons for creator */}
-              <div className="flex gap-2">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="text-white hover:bg-white/20 bg-black/30"
-                  onClick={() => {
-                    // TODO: Navigate to edit page
-                    toast({
-                      title: "Edit Video",
-                      description: "Edit functionality coming soon!",
-                    });
-                  }}
-                >
-                  Edit
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="text-red-400 hover:bg-red-500/20 bg-black/30"
-                  onClick={() => {
-                    if (window.confirm('Are you sure you want to delete this video?')) {
-                      // TODO: Implement delete functionality
-                      toast({
-                        title: "Deleted",
-                        description: "Video deleted successfully",
-                        variant: "destructive",
-                      });
-                    }
-                  }}
-                >
-                  Delete
-                </Button>
-              </div>
+              {/* Creator Actions Menu */}
+              {isCreator && (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 backdrop-blur-sm transition-all duration-300 border border-white/20"
+                    >
+                      <MoreHorizontal className="h-5 w-5 text-white" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent 
+                    align="end" 
+                    className="bg-black/90 backdrop-blur-md border-white/20 text-white min-w-[160px]"
+                  >
+                    <DropdownMenuItem 
+                      onClick={handleEdit}
+                      className="hover:bg-white/10 focus:bg-white/10 cursor-pointer"
+                    >
+                      <Edit3 className="w-4 h-4 mr-2" />
+                      Edit Video
+                    </DropdownMenuItem>
+                    <DropdownMenuItem 
+                      onClick={handleDelete}
+                      className="hover:bg-red-500/20 focus:bg-red-500/20 text-red-400 cursor-pointer"
+                    >
+                      <Trash2 className="w-4 h-4 mr-2" />
+                      Delete Video
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              )}
             </div>
 
             {/* Description */}
             {currentVideo.description && (
-              <p className="text-white/90 text-sm leading-relaxed line-clamp-3">
+              <p className="text-white/90 text-base leading-relaxed line-clamp-3 font-light">
                 {currentVideo.description}
               </p>
             )}
 
+            {/* Hashtags simulation */}
+            <div className="flex flex-wrap gap-2">
+              <span className="text-primary text-sm font-medium hover:text-primary/80 cursor-pointer transition-colors">
+                #shorts
+              </span>
+              <span className="text-primary text-sm font-medium hover:text-primary/80 cursor-pointer transition-colors">
+                #viral
+              </span>
+            </div>
+
             {/* Timestamp */}
-            <p className="text-luxury-neutral text-xs">
+            <p className="text-white/60 text-xs">
               {new Date(currentVideo.created_at).toLocaleDateString()}
             </p>
           </div>
@@ -318,20 +365,31 @@ const Shorts = () => {
           />
         </div>
 
-        {/* Progress Indicator - minimal */}
-        <div className="absolute top-16 right-4 z-20">
-          <div className="bg-black/40 backdrop-blur-sm rounded-full px-2 py-1">
+        {/* Progress Indicator - enhanced */}
+        <div className="absolute top-6 right-4 z-20">
+          <div className="bg-black/50 backdrop-blur-md rounded-full px-3 py-2 border border-white/10">
             <span className="text-white text-xs font-medium">
               {currentVideoIndex + 1}/{shorts.length}
             </span>
           </div>
+          {/* Progress bar */}
+          <div className="w-16 h-1 bg-white/20 rounded-full mt-2 overflow-hidden">
+            <div 
+              className="h-full bg-primary rounded-full transition-all duration-300"
+              style={{ width: `${((currentVideoIndex + 1) / shorts.length) * 100}%` }}
+            />
+          </div>
         </div>
 
-        {/* Cyberpunk Glow Effects */}
-        <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute top-0 left-0 w-32 h-32 bg-luxury-primary/10 rounded-full blur-3xl animate-pulse" />
-          <div className="absolute bottom-0 right-0 w-40 h-40 bg-blue-500/10 rounded-full blur-3xl animate-pulse delay-1000" />
-          <div className="absolute top-1/2 left-1/4 w-24 h-24 bg-purple-500/10 rounded-full blur-2xl animate-pulse delay-500" />
+        {/* Ambient Glow Effects */}
+        <div className="absolute inset-0 pointer-events-none overflow-hidden">
+          <div className="absolute top-0 left-0 w-40 h-40 bg-primary/5 rounded-full blur-3xl animate-pulse" />
+          <div className="absolute bottom-0 right-0 w-48 h-48 bg-blue-500/5 rounded-full blur-3xl animate-pulse delay-1000" />
+          <div className="absolute top-1/2 left-1/4 w-32 h-32 bg-purple-500/5 rounded-full blur-3xl animate-pulse delay-500" />
+          
+          {/* Floating particles */}
+          <div className="absolute top-1/4 right-1/3 w-2 h-2 bg-white/20 rounded-full animate-bounce delay-300" />
+          <div className="absolute bottom-1/3 left-1/5 w-1 h-1 bg-primary/40 rounded-full animate-bounce delay-700" />
         </div>
       </div>
 
