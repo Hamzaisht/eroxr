@@ -19,7 +19,7 @@ export const VideoProfileCarousel = () => {
   const carouselRef = useRef<HTMLDivElement>(null);
   const isMobile = useMediaQuery("(max-width: 768px)");
   
-  // Fetch video profiles
+  // Fetch video profiles with better caching
   const { data: profiles, isLoading } = useQuery({
     queryKey: ["video-profiles"],
     queryFn: async () => {
@@ -40,7 +40,9 @@ export const VideoProfileCarousel = () => {
       
       if (error) throw error;
       return data || [];
-    }
+    },
+    staleTime: 30000, // Cache for 30 seconds
+    refetchOnWindowFocus: false,
   });
   
   // Make sure profiles is safe to use

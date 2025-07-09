@@ -50,7 +50,7 @@ export const useCreateAdForm = () => {
     setIsSubmitting(false);
   }, []);
 
-  const uploadMedia = useCallback(async (file: File, bucket: string, path: string) => {
+  const uploadMedia = async (file: File, bucket: string, path: string) => {
     const { data, error } = await supabase.storage
       .from(bucket)
       .upload(path, file, {
@@ -68,7 +68,7 @@ export const useCreateAdForm = () => {
       .getPublicUrl(path);
 
     return publicUrl;
-  }, []);
+  };
 
   const submitForm = useCallback(async (onSuccess?: () => void) => {
     setIsSubmitting(true);
@@ -181,7 +181,7 @@ export const useCreateAdForm = () => {
     } finally {
       setIsSubmitting(false);
     }
-  }, [formData, resetForm, toast, uploadMedia]);
+  }, [formData, resetForm, toast]);
 
   const getProgress = useCallback(() => {
     const totalSteps = 4; // We'll have 4 steps

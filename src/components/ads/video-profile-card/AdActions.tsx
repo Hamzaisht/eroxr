@@ -10,11 +10,11 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { DeleteConfirmDialog } from "@/components/feed/DeleteConfirmDialog";
 import { EditAdDialog } from "../create-ad/EditAdDialog";
 import { DatingAd } from "../types/dating";
+import { useInstantFeedback } from "@/hooks/useInstantFeedback";
 
 interface AdActionsProps {
   ad: DatingAd;
@@ -22,11 +22,10 @@ interface AdActionsProps {
 
 export const AdActions = ({ ad }: AdActionsProps) => {
   const session = useSession();
-  const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { withInstantFeedback } = useInstantFeedback();
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
   
   const isOwner = session?.user?.id === ad.user_id;
@@ -34,34 +33,37 @@ export const AdActions = ({ ad }: AdActionsProps) => {
   if (!isOwner) return null;
   
   const handleDelete = async () => {
-    try {
-      setIsDeleting(true);
-      setDeleteError(null);
-      
-      // Delete the ad from the database
-      const { error } = await supabase
-        .from('dating_ads')
-        .delete()
-        .eq('id', ad.id)
-        .eq('user_id', session?.user?.id);
-      
-      if (error) throw error;
-      
-      toast({
-        title: "Ad deleted",
-        description: "Your ad has been successfully removed.",
-      });
-      
-      // Invalidate queries to refresh the UI
-      queryClient.invalidateQueries({ queryKey: ["dating_ads"] });
-      
-      setIsDeleteDialogOpen(false);
-    } catch (error) {
-      console.error('Delete error:', error);
-      setDeleteError("Failed to delete ad. Please try again.");
-    } finally {
-      setIsDeleting(false);
-    }
+    await withInstantFeedback(
+      async () => {
+        // Optimistic update - remove from UI immediately
+        queryClient.setQueryData(['dating_ads'], (oldData: DatingAd[] = []) => {
+          return oldData.filter(item => item.id !== ad.id);
+        });
+
+        // Perform actual deletion
+        const { error } = await supabase
+          .from('dating_ads')
+          .delete()
+          .eq('id', ad.id)
+          .eq('user_id', session?.user?.id);
+        
+        if (error) throw error;
+        
+        // Invalidate queries to sync with server
+        queryClient.invalidateQueries({ queryKey: ["dating_ads"] });
+      },
+      {
+        successMessage: "Your ad has been deleted successfully",
+        errorMessage: "Failed to delete ad. Please try again.",
+        showInstantSuccess: true,
+        onError: () => {
+          // Revert optimistic update on error
+          queryClient.invalidateQueries({ queryKey: ["dating_ads"] });
+        }
+      }
+    );
+    
+    setIsDeleteDialogOpen(false);
   };
 
   const handleEdit = () => {
@@ -70,15 +72,6 @@ export const AdActions = ({ ad }: AdActionsProps) => {
 
   const handleEditSuccess = () => {
     queryClient.invalidateQueries({ queryKey: ["dating_ads"] });
-    toast({
-      title: "Ad updated",
-      description: "Your ad has been successfully updated.",
-    });
-  };
-
-  const handleRetryDelete = () => {
-    setDeleteError(null);
-    handleDelete();
   };
 
   return (
@@ -107,9 +100,9 @@ export const AdActions = ({ ad }: AdActionsProps) => {
         open={isDeleteDialogOpen}
         onOpenChange={setIsDeleteDialogOpen}
         onConfirm={handleDelete}
-        isDeleting={isDeleting}
+        isDeleting={false}
         error={deleteError}
-        onRetry={handleRetryDelete}
+        onRetry={handleDelete}
       />
 
       <EditAdDialog

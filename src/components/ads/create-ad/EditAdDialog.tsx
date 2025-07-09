@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { DatingAd } from "@/types/dating";
 import {
@@ -13,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { X, Plus } from "lucide-react";
+import { useInstantFeedback } from "@/hooks/useInstantFeedback";
 
 interface EditAdDialogProps {
   open: boolean;
@@ -26,8 +26,7 @@ export const EditAdDialog = ({ open, onOpenChange, ad, onSuccess }: EditAdDialog
   const [description, setDescription] = useState(ad.description || "");
   const [interests, setInterests] = useState<string[]>(ad.tags || []);
   const [newInterest, setNewInterest] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-  const { toast } = useToast();
+  const { withInstantFeedback, isProcessing } = useInstantFeedback();
 
   useEffect(() => {
     if (open) {
@@ -51,38 +50,32 @@ export const EditAdDialog = ({ open, onOpenChange, ad, onSuccess }: EditAdDialog
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
 
-    try {
-      const { error } = await supabase
-        .from('dating_ads')
-        .update({
-          title: title.trim(),
-          description: description.trim(),
-          tags: interests,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', ad.id);
+    await withInstantFeedback(
+      async () => {
+        const { error } = await supabase
+          .from('dating_ads')
+          .update({
+            title: title.trim(),
+            description: description.trim(),
+            tags: interests,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', ad.id);
 
-      if (error) throw error;
-
-      toast({
-        title: "Success!",
-        description: "Your ad has been updated successfully.",
-      });
-
-      onSuccess();
-      onOpenChange(false);
-    } catch (error) {
-      console.error('Update error:', error);
-      toast({
-        title: "Error",
-        description: "Failed to update ad. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-    }
+        if (error) throw error;
+        
+        onSuccess();
+      },
+      {
+        successMessage: "Your ad has been updated successfully",
+        errorMessage: "Failed to update ad. Please try again.",
+        showInstantSuccess: true,
+        onSuccess: () => {
+          onOpenChange(false);
+        }
+      }
+    );
   };
 
   return (
@@ -169,10 +162,10 @@ export const EditAdDialog = ({ open, onOpenChange, ad, onSuccess }: EditAdDialog
             </Button>
             <Button
               type="submit"
-              disabled={isLoading || !title.trim() || !description.trim()}
+              disabled={isProcessing || !title.trim() || !description.trim()}
               className="bg-luxury-primary hover:bg-luxury-primary/80 text-white"
             >
-              {isLoading ? "Updating..." : "Update Ad"}
+              {isProcessing ? "Updating..." : "Update Ad"}
             </Button>
           </div>
         </form>

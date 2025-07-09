@@ -74,6 +74,28 @@ export default function DatingMainContent(props: any) {
 
   useEffect(() => {
     fetchDatingAds();
+    
+    // Set up real-time subscription for instant updates
+    const channel = supabase
+      .channel('dating_ads_changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'dating_ads'
+        },
+        (payload) => {
+          console.log('Real-time update:', payload);
+          // Refetch data immediately when any change occurs
+          fetchDatingAds();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [selectedTab, isFilterApplied]);
 
   useEffect(() => {
@@ -94,7 +116,7 @@ export default function DatingMainContent(props: any) {
         throw error;
       }
 
-      // Transform the data to match the DatingAd interface
+      // Transform the data to match the DatingAd interface with better performance
       const transformedAds = ads?.map(ad => ({
         id: ad.id,
         user_id: ad.user_id,
@@ -194,10 +216,11 @@ export default function DatingMainContent(props: any) {
 
   const handleAdCreationSuccess = () => {
     setShowCreateAdDialog(false);
-    fetchDatingAds(); // Refresh the ads list
+    // Instant refresh for new ads
+    fetchDatingAds();
     toast({
       title: "Success!",
-      description: "Your dating ad has been created",
+      description: "Your dating ad has been created and is now live!",
     });
   };
 
