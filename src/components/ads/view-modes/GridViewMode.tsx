@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { DatingAd } from "../types/dating";
-import { GridItem } from "./components/GridItem";
+import { EnhancedAdCard } from "./components/grid-item/EnhancedAdCard";
 import { FullscreenAdViewer } from "../video-profile/FullscreenAdViewer";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
 import { SkeletonCards } from "./SkeletonCards";
@@ -138,13 +138,12 @@ export const GridViewMode = ({
           const uniqueKey = `${ad.id || 'no-id'}-${index}-${ad.created_at || 'no-date'}`;
           return (
             <div key={uniqueKey} ref={index === visibleAds.length - 4 ? lastElementRef : undefined}>
-              <GridItem 
+              <EnhancedAdCard 
                 ad={ad}
-                isHovered={hoveredId === ad.id}
-                onHover={setHoveredId}
                 onSelect={handleSelectAd}
                 isMobile={isMobile}
                 userProfile={userProfile}
+                index={index}
               />
             </div>
           );

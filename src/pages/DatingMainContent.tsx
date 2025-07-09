@@ -1,12 +1,14 @@
 
 import { useState, useEffect, useMemo } from "react";
-import { DatingFiltersPanel } from "../components/dating/DatingFiltersPanel";
+import { EnhancedFiltersPanel } from "../components/dating/EnhancedFiltersPanel";
 import { DatingContent } from "../components/dating/DatingContent";
-import { DatingHeader } from "../components/dating/DatingHeader";
+import { EnhancedDatingHeader } from "../components/dating/EnhancedDatingHeader";
 import { CreateAdDialog } from "../components/ads/create-ad";
 import { DatingAd } from "@/types/dating";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { FloatingActionButton } from "../components/dating/FloatingActionButton";
+import { GreekSymbolsBackground } from "../components/dating/animations/GreekMythologyElements";
 
 export interface DatingFiltersPanelProps {
   // Define all required props to match what's being passed
@@ -281,20 +283,41 @@ export default function DatingMainContent(props: any) {
   };
 
   return (
-    <div className="container mx-auto py-6">
-      {/* Header with tabs and create button */}
-      <DatingHeader 
-        activeTab={selectedTab}
-        onTabChange={setSelectedTab}
-        viewMode={viewMode}
-        onViewModeChange={setViewMode}
-        onCreateAd={handleCreateAd}
-      />
-      
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        {/* Filter Section */}
-        <div className="lg:col-span-1">
-          <DatingFiltersPanel
+    <div className="min-h-screen bg-gradient-to-br from-black via-purple-950/20 to-cyan-950/20 relative overflow-hidden">
+      {/* Background Effects */}
+      <div className="absolute inset-0 neural-bg opacity-20" />
+      <GreekSymbolsBackground />
+      <div className="absolute inset-0 pointer-events-none">
+        {[...Array(20)].map((_, i) => (
+          <div
+            key={i}
+            className="absolute floating-element"
+            style={{
+              left: `${Math.random() * 100}%`,
+              top: `${Math.random() * 100}%`,
+              width: `${2 + Math.random() * 4}px`,
+              height: `${2 + Math.random() * 4}px`,
+              animationDelay: `${Math.random() * 10}s`,
+            }}
+          />
+        ))}
+      </div>
+
+      <div className="container mx-auto py-6 relative z-10">
+        {/* Enhanced Header */}
+        <EnhancedDatingHeader 
+          activeTab={selectedTab}
+          onTabChange={setSelectedTab}
+          viewMode={viewMode}
+          onViewModeChange={setViewMode}
+          onCreateAd={handleCreateAd}
+          onToggleFilters={toggleFilters}
+        />
+        
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+          {/* Enhanced Filter Section */}
+          <div className="lg:col-span-1">
+            <EnhancedFiltersPanel
             isFilterCollapsed={props.isFilterCollapsed || isFilterCollapsed}
             setIsFilterCollapsed={props.setIsFilterCollapsed || setIsFilterCollapsed}
             showFilters={props.showFilters || showFilters}
@@ -321,11 +344,11 @@ export default function DatingMainContent(props: any) {
             setSelectedPremium={props.setSelectedPremium || setSelectedPremium}
             distanceRange={props.distanceRange || distanceRange}
             setDistanceRange={props.setDistanceRange || setDistanceRange}
-          />
-        </div>
-        
-        {/* Content Section */}
-        <div className="lg:col-span-3">
+            />
+          </div>
+          
+          {/* Content Section */}
+          <div className="lg:col-span-3">
           <DatingContent 
             datingAds={props.datingAds || filteredAds || []}
             isLoading={props.isLoading || isLoading}
@@ -336,6 +359,7 @@ export default function DatingMainContent(props: any) {
             handleTabChange={props.setActiveTab || setSelectedTab}
             handleFilterToggle={props.handleFilterToggle || toggleFilters}
           />
+          </div>
         </div>
       </div>
 
@@ -344,6 +368,14 @@ export default function DatingMainContent(props: any) {
         open={showCreateAdDialog}
         onOpenChange={setShowCreateAdDialog}
         onSuccess={handleAdCreationSuccess}
+      />
+
+      {/* Floating Action Button */}
+      <FloatingActionButton 
+        onCreateAd={handleCreateAd}
+        onQuickMatch={() => setSelectedTab("quick-match")}
+        onMessages={() => console.log("Messages")}
+        onSearch={() => console.log("Search")}
       />
     </div>
   );
