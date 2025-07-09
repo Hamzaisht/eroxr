@@ -76,7 +76,7 @@ export const SearchFilterBar = ({
             <SelectValue placeholder="Type" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">All Types</SelectItem>
+            <SelectItem value="all">All Types</SelectItem>
             {availableTypes.map((type) => (
               <SelectItem key={type.value} value={type.value}>
                 {type.label}
@@ -92,7 +92,7 @@ export const SearchFilterBar = ({
             <SelectValue placeholder="Status" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">All Statuses</SelectItem>
+            <SelectItem value="all-statuses">All Statuses</SelectItem>
             {availableStatuses.map((status) => (
               <SelectItem key={status.value} value={status.value}>
                 {status.label}

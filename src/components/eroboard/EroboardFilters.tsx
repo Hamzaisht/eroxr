@@ -37,7 +37,7 @@ export const EroboardFilters = ({ filters, onFiltersChange }: EroboardFiltersPro
               <SelectValue placeholder="All Categories" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">All Categories</SelectItem>
+              <SelectItem value="all">All Categories</SelectItem>
               <SelectItem value="photos">Photos</SelectItem>
               <SelectItem value="videos">Videos</SelectItem>
               <SelectItem value="live">Live</SelectItem>
