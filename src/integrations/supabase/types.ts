@@ -1807,22 +1807,7 @@ export type Database = {
           score?: number | null
           screenshots?: number | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "trending_content_post_id_fkey"
-            columns: ["post_id"]
-            isOneToOne: false
-            referencedRelation: "posts"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "trending_content_post_id_fkey"
-            columns: ["post_id"]
-            isOneToOne: false
-            referencedRelation: "user_bookmarks"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       user_roles: {
         Row: {
