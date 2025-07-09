@@ -1,14 +1,23 @@
 
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { motion } from 'framer-motion';
-import { Crown, Heart, Eye, MessageCircle } from 'lucide-react';
+import { Crown, Heart, Eye, MessageCircle, Share2 } from 'lucide-react';
+import { useState } from 'react';
+import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
+import { Button } from '@/components/ui/button';
 
 interface ProfilePostsProps {
   profileId: string;
 }
 
 export const ProfilePosts = ({ profileId }: ProfilePostsProps) => {
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const [likedPosts, setLikedPosts] = useState<Set<string>>(new Set());
+
   const { data: posts, isLoading } = useQuery({
     queryKey: ['profile-posts', profileId],
     queryFn: async () => {
@@ -48,6 +57,96 @@ export const ProfilePosts = ({ profileId }: ProfilePostsProps) => {
     staleTime: 60000,
   });
 
+  // Check user's likes on posts
+  useQuery({
+    queryKey: ['user-post-likes', user?.id],
+    queryFn: async () => {
+      if (!user || !posts) return [];
+      
+      const { data } = await supabase
+        .from('post_likes')
+        .select('post_id')
+        .eq('user_id', user.id)
+        .in('post_id', posts.map(p => p.id));
+      
+      if (data) {
+        setLikedPosts(new Set(data.map(like => like.post_id)));
+      }
+      return data;
+    },
+    enabled: !!user && !!posts,
+  });
+
+  // View tracking mutation
+  const viewMutation = useMutation({
+    mutationFn: async (postId: string) => {
+      const { error } = await supabase.rpc('increment_counter', {
+        row_id: postId,
+        counter_name: 'view_count',
+        table_name: 'posts'
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['profile-posts', profileId] });
+    },
+  });
+
+  // Like toggle mutation
+  const likeMutation = useMutation({
+    mutationFn: async ({ postId, isLiking }: { postId: string; isLiking: boolean }) => {
+      if (isLiking) {
+        const { error } = await supabase
+          .from('post_likes')
+          .insert({ post_id: postId, user_id: user!.id });
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from('post_likes')
+          .delete()
+          .eq('post_id', postId)
+          .eq('user_id', user!.id);
+        if (error) throw error;
+      }
+    },
+    onSuccess: (_, { postId, isLiking }) => {
+      setLikedPosts(prev => {
+        const newSet = new Set(prev);
+        if (isLiking) {
+          newSet.add(postId);
+        } else {
+          newSet.delete(postId);
+        }
+        return newSet;
+      });
+      queryClient.invalidateQueries({ queryKey: ['profile-posts', profileId] });
+      toast({
+        title: isLiking ? "💖 Post liked!" : "💔 Like removed",
+        description: isLiking ? "Added to your favorites" : "Removed from favorites",
+        duration: 2000,
+      });
+    },
+  });
+
+  const handlePostClick = (postId: string) => {
+    viewMutation.mutate(postId);
+  };
+
+  const handleLike = (e: React.MouseEvent, postId: string) => {
+    e.stopPropagation();
+    if (!user) {
+      toast({
+        title: "Login required",
+        description: "Please login to like posts",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    const isCurrentlyLiked = likedPosts.has(postId);
+    likeMutation.mutate({ postId, isLiking: !isCurrentlyLiked });
+  };
+
   if (isLoading) {
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -85,11 +184,12 @@ export const ProfilePosts = ({ profileId }: ProfilePostsProps) => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: index * 0.1 }}
           whileHover={{ y: -5, scale: 1.02 }}
-          className="bg-slate-800/30 backdrop-blur-xl rounded-2xl p-6 border border-slate-700/30 group cursor-pointer"
+          onClick={() => handlePostClick(post.id)}
+          className="bg-slate-800/30 backdrop-blur-xl rounded-2xl p-6 border border-slate-700/30 group cursor-pointer hover:border-purple-400/30 transition-all duration-300"
         >
           {/* Media Preview */}
           {post.media_assets && post.media_assets.length > 0 && (
-            <div className="w-full h-48 rounded-xl overflow-hidden mb-4 bg-slate-700/30">
+            <div className="w-full h-48 rounded-xl overflow-hidden mb-4 bg-slate-700/30 relative">
               {post.media_assets[0].media_type === 'image' ? (
                 <img
                   src={`${supabase.storage.from('media').getPublicUrl(post.media_assets[0].storage_path).data.publicUrl}`}
@@ -103,6 +203,13 @@ export const ProfilePosts = ({ profileId }: ProfilePostsProps) => {
                   muted
                 />
               )}
+              
+              {/* Overlay for view indicator */}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+              <div className="absolute bottom-2 right-2 bg-black/60 backdrop-blur-sm rounded-lg px-2 py-1 text-white text-xs opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                <Eye className="w-3 h-3 inline mr-1" />
+                Click to view
+              </div>
             </div>
           )}
 
@@ -112,18 +219,29 @@ export const ProfilePosts = ({ profileId }: ProfilePostsProps) => {
               {post.content}
             </p>
 
-            {/* Stats */}
+            {/* Interactive Stats */}
             <div className="flex items-center justify-between text-slate-400 text-sm">
               <div className="flex items-center gap-4">
-                <div className="flex items-center gap-1">
-                  <Heart className="w-4 h-4" />
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={(e) => handleLike(e, post.id)}
+                  className={`h-8 px-2 transition-colors ${
+                    likedPosts.has(post.id) 
+                      ? 'text-red-400 hover:text-red-300' 
+                      : 'text-slate-400 hover:text-red-400'
+                  }`}
+                >
+                  <Heart className={`w-4 h-4 mr-1 ${likedPosts.has(post.id) ? 'fill-current' : ''}`} />
                   <span>{post.likes_count || 0}</span>
-                </div>
-                <div className="flex items-center gap-1">
+                </Button>
+                
+                <div className="flex items-center gap-1 text-slate-400">
                   <MessageCircle className="w-4 h-4" />
                   <span>{post.comments_count || 0}</span>
                 </div>
-                <div className="flex items-center gap-1">
+                
+                <div className="flex items-center gap-1 text-slate-400">
                   <Eye className="w-4 h-4" />
                   <span>{post.view_count || 0}</span>
                 </div>
@@ -140,7 +258,7 @@ export const ProfilePosts = ({ profileId }: ProfilePostsProps) => {
                 {post.tags.slice(0, 3).map((tag) => (
                   <span
                     key={tag}
-                    className="text-xs bg-slate-700/50 text-slate-300 px-2 py-1 rounded-lg"
+                    className="text-xs bg-slate-700/50 text-slate-300 px-2 py-1 rounded-lg hover:bg-purple-500/20 transition-colors cursor-pointer"
                   >
                     #{tag}
                   </span>
