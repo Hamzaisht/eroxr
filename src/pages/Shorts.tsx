@@ -21,8 +21,14 @@ const Shorts = () => {
           like_count,
           view_count,
           created_at,
-          creator:profiles(id, username)
+          visibility,
+          profiles!creator_id (
+            id,
+            username,
+            avatar_url
+          )
         `)
+        .eq('visibility', 'public')
         .order('created_at', { ascending: false })
         .limit(20);
 
@@ -47,13 +53,9 @@ const Shorts = () => {
     description: short.description || '',
     creator: {
       id: short.creator_id,
-      name: Array.isArray(short.creator) && short.creator.length > 0 
-        ? short.creator[0].username || 'Unknown'
-        : 'Unknown',
-      username: Array.isArray(short.creator) && short.creator.length > 0 
-        ? short.creator[0].username || 'Unknown'
-        : 'Unknown',
-      avatarUrl: ''
+      name: short.profiles?.[0]?.username || 'Unknown',
+      username: short.profiles?.[0]?.username || 'Unknown',
+      avatarUrl: short.profiles?.[0]?.avatar_url || ''
     },
     stats: {
       likes: short.like_count || 0,
