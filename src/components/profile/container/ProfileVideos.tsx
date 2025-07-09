@@ -22,6 +22,12 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 
 interface ProfileVideosProps {
   profileId: string;
@@ -33,6 +39,29 @@ export const ProfileVideos = ({ profileId }: ProfileVideosProps) => {
   const queryClient = useQueryClient();
   const isOwnProfile = user?.id === profileId;
   const [deleteVideoId, setDeleteVideoId] = useState<string | null>(null);
+  const [playingVideoId, setPlayingVideoId] = useState<string | null>(null);
+
+  // Helper function to format video titles
+  const formatVideoTitle = (title: string) => {
+    if (!title) return 'Untitled Video';
+    
+    // If it's a filename, clean it up
+    if (title.includes('.mp4') || title.includes('-')) {
+      // Remove file extension and timestamp-like patterns
+      return title
+        .replace(/\.(mp4|mov|avi|mkv)$/i, '')
+        .replace(/^\d+-/, '') // Remove timestamp prefix
+        .replace(/[_-]/g, ' ')
+        .replace(/\w+/g, word => word.charAt(0).toUpperCase() + word.slice(1))
+        .trim() || 'Eros Video';
+    }
+    
+    return title;
+  };
+
+  const handleVideoClick = (video: any) => {
+    setPlayingVideoId(video.id);
+  };
 
   const { data: videos, isLoading, refetch } = useQuery({
     queryKey: ['profile-videos', profileId],
@@ -157,6 +186,7 @@ export const ProfileVideos = ({ profileId }: ProfileVideosProps) => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: index * 0.1 }}
           className="group relative aspect-[9/16] bg-black rounded-xl overflow-hidden cursor-pointer"
+          onClick={() => handleVideoClick(video)}
         >
           {/* Video Thumbnail */}
           <div className="absolute inset-0">
@@ -167,9 +197,18 @@ export const ProfileVideos = ({ profileId }: ProfileVideosProps) => {
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
               />
             ) : (
-              <div className="w-full h-full bg-gradient-to-br from-primary/20 to-blue-500/20 flex items-center justify-center">
-                <Video className="w-12 h-12 text-white/60" />
-              </div>
+              <video
+                src={video.video_url}
+                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                muted
+                playsInline
+                preload="metadata"
+                onLoadedData={(e) => {
+                  // Set video time to get a frame for thumbnail
+                  const videoElement = e.target as HTMLVideoElement;
+                  videoElement.currentTime = 1;
+                }}
+              />
             )}
           </div>
 
@@ -185,7 +224,10 @@ export const ProfileVideos = ({ profileId }: ProfileVideosProps) => {
 
           {/* Content Actions (only for own profile) */}
           {isOwnProfile && (
-            <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+            <div 
+              className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+              onClick={(e) => e.stopPropagation()}
+            >
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button
@@ -222,7 +264,7 @@ export const ProfileVideos = ({ profileId }: ProfileVideosProps) => {
           {/* Video Info */}
           <div className="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black/80 to-transparent">
             <h4 className="text-white font-medium text-sm mb-1 line-clamp-2">
-              {video.title || 'Untitled Video'}
+              {formatVideoTitle(video.title)}
             </h4>
             
             {/* Stats */}
@@ -271,6 +313,30 @@ export const ProfileVideos = ({ profileId }: ProfileVideosProps) => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Video Player Modal */}
+      <Dialog open={!!playingVideoId} onOpenChange={() => setPlayingVideoId(null)}>
+        <DialogContent className="max-w-4xl bg-black/95 backdrop-blur-md border-white/20 p-0">
+          <DialogHeader className="p-6 pb-0">
+            <DialogTitle className="text-white">
+              {playingVideoId && videos?.find(v => v.id === playingVideoId) && 
+                formatVideoTitle(videos.find(v => v.id === playingVideoId)!.title)
+              }
+            </DialogTitle>
+          </DialogHeader>
+          <div className="aspect-video w-full">
+            {playingVideoId && videos?.find(v => v.id === playingVideoId) && (
+              <video
+                src={videos.find(v => v.id === playingVideoId)!.video_url}
+                className="w-full h-full rounded-b-lg"
+                controls
+                autoPlay
+                playsInline
+              />
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
