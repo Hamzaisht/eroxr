@@ -111,15 +111,21 @@ export const ProfileVideos = ({ profileId }: ProfileVideosProps) => {
   const { data: folders } = useQuery({
     queryKey: ['video-folders', profileId],
     queryFn: async () => {
+      console.log('📁 Fetching folders for profile:', profileId);
       const { data, error } = await supabase
         .from('video_folders')
         .select('*')
         .eq('creator_id', profileId)
         .order('created_at', { ascending: true });
 
-      if (error) throw error;
+      if (error) {
+        console.error('❌ Error fetching folders:', error);
+        throw error;
+      }
+      console.log('✅ Folders fetched:', data);
       return data || [];
     },
+    enabled: !!profileId,
   });
 
   // Fetch videos based on selected folder
@@ -474,11 +480,14 @@ export const ProfileVideos = ({ profileId }: ProfileVideosProps) => {
         <Button
           variant={selectedFolderId === null ? "default" : "outline"}
           size="sm"
-          onClick={() => {
-            console.log('🔄 Setting folder to null (All Videos)');
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('🔄 Clicking All Videos button');
             setSelectedFolderId(null);
           }}
-          className="whitespace-nowrap"
+          className="whitespace-nowrap cursor-pointer"
+          type="button"
         >
           All Videos
         </Button>
@@ -488,11 +497,14 @@ export const ProfileVideos = ({ profileId }: ProfileVideosProps) => {
             <Button
               variant={selectedFolderId === folder.id ? "default" : "outline"}
               size="sm"
-              onClick={() => {
-                console.log('🔄 Setting folder to:', folder.id, folder.name);
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log('🔄 Clicking folder button:', folder.id, folder.name);
                 setSelectedFolderId(folder.id);
               }}
-              className="whitespace-nowrap"
+              className="whitespace-nowrap cursor-pointer"
+              type="button"
             >
               <Folder className="w-3 h-3 mr-1" />
               {folder.name}
@@ -505,8 +517,8 @@ export const ProfileVideos = ({ profileId }: ProfileVideosProps) => {
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-8 w-8 text-white/60 hover:text-white hover:bg-white/10"
-                    onClick={(e) => e.stopPropagation()}
+                    className="h-8 w-8 text-white/60 hover:text-white hover:bg-white/10 cursor-pointer"
+                    type="button"
                   >
                     <Settings className="w-3 h-3" />
                   </Button>
@@ -516,7 +528,9 @@ export const ProfileVideos = ({ profileId }: ProfileVideosProps) => {
                   className="bg-black/90 backdrop-blur-md border-white/20 text-white z-50"
                 >
                   <DropdownMenuItem 
-                    onClick={() => {
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
                       setEditingFolderId(folder.id);
                       setEditFolderName(folder.name);
                     }}
@@ -526,14 +540,22 @@ export const ProfileVideos = ({ profileId }: ProfileVideosProps) => {
                     Edit Name
                   </DropdownMenuItem>
                   <DropdownMenuItem 
-                    onClick={() => handleToggleFolderVisibility(folder.id, folder.is_public)}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      handleToggleFolderVisibility(folder.id, folder.is_public);
+                    }}
                     className="hover:bg-white/10 focus:bg-white/10 cursor-pointer"
                   >
                     {folder.is_public ? <EyeOff className="w-4 h-4 mr-2" /> : <Eye className="w-4 h-4 mr-2" />}
                     {folder.is_public ? 'Make Private' : 'Make Public'}
                   </DropdownMenuItem>
                   <DropdownMenuItem 
-                    onClick={() => setDeleteFolderId(folder.id)}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setDeleteFolderId(folder.id);
+                    }}
                     className="hover:bg-red-500/20 focus:bg-red-500/20 text-red-400 cursor-pointer"
                   >
                     <Trash2 className="w-4 h-4 mr-2" />
@@ -549,11 +571,14 @@ export const ProfileVideos = ({ profileId }: ProfileVideosProps) => {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => {
-              console.log('📁 Opening create folder dialog');
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              console.log('📁 Clicking New Folder button');
               setShowCreateFolder(true);
             }}
-            className="whitespace-nowrap"
+            className="whitespace-nowrap cursor-pointer"
+            type="button"
           >
             <Plus className="w-3 h-3 mr-1" />
             New Folder
