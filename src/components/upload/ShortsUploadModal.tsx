@@ -110,21 +110,23 @@ export const ShortsUploadModal = ({ isOpen, onClose, onUploadComplete }: ShortsU
 
       if (uploadError) throw uploadError;
 
-      // Simulate progress for better UX
+      // Real-time progress simulation for better UX
+      setUploadProgress(20);
+      
+      // Simulate upload progress more smoothly
       const progressInterval = setInterval(() => {
         setUploadProgress(prev => {
-          if (prev >= 90) {
+          if (prev >= 85) {
             clearInterval(progressInterval);
-            return 90;
+            return 85;
           }
-          return prev + 10;
+          return prev + Math.random() * 5 + 2;
         });
-      }, 200);
+      }, 150);
 
       // Complete progress after successful upload
-      setTimeout(() => {
-        setUploadProgress(100);
-      }, 1000);
+      clearInterval(progressInterval);
+      setUploadProgress(100);
 
       // Get public URL
       const { data: { publicUrl } } = supabase.storage
@@ -327,7 +329,7 @@ export const ShortsUploadModal = ({ isOpen, onClose, onUploadComplete }: ShortsU
           </div>
 
           {/* Form Section */}
-          <div className="w-96 bg-gray-900/95 backdrop-blur-xl border-l border-gray-800 p-6 overflow-y-auto">
+          <div className="w-96 bg-gray-900/95 backdrop-blur-xl border-l border-gray-800 p-6 overflow-y-auto fade-scrollbar">
             <div className="space-y-6">
               {/* Header */}
               <div className="flex items-center justify-between">

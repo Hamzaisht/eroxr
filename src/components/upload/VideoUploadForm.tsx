@@ -179,12 +179,15 @@ export function VideoUploadForm({
     setIsPreviewPlaying(!isPreviewPlaying);
   };
   
-  // Update progress when uploading
+  // Update progress when uploading with real-time feel
   useEffect(() => {
     if (isUploading) {
       const interval = setInterval(() => {
-        setUploadProgress(prev => Math.min(prev + 10, 90));
-      }, 200);
+        setUploadProgress(prev => {
+          const increment = Math.random() * 3 + 1;
+          return Math.min(prev + increment, 90);
+        });
+      }, 100);
       
       return () => clearInterval(interval);
     } else if (uploadProgress > 0) {
@@ -193,7 +196,7 @@ export function VideoUploadForm({
   }, [isUploading, uploadProgress]);
   
   return (
-    <Card className="p-6">
+    <Card className="p-6 max-h-[80vh] overflow-y-auto fade-scrollbar">
       <form onSubmit={handleSubmit} className="space-y-6">
         <div>
           <h2 className="text-2xl font-bold mb-4">Upload Video</h2>
