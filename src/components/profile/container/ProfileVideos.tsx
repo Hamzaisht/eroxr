@@ -173,6 +173,7 @@ export const ProfileVideos = ({ profileId }: ProfileVideosProps) => {
     },
     staleTime: 30000,
     refetchOnWindowFocus: false,
+    enabled: !!profileId, // Only run query when profileId is available
   });
 
   const handleDeleteVideo = async () => {
@@ -374,7 +375,10 @@ export const ProfileVideos = ({ profileId }: ProfileVideosProps) => {
         <Button
           variant={selectedFolderId === null ? "default" : "outline"}
           size="sm"
-          onClick={() => setSelectedFolderId(null)}
+          onClick={() => {
+            console.log('🔄 Setting folder to null (All Videos)');
+            setSelectedFolderId(null);
+          }}
           className="whitespace-nowrap"
         >
           All Videos
@@ -385,7 +389,10 @@ export const ProfileVideos = ({ profileId }: ProfileVideosProps) => {
             key={folder.id}
             variant={selectedFolderId === folder.id ? "default" : "outline"}
             size="sm"
-            onClick={() => setSelectedFolderId(folder.id)}
+            onClick={() => {
+              console.log('🔄 Setting folder to:', folder.id, folder.name);
+              setSelectedFolderId(folder.id);
+            }}
             className="whitespace-nowrap"
           >
             <Folder className="w-3 h-3 mr-1" />
@@ -397,7 +404,10 @@ export const ProfileVideos = ({ profileId }: ProfileVideosProps) => {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => setShowCreateFolder(true)}
+            onClick={() => {
+              console.log('📁 Opening create folder dialog');
+              setShowCreateFolder(true);
+            }}
             className="whitespace-nowrap"
           >
             <Plus className="w-3 h-3 mr-1" />
