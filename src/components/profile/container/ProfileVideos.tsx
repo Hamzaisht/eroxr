@@ -5,12 +5,23 @@ import { Video, Eye, Heart, MessageCircle, Play, Edit3, Trash2, MoreHorizontal }
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
+import { useState } from 'react';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 interface ProfileVideosProps {
   profileId: string;
@@ -20,6 +31,7 @@ export const ProfileVideos = ({ profileId }: ProfileVideosProps) => {
   const { user } = useAuth();
   const { toast } = useToast();
   const isOwnProfile = user?.id === profileId;
+  const [deleteVideoId, setDeleteVideoId] = useState<string | null>(null);
 
   const { data: videos, isLoading, refetch } = useQuery({
     queryKey: ['profile-videos', profileId],
@@ -54,16 +66,14 @@ export const ProfileVideos = ({ profileId }: ProfileVideosProps) => {
     staleTime: 60000,
   });
 
-  const handleDeleteVideo = async (videoId: string) => {
-    if (!window.confirm('Are you sure you want to delete this video? This action cannot be undone.')) {
-      return;
-    }
+  const handleDeleteVideo = async () => {
+    if (!deleteVideoId) return;
 
     try {
       const { error } = await supabase
         .from('videos')
         .delete()
-        .eq('id', videoId);
+        .eq('id', deleteVideoId);
 
       if (error) throw error;
 
@@ -72,6 +82,7 @@ export const ProfileVideos = ({ profileId }: ProfileVideosProps) => {
         description: "Your video has been successfully deleted.",
       });
 
+      setDeleteVideoId(null);
       refetch();
     } catch (error) {
       console.error('Error deleting video:', error);
@@ -80,6 +91,7 @@ export const ProfileVideos = ({ profileId }: ProfileVideosProps) => {
         description: "Failed to delete video. Please try again.",
         variant: "destructive",
       });
+      setDeleteVideoId(null);
     }
   };
 
@@ -178,7 +190,7 @@ export const ProfileVideos = ({ profileId }: ProfileVideosProps) => {
                     Edit Video
                   </DropdownMenuItem>
                   <DropdownMenuItem 
-                    onClick={() => handleDeleteVideo(video.id)}
+                    onClick={() => setDeleteVideoId(video.id)}
                     className="hover:bg-red-500/20 focus:bg-red-500/20 text-red-400 cursor-pointer"
                   >
                     <Trash2 className="w-4 h-4 mr-2" />
@@ -215,6 +227,32 @@ export const ProfileVideos = ({ profileId }: ProfileVideosProps) => {
           </div>
         </motion.div>
       ))}
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={!!deleteVideoId} onOpenChange={() => setDeleteVideoId(null)}>
+        <AlertDialogContent className="bg-black/95 backdrop-blur-md border-white/20 text-white">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-white">Delete Video</AlertDialogTitle>
+            <AlertDialogDescription className="text-white/70">
+              Are you sure you want to delete this video? This action cannot be undone and the video will be permanently removed.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel 
+              onClick={() => setDeleteVideoId(null)}
+              className="bg-white/10 hover:bg-white/20 text-white border-white/20"
+            >
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleDeleteVideo}
+              className="bg-red-600 hover:bg-red-700 text-white"
+            >
+              Delete Video
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
