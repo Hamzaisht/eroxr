@@ -93,6 +93,11 @@ export function useEroboardData() {
 
       if (analyticsError) {
         console.error("Error fetching analytics:", analyticsError);
+        // If functions don't exist, set error and return early to prevent infinite loops
+        if (analyticsError.message?.includes('function') || analyticsError.message?.includes('Failed to fetch')) {
+          setError("Database functions not available. Please ensure migrations are run.");
+          return;
+        }
       }
 
       const analytics = analyticsData?.[0] || {
@@ -116,6 +121,9 @@ export function useEroboardData() {
 
       if (revenueError) {
         console.error("Error fetching revenue breakdown:", revenueError);
+        if (revenueError.message?.includes('function') || revenueError.message?.includes('Failed to fetch')) {
+          return;
+        }
       }
 
       const dbBreakdown = revenueData?.[0] || {
@@ -143,6 +151,9 @@ export function useEroboardData() {
 
       if (timelineError) {
         console.error("Error fetching earnings timeline:", timelineError);
+        if (timelineError.message?.includes('function') || timelineError.message?.includes('Failed to fetch')) {
+          return;
+        }
       }
 
       const chartEarningsData = timelineData?.map((item: any) => ({
@@ -160,6 +171,9 @@ export function useEroboardData() {
 
       if (subscriberError) {
         console.error("Error fetching subscriber analytics:", subscriberError);
+        if (subscriberError.message?.includes('function') || subscriberError.message?.includes('Failed to fetch')) {
+          return;
+        }
       }
 
       const subAnalytics = subscriberData?.[0] || {
@@ -179,6 +193,9 @@ export function useEroboardData() {
 
       if (contentError) {
         console.error("Error fetching content performance:", contentError);
+        if (contentError.message?.includes('function') || contentError.message?.includes('Failed to fetch')) {
+          return;
+        }
       }
 
       const contentPerformance = contentData?.map((item: any) => ({
@@ -350,10 +367,10 @@ export function useEroboardData() {
   };
 
   useEffect(() => {
-    if (session?.user?.id) {
+    if (session?.user?.id && !error) {
       fetchDashboardData();
       
-      // Set up real-time subscriptions for live data updates
+      // Only set up real-time subscriptions if no error
       const earningsChannel = supabase
         .channel('earnings-updates')
         .on('postgres_changes', {
@@ -361,8 +378,10 @@ export function useEroboardData() {
           schema: 'public',
           table: 'post_purchases'
         }, () => {
-          // Refetch data when new purchases come in
-          fetchDashboardData();
+          // Only refetch if no error
+          if (!error) {
+            fetchDashboardData();
+          }
         })
         .subscribe();
 
@@ -373,8 +392,10 @@ export function useEroboardData() {
           schema: 'public',
           table: 'posts'
         }, () => {
-          // Refetch data when posts are updated
-          fetchDashboardData();
+          // Only refetch if no error  
+          if (!error) {
+            fetchDashboardData();
+          }
         })
         .subscribe();
 
@@ -385,8 +406,10 @@ export function useEroboardData() {
           schema: 'public',
           table: 'creator_subscriptions'
         }, () => {
-          // Refetch data when subscriptions change
-          fetchDashboardData();
+          // Only refetch if no error
+          if (!error) {
+            fetchDashboardData();
+          }
         })
         .subscribe();
 
@@ -397,7 +420,7 @@ export function useEroboardData() {
         supabase.removeChannel(subscriptionsChannel);
       };
     }
-  }, [session?.user?.id, fetchDashboardData]);
+  }, [session?.user?.id, fetchDashboardData, error]);
 
   return {
     loading,
