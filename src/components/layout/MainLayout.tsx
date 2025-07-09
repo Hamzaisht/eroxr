@@ -2,6 +2,7 @@
 import { useLocation, Outlet, Navigate } from "react-router-dom";
 import { BackgroundEffects } from "./BackgroundEffects";
 import { InteractiveNav } from "./InteractiveNav";
+import { CollapsibleNav } from "./CollapsibleNav";
 import { MainContent } from "./components/MainContent";
 import { FloatingActionMenu } from "./FloatingActionMenu";
 import { MainNav } from "@/components/MainNav";
@@ -54,9 +55,10 @@ export const MainLayout = () => {
 
   return (
     <div className="flex min-h-screen w-full bg-luxury-gradient-from overflow-x-hidden">
-      <InteractiveNav />
+      {/* Use collapsible nav for Eros/Shorts route for immersive experience */}
+      {isErosRoute ? <CollapsibleNav /> : <InteractiveNav />}
       
-      <div className="flex-1 min-h-screen relative w-full">
+      <div className={`flex-1 min-h-screen relative w-full ${isErosRoute ? '' : 'md:ml-20'}`}>
         {/* Background with geex art studio aesthetic */}
         <div className="fixed inset-0 pointer-events-none">
           <BackgroundEffects />
@@ -65,18 +67,18 @@ export const MainLayout = () => {
           <div className="absolute inset-0 bg-gradient-to-br from-luxury-dark via-luxury-darker to-luxury-gradient-to opacity-90" />
         </div>
         
-        {/* Main Navigation Header */}
-        <MainNav />
+        {/* Main Navigation Header - hide on Eros route */}
+        {!isErosRoute && <MainNav />}
         
         {/* Main content wrapper with studio styling */}
         <MainContent isErosRoute={isErosRoute}>
-          <div className="pt-20 relative z-10">
+          <div className={`relative z-10 ${isErosRoute ? '' : 'pt-20'}`}>
             <Outlet />
           </div>
         </MainContent>
 
-        {/* Floating action menu */}
-        <FloatingActionMenu currentPath={location.pathname} />
+        {/* Floating action menu - hide on Eros route */}
+        {!isErosRoute && <FloatingActionMenu currentPath={location.pathname} />}
       </div>
     </div>
   );

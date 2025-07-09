@@ -10,9 +10,15 @@ export const useShortActions = () => {
   const likeShort = useCallback(async (shortId: string) => {
     setIsProcessing(true);
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
       const { error } = await supabase
         .from('post_likes')
-        .insert({ post_id: shortId });
+        .insert({ 
+          post_id: shortId,
+          user_id: user.id 
+        });
 
       if (error) throw error;
       return true;
@@ -32,10 +38,14 @@ export const useShortActions = () => {
   const unlikeShort = useCallback(async (shortId: string) => {
     setIsProcessing(true);
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
       const { error } = await supabase
         .from('post_likes')
         .delete()
-        .eq('post_id', shortId);
+        .eq('post_id', shortId)
+        .eq('user_id', user.id);
 
       if (error) throw error;
       return true;
@@ -55,9 +65,15 @@ export const useShortActions = () => {
   const saveShort = useCallback(async (shortId: string) => {
     setIsProcessing(true);
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
       const { error } = await supabase
         .from('post_saves')
-        .insert({ post_id: shortId });
+        .insert({ 
+          post_id: shortId,
+          user_id: user.id 
+        });
 
       if (error) throw error;
       return true;
@@ -77,10 +93,14 @@ export const useShortActions = () => {
   const unsaveShort = useCallback(async (shortId: string) => {
     setIsProcessing(true);
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
       const { error } = await supabase
         .from('post_saves')
         .delete()
-        .eq('post_id', shortId);
+        .eq('post_id', shortId)
+        .eq('user_id', user.id);
 
       if (error) throw error;
       return true;

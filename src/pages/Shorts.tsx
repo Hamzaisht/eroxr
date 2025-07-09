@@ -12,6 +12,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
+import { CommentsModal } from "@/components/home/components/CommentsModal";
 
 interface ShortVideo {
   id: string;
@@ -32,6 +33,7 @@ interface ShortVideo {
 const Shorts = () => {
   const [currentVideoIndex, setCurrentVideoIndex] = useState(0);
   const [isMuted, setIsMuted] = useState(true);
+  const [showComments, setShowComments] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
   const { likeShort, unlikeShort, saveShort, unsaveShort } = useShortActions();
@@ -125,10 +127,7 @@ const Shorts = () => {
   };
 
   const handleComment = () => {
-    toast({
-      title: "Comments 💬",
-      description: "Comments feature coming soon!",
-    });
+    setShowComments(true);
   };
 
   const handleShare = async (video: ShortVideo) => {
@@ -216,17 +215,6 @@ const Shorts = () => {
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
     >
-      {/* Minimal Header - only back button */}
-      <div className="absolute top-4 left-4 z-30">
-        <Button 
-          variant="ghost" 
-          size="icon"
-          onClick={() => navigate(-1)}
-          className="text-white hover:bg-white/20 bg-black/30 backdrop-blur-sm"
-        >
-          <ArrowLeft className="h-6 w-6" />
-        </Button>
-      </div>
 
       {/* Video Container */}
       <div className="relative w-full h-full">
@@ -346,6 +334,14 @@ const Shorts = () => {
           <div className="absolute top-1/2 left-1/4 w-24 h-24 bg-purple-500/10 rounded-full blur-2xl animate-pulse delay-500" />
         </div>
       </div>
+
+      {/* Comments Modal */}
+      <CommentsModal
+        isOpen={showComments}
+        onClose={() => setShowComments(false)}
+        videoId={currentVideo.id}
+        videoTitle={currentVideo.title}
+      />
     </div>
   );
 };
