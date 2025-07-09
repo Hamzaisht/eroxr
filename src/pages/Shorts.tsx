@@ -100,6 +100,22 @@ const Shorts = () => {
     setIsMuted
   });
 
+  // Define variables early but safely
+  const currentVideo = shorts?.[currentVideoIndex];
+  const isCreator = user?.id === currentVideo?.creator_id;
+
+  // Load user interactions when video changes - ensure hooks are called consistently
+  useEffect(() => {
+    if (currentVideo && !userInteractions[currentVideo.id]) {
+      checkUserInteractions(currentVideo.id).then(interactions => {
+        setUserInteractions(prev => ({
+          ...prev,
+          [currentVideo.id]: interactions
+        }));
+      });
+    }
+  }, [currentVideo, checkUserInteractions, userInteractions]);
+
   const handleNext = () => {
     if (currentVideoIndex < (shorts?.length || 0) - 1) {
       setCurrentVideoIndex(currentVideoIndex + 1);
@@ -188,10 +204,12 @@ const Shorts = () => {
   };
 
   const handleEdit = () => {
+    if (!currentVideo) return;
     navigate(`/shorts/${currentVideo.id}/edit`);
   };
 
   const handleDelete = async () => {
+    if (!currentVideo) return;
     if (window.confirm('Are you sure you want to delete this video? This action cannot be undone.')) {
       const success = await deleteShort(currentVideo.id);
       if (success) {
@@ -210,7 +228,7 @@ const Shorts = () => {
     }
   };
 
-
+  // Handle all early returns AFTER all hooks
   if (isLoading) {
     return (
       <div className="fixed inset-0 bg-black flex items-center justify-center z-50">
@@ -240,22 +258,6 @@ const Shorts = () => {
     );
   }
 
-  const currentVideo = shorts?.[currentVideoIndex];
-  const isCreator = user?.id === currentVideo?.creator_id;
-
-  // Load user interactions when video changes - ensure hooks are called consistently
-  useEffect(() => {
-    if (currentVideo && !userInteractions[currentVideo.id]) {
-      checkUserInteractions(currentVideo.id).then(interactions => {
-        setUserInteractions(prev => ({
-          ...prev,
-          [currentVideo.id]: interactions
-        }));
-      });
-    }
-  }, [currentVideo, checkUserInteractions, userInteractions]);
-
-  // Early return with safety check AFTER all hooks
   if (!currentVideo) {
     return (
       <div className="fixed inset-0 bg-black flex items-center justify-center z-50">
