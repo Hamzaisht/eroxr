@@ -162,180 +162,251 @@ export const ProfileDatingAds = ({ profileId }: ProfileDatingAdsProps) => {
       {datingAds.map((ad, index) => (
         <motion.div
           key={ad.id}
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: index * 0.1 }}
-          className="group bg-white/5 backdrop-blur-xl rounded-xl border border-white/10 p-6 hover:bg-white/10 transition-all duration-300"
+          initial={{ opacity: 0, y: 50, rotateX: -15 }}
+          animate={{ opacity: 1, y: 0, rotateX: 0 }}
+          transition={{ 
+            delay: index * 0.15, 
+            duration: 0.8, 
+            type: "spring",
+            stiffness: 100 
+          }}
+          whileHover={{ 
+            y: -8, 
+            scale: 1.02,
+            transition: { duration: 0.3, type: "spring", stiffness: 400 }
+          }}
+          className="group relative overflow-hidden"
         >
-          {/* Header */}
-          <div className="flex items-start justify-between mb-4">
-            <div className="flex items-center gap-4">
-              <div className="w-16 h-16 rounded-full bg-gradient-to-br from-primary/20 to-blue-500/20 flex items-center justify-center border-2 border-white/20">
-                <Heart className="w-8 h-8 text-white/60" />
+          {/* Background Glow Effect */}
+          <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 via-pink-500/5 to-cyan-500/10 rounded-2xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
+          
+          {/* Main Card */}
+          <div className="relative bg-gradient-to-br from-black/40 via-gray-900/50 to-black/60 backdrop-blur-xl rounded-2xl border border-white/10 group-hover:border-purple-400/30 transition-all duration-500 overflow-hidden">
+            {/* Floating Particles */}
+            <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-700">
+              {[...Array(6)].map((_, i) => (
+                <motion.div
+                  key={i}
+                  className="absolute w-1 h-1 bg-gradient-to-r from-purple-400 to-cyan-400 rounded-full"
+                  style={{
+                    left: `${20 + Math.random() * 60}%`,
+                    top: `${20 + Math.random() * 60}%`,
+                  }}
+                  animate={{
+                    y: [-10, 10, -10],
+                    x: [-5, 5, -5],
+                    opacity: [0, 1, 0],
+                    scale: [0, 1.5, 0],
+                  }}
+                  transition={{
+                    duration: 3 + Math.random() * 2,
+                    repeat: Infinity,
+                    ease: "easeInOut",
+                  }}
+                />
+              ))}
+            </div>
+
+            {/* Media Section - Hero Style */}
+            {(ad.avatar_url || ad.video_url) && (
+              <div className="relative h-64 mb-6 overflow-hidden">
+                {/* Media Container */}
+                <div className="absolute inset-0">
+                  {ad.avatar_url && (
+                    <div className="relative w-full h-full">
+                      <img
+                        src={ad.avatar_url}
+                        alt={`${ad.title} - Profile`}
+                        className="w-full h-full object-cover"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+                      <div className="absolute top-4 left-4">
+                        <Badge className="bg-black/60 backdrop-blur-sm text-white border-0 text-xs font-medium">
+                          Photo
+                        </Badge>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {ad.video_url && (
+                    <div className="relative w-full h-full">
+                      <video
+                        src={ad.video_url}
+                        className="w-full h-full object-cover"
+                        controls={false}
+                        preload="metadata"
+                        muted
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+                      <div className="absolute top-4 left-4">
+                        <Badge className="bg-black/60 backdrop-blur-sm text-white border-0 text-xs font-medium flex items-center gap-1">
+                          <Play className="w-3 h-3" />
+                          Video
+                        </Badge>
+                      </div>
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center hover:bg-white/30 transition-colors cursor-pointer">
+                          <Play className="w-6 h-6 text-white ml-1" />
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Floating Header Info */}
+                <div className="absolute bottom-4 left-4 right-4 z-10">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center border-2 border-white/20">
+                        <Heart className="w-6 h-6 text-white" />
+                      </div>
+                      <div>
+                        <h4 className="text-xl font-bold text-white mb-1 drop-shadow-lg">{ad.title}</h4>
+                        <div className="flex items-center gap-2 text-white/90 text-sm">
+                          <MapPin className="w-4 h-4" />
+                          <span>{ad.city}, {ad.country}</span>
+                          <span>•</span>
+                          <span>{getAgeRangeText(ad.age_range)}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Actions Dropdown */}
+                    {isOwnProfile && (
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="w-10 h-10 bg-black/40 backdrop-blur-sm hover:bg-black/60 border border-white/20 opacity-0 group-hover:opacity-100 transition-all duration-300"
+                          >
+                            <MoreHorizontal className="h-4 w-4 text-white" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent 
+                          align="end" 
+                          className="bg-black/90 backdrop-blur-xl border-white/20 text-white"
+                        >
+                          <DropdownMenuItem 
+                            onClick={() => handleEditAd(ad.id)}
+                            className="hover:bg-white/10 focus:bg-white/10 cursor-pointer"
+                          >
+                            <Edit3 className="w-4 h-4 mr-2" />
+                            Edit Ad
+                          </DropdownMenuItem>
+                          <DropdownMenuItem 
+                            onClick={() => handleDeleteAd(ad.id)}
+                            className="hover:bg-red-500/20 focus:bg-red-500/20 text-red-400 cursor-pointer"
+                          >
+                            <Trash2 className="w-4 h-4 mr-2" />
+                            Delete Ad
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    )}
+                  </div>
+                </div>
               </div>
-              
-              <div className="flex-1">
-                <h4 className="text-lg font-semibold text-white mb-1">{ad.title}</h4>
-                <div className="flex items-center gap-2 text-white/60 text-sm">
-                  <MapPin className="w-4 h-4" />
-                  <span>{ad.city}, {ad.country}</span>
-                  <span>•</span>
-                  <span>{getAgeRangeText(ad.age_range)}</span>
+            )}
+
+            {/* Card Content */}
+            <div className="p-6 pt-0">
+              {/* Status Badges */}
+              <div className="flex gap-2 mb-4">
+                <Badge className={`text-xs font-medium ${getStatusColor(ad.moderation_status || 'pending')}`}>
+                  {ad.moderation_status || 'Pending'}
+                </Badge>
+                {!ad.is_active && (
+                  <Badge className="text-xs bg-gray-500/20 text-gray-400 border-gray-500/30 font-medium">
+                    Inactive
+                  </Badge>
+                )}
+              </div>
+
+              {/* Description */}
+              <div className="mb-6">
+                <p className="text-white/90 text-base leading-relaxed line-clamp-3">
+                  {ad.description}
+                </p>
+              </div>
+
+              {/* Looking For */}
+              {ad.looking_for && ad.looking_for.length > 0 && (
+                <div className="mb-6">
+                  <h5 className="text-white/70 text-sm font-semibold mb-3 tracking-wide">LOOKING FOR</h5>
+                  <div className="flex flex-wrap gap-2">
+                    {ad.looking_for.slice(0, 3).map((item: string, i: number) => (
+                      <motion.span
+                        key={i}
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                        transition={{ delay: 0.1 * i }}
+                        className="px-3 py-1.5 bg-gradient-to-r from-purple-500/20 to-pink-500/20 border border-purple-400/30 text-purple-300 text-sm font-medium rounded-full backdrop-blur-sm"
+                      >
+                        {item}
+                      </motion.span>
+                    ))}
+                    {ad.looking_for.length > 3 && (
+                      <span className="px-3 py-1.5 text-sm text-white/50 font-medium">
+                        +{ad.looking_for.length - 3} more
+                      </span>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Interests */}
+              {ad.interests && ad.interests.length > 0 && (
+                <div className="mb-6">
+                  <h5 className="text-white/70 text-sm font-semibold mb-3 tracking-wide">INTERESTS</h5>
+                  <div className="flex flex-wrap gap-2">
+                    {ad.interests.slice(0, 4).map((interest: string, i: number) => (
+                      <motion.span
+                        key={i}
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                        transition={{ delay: 0.1 * i }}
+                        className="px-3 py-1.5 bg-white/10 backdrop-blur-sm text-white/80 text-sm font-medium rounded-full border border-white/20 hover:bg-white/20 transition-colors"
+                      >
+                        {interest}
+                      </motion.span>
+                    ))}
+                    {ad.interests.length > 4 && (
+                      <span className="px-3 py-1.5 text-sm text-white/50 font-medium">
+                        +{ad.interests.length - 4} more
+                      </span>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Stats & Date Footer */}
+              <div className="flex items-center justify-between pt-4 border-t border-white/10">
+                <div className="flex items-center gap-6">
+                  <div className="flex items-center gap-2 text-white/60">
+                    <div className="w-8 h-8 bg-gradient-to-br from-blue-500/20 to-cyan-500/20 rounded-full flex items-center justify-center">
+                      <Eye className="w-4 h-4" />
+                    </div>
+                    <span className="text-sm font-medium">{ad.view_count || 0} views</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-white/60">
+                    <div className="w-8 h-8 bg-gradient-to-br from-pink-500/20 to-red-500/20 rounded-full flex items-center justify-center">
+                      <Heart className="w-4 h-4" />
+                    </div>
+                    <span className="text-sm font-medium">{ad.click_count || 0} likes</span>
+                  </div>
+                </div>
+                
+                <div className="flex items-center gap-2 text-white/50">
+                  <Calendar className="w-4 h-4" />
+                  <span className="text-sm font-medium">{new Date(ad.created_at).toLocaleDateString()}</span>
                 </div>
               </div>
             </div>
 
-            {/* Content Actions (only for own profile) */}
-            {isOwnProfile && (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="w-8 h-8 opacity-0 group-hover:opacity-100 transition-opacity"
-                  >
-                    <MoreHorizontal className="h-4 w-4 text-white" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent 
-                  align="end" 
-                  className="bg-black/90 backdrop-blur-md border-white/20 text-white"
-                >
-                  <DropdownMenuItem 
-                    onClick={() => handleEditAd(ad.id)}
-                    className="hover:bg-white/10 focus:bg-white/10 cursor-pointer"
-                  >
-                    <Edit3 className="w-4 h-4 mr-2" />
-                    Edit Ad
-                  </DropdownMenuItem>
-                  <DropdownMenuItem 
-                    onClick={() => handleDeleteAd(ad.id)}
-                    className="hover:bg-red-500/20 focus:bg-red-500/20 text-red-400 cursor-pointer"
-                  >
-                    <Trash2 className="w-4 h-4 mr-2" />
-                    Delete Ad
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            )}
-          </div>
-
-          {/* Media Section */}
-          {(ad.avatar_url || ad.video_url) && (
-            <div className="mb-4">
-              <div className="grid gap-3">
-                {ad.avatar_url && (
-                  <div className="relative">
-                    <img
-                      src={ad.avatar_url}
-                      alt={`${ad.title} - Profile`}
-                      className="w-full h-48 object-cover rounded-lg border border-white/20"
-                    />
-                    <div className="absolute top-2 left-2">
-                      <Badge className="text-xs bg-black/60 text-white border-0">
-                        Photo
-                      </Badge>
-                    </div>
-                  </div>
-                )}
-                
-                {ad.video_url && (
-                  <div className="relative">
-                    <video
-                      src={ad.video_url}
-                      className="w-full h-48 object-cover rounded-lg border border-white/20"
-                      controls
-                      preload="metadata"
-                    />
-                    <div className="absolute top-2 left-2">
-                      <Badge className="text-xs bg-black/60 text-white border-0 flex items-center gap-1">
-                        <Play className="w-3 h-3" />
-                        Video
-                      </Badge>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* Status Badges */}
-          <div className="flex gap-2 mb-3">
-            <Badge className={`text-xs ${getStatusColor(ad.moderation_status || 'pending')}`}>
-              {ad.moderation_status || 'Pending'}
-            </Badge>
-            {!ad.is_active && (
-              <Badge className="text-xs bg-gray-500/20 text-gray-400 border-gray-500/30">
-                Inactive
-              </Badge>
-            )}
-          </div>
-
-          {/* Description */}
-          <p className="text-white/80 text-sm mb-4 line-clamp-3 leading-relaxed">
-            {ad.description}
-          </p>
-
-          {/* Looking For */}
-          {ad.looking_for && ad.looking_for.length > 0 && (
-            <div className="mb-4">
-              <h5 className="text-white/60 text-xs font-medium mb-2">Looking for:</h5>
-              <div className="flex flex-wrap gap-1">
-                {ad.looking_for.slice(0, 3).map((item: string, i: number) => (
-                  <span
-                    key={i}
-                    className="text-xs bg-primary/20 text-primary px-2 py-1 rounded-lg"
-                  >
-                    {item}
-                  </span>
-                ))}
-                {ad.looking_for.length > 3 && (
-                  <span className="text-xs text-white/40">
-                    +{ad.looking_for.length - 3} more
-                  </span>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* Interests */}
-          {ad.interests && ad.interests.length > 0 && (
-            <div className="mb-4">
-              <h5 className="text-white/60 text-xs font-medium mb-2">Interests:</h5>
-              <div className="flex flex-wrap gap-1">
-                {ad.interests.slice(0, 4).map((interest: string, i: number) => (
-                  <span
-                    key={i}
-                    className="text-xs bg-white/10 text-white/70 px-2 py-1 rounded-lg"
-                  >
-                    {interest}
-                  </span>
-                ))}
-                {ad.interests.length > 4 && (
-                  <span className="text-xs text-white/40">
-                    +{ad.interests.length - 4} more
-                  </span>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* Stats & Date */}
-          <div className="flex items-center justify-between text-white/50 text-xs pt-4 border-t border-white/10">
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-1">
-                <Eye className="w-3 h-3" />
-                <span>{ad.view_count || 0}</span>
-              </div>
-              <div className="flex items-center gap-1">
-                <Heart className="w-3 h-3" />
-                <span>{ad.click_count || 0}</span>
-              </div>
-            </div>
-            
-            <div className="flex items-center gap-1">
-              <Calendar className="w-3 h-3" />
-              <span>{new Date(ad.created_at).toLocaleDateString()}</span>
+            {/* Shimmer Effect */}
+            <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-1000">
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -skew-x-12 animate-pulse" />
             </div>
           </div>
         </motion.div>
