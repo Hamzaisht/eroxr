@@ -25,6 +25,8 @@ export const ProfileDatingAds = ({ profileId }: ProfileDatingAdsProps) => {
   const { data: datingAds, isLoading, refetch } = useQuery({
     queryKey: ['profile-dating-ads', profileId],
     queryFn: async () => {
+      console.log('🎯 ProfileDatingAds: Fetching dating ads for:', profileId);
+      
       const { data, error } = await supabase
         .from('dating_ads')
         .select(`
@@ -48,7 +50,12 @@ export const ProfileDatingAds = ({ profileId }: ProfileDatingAdsProps) => {
         .eq('user_id', profileId)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('❌ ProfileDatingAds: Fetch failed:', error);
+        throw error;
+      }
+      
+      console.log('✅ ProfileDatingAds: Found ads:', data?.length || 0);
       return data || [];
     },
     staleTime: 60000,

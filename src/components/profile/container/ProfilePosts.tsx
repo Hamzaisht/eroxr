@@ -12,6 +12,8 @@ export const ProfilePosts = ({ profileId }: ProfilePostsProps) => {
   const { data: posts, isLoading } = useQuery({
     queryKey: ['profile-posts', profileId],
     queryFn: async () => {
+      console.log('🎯 ProfilePosts: Fetching posts for:', profileId);
+      
       const { data, error } = await supabase
         .from('posts')
         .select(`
@@ -35,7 +37,12 @@ export const ProfilePosts = ({ profileId }: ProfilePostsProps) => {
         .eq('visibility', 'public')
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('❌ ProfilePosts: Fetch failed:', error);
+        throw error;
+      }
+      
+      console.log('✅ ProfilePosts: Found posts:', data?.length || 0);
       return data || [];
     },
     staleTime: 60000,

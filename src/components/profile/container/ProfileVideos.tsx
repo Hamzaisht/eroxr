@@ -24,6 +24,8 @@ export const ProfileVideos = ({ profileId }: ProfileVideosProps) => {
   const { data: videos, isLoading, refetch } = useQuery({
     queryKey: ['profile-videos', profileId],
     queryFn: async () => {
+      console.log('🎯 ProfileVideos: Fetching videos for:', profileId);
+      
       const { data, error } = await supabase
         .from('videos')
         .select(`
@@ -41,7 +43,12 @@ export const ProfileVideos = ({ profileId }: ProfileVideosProps) => {
         .eq('creator_id', profileId)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('❌ ProfileVideos: Fetch failed:', error);
+        throw error;
+      }
+      
+      console.log('✅ ProfileVideos: Found videos:', data?.length || 0);
       return data || [];
     },
     staleTime: 60000,
