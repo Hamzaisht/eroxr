@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { motion } from 'framer-motion';
-import { Heart, MapPin, Edit3, Trash2, MoreHorizontal, Calendar, Eye } from 'lucide-react';
+import { Heart, MapPin, Edit3, Trash2, MoreHorizontal, Calendar, Eye, Play } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
@@ -34,6 +34,7 @@ export const ProfileDatingAds = ({ profileId }: ProfileDatingAdsProps) => {
           title,
           description,
           avatar_url,
+          video_url,
           city,
           country,
           age_range,
@@ -169,17 +170,9 @@ export const ProfileDatingAds = ({ profileId }: ProfileDatingAdsProps) => {
           {/* Header */}
           <div className="flex items-start justify-between mb-4">
             <div className="flex items-center gap-4">
-              {ad.avatar_url ? (
-                <img
-                  src={ad.avatar_url}
-                  alt={ad.title}
-                  className="w-16 h-16 rounded-full object-cover border-2 border-white/20"
-                />
-              ) : (
-                <div className="w-16 h-16 rounded-full bg-gradient-to-br from-primary/20 to-blue-500/20 flex items-center justify-center border-2 border-white/20">
-                  <Heart className="w-8 h-8 text-white/60" />
-                </div>
-              )}
+              <div className="w-16 h-16 rounded-full bg-gradient-to-br from-primary/20 to-blue-500/20 flex items-center justify-center border-2 border-white/20">
+                <Heart className="w-8 h-8 text-white/60" />
+              </div>
               
               <div className="flex-1">
                 <h4 className="text-lg font-semibold text-white mb-1">{ad.title}</h4>
@@ -226,6 +219,45 @@ export const ProfileDatingAds = ({ profileId }: ProfileDatingAdsProps) => {
               </DropdownMenu>
             )}
           </div>
+
+          {/* Media Section */}
+          {(ad.avatar_url || ad.video_url) && (
+            <div className="mb-4">
+              <div className="grid gap-3">
+                {ad.avatar_url && (
+                  <div className="relative">
+                    <img
+                      src={ad.avatar_url}
+                      alt={`${ad.title} - Profile`}
+                      className="w-full h-48 object-cover rounded-lg border border-white/20"
+                    />
+                    <div className="absolute top-2 left-2">
+                      <Badge className="text-xs bg-black/60 text-white border-0">
+                        Photo
+                      </Badge>
+                    </div>
+                  </div>
+                )}
+                
+                {ad.video_url && (
+                  <div className="relative">
+                    <video
+                      src={ad.video_url}
+                      className="w-full h-48 object-cover rounded-lg border border-white/20"
+                      controls
+                      preload="metadata"
+                    />
+                    <div className="absolute top-2 left-2">
+                      <Badge className="text-xs bg-black/60 text-white border-0 flex items-center gap-1">
+                        <Play className="w-3 h-3" />
+                        Video
+                      </Badge>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* Status Badges */}
           <div className="flex gap-2 mb-3">
