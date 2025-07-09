@@ -129,7 +129,7 @@ export function EnhancedFiltersPanel(props: EnhancedFiltersPanelProps) {
                 <SelectValue placeholder="All genders" />
               </SelectTrigger>
               <SelectContent className="glass-panel border-purple-400/30">
-                <SelectItem value="">All Mortals</SelectItem>
+                <SelectItem value="all">All Mortals</SelectItem>
                 <SelectItem value="male">⚡ Male Gods</SelectItem>
                 <SelectItem value="female">🌙 Female Goddesses</SelectItem>
                 <SelectItem value="non-binary">✨ Divine Beings</SelectItem>
