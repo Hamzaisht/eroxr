@@ -18,6 +18,7 @@ import Dating from "./pages/Dating";
 import Messages from "./pages/Messages";
 import Shorts from "./pages/Shorts";
 import ShortsUpload from "./pages/ShortsUpload";
+import Eroboard from "./pages/Eroboard";
 import { MainLayout } from "@/components/layout/MainLayout";
 
 const queryClient = new QueryClient();
@@ -42,6 +43,7 @@ const App = () => (
                     <Route path="/messages" element={<Messages />} />
                     <Route path="/shorts" element={<Shorts />} />
                     <Route path="/shorts/upload" element={<ShortsUpload />} />
+                    <Route path="/eroboard" element={<Eroboard />} />
                     <Route path="/profile" element={<Profile />} />
                     <Route path="/profile/:userId" element={<Profile />} />
                   </Route>
