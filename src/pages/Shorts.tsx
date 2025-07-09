@@ -10,7 +10,7 @@ const Shorts = () => {
     queryKey: ['shorts'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('shorts')
+        .from('videos')
         .select(`
           id,
           title,
@@ -18,8 +18,8 @@ const Shorts = () => {
           video_url,
           thumbnail_url,
           creator_id,
-          likes_count,
-          views_count,
+          like_count,
+          view_count,
           created_at,
           creator:profiles(id, username)
         `)
@@ -56,10 +56,10 @@ const Shorts = () => {
       avatarUrl: ''
     },
     stats: {
-      likes: short.likes_count || 0,
+      likes: short.like_count || 0,
       comments: 0,
       shares: 0,
-      views: short.views_count || 0
+      views: short.view_count || 0
     },
     hasLiked: false,
     hasSaved: false,
