@@ -10,6 +10,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { LoadingScreen } from "./LoadingScreen";
 import { useAuth } from "@/contexts/AuthContext";
 import { ErrorState } from "@/components/ui/ErrorState";
+import { UploadFloatingButton } from "@/components/upload/UploadFloatingButton";
 
 export const MainLayout = () => {
   const { user, session, loading, error, clearError } = useAuth();
@@ -79,6 +80,9 @@ export const MainLayout = () => {
 
         {/* Floating action menu - hide on Eros route */}
         {!isErosRoute && <FloatingActionMenu currentPath={location.pathname} />}
+        
+        {/* Upload floating button - available everywhere */}
+        <UploadFloatingButton />
       </div>
     </div>
   );
