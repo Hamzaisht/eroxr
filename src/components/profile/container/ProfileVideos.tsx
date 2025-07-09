@@ -443,9 +443,14 @@ export const ProfileVideos = ({ profileId }: ProfileVideosProps) => {
                     // Set thumbnail frame
                     el.currentTime = 1;
                     
-                    // Play/pause based on hover state
+                    // Play/pause based on hover state with proper error handling
                     if (hoveredVideoId === video.id) {
-                      el.play().catch(console.error);
+                      const playPromise = el.play();
+                      if (playPromise !== undefined) {
+                        playPromise.catch(() => {
+                          // Silently handle play interruption errors
+                        });
+                      }
                     } else {
                       el.pause();
                       el.currentTime = 1; // Reset to thumbnail frame
