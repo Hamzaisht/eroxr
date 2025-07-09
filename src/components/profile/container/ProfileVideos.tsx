@@ -476,113 +476,67 @@ export const ProfileVideos = ({ profileId }: ProfileVideosProps) => {
   return (
     <div className="space-y-4">
       {/* Folder Navigation */}
-      <div className="flex items-center gap-2 mb-6 overflow-x-auto">
-        <Button
-          variant={selectedFolderId === null ? "default" : "outline"}
-          size="sm"
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            console.log('🔄 Clicking All Videos button');
+      <div className="flex items-center gap-2 mb-6 overflow-x-auto relative z-10">
+        <button
+          onClick={() => {
+            console.log('🔄 All Videos clicked!');
             setSelectedFolderId(null);
           }}
-          className="whitespace-nowrap cursor-pointer"
-          type="button"
+          className={`px-3 py-1.5 text-sm rounded border whitespace-nowrap cursor-pointer ${
+            selectedFolderId === null 
+              ? 'bg-primary text-primary-foreground border-primary' 
+              : 'bg-transparent border-border text-foreground hover:bg-accent'
+          }`}
         >
           All Videos
-        </Button>
+        </button>
         
         {folders?.map((folder) => (
           <div key={folder.id} className="flex items-center gap-1">
-            <Button
-              variant={selectedFolderId === folder.id ? "default" : "outline"}
-              size="sm"
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                console.log('🔄 Clicking folder button:', folder.id, folder.name);
+            <button
+              onClick={() => {
+                console.log('🔄 Folder clicked:', folder.name);
                 setSelectedFolderId(folder.id);
               }}
-              className="whitespace-nowrap cursor-pointer"
-              type="button"
+              className={`px-3 py-1.5 text-sm rounded border whitespace-nowrap cursor-pointer flex items-center gap-1 ${
+                selectedFolderId === folder.id 
+                  ? 'bg-primary text-primary-foreground border-primary' 
+                  : 'bg-transparent border-border text-foreground hover:bg-accent'
+              }`}
             >
-              <Folder className="w-3 h-3 mr-1" />
+              <Folder className="w-3 h-3" />
               {folder.name}
-              {!folder.is_public && <EyeOff className="w-3 h-3 ml-1" />}
-            </Button>
+              {!folder.is_public && <EyeOff className="w-3 h-3" />}
+            </button>
             
             {isOwnProfile && (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 text-white/60 hover:text-white hover:bg-white/10 cursor-pointer"
-                    type="button"
-                  >
-                    <Settings className="w-3 h-3" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent 
-                  align="end" 
-                  className="bg-black/90 backdrop-blur-md border-white/20 text-white z-50"
+              <div className="relative">
+                <button
+                  onClick={() => {
+                    console.log('🛠️ Settings clicked for:', folder.name);
+                    setEditingFolderId(folder.id);
+                    setEditFolderName(folder.name);
+                  }}
+                  className="p-1 text-white/60 hover:text-white hover:bg-white/10 rounded cursor-pointer"
                 >
-                  <DropdownMenuItem 
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      setEditingFolderId(folder.id);
-                      setEditFolderName(folder.name);
-                    }}
-                    className="hover:bg-white/10 focus:bg-white/10 cursor-pointer"
-                  >
-                    <Edit3 className="w-4 h-4 mr-2" />
-                    Edit Name
-                  </DropdownMenuItem>
-                  <DropdownMenuItem 
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      handleToggleFolderVisibility(folder.id, folder.is_public);
-                    }}
-                    className="hover:bg-white/10 focus:bg-white/10 cursor-pointer"
-                  >
-                    {folder.is_public ? <EyeOff className="w-4 h-4 mr-2" /> : <Eye className="w-4 h-4 mr-2" />}
-                    {folder.is_public ? 'Make Private' : 'Make Public'}
-                  </DropdownMenuItem>
-                  <DropdownMenuItem 
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      setDeleteFolderId(folder.id);
-                    }}
-                    className="hover:bg-red-500/20 focus:bg-red-500/20 text-red-400 cursor-pointer"
-                  >
-                    <Trash2 className="w-4 h-4 mr-2" />
-                    Delete Folder
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+                  <Settings className="w-3 h-3" />
+                </button>
+              </div>
             )}
           </div>
         ))}
 
         {isOwnProfile && (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              console.log('📁 Clicking New Folder button');
+          <button
+            onClick={() => {
+              console.log('📁 New Folder clicked!');
               setShowCreateFolder(true);
             }}
-            className="whitespace-nowrap cursor-pointer"
-            type="button"
+            className="px-3 py-1.5 text-sm rounded border border-border text-foreground hover:bg-accent whitespace-nowrap cursor-pointer flex items-center gap-1"
           >
-            <Plus className="w-3 h-3 mr-1" />
+            <Plus className="w-3 h-3" />
             New Folder
-          </Button>
+          </button>
         )}
       </div>
 
