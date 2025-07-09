@@ -298,6 +298,131 @@ export type Database = {
           },
         ]
       }
+      communities: {
+        Row: {
+          avatar_url: string | null
+          banner_url: string | null
+          created_at: string | null
+          created_by: string
+          description: string | null
+          id: string
+          is_private: boolean | null
+          member_count: number | null
+          name: string
+          rules: Json | null
+          tags: string[] | null
+          updated_at: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          banner_url?: string | null
+          created_at?: string | null
+          created_by: string
+          description?: string | null
+          id?: string
+          is_private?: boolean | null
+          member_count?: number | null
+          name: string
+          rules?: Json | null
+          tags?: string[] | null
+          updated_at?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          banner_url?: string | null
+          created_at?: string | null
+          created_by?: string
+          description?: string | null
+          id?: string
+          is_private?: boolean | null
+          member_count?: number | null
+          name?: string
+          rules?: Json | null
+          tags?: string[] | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      community_members: {
+        Row: {
+          community_id: string
+          id: string
+          joined_at: string | null
+          role: string | null
+          user_id: string
+        }
+        Insert: {
+          community_id: string
+          id?: string
+          joined_at?: string | null
+          role?: string | null
+          user_id: string
+        }
+        Update: {
+          community_id?: string
+          id?: string
+          joined_at?: string | null
+          role?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "community_members_community_id_fkey"
+            columns: ["community_id"]
+            isOneToOne: false
+            referencedRelation: "communities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      content_analytics: {
+        Row: {
+          avg_watch_time: number | null
+          bounce_rate: number | null
+          content_id: string
+          content_type: string
+          conversion_rate: number | null
+          created_at: string | null
+          date: string | null
+          engagement_rate: number | null
+          id: string
+          revenue_generated: number | null
+          unique_views: number | null
+          user_id: string
+          views: number | null
+        }
+        Insert: {
+          avg_watch_time?: number | null
+          bounce_rate?: number | null
+          content_id: string
+          content_type: string
+          conversion_rate?: number | null
+          created_at?: string | null
+          date?: string | null
+          engagement_rate?: number | null
+          id?: string
+          revenue_generated?: number | null
+          unique_views?: number | null
+          user_id: string
+          views?: number | null
+        }
+        Update: {
+          avg_watch_time?: number | null
+          bounce_rate?: number | null
+          content_id?: string
+          content_type?: string
+          conversion_rate?: number | null
+          created_at?: string | null
+          date?: string | null
+          engagement_rate?: number | null
+          id?: string
+          revenue_generated?: number | null
+          unique_views?: number | null
+          user_id?: string
+          views?: number | null
+        }
+        Relationships: []
+      }
       content_classifications: {
         Row: {
           age_restriction: boolean | null
@@ -347,6 +472,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      content_recommendations: {
+        Row: {
+          content_id: string
+          content_type: string
+          created_at: string | null
+          expires_at: string | null
+          id: string
+          reason: string | null
+          recommendation_score: number | null
+          user_id: string
+        }
+        Insert: {
+          content_id: string
+          content_type: string
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          reason?: string | null
+          recommendation_score?: number | null
+          user_id: string
+        }
+        Update: {
+          content_id?: string
+          content_type?: string
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          reason?: string | null
+          recommendation_score?: number | null
+          user_id?: string
+        }
+        Relationships: []
       }
       creator_content_prices: {
         Row: {
@@ -1042,6 +1200,42 @@ export type Database = {
           },
         ]
       }
+      message_threads: {
+        Row: {
+          created_at: string | null
+          created_by: string
+          id: string
+          is_archived: boolean | null
+          last_message_at: string | null
+          participants: string[]
+          thread_type: string | null
+          title: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          created_by: string
+          id?: string
+          is_archived?: boolean | null
+          last_message_at?: string | null
+          participants: string[]
+          thread_type?: string | null
+          title?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string
+          id?: string
+          is_archived?: boolean | null
+          last_message_at?: string | null
+          participants?: string[]
+          thread_type?: string | null
+          title?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       nordic_cities: {
         Row: {
           city_name: string
@@ -1571,6 +1765,33 @@ export type Database = {
           },
         ]
       }
+      search_history: {
+        Row: {
+          created_at: string | null
+          id: string
+          results_count: number | null
+          search_query: string
+          search_type: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          results_count?: number | null
+          search_query: string
+          search_type?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          results_count?: number | null
+          search_query?: string
+          search_type?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       security_violations: {
         Row: {
           content_owner_id: string
@@ -1806,6 +2027,75 @@ export type Database = {
           post_id?: string
           score?: number | null
           screenshots?: number | null
+        }
+        Relationships: []
+      }
+      user_analytics: {
+        Row: {
+          content_interactions: number | null
+          created_at: string | null
+          daily_views: number | null
+          date: string | null
+          follower_growth: number | null
+          id: string
+          monthly_views: number | null
+          profile_visits: number | null
+          total_engagement_score: number | null
+          updated_at: string | null
+          user_id: string
+          weekly_views: number | null
+        }
+        Insert: {
+          content_interactions?: number | null
+          created_at?: string | null
+          daily_views?: number | null
+          date?: string | null
+          follower_growth?: number | null
+          id?: string
+          monthly_views?: number | null
+          profile_visits?: number | null
+          total_engagement_score?: number | null
+          updated_at?: string | null
+          user_id: string
+          weekly_views?: number | null
+        }
+        Update: {
+          content_interactions?: number | null
+          created_at?: string | null
+          daily_views?: number | null
+          date?: string | null
+          follower_growth?: number | null
+          id?: string
+          monthly_views?: number | null
+          profile_visits?: number | null
+          total_engagement_score?: number | null
+          updated_at?: string | null
+          user_id?: string
+          weekly_views?: number | null
+        }
+        Relationships: []
+      }
+      user_interests: {
+        Row: {
+          created_at: string | null
+          id: string
+          interest: string
+          user_id: string
+          weight: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          interest: string
+          user_id: string
+          weight?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          interest?: string
+          user_id?: string
+          weight?: number | null
         }
         Relationships: []
       }
