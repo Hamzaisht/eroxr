@@ -41,10 +41,11 @@ const Shorts = () => {
   const [currentVideoIndex, setCurrentVideoIndex] = useState(0);
   const [isMuted, setIsMuted] = useState(true);
   const [showComments, setShowComments] = useState(false);
+  const [userInteractions, setUserInteractions] = useState<Record<string, { hasLiked: boolean; hasSaved: boolean }>>({});
   const navigate = useNavigate();
   const { toast } = useToast();
   const { user } = useAuth();
-  const { likeShort, unlikeShort, saveShort, unsaveShort } = useShortActions();
+  const { likeShort, unlikeShort, saveShort, unsaveShort, deleteShort, shareShort, checkUserInteractions } = useShortActions();
 
   const { data: shorts, isLoading, error, refetch } = useQuery({
     queryKey: ['shorts'],
@@ -112,25 +113,33 @@ const Shorts = () => {
   };
 
   const handleLike = async (shortId: string) => {
-    const success = await likeShort(shortId);
-    if (success) {
-      // Optimistically update the UI
-      refetch();
-      toast({
-        title: "Liked! ❤️",
-        description: "Video added to your likes",
-      });
-    }
-  };
-
-  const handleUnlike = async (shortId: string) => {
-    const success = await unlikeShort(shortId);
-    if (success) {
-      refetch();
-      toast({
-        title: "Unliked",
-        description: "Video removed from your likes",
-      });
+    const interactions = userInteractions[shortId];
+    if (interactions?.hasLiked) {
+      const success = await unlikeShort(shortId);
+      if (success) {
+        setUserInteractions(prev => ({
+          ...prev,
+          [shortId]: { hasLiked: false, hasSaved: userInteractions[shortId]?.hasSaved || false }
+        }));
+        refetch();
+        toast({
+          title: "Unliked",
+          description: "Video removed from your likes",
+        });
+      }
+    } else {
+      const success = await likeShort(shortId);
+      if (success) {
+        setUserInteractions(prev => ({
+          ...prev,
+          [shortId]: { hasLiked: true, hasSaved: userInteractions[shortId]?.hasSaved || false }
+        }));
+        refetch();
+        toast({
+          title: "Liked! ❤️",
+          description: "Video added to your likes",
+        });
+      }
     }
   };
 
@@ -139,49 +148,38 @@ const Shorts = () => {
   };
 
   const handleShare = async (video: ShortVideo) => {
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: video.title,
-          text: video.description,
-          url: window.location.href,
-        });
-        toast({
-          title: "Shared! 🚀",
-          description: "Video shared successfully",
-        });
-      } catch (err) {
-        console.log('Error sharing:', err);
-      }
-    } else {
-      // Fallback to copying URL
-      navigator.clipboard.writeText(window.location.href);
-      toast({
-        title: "Copied! 📋",
-        description: "Link copied to clipboard",
-      });
+    const success = await shareShort(video);
+    if (success) {
+      refetch();
     }
   };
 
   const handleSave = async (shortId: string) => {
-    const success = await saveShort(shortId);
-    if (success) {
-      refetch();
-      toast({
-        title: "Saved! 🔖",
-        description: "Video saved to your collection",
-      });
-    }
-  };
-
-  const handleUnsave = async (shortId: string) => {
-    const success = await unsaveShort(shortId);
-    if (success) {
-      refetch();
-      toast({
-        title: "Unsaved",
-        description: "Video removed from your collection",
-      });
+    const interactions = userInteractions[shortId];
+    if (interactions?.hasSaved) {
+      const success = await unsaveShort(shortId);
+      if (success) {
+        setUserInteractions(prev => ({
+          ...prev,
+          [shortId]: { hasLiked: userInteractions[shortId]?.hasLiked || false, hasSaved: false }
+        }));
+        toast({
+          title: "Unsaved",
+          description: "Video removed from your collection",
+        });
+      }
+    } else {
+      const success = await saveShort(shortId);
+      if (success) {
+        setUserInteractions(prev => ({
+          ...prev,
+          [shortId]: { hasLiked: userInteractions[shortId]?.hasLiked || false, hasSaved: true }
+        }));
+        toast({
+          title: "Saved! 🔖",
+          description: "Video saved to your collection",
+        });
+      }
     }
   };
 
@@ -190,21 +188,28 @@ const Shorts = () => {
   };
 
   const handleEdit = () => {
-    toast({
-      title: "Edit Video",
-      description: "Edit functionality coming soon!",
-    });
+    navigate(`/shorts/${currentVideo.id}/edit`);
   };
 
-  const handleDelete = () => {
-    if (window.confirm('Are you sure you want to delete this video?')) {
-      toast({
-        title: "Deleted",
-        description: "Video deleted successfully",
-        variant: "destructive",
-      });
+  const handleDelete = async () => {
+    if (window.confirm('Are you sure you want to delete this video? This action cannot be undone.')) {
+      const success = await deleteShort(currentVideo.id);
+      if (success) {
+        toast({
+          title: "Deleted",
+          description: "Video deleted successfully",
+          variant: "destructive",
+        });
+        // Navigate away or refresh data
+        if (shorts && shorts.length > 1) {
+          refetch();
+        } else {
+          navigate('/');
+        }
+      }
     }
   };
+
 
   if (isLoading) {
     return (
@@ -237,6 +242,18 @@ const Shorts = () => {
 
   const currentVideo = shorts[currentVideoIndex];
   const isCreator = user?.id === currentVideo?.creator_id;
+
+  // Load user interactions when video changes
+  useEffect(() => {
+    if (currentVideo && !userInteractions[currentVideo.id]) {
+      checkUserInteractions(currentVideo.id).then(interactions => {
+        setUserInteractions(prev => ({
+          ...prev,
+          [currentVideo.id]: interactions
+        }));
+      });
+    }
+  }, [currentVideo, checkUserInteractions, userInteractions]);
 
   return (
     <div 
@@ -352,8 +369,8 @@ const Shorts = () => {
         {/* Actions */}
         <div className="absolute bottom-32 right-4 z-20">
           <ShortActions
-            hasLiked={false} // TODO: Implement actual like state from database
-            hasSaved={false} // TODO: Implement actual save state from database
+            hasLiked={userInteractions[currentVideo.id]?.hasLiked || false}
+            hasSaved={userInteractions[currentVideo.id]?.hasSaved || false}
             likesCount={currentVideo.like_count || 0}
             commentsCount={currentVideo.comment_count || 0}
             sharesCount={currentVideo.share_count || 0}
