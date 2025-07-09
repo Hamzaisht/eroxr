@@ -46,6 +46,8 @@ export const ProfileVideos = ({ profileId }: ProfileVideosProps) => {
   const [hoveredVideoId, setHoveredVideoId] = useState<string | null>(null);
   const [bookmarkVideoId, setBookmarkVideoId] = useState<string | null>(null);
   const [showBookmarkDialog, setShowBookmarkDialog] = useState(false);
+  const [showCreateInBookmark, setShowCreateInBookmark] = useState(false);
+  const [newBookmarkFolderName, setNewBookmarkFolderName] = useState('');
 
   // Helper function to format video titles
   const formatVideoTitle = (title: string) => {
@@ -292,6 +294,46 @@ export const ProfileVideos = ({ profileId }: ProfileVideosProps) => {
     }
   };
 
+  const handleCreateFolderInBookmark = async () => {
+    if (!newBookmarkFolderName.trim()) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('video_folders')
+        .insert({
+          creator_id: profileId,
+          name: newBookmarkFolderName.trim(),
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      toast({
+        title: "Folder created",
+        description: `"${newBookmarkFolderName}" has been created successfully.`,
+      });
+
+      // Refresh folders list
+      queryClient.invalidateQueries({ queryKey: ['video-folders', profileId] });
+      
+      // Auto-bookmark to the new folder
+      if (bookmarkVideoId && data) {
+        await handleBookmarkVideo(data.id);
+      }
+
+      setNewBookmarkFolderName('');
+      setShowCreateInBookmark(false);
+    } catch (error) {
+      console.error('Error creating folder:', error);
+      toast({
+        title: "Error",
+        description: "Failed to create folder. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="space-y-4">
@@ -512,40 +554,88 @@ export const ProfileVideos = ({ profileId }: ProfileVideosProps) => {
       </Dialog>
 
       {/* Bookmark to Folder Dialog */}
-      <Dialog open={showBookmarkDialog} onOpenChange={setShowBookmarkDialog}>
+      <Dialog open={showBookmarkDialog} onOpenChange={() => {
+        setShowBookmarkDialog(false);
+        setShowCreateInBookmark(false);
+        setNewBookmarkFolderName('');
+      }}>
         <DialogContent className="bg-black/95 backdrop-blur-md border-white/20 text-white">
           <DialogHeader>
             <DialogTitle>Bookmark to Folder</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
-            <p className="text-white/70">Select a folder to bookmark this video:</p>
-            <div className="space-y-2 max-h-60 overflow-y-auto">
-              {folders?.map((folder) => (
-                <Button
-                  key={folder.id}
-                  variant="outline"
-                  onClick={() => handleBookmarkVideo(folder.id)}
-                  className="w-full justify-start bg-transparent border-white/20 text-white hover:bg-white/10"
-                >
-                  <Folder className="w-4 h-4 mr-2" />
-                  {folder.name}
-                </Button>
-              ))}
-              {(!folders || folders.length === 0) && (
-                <p className="text-white/50 text-center py-4">
-                  No folders available. Create a folder first.
-                </p>
-              )}
-            </div>
-            <div className="flex gap-2 justify-end">
-              <Button
-                variant="outline"
-                onClick={() => setShowBookmarkDialog(false)}
-                className="bg-transparent border-white/20 text-white hover:bg-white/10"
-              >
-                Cancel
-              </Button>
-            </div>
+            {!showCreateInBookmark ? (
+              <>
+                <p className="text-white/70">Select a folder to bookmark this video:</p>
+                <div className="space-y-2 max-h-60 overflow-y-auto">
+                  {folders?.map((folder) => (
+                    <Button
+                      key={folder.id}
+                      variant="outline"
+                      onClick={() => handleBookmarkVideo(folder.id)}
+                      className="w-full justify-start bg-transparent border-white/20 text-white hover:bg-white/10"
+                    >
+                      <Folder className="w-4 h-4 mr-2" />
+                      {folder.name}
+                    </Button>
+                  ))}
+                  
+                  {/* Create New Folder Button */}
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowCreateInBookmark(true)}
+                    className="w-full justify-start bg-transparent border-white/20 text-white hover:bg-white/10 border-dashed"
+                  >
+                    <Plus className="w-4 h-4 mr-2" />
+                    Create New Folder
+                  </Button>
+                  
+                  {(!folders || folders.length === 0) && (
+                    <p className="text-white/50 text-center py-4">
+                      No folders available. Create your first folder above.
+                    </p>
+                  )}
+                </div>
+                <div className="flex gap-2 justify-end">
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowBookmarkDialog(false)}
+                    className="bg-transparent border-white/20 text-white hover:bg-white/10"
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </>
+            ) : (
+              <>
+                <p className="text-white/70">Create a new folder and bookmark this video:</p>
+                <input
+                  type="text"
+                  placeholder="Enter folder name"
+                  value={newBookmarkFolderName}
+                  onChange={(e) => setNewBookmarkFolderName(e.target.value)}
+                  className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded text-white placeholder-white/50"
+                  onKeyPress={(e) => e.key === 'Enter' && handleCreateFolderInBookmark()}
+                  autoFocus
+                />
+                <div className="flex gap-2 justify-end">
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowCreateInBookmark(false)}
+                    className="bg-transparent border-white/20 text-white hover:bg-white/10"
+                  >
+                    Back
+                  </Button>
+                  <Button
+                    onClick={handleCreateFolderInBookmark}
+                    disabled={!newBookmarkFolderName.trim()}
+                    className="bg-luxury-primary hover:bg-luxury-primary/80"
+                  >
+                    Create & Bookmark
+                  </Button>
+                </div>
+              </>
+            )}
           </div>
         </DialogContent>
       </Dialog>
