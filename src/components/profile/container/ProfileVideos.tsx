@@ -1,7 +1,7 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { motion } from 'framer-motion';
-import { Video, Eye, Heart, MessageCircle, Play, Edit3, Trash2, MoreHorizontal, Plus, Folder } from 'lucide-react';
+import { Video, Eye, Heart, MessageCircle, Play, Edit3, Trash2, MoreHorizontal, Plus, Folder, Bookmark } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
@@ -44,6 +44,8 @@ export const ProfileVideos = ({ profileId }: ProfileVideosProps) => {
   const [showCreateFolder, setShowCreateFolder] = useState(false);
   const [newFolderName, setNewFolderName] = useState('');
   const [hoveredVideoId, setHoveredVideoId] = useState<string | null>(null);
+  const [bookmarkVideoId, setBookmarkVideoId] = useState<string | null>(null);
+  const [showBookmarkDialog, setShowBookmarkDialog] = useState(false);
 
   // Helper function to format video titles
   const formatVideoTitle = (title: string) => {
@@ -241,6 +243,55 @@ export const ProfileVideos = ({ profileId }: ProfileVideosProps) => {
     }
   };
 
+  const handleBookmarkVideo = async (folderId: string) => {
+    if (!bookmarkVideoId) return;
+
+    try {
+      // Check if video is already in folder
+      const { data: existing } = await supabase
+        .from('video_folder_items')
+        .select('id')
+        .eq('video_id', bookmarkVideoId)
+        .eq('folder_id', folderId)
+        .single();
+
+      if (existing) {
+        toast({
+          title: "Already bookmarked",
+          description: "This video is already in the selected folder.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Add video to folder
+      const { error } = await supabase
+        .from('video_folder_items')
+        .insert({
+          video_id: bookmarkVideoId,
+          folder_id: folderId,
+        });
+
+      if (error) throw error;
+
+      const folderName = folders?.find(f => f.id === folderId)?.name || 'folder';
+      toast({
+        title: "Video bookmarked",
+        description: `Video added to "${folderName}" successfully.`,
+      });
+
+      setBookmarkVideoId(null);
+      setShowBookmarkDialog(false);
+    } catch (error) {
+      console.error('Error bookmarking video:', error);
+      toast({
+        title: "Error",
+        description: "Failed to bookmark video. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="space-y-4">
@@ -380,13 +431,6 @@ export const ProfileVideos = ({ profileId }: ProfileVideosProps) => {
             {/* Hover Overlay */}
             <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10" />
 
-            {/* Playing Indicator */}
-            {hoveredVideoId === video.id && (
-              <div className="absolute top-1 left-1 bg-red-500 text-white text-xs px-1 py-0.5 rounded text-center z-20">
-                LIVE
-              </div>
-            )}
-
             {/* Actions Menu (Own Profile Only) */}
             {isOwnProfile && (
               <div 
@@ -405,8 +449,18 @@ export const ProfileVideos = ({ profileId }: ProfileVideosProps) => {
                   </DropdownMenuTrigger>
                   <DropdownMenuContent 
                     align="end" 
-                    className="bg-black/90 backdrop-blur-md border-white/20 text-white"
+                    className="bg-black/90 backdrop-blur-md border-white/20 text-white z-50"
                   >
+                    <DropdownMenuItem 
+                      onClick={() => {
+                        setBookmarkVideoId(video.id);
+                        setShowBookmarkDialog(true);
+                      }}
+                      className="hover:bg-white/10 focus:bg-white/10 cursor-pointer"
+                    >
+                      <Bookmark className="w-4 h-4 mr-2" />
+                      Bookmark to Folder
+                    </DropdownMenuItem>
                     <DropdownMenuItem 
                       onClick={() => setDeleteVideoId(video.id)}
                       className="hover:bg-red-500/20 focus:bg-red-500/20 text-red-400 cursor-pointer"
@@ -451,6 +505,45 @@ export const ProfileVideos = ({ profileId }: ProfileVideosProps) => {
                 className="bg-luxury-primary hover:bg-luxury-primary/80"
               >
                 Create Folder
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Bookmark to Folder Dialog */}
+      <Dialog open={showBookmarkDialog} onOpenChange={setShowBookmarkDialog}>
+        <DialogContent className="bg-black/95 backdrop-blur-md border-white/20 text-white">
+          <DialogHeader>
+            <DialogTitle>Bookmark to Folder</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <p className="text-white/70">Select a folder to bookmark this video:</p>
+            <div className="space-y-2 max-h-60 overflow-y-auto">
+              {folders?.map((folder) => (
+                <Button
+                  key={folder.id}
+                  variant="outline"
+                  onClick={() => handleBookmarkVideo(folder.id)}
+                  className="w-full justify-start bg-transparent border-white/20 text-white hover:bg-white/10"
+                >
+                  <Folder className="w-4 h-4 mr-2" />
+                  {folder.name}
+                </Button>
+              ))}
+              {(!folders || folders.length === 0) && (
+                <p className="text-white/50 text-center py-4">
+                  No folders available. Create a folder first.
+                </p>
+              )}
+            </div>
+            <div className="flex gap-2 justify-end">
+              <Button
+                variant="outline"
+                onClick={() => setShowBookmarkDialog(false)}
+                className="bg-transparent border-white/20 text-white hover:bg-white/10"
+              >
+                Cancel
               </Button>
             </div>
           </div>
