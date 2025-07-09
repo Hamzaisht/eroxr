@@ -64,11 +64,6 @@ export const FeaturesSection = () => {
     visible: (i: number) => ({
       opacity: 1,
       y: 0,
-      transition: {
-        delay: i * 0.1,
-        duration: 0.8,
-        ease: "easeOut",
-      },
     }),
   };
 
@@ -141,6 +136,11 @@ export const FeaturesSection = () => {
               initial="hidden"
               animate={isInView ? "visible" : "hidden"}
               variants={cardVariants}
+              transition={{
+                delay: i * 0.1,
+                duration: 0.8,
+                ease: [0.22, 1, 0.36, 1],
+              }}
               whileHover={{ 
                 y: -10,
                 transition: { duration: 0.3 }

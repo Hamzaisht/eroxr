@@ -41,7 +41,7 @@ export const Navbar = () => {
       scale: 1.05,
       filter: "brightness(1.2)",
       transition: { 
-        scale: { type: "spring", stiffness: 400, damping: 10 },
+        scale: { type: "spring" as const, stiffness: 400, damping: 10 },
         filter: { duration: 0.2 }
       }
     },

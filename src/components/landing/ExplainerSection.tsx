@@ -52,14 +52,7 @@ export const ExplainerSection = () => {
   
   const itemVariants = {
     hidden: { opacity: 0, y: 30 },
-    visible: {
-      opacity: 1,
-      y: 0,
-      transition: {
-        duration: 0.8,
-        ease: "easeOut",
-      },
-    },
+    visible: { opacity: 1, y: 0 },
   };
 
   return (
@@ -93,6 +86,10 @@ export const ExplainerSection = () => {
               key={index}
               className="relative bg-gradient-to-br from-luxury-darker to-luxury-dark border border-luxury-primary/10 p-8 rounded-xl hover:shadow-[0_0_30px_rgba(155,135,245,0.15)] transition-all duration-500 group"
               variants={itemVariants}
+              transition={{
+                duration: 0.8,
+                ease: [0.22, 1, 0.36, 1],
+              }}
               style={{ y: y }}
             >
               <motion.div

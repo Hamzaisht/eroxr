@@ -25,12 +25,7 @@ export const HeroSection = ({ scrollOpacity }: HeroSectionProps) => {
     hidden: { opacity: 0, y: 30 },
     visible: { 
       opacity: 1, 
-      y: 0,
-      transition: { 
-        duration: 0.8,
-        staggerChildren: 0.2,
-        ease: "easeOut"
-      }
+      y: 0
     }
   };
   
@@ -58,6 +53,11 @@ export const HeroSection = ({ scrollOpacity }: HeroSectionProps) => {
             initial="hidden"
             animate="visible"
             variants={textVariants}
+            transition={{ 
+              duration: 0.8,
+              staggerChildren: 0.2,
+              ease: [0.22, 1, 0.36, 1]
+            }}
             style={{ opacity: scrollOpacity }}
           >
             {/* Main headline */}
