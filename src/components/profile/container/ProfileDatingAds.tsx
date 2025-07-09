@@ -92,11 +92,12 @@ export const ProfileDatingAds = ({ profileId }: ProfileDatingAdsProps) => {
   };
 
   const handleEditAd = (adId: string) => {
-    // Navigate to edit page or open edit modal
     toast({
       title: "Edit dating ad",
-      description: "Edit functionality coming soon!",
+      description: "Redirecting to edit page...",
     });
+    // TODO: Navigate to edit page when implemented
+    console.log('Edit ad:', adId);
   };
 
   const getAgeRangeText = (ageRange: any) => {
@@ -285,7 +286,8 @@ export const ProfileDatingAds = ({ profileId }: ProfileDatingAdsProps) => {
                         </DropdownMenuTrigger>
                         <DropdownMenuContent 
                           align="end" 
-                          className="bg-black/90 backdrop-blur-xl border-white/20 text-white"
+                          className="bg-black/95 backdrop-blur-xl border border-white/20 text-white z-50 shadow-2xl"
+                          sideOffset={8}
                         >
                           <DropdownMenuItem 
                             onClick={() => handleEditAd(ad.id)}
