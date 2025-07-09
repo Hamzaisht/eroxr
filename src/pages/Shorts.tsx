@@ -37,7 +37,7 @@ const Shorts = () => {
   const { toast } = useToast();
   const { likeShort, unlikeShort, saveShort, unsaveShort } = useShortActions();
 
-  const { data: shorts, isLoading, error } = useQuery({
+  const { data: shorts, isLoading, error, refetch } = useQuery({
     queryKey: ['shorts'],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -92,27 +92,46 @@ const Shorts = () => {
   };
 
   const handleLike = async (shortId: string) => {
-    // For now, just show a toast - implement actual like logic
-    toast({
-      title: "Liked!",
-      description: "Video liked successfully",
-    });
+    const success = await likeShort(shortId);
+    if (success) {
+      // Optimistically update the UI
+      refetch();
+      toast({
+        title: "Liked! ❤️",
+        description: "Video added to your likes",
+      });
+    }
+  };
+
+  const handleUnlike = async (shortId: string) => {
+    const success = await unlikeShort(shortId);
+    if (success) {
+      refetch();
+      toast({
+        title: "Unliked",
+        description: "Video removed from your likes",
+      });
+    }
   };
 
   const handleComment = () => {
     toast({
-      title: "Comments",
+      title: "Comments 💬",
       description: "Comments feature coming soon!",
     });
   };
 
-  const handleShare = async () => {
-    if (navigator.share && shorts && shorts[currentVideoIndex]) {
+  const handleShare = async (video: ShortVideo) => {
+    if (navigator.share) {
       try {
         await navigator.share({
-          title: shorts[currentVideoIndex].title,
-          text: shorts[currentVideoIndex].description,
+          title: video.title,
+          text: video.description,
           url: window.location.href,
+        });
+        toast({
+          title: "Shared! 🚀",
+          description: "Video shared successfully",
         });
       } catch (err) {
         console.log('Error sharing:', err);
@@ -121,17 +140,32 @@ const Shorts = () => {
       // Fallback to copying URL
       navigator.clipboard.writeText(window.location.href);
       toast({
-        title: "Copied!",
+        title: "Copied! 📋",
         description: "Link copied to clipboard",
       });
     }
   };
 
   const handleSave = async (shortId: string) => {
-    toast({
-      title: "Saved!",
-      description: "Video saved to your collection",
-    });
+    const success = await saveShort(shortId);
+    if (success) {
+      refetch();
+      toast({
+        title: "Saved! 🔖",
+        description: "Video saved to your collection",
+      });
+    }
+  };
+
+  const handleUnsave = async (shortId: string) => {
+    const success = await unsaveShort(shortId);
+    if (success) {
+      refetch();
+      toast({
+        title: "Unsaved",
+        description: "Video removed from your collection",
+      });
+    }
   };
 
   if (isLoading) {
@@ -211,9 +245,9 @@ const Shorts = () => {
           <div className="space-y-3">
             {/* Creator */}
             <div className="flex items-center gap-3">
-              <Avatar className="h-12 w-12 border-2 border-luxury-primary shadow-lg shadow-luxury-primary/20">
+              <Avatar className="h-12 w-12 border-2 border-primary shadow-lg shadow-primary/20">
                 <AvatarImage src={currentVideo.profiles[0]?.avatar_url} />
-                <AvatarFallback className="bg-luxury-primary text-black font-bold">
+                <AvatarFallback className="bg-primary text-black font-bold">
                   {currentVideo.profiles[0]?.username?.[0]?.toUpperCase() || "U"}
                 </AvatarFallback>
               </Avatar>
@@ -221,7 +255,7 @@ const Shorts = () => {
                 <p className="text-white font-semibold text-lg">
                   @{currentVideo.profiles[0]?.username || 'Unknown'}
                 </p>
-                <p className="text-luxury-neutral text-sm">
+                <p className="text-muted-foreground text-sm">
                   {currentVideo.view_count?.toLocaleString() || 0} views
                 </p>
               </div>
@@ -244,13 +278,13 @@ const Shorts = () => {
         {/* Actions */}
         <div className="absolute bottom-32 right-4 z-20">
           <ShortActions
-            hasLiked={false}
-            hasSaved={false}
+            hasLiked={false} // TODO: Implement actual like state from database
+            hasSaved={false} // TODO: Implement actual save state from database
             likesCount={currentVideo.like_count || 0}
-            commentsCount={0}
+            commentsCount={0} // TODO: Get from comments table
             onLike={() => handleLike(currentVideo.id)}
             onComment={handleComment}
-            onShare={handleShare}
+            onShare={() => handleShare(currentVideo)}
             onSave={() => handleSave(currentVideo.id)}
             isDeleting={false}
           />

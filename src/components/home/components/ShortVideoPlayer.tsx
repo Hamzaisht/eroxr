@@ -99,7 +99,7 @@ export const ShortVideoPlayer = memo(({
         ref={videoRef}
         src={videoUrl}
         poster={thumbnailUrl}
-        className="h-full w-full object-cover"
+        className="h-full w-full object-contain bg-black"
         loop
         muted={isMuted}
         playsInline
