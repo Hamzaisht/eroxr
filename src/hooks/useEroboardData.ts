@@ -352,6 +352,50 @@ export function useEroboardData() {
   useEffect(() => {
     if (session?.user?.id) {
       fetchDashboardData();
+      
+      // Set up real-time subscriptions for live data updates
+      const earningsChannel = supabase
+        .channel('earnings-updates')
+        .on('postgres_changes', {
+          event: '*',
+          schema: 'public',
+          table: 'post_purchases'
+        }, () => {
+          // Refetch data when new purchases come in
+          fetchDashboardData();
+        })
+        .subscribe();
+
+      const postsChannel = supabase
+        .channel('posts-updates')
+        .on('postgres_changes', {
+          event: '*',
+          schema: 'public',
+          table: 'posts'
+        }, () => {
+          // Refetch data when posts are updated
+          fetchDashboardData();
+        })
+        .subscribe();
+
+      const subscriptionsChannel = supabase
+        .channel('subscriptions-updates')
+        .on('postgres_changes', {
+          event: '*',
+          schema: 'public',
+          table: 'creator_subscriptions'
+        }, () => {
+          // Refetch data when subscriptions change
+          fetchDashboardData();
+        })
+        .subscribe();
+
+      // Cleanup subscriptions
+      return () => {
+        supabase.removeChannel(earningsChannel);
+        supabase.removeChannel(postsChannel);
+        supabase.removeChannel(subscriptionsChannel);
+      };
     }
   }, [session?.user?.id, fetchDashboardData]);
 

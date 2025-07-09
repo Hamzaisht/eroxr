@@ -8,6 +8,8 @@ import { StreamingAnalytics } from "@/components/eroboard/analytics/StreamingAna
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 import { 
   BarChart3, 
   DollarSign, 
@@ -17,40 +19,66 @@ import {
   Zap,
   Download,
   FileText,
-  Lightbulb
+  Lightbulb,
+  Database
 } from "lucide-react";
 
 const Eroboard = () => {
   const [activeTab, setActiveTab] = useState("overview");
-  const { loading, error, stats, revenueBreakdown, earningsData, creatorRankings } = useEroboardData();
+  const { loading, error, stats, revenueBreakdown, earningsData, creatorRankings, fetchDashboardData } = useEroboardData();
+  const { toast } = useToast();
+  
+  const handleGenerateSampleData = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
 
-  // Quick stats for overview
+      const { error } = await supabase.rpc('create_sample_analytics_data_for_user', {
+        p_user_id: user.id
+      });
+      
+      if (error) {
+        console.error('Error generating sample data:', error);
+      } else {
+        // Refetch dashboard data after sample data creation
+        await fetchDashboardData();
+        toast({
+          title: "Sample data generated!",
+          description: "Your analytics dashboard now shows sample data for testing."
+        });
+      }
+    } catch (error) {
+      console.error('Error:', error);
+    }
+  };
+
+  // Quick stats for overview using real data
   const quickStats = [
     {
-      title: "Today's Earnings",
-      value: "$1,245.50",
-      change: "+12.3%",
+      title: "Total Earnings",
+      value: `$${stats.totalEarnings.toLocaleString()}`,
+      change: stats.earningsPercentile ? `Top ${(100 - stats.earningsPercentile).toFixed(1)}%` : "+0%",
       icon: DollarSign,
       color: "text-green-400"
     },
     {
-      title: "New Followers",
-      value: "47",
-      change: "+8.7%",
+      title: "Followers",
+      value: stats.followers.toLocaleString(),
+      change: `+${stats.newSubscribers}`,
       icon: Users,
       color: "text-blue-400"
     },
     {
-      title: "Content Views",
-      value: "12.5K",
-      change: "+15.2%",
+      title: "Total Views",
+      value: stats.totalViews > 1000 ? `${(stats.totalViews / 1000).toFixed(1)}K` : stats.totalViews.toString(),
+      change: `${stats.totalContent} posts`,
       icon: BarChart3,
       color: "text-purple-400"
     },
     {
       title: "Engagement Rate",
-      value: "18.3%",
-      change: "+3.1%",
+      value: `${stats.engagementRate.toFixed(1)}%`,
+      change: `${stats.vipFans} VIP fans`,
       icon: TrendingUp,
       color: "text-pink-400"
     }
@@ -150,6 +178,26 @@ const Eroboard = () => {
                 ))}
               </CardContent>
             </Card>
+
+            {/* Sample Data Generation - Only show if user has no earnings */}
+            {stats.totalEarnings === 0 && (
+              <Card className="bg-gradient-to-r from-blue-600/20 to-purple-600/20 border border-blue-500/30">
+                <CardContent className="p-6 text-center">
+                  <Database className="h-12 w-12 text-blue-400 mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold text-white mb-2">No Analytics Data Found</h3>
+                  <p className="text-gray-300 text-sm mb-4">
+                    Generate sample data to explore all the features of your analytics dashboard
+                  </p>
+                  <Button 
+                    onClick={handleGenerateSampleData}
+                    className="bg-blue-600 hover:bg-blue-700 text-white"
+                    disabled={loading}
+                  >
+                    {loading ? "Generating..." : "Generate Sample Data"}
+                  </Button>
+                </CardContent>
+              </Card>
+            )}
 
             {/* Quick Access */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">

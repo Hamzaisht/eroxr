@@ -2912,6 +2912,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
+      create_sample_analytics_data_for_user: {
+        Args: { p_user_id: string }
+        Returns: undefined
+      }
       detect_stack_depth: {
         Args: Record<PropertyKey, never>
         Returns: number
