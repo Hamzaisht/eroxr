@@ -47,18 +47,19 @@ export const AudienceInsights = ({ data, isLoading }: AudienceInsightsProps) => 
   const realGeoData = data.geographicData || [];
   const geoData = realGeoData.length > 0 
     ? realGeoData.slice(0, 6).map(item => ({
-        country: item.country,
-        fans: item.fans,
-        percentage: item.percentage
+        country: item.country || 'Unknown',
+        fans: item.fans || 0,
+        sessions: item.sessions || 0,
+        percentage: item.percentage || 0,
+        latitude: item.latitude,
+        longitude: item.longitude
       }))
     : [
-        { country: "United States", fans: 3420, percentage: 38.2 },
-        { country: "United Kingdom", fans: 1245, percentage: 13.9 },
-        { country: "Canada", fans: 890, percentage: 9.9 },
-        { country: "Australia", fans: 678, percentage: 7.6 },
-        { country: "Germany", fans: 567, percentage: 6.3 },
-        { country: "Others", fans: 2145, percentage: 24.1 }
+        { country: "No data yet", fans: 0, sessions: 0, percentage: 0, latitude: null, longitude: null }
       ];
+
+  const hasRealData = realGeoData.length > 0;
+  const totalSessions = geoData.reduce((sum, item) => sum + item.sessions, 0);
   
   const audienceStats = [
     {
@@ -179,8 +180,20 @@ export const AudienceInsights = ({ data, isLoading }: AudienceInsightsProps) => 
           <CardHeader>
             <CardTitle className="text-white flex items-center gap-2">
               <Globe className="h-5 w-5 text-luxury-primary" />
-              Geographic Distribution
+              Real-Time Geographic Distribution
+              {hasRealData && (
+                <Badge className="bg-green-500/20 text-green-400 text-xs ml-auto">
+                  <div className="w-2 h-2 bg-green-400 rounded-full mr-1 animate-pulse" />
+                  Live
+                </Badge>
+              )}
             </CardTitle>
+            <p className="text-xs text-gray-400">
+              {hasRealData 
+                ? `${totalSessions} total sessions tracked`
+                : "Waiting for visitor data..."
+              }
+            </p>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
@@ -189,17 +202,32 @@ export const AudienceInsights = ({ data, isLoading }: AudienceInsightsProps) => 
                   <div className="flex items-center justify-between">
                     <span className="text-white font-medium">{country.country}</span>
                     <div className="text-right">
-                      <p className="text-white font-bold">{country.fans.toLocaleString()}</p>
-                      <p className="text-sm text-gray-400">{country.percentage}%</p>
+                      <p className="text-white font-bold">
+                        {hasRealData ? (
+                          <>
+                            <span className="text-sm text-gray-400">{country.sessions} sessions</span>
+                            <br />
+                            <span>{country.fans} users</span>
+                          </>
+                        ) : (
+                          "0 sessions"
+                        )}
+                      </p>
+                      <p className="text-sm text-gray-400">{country.percentage.toFixed(1)}%</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
                     <div className="flex-1 bg-luxury-dark rounded-full h-2">
                       <div 
                         className="bg-luxury-primary h-2 rounded-full transition-all duration-300"
-                        style={{ width: `${country.percentage}%` }}
+                        style={{ width: `${Math.max(country.percentage, 2)}%` }}
                       />
                     </div>
+                    {hasRealData && country.latitude && country.longitude && (
+                      <Badge className="text-xs bg-blue-500/20 text-blue-400">
+                        📍 {country.latitude.toFixed(2)}, {country.longitude.toFixed(2)}
+                      </Badge>
+                    )}
                   </div>
                 </div>
               ))}
