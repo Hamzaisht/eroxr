@@ -183,9 +183,7 @@ export function useEroboardData() {
       // Create content performance data from posts
       const contentPerformance = postsData.map((post, index) => ({
         id: post.id || index + 1,
-        earnings: purchasesData
-          .filter(p => p.posts?.creator_id === post.creator_id)
-          .reduce((sum, p) => sum + (p.amount || 0), 0) / postsData.length, // Average earnings per post
+        earnings: totalEarnings / Math.max(postsData.length, 1), // Average earnings per post
         likes: post.likes_count || 0,
         comments: post.comments_count || 0,
         views: post.view_count || 0,
