@@ -1,0 +1,361 @@
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
+import { 
+  TrendingUp, 
+  Users, 
+  UserPlus,
+  Target,
+  Calendar,
+  Globe,
+  BarChart3,
+  ArrowUpRight,
+  ArrowDownRight,
+  Minus
+} from "lucide-react";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area, PieChart, Pie, Cell } from 'recharts';
+import { EroboardStats } from "@/hooks/useEroboardData";
+
+interface GrowthAnalyticsProps {
+  data: {
+    stats: EroboardStats;
+    engagementData: Array<{ date: string; count: number }>;
+  };
+  isLoading: boolean;
+}
+
+export function GrowthAnalytics({ data, isLoading }: GrowthAnalyticsProps) {
+  const { stats, engagementData } = data;
+
+  // Generate growth data
+  const growthData = Array.from({ length: 30 }, (_, i) => {
+    const date = new Date();
+    date.setDate(date.getDate() - (29 - i));
+    
+    return {
+      date: date.toISOString().split('T')[0],
+      followers: Math.floor(stats.followers * (0.8 + (i / 29) * 0.2) + Math.random() * 10),
+      subscribers: Math.floor(stats.totalSubscribers * (0.7 + (i / 29) * 0.3) + Math.random() * 5),
+      engagement: Math.floor(stats.engagementRate * (0.9 + (i / 29) * 0.1) + Math.random() * 2)
+    };
+  });
+
+  const retentionData = [
+    { period: 'Week 1', retention: 85 },
+    { period: 'Week 2', retention: 72 },
+    { period: 'Week 3', retention: 64 },
+    { period: 'Month 1', retention: 58 },
+    { period: 'Month 2', retention: 52 },
+    { period: 'Month 3', retention: 48 }
+  ];
+
+  const demographicsData = [
+    { name: 'US', value: 35, color: '#8B5CF6' },
+    { name: 'UK', value: 20, color: '#A855F7' },
+    { name: 'Canada', value: 15, color: '#C084FC' },
+    { name: 'Australia', value: 12, color: '#DDD6FE' },
+    { name: 'Other', value: 18, color: '#F3F4F6' }
+  ];
+
+  const growthMetrics = [
+    {
+      title: "Follower Growth Rate",
+      value: "+12.5%",
+      change: "+2.3%",
+      trend: "up",
+      description: "vs last month",
+      icon: Users
+    },
+    {
+      title: "Subscription Rate",
+      value: `${((stats.totalSubscribers / Math.max(stats.followers, 1)) * 100).toFixed(1)}%`,
+      change: "+0.8%",
+      trend: "up",
+      description: "conversion rate",
+      icon: UserPlus
+    },
+    {
+      title: "Retention Rate",
+      value: "78.4%",
+      change: "-1.2%",
+      trend: "down",
+      description: "30-day retention",
+      icon: Target
+    },
+    {
+      title: "Churn Rate",
+      value: `${stats.churnRate.toFixed(1)}%`,
+      change: "+0.5%",
+      trend: "up",
+      description: "monthly churn",
+      icon: TrendingUp
+    }
+  ];
+
+  const getTrendIcon = (trend: string) => {
+    switch (trend) {
+      case 'up': return <ArrowUpRight className="h-4 w-4 text-green-400" />;
+      case 'down': return <ArrowDownRight className="h-4 w-4 text-red-400" />;
+      default: return <Minus className="h-4 w-4 text-gray-400" />;
+    }
+  };
+
+  const getTrendColor = (trend: string) => {
+    switch (trend) {
+      case 'up': return 'text-green-400';
+      case 'down': return 'text-red-400';
+      default: return 'text-gray-400';
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-center h-64">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-luxury-primary"></div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-white flex items-center gap-3">
+            <TrendingUp className="h-8 w-8 text-luxury-primary" />
+            Growth Analytics
+          </h1>
+          <p className="text-gray-300 mt-2">Track your audience growth and engagement trends</p>
+        </div>
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm" className="border-luxury-neutral/20">
+            <Calendar className="h-4 w-4 mr-2" />
+            Last 30 Days
+          </Button>
+          <Button variant="outline" size="sm" className="border-luxury-neutral/20">
+            Export Data
+          </Button>
+        </div>
+      </div>
+
+      {/* Growth Metrics Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {growthMetrics.map((metric, index) => {
+          const Icon = metric.icon;
+          return (
+            <Card key={index} className="bg-luxury-darker border-luxury-neutral/10">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <Icon className="h-8 w-8 text-luxury-primary" />
+                  <div className={`flex items-center gap-1 ${getTrendColor(metric.trend)}`}>
+                    {getTrendIcon(metric.trend)}
+                    <span className="text-sm font-medium">{metric.change}</span>
+                  </div>
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-white mb-1">{metric.value}</p>
+                  <p className="text-sm text-gray-400">{metric.title}</p>
+                  <p className="text-xs text-gray-500 mt-1">{metric.description}</p>
+                </div>
+              </CardContent>
+            </Card>
+          );
+        })}
+      </div>
+
+      {/* Growth Charts */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Follower Growth Chart */}
+        <Card className="bg-luxury-darker border-luxury-neutral/10">
+          <CardHeader>
+            <CardTitle className="text-white">Follower Growth Trend</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={300}>
+              <AreaChart data={growthData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                <XAxis 
+                  dataKey="date" 
+                  stroke="#9CA3AF"
+                  fontSize={12}
+                  tickFormatter={(value) => new Date(value).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                />
+                <YAxis stroke="#9CA3AF" fontSize={12} />
+                <Tooltip 
+                  contentStyle={{ 
+                    backgroundColor: '#1F2937', 
+                    border: '1px solid #374151',
+                    borderRadius: '8px',
+                    color: '#F9FAFB'
+                  }}
+                />
+                <Area 
+                  type="monotone" 
+                  dataKey="followers" 
+                  stroke="#8B5CF6" 
+                  fill="url(#colorFollowers)"
+                  strokeWidth={2}
+                />
+                <defs>
+                  <linearGradient id="colorFollowers" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#8B5CF6" stopOpacity={0.3}/>
+                    <stop offset="95%" stopColor="#8B5CF6" stopOpacity={0}/>
+                  </linearGradient>
+                </defs>
+              </AreaChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+
+        {/* Subscriber Conversion */}
+        <Card className="bg-luxury-darker border-luxury-neutral/10">
+          <CardHeader>
+            <CardTitle className="text-white">Subscriber Conversion Rate</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={300}>
+              <LineChart data={growthData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                <XAxis 
+                  dataKey="date" 
+                  stroke="#9CA3AF"
+                  fontSize={12}
+                  tickFormatter={(value) => new Date(value).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                />
+                <YAxis stroke="#9CA3AF" fontSize={12} />
+                <Tooltip 
+                  contentStyle={{ 
+                    backgroundColor: '#1F2937', 
+                    border: '1px solid #374151',
+                    borderRadius: '8px',
+                    color: '#F9FAFB'
+                  }}
+                />
+                <Line 
+                  type="monotone" 
+                  dataKey="subscribers" 
+                  stroke="#10B981" 
+                  strokeWidth={2}
+                  dot={{ fill: '#10B981', strokeWidth: 2, r: 4 }}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Demographics and Retention */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Geographic Distribution */}
+        <Card className="bg-luxury-darker border-luxury-neutral/10">
+          <CardHeader>
+            <CardTitle className="text-white flex items-center gap-2">
+              <Globe className="h-5 w-5 text-luxury-primary" />
+              Geographic Distribution
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center justify-between">
+              <ResponsiveContainer width="60%" height={200}>
+                <PieChart>
+                  <Pie
+                    data={demographicsData}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={40}
+                    outerRadius={80}
+                    paddingAngle={5}
+                    dataKey="value"
+                  >
+                    {demographicsData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                </PieChart>
+              </ResponsiveContainer>
+              <div className="space-y-2">
+                {demographicsData.map((item, index) => (
+                  <div key={index} className="flex items-center gap-2">
+                    <div 
+                      className="w-3 h-3 rounded-full" 
+                      style={{ backgroundColor: item.color }}
+                    />
+                    <span className="text-sm text-gray-300">{item.name}</span>
+                    <span className="text-sm text-gray-400">{item.value}%</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Retention Analysis */}
+        <Card className="bg-luxury-darker border-luxury-neutral/10">
+          <CardHeader>
+            <CardTitle className="text-white">Retention Analysis</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {retentionData.map((item, index) => (
+              <div key={index} className="space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-300">{item.period}</span>
+                  <span className="text-white font-medium">{item.retention}%</span>
+                </div>
+                <Progress value={item.retention} className="h-2" />
+              </div>
+            ))}
+            <div className="mt-4 p-3 bg-luxury-dark/50 rounded-lg">
+              <p className="text-sm text-gray-300">
+                <strong className="text-white">Insight:</strong> Your 3-month retention rate of 48% is above industry average (35-40%).
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Growth Targets */}
+      <Card className="bg-luxury-darker border-luxury-neutral/10">
+        <CardHeader>
+          <CardTitle className="text-white flex items-center gap-2">
+            <Target className="h-5 w-5 text-luxury-primary" />
+            Growth Targets & Milestones
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="space-y-3">
+              <div className="flex justify-between">
+                <span className="text-gray-300">Next 1K Followers</span>
+                <Badge className="bg-luxury-primary/20 text-luxury-primary">87% Complete</Badge>
+              </div>
+              <Progress value={87} className="h-2" />
+              <p className="text-sm text-gray-400">130 followers to go • Est. 8 days</p>
+            </div>
+            
+            <div className="space-y-3">
+              <div className="flex justify-between">
+                <span className="text-gray-300">500 Subscribers</span>
+                <Badge className="bg-green-500/20 text-green-400">Achieved!</Badge>
+              </div>
+              <Progress value={100} className="h-2" />
+              <p className="text-sm text-gray-400">Next target: 1,000 subscribers</p>
+            </div>
+            
+            <div className="space-y-3">
+              <div className="flex justify-between">
+                <span className="text-gray-300">$10K Monthly</span>
+                <Badge className="bg-yellow-500/20 text-yellow-400">In Progress</Badge>
+              </div>
+              <Progress value={65} className="h-2" />
+              <p className="text-sm text-gray-400">${(10000 - stats.totalEarnings).toLocaleString()} to go</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}

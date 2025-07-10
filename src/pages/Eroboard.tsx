@@ -6,6 +6,9 @@ import { EarningsOverview } from "@/components/eroboard/analytics/EarningsOvervi
 import { ContentPerformance } from "@/components/eroboard/analytics/ContentPerformance";
 import { AudienceInsights } from "@/components/eroboard/analytics/AudienceInsights";
 import { StreamingAnalytics } from "@/components/eroboard/analytics/StreamingAnalytics";
+import { AIInsights } from "@/components/eroboard/analytics/AIInsights";
+import { GrowthAnalytics } from "@/components/eroboard/analytics/GrowthAnalytics";
+import { ReportsExports } from "@/components/eroboard/analytics/ReportsExports";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -316,26 +319,11 @@ const Eroboard = () => {
           engagementData 
         }} isLoading={loading} />;
       case "growth":
-        return (
-          <div className="space-y-6">
-            <h1 className="text-3xl font-bold text-white">Growth Analytics</h1>
-            <p className="text-gray-400">Coming soon - Advanced growth metrics and follower analytics</p>
-          </div>
-        );
+        return <GrowthAnalytics data={{ stats, engagementData }} isLoading={loading} />;
       case "insights":
-        return (
-          <div className="space-y-6">
-            <h1 className="text-3xl font-bold text-white">AI Insights</h1>
-            <p className="text-gray-400">Coming soon - Advanced AI-powered recommendations and predictions</p>
-          </div>
-        );
+        return <AIInsights data={{ stats, contentTypeData, engagementData }} isLoading={loading} />;
       case "exports":
-        return (
-          <div className="space-y-6">
-            <h1 className="text-3xl font-bold text-white">Reports & Exports</h1>
-            <p className="text-gray-400">Coming soon - Data export tools and detailed reports</p>
-          </div>
-        );
+        return <ReportsExports data={{ stats, earningsData }} isLoading={loading} />;
       default:
         return <EarningsOverview data={{ stats, revenueBreakdown, earningsData }} isLoading={loading} />;
     }
