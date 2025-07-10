@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { LoadingOverlay } from "@/components/eroboard/LoadingOverlay";
 import { 
   BarChart3, 
   DollarSign, 
@@ -60,7 +61,7 @@ const Eroboard = () => {
           variant: "destructive"
         });
       } else {
-        await fetchDashboardData();
+        await fetchDashboardData(undefined, true); // Force refresh after generating sample data
         toast({
           title: "Sample data generated!",
           description: "Your analytics dashboard now shows sample data for testing."
@@ -77,7 +78,7 @@ const Eroboard = () => {
   };
 
   const handleRetry = () => {
-    fetchDashboardData();
+    fetchDashboardData(undefined, true); // Force refresh when retrying
   };
 
   // Show error state with retry option

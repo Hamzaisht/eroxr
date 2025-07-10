@@ -42,6 +42,7 @@ export function useEroboardData() {
   const session = useSession();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [initialDataLoaded, setInitialDataLoaded] = useState(false);
   const { toast } = useToast();
   
   const [stats, setStats] = useState<EroboardStats>({
@@ -74,8 +75,14 @@ export function useEroboardData() {
   const [latestPayout, setLatestPayout] = useState<PayoutInfo | null>(null);
   const [creatorRankings, setCreatorRankings] = useState([]);
 
-  const fetchDashboardData = useCallback(async (dateRange?: DateRange) => {
+  const fetchDashboardData = useCallback(async (dateRange?: DateRange, forceRefresh = false) => {
     if (!session?.user?.id) return;
+    
+    // Don't refetch if data already loaded unless forced
+    if (initialDataLoaded && !forceRefresh) {
+      console.log('📋 Using cached dashboard data');
+      return;
+    }
 
     try {
       setLoading(true);
@@ -276,6 +283,7 @@ export function useEroboardData() {
       setCreatorRankings([]);
 
       console.log('✅ Dashboard data loaded successfully');
+      setInitialDataLoaded(true);
 
     } catch (error: any) {
       console.error('❌ Error fetching dashboard data:', error);
@@ -294,7 +302,7 @@ export function useEroboardData() {
     } finally {
       setLoading(false);
     }
-  }, [session?.user?.id, toast]);
+  }, [session?.user?.id, initialDataLoaded, toast]);
 
   useEffect(() => {
     if (session?.user?.id) {
@@ -308,7 +316,8 @@ export function useEroboardData() {
           schema: 'public',
           table: 'post_purchases'
         }, () => {
-          fetchDashboardData();
+          console.log('📈 Real-time earnings update detected');
+          fetchDashboardData(undefined, true); // Force refresh for real-time updates
         })
         .subscribe();
 
@@ -319,7 +328,8 @@ export function useEroboardData() {
           schema: 'public',
           table: 'posts'
         }, () => {
-          fetchDashboardData();
+          console.log('📝 Real-time posts update detected');
+          fetchDashboardData(undefined, true); // Force refresh for real-time updates
         })
         .subscribe();
 
@@ -330,7 +340,8 @@ export function useEroboardData() {
           schema: 'public',
           table: 'creator_subscriptions'
         }, () => {
-          fetchDashboardData();
+          console.log('👥 Real-time subscriptions update detected');
+          fetchDashboardData(undefined, true); // Force refresh for real-time updates
         })
         .subscribe();
 
