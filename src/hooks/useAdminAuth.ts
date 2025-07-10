@@ -15,6 +15,8 @@ export const useAdminAuth = () => {
   const [adminUser, setAdminUser] = useState<AdminUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  console.log('🔍 useAdminAuth: Hook called with user:', user ? 'exists' : 'null');
+
   useEffect(() => {
     const checkAdminStatus = async () => {
       if (!user?.id) {

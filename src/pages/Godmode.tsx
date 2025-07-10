@@ -7,13 +7,18 @@ import { LoadingScreen } from '@/components/layout/LoadingScreen';
 export const Godmode: React.FC = () => {
   const { isAdmin, isLoading } = useAdminSession();
 
+  console.log('🎯 Godmode: Component rendered', { isAdmin, isLoading });
+
   if (isLoading) {
+    console.log('🎯 Godmode: Showing loading screen');
     return <LoadingScreen />;
   }
 
   if (!isAdmin) {
+    console.log('🎯 Godmode: Not admin, redirecting to home');
     return <Navigate to="/" replace />;
   }
 
+  console.log('🎯 Godmode: Admin confirmed, showing layout');
   return <GodmodeLayout />;
 };
