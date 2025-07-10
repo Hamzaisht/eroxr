@@ -28,70 +28,166 @@ interface AIInsightsProps {
 export function AIInsights({ data, isLoading }: AIInsightsProps) {
   const { stats, contentTypeData, engagementData } = data;
 
-  // AI-powered insights based on real data
-  const insights = [
-    {
-      category: "Revenue Optimization",
-      icon: DollarSign,
-      priority: "high",
-      title: "Peak earning potential detected",
-      description: `Based on your current performance, you could increase earnings by 35% by posting content during peak hours (8-10 PM).`,
-      action: "Optimize posting schedule",
-      impact: "+$" + (stats.totalEarnings * 0.35).toFixed(0),
-      confidence: 92
-    },
-    {
-      category: "Content Strategy",
-      icon: BarChart3,
-      priority: "medium",
-      title: "Video content opportunity",
-      description: `Creators with similar profiles earn 45% more with video content. Your engagement rate suggests strong video potential.`,
-      action: "Create more video content",
-      impact: "+45% engagement",
-      confidence: 87
-    },
-    {
-      category: "Audience Growth",
-      icon: Users,
-      priority: "high",
-      title: "Follower conversion optimization",
-      description: `Your conversion rate of ${((stats.totalSubscribers / Math.max(stats.followers, 1)) * 100).toFixed(1)}% can be improved. Target: 15%+`,
-      action: "Implement subscription incentives",
-      impact: `+${Math.floor(stats.followers * 0.15 - stats.totalSubscribers)} subscribers`,
-      confidence: 89
-    },
-    {
-      category: "Engagement",
-      icon: TrendingUp,
-      priority: "medium",
-      title: "Best posting frequency identified",
-      description: `Your optimal posting frequency is 3-4 times per week based on engagement patterns.`,
-      action: "Adjust content calendar",
-      impact: "+25% engagement",
-      confidence: 84
-    }
-  ];
+  // Calculate real AI insights based on actual data
+  const generateInsights = () => {
+    const insights = [];
+    
+    // Revenue Optimization Analysis
+    const avgDailyEarnings = stats.totalEarnings / 30;
+    const conversionRate = (stats.totalSubscribers / Math.max(stats.followers, 1)) * 100;
+    const engagementTrend = engagementData.length >= 2 ? 
+      ((engagementData[engagementData.length - 1]?.count || 0) - (engagementData[0]?.count || 0)) / (engagementData[0]?.count || 1) * 100 : 0;
 
-  const recommendations = [
-    {
-      title: "Schedule Premium Content",
-      description: "Post your best content between 8-10 PM for maximum revenue",
-      timeframe: "This week",
-      effort: "Low"
-    },
-    {
-      title: "Create Video Series",
-      description: "Launch a weekly video series to boost engagement and retention",
-      timeframe: "Next 2 weeks",
-      effort: "Medium"
-    },
-    {
-      title: "VIP Subscriber Campaign",
-      description: "Create exclusive content tiers to increase subscription conversion",
-      timeframe: "This month",
-      effort: "High"
+    // High priority: Low conversion rate
+    if (conversionRate < 10 && stats.followers > 50) {
+      insights.push({
+        category: "Revenue Optimization",
+        icon: DollarSign,
+        priority: "high",
+        title: "Low follower conversion detected",
+        description: `Your conversion rate is ${conversionRate.toFixed(1)}%. Industry average is 12-15%. Focus on converting existing followers.`,
+        action: "Launch conversion campaign",
+        impact: `+$${(stats.followers * 0.12 * 25).toFixed(0)} potential`,
+        confidence: Math.min(95, 70 + Math.floor(stats.followers / 10))
+      });
     }
-  ];
+
+    // Content Strategy based on engagement rate
+    if (stats.engagementRate < 5 && stats.totalViews > 100) {
+      const topContentType = contentTypeData.reduce((a, b) => a.value > b.value ? a : b, { name: 'mixed', value: 0 });
+      insights.push({
+        category: "Content Strategy",
+        icon: BarChart3,
+        priority: stats.engagementRate < 2 ? "high" : "medium",
+        title: "Engagement optimization needed",
+        description: `Your ${stats.engagementRate.toFixed(1)}% engagement rate can be improved. ${topContentType.name} content performs best for you.`,
+        action: `Focus on ${topContentType.name} content`,
+        impact: `+${(8 - stats.engagementRate).toFixed(1)}% engagement`,
+        confidence: 88
+      });
+    } else if (stats.engagementRate > 8) {
+      insights.push({
+        category: "Content Strategy", 
+        icon: BarChart3,
+        priority: "medium",
+        title: "High engagement opportunity",
+        description: `Your ${stats.engagementRate.toFixed(1)}% engagement rate is excellent! Scale your content production.`,
+        action: "Increase posting frequency",
+        impact: `+${(stats.totalEarnings * 0.4).toFixed(0)}$ potential`,
+        confidence: 92
+      });
+    }
+
+    // Audience Growth Analysis
+    if (stats.newSubscribers < stats.totalSubscribers * 0.1 && stats.totalSubscribers > 10) {
+      insights.push({
+        category: "Audience Growth",
+        icon: Users,
+        priority: "high",
+        title: "Subscriber growth stagnation",
+        description: `Only ${stats.newSubscribers} new subscribers this month. Your retention is good but growth needs attention.`,
+        action: "Launch growth campaign",
+        impact: `+${Math.floor(stats.totalSubscribers * 0.3)} new subscribers`,
+        confidence: 85
+      });
+    }
+
+    // Engagement Trend Analysis
+    if (engagementTrend < -10) {
+      insights.push({
+        category: "Engagement",
+        icon: TrendingUp,
+        priority: "high", 
+        title: "Declining engagement trend",
+        description: `Engagement dropped ${Math.abs(engagementTrend).toFixed(1)}% recently. Time to refresh your content strategy.`,
+        action: "Content strategy refresh",
+        impact: `+${Math.abs(engagementTrend * 1.5).toFixed(1)}% recovery`,
+        confidence: 90
+      });
+    } else if (engagementTrend > 20) {
+      insights.push({
+        category: "Engagement",
+        icon: TrendingUp,
+        priority: "medium",
+        title: "Strong engagement momentum",
+        description: `Engagement up ${engagementTrend.toFixed(1)}%! Capitalize on this momentum.`,
+        action: "Scale successful content",
+        impact: `+${(engagementTrend * 0.5).toFixed(1)}% additional growth`,
+        confidence: 94
+      });
+    }
+
+    // Financial Performance Analysis
+    if (stats.totalEarnings > 1000 && avgDailyEarnings > 30) {
+      insights.push({
+        category: "Revenue Optimization",
+        icon: DollarSign,
+        priority: "medium",
+        title: "Premium tier opportunity",
+        description: `With $${avgDailyEarnings.toFixed(0)}/day average, you can launch premium subscription tiers.`,
+        action: "Create premium tiers",
+        impact: `+$${(avgDailyEarnings * 10).toFixed(0)}/month`,
+        confidence: 87
+      });
+    }
+
+    return insights.slice(0, 4); // Return top 4 insights
+  };
+
+  const generateRecommendations = () => {
+    const recs = [];
+    
+    // Based on performance data
+    if (stats.engagementRate < 5) {
+      recs.push({
+        title: "Optimize Posting Schedule",
+        description: "Analyze your best performing posts and schedule content during peak engagement hours",
+        timeframe: "This week",
+        effort: "Low"
+      });
+    }
+
+    if (stats.totalSubscribers > 0 && (stats.totalSubscribers / Math.max(stats.followers, 1)) < 0.1) {
+      recs.push({
+        title: "Conversion Campaign",
+        description: "Create exclusive content previews to convert followers into paying subscribers",
+        timeframe: "Next 2 weeks", 
+        effort: "Medium"
+      });
+    }
+
+    if (stats.totalEarnings > 500) {
+      recs.push({
+        title: "Premium Content Strategy",
+        description: "Launch tiered subscription model with exclusive premium content",
+        timeframe: "This month",
+        effort: "High"
+      });
+    }
+
+    // Add default recommendations if none generated
+    if (recs.length === 0) {
+      recs.push(
+        {
+          title: "Content Consistency Plan",
+          description: "Establish a regular posting schedule to build audience expectations",
+          timeframe: "This week",
+          effort: "Low"
+        },
+        {
+          title: "Engagement Boosting",
+          description: "Interact more with your audience through comments and direct messages",
+          timeframe: "Ongoing",
+          effort: "Medium"
+        }
+      );
+    }
+
+    return recs.slice(0, 3);
+  };
+
+  const insights = generateInsights();
+  const recommendations = generateRecommendations();
 
   const performanceScore = Math.min(100, 
     (stats.engagementRate * 10) + 
