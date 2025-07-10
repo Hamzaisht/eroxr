@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -5,20 +6,18 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { 
   Video, 
-  Clock, 
   Users, 
+  Clock, 
   DollarSign, 
   TrendingUp,
+  Play,
   Eye,
+  Heart,
   MessageCircle,
-  Gift,
-  Calendar,
-  PlayCircle,
-  Pause,
-  BarChart3,
-  Activity
+  Zap,
+  Calendar
 } from "lucide-react";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area, BarChart, Bar } from "recharts";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, Area, AreaChart } from "recharts";
 
 interface StreamingAnalyticsProps {
   data: any;
@@ -38,118 +37,75 @@ export const StreamingAnalytics = ({ data, isLoading }: StreamingAnalyticsProps)
     );
   }
 
-  // Real data from stats
-  const totalEarnings = data.stats?.totalEarnings || 0;
-  const totalViews = data.stats?.totalViews || 0;
-  const followers = data.stats?.followers || 0;
-  const engagementRate = data.stats?.engagementRate || 0;
-  
+  // Mock streaming data based on real stats
   const streamingStats = [
     {
-      title: "Total Earnings",
-      value: `$${totalEarnings.toLocaleString()}`,
-      change: "+18.2%",
-      icon: DollarSign,
-      color: "text-luxury-primary"
-    },
-    {
-      title: "Total Views",
-      value: totalViews > 1000 ? `${(totalViews / 1000).toFixed(1)}K` : totalViews.toString(),
-      change: "+12.7%",
-      icon: Eye,
+      title: "Total Stream Time",
+      value: `${Math.floor((data.stats?.totalViews || 0) / 100)}h`,
+      change: "+12.5%",
+      icon: Clock,
       color: "text-blue-400"
     },
     {
-      title: "Followers",
-      value: followers.toLocaleString(),
-      change: "+25.1%",
+      title: "Peak Viewers",
+      value: Math.floor((data.stats?.followers || 0) * 0.1).toString(),
+      change: "+8.3%",
       icon: Users,
       color: "text-green-400"
     },
     {
-      title: "Engagement Rate",
-      value: `${engagementRate.toFixed(1)}%`,
-      change: "+8.3%",
-      icon: TrendingUp,
+      title: "Stream Revenue",
+      value: `$${Math.floor((data.stats?.totalEarnings || 0) * 0.3).toLocaleString()}`,
+      change: "+15.7%",
+      icon: DollarSign,
+      color: "text-luxury-primary"
+    },
+    {
+      title: "Chat Messages",
+      value: Math.floor((data.stats?.totalViews || 0) * 0.5).toLocaleString(),
+      change: "+22.1%",
+      icon: MessageCircle,
       color: "text-pink-400"
     }
   ];
 
+  // Mock streaming sessions
   const recentStreams = [
     {
       id: 1,
-      title: "Saturday Night Chill 🌙",
-      date: "2024-01-20",
-      duration: "3h 45m",
-      viewers: 2850,
-      peakViewers: 3200,
-      revenue: 1250,
-      chatMessages: 8950,
-      status: "completed"
+      title: "Evening Chat Session",
+      date: "2024-01-15",
+      duration: "2h 45m",
+      viewers: Math.floor((data.stats?.followers || 0) * 0.08),
+      revenue: Math.floor((data.stats?.totalEarnings || 0) * 0.05),
+      engagement: 87
     },
     {
       id: 2,
-      title: "Friday Fun Stream",
-      date: "2024-01-19",
-      duration: "2h 30m",
-      viewers: 1920,
-      peakViewers: 2400,
-      revenue: 820,
-      chatMessages: 5650,
-      status: "completed"
+      title: "Interactive Q&A",
+      date: "2024-01-14",
+      duration: "1h 30m",
+      viewers: Math.floor((data.stats?.followers || 0) * 0.12),
+      revenue: Math.floor((data.stats?.totalEarnings || 0) * 0.08),
+      engagement: 92
     },
     {
       id: 3,
-      title: "Midweek Vibes",
-      date: "2024-01-17",
-      duration: "4h 15m",
-      viewers: 3120,
-      peakViewers: 3800,
-      revenue: 1850,
-      chatMessages: 12400,
-      status: "completed"
+      title: "Behind the Scenes",
+      date: "2024-01-13",
+      duration: "3h 15m",
+      viewers: Math.floor((data.stats?.followers || 0) * 0.06),
+      revenue: Math.floor((data.stats?.totalEarnings || 0) * 0.04),
+      engagement: 78
     }
   ];
 
-  const viewerRetention = [
-    { minute: 0, retention: 100, viewers: 2850 },
-    { minute: 15, retention: 85, viewers: 2422 },
-    { minute: 30, retention: 75, viewers: 2137 },
-    { minute: 45, retention: 68, viewers: 1938 },
-    { minute: 60, retention: 62, viewers: 1767 },
-    { minute: 90, retention: 55, viewers: 1567 },
-    { minute: 120, retention: 48, viewers: 1368 },
-    { minute: 150, retention: 42, viewers: 1197 },
-    { minute: 180, retention: 38, viewers: 1083 }
-  ];
-
-  const hourlyPerformance = [
-    { hour: "6 PM", viewers: 450, revenue: 125, engagement: 65 },
-    { hour: "7 PM", viewers: 850, revenue: 280, engagement: 78 },
-    { hour: "8 PM", viewers: 1450, revenue: 520, engagement: 92 },
-    { hour: "9 PM", viewers: 2200, revenue: 780, engagement: 95 },
-    { hour: "10 PM", viewers: 2850, revenue: 1250, engagement: 100 },
-    { hour: "11 PM", viewers: 2400, revenue: 1080, engagement: 88 },
-    { hour: "12 AM", viewers: 1800, revenue: 650, engagement: 72 }
-  ];
-
-  const topDonors = [
-    { username: "BigTipper_VIP", amount: 450, tips: 8, avgTip: 56.25, avatar: "💎" },
-    { username: "GenerousViewer", amount: 320, tips: 12, avgTip: 26.67, avatar: "👑" },
-    { username: "SupporterFan", amount: 285, tips: 6, avgTip: 47.50, avatar: "🌟" },
-    { username: "StreamLover", amount: 250, tips: 15, avgTip: 16.67, avatar: "❤️" },
-    { username: "LoyalDonor", amount: 180, tips: 9, avgTip: 20.00, avatar: "⭐" }
-  ];
-
-  const bestStreamingTimes = [
-    { day: "Monday", bestHour: "9 PM", avgViewers: 1250, avgRevenue: 420 },
-    { day: "Tuesday", bestHour: "8 PM", avgViewers: 980, avgRevenue: 340 },
-    { day: "Wednesday", bestHour: "10 PM", avgViewers: 1450, avgRevenue: 520 },
-    { day: "Thursday", bestHour: "9 PM", avgViewers: 1680, avgRevenue: 580 },
-    { day: "Friday", bestHour: "10 PM", avgViewers: 2200, avgRevenue: 850 },
-    { day: "Saturday", bestHour: "10 PM", avgViewers: 2850, avgRevenue: 1250 },
-    { day: "Sunday", bestHour: "9 PM", avgViewers: 1950, avgRevenue: 720 }
-  ];
+  // Mock viewer activity data
+  const viewerActivityData = data.engagementData?.map((item: any, index: number) => ({
+    time: `${index * 4}:00`,
+    viewers: Math.floor(Math.random() * 100) + 20,
+    engagement: Math.floor(Math.random() * 40) + 60
+  })) || [];
 
   return (
     <div className="space-y-6">
@@ -157,7 +113,7 @@ export const StreamingAnalytics = ({ data, isLoading }: StreamingAnalyticsProps)
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-white mb-2">
-            Streaming Analytics 🎥
+            Streaming Analytics 📺
           </h1>
           <p className="text-gray-400">Monitor your live streaming performance</p>
         </div>
@@ -174,8 +130,8 @@ export const StreamingAnalytics = ({ data, isLoading }: StreamingAnalyticsProps)
             </SelectContent>
           </Select>
           <Button className="bg-luxury-primary hover:bg-luxury-primary/90">
-            <PlayCircle className="h-4 w-4 mr-2" />
-            Go Live
+            <Video className="h-4 w-4 mr-2" />
+            Start Stream
           </Button>
         </div>
       </div>
@@ -204,187 +160,116 @@ export const StreamingAnalytics = ({ data, isLoading }: StreamingAnalyticsProps)
         })}
       </div>
 
-      {/* Viewer Retention Chart */}
+      {/* Viewer Activity Chart */}
       <Card className="bg-luxury-darker border-luxury-neutral/10">
         <CardHeader>
           <CardTitle className="text-white flex items-center gap-2">
-            <Activity className="h-5 w-5 text-luxury-primary" />
-            Viewer Retention (Last Stream)
+            <Users className="h-5 w-5 text-luxury-primary" />
+            Live Viewer Activity
           </CardTitle>
         </CardHeader>
         <CardContent>
           <ResponsiveContainer width="100%" height={300}>
-            <AreaChart data={viewerRetention}>
+            <AreaChart data={viewerActivityData}>
               <defs>
-                <linearGradient id="colorRetention" x1="0" y1="0" x2="0" y2="1">
+                <linearGradient id="colorViewers" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="5%" stopColor="#8B5CF6" stopOpacity={0.8}/>
                   <stop offset="95%" stopColor="#8B5CF6" stopOpacity={0.1}/>
                 </linearGradient>
               </defs>
               <CartesianGrid strokeDasharray="3 3" stroke="#374151" opacity={0.3} />
-              <XAxis 
-                dataKey="minute" 
-                stroke="#9CA3AF"
-                tickFormatter={(value) => `${value}m`}
-              />
-              <YAxis 
-                yAxisId="left"
-                stroke="#9CA3AF"
-                tickFormatter={(value) => `${value}%`}
-              />
-              <YAxis 
-                yAxisId="right"
-                orientation="right"
-                stroke="#9CA3AF"
-              />
+              <XAxis dataKey="time" stroke="#9CA3AF" />
+              <YAxis stroke="#9CA3AF" />
               <Tooltip 
                 contentStyle={{ 
                   backgroundColor: '#1F2937', 
                   border: '1px solid #374151',
                   borderRadius: '8px',
                   color: '#fff'
-                }}
-                formatter={(value: any, name: string) => [
-                  name === 'retention' ? `${value}%` : value,
-                  name === 'retention' ? 'Retention' : 'Viewers'
-                ]}
+                }} 
               />
               <Area 
-                yAxisId="left"
-                type="monotone" 
-                dataKey="retention" 
-                stroke="#8B5CF6" 
-                fillOpacity={1} 
-                fill="url(#colorRetention)" 
-                strokeWidth={2}
-              />
-              <Line 
-                yAxisId="right"
                 type="monotone" 
                 dataKey="viewers" 
-                stroke="#EC4899" 
+                stroke="#8B5CF6" 
+                fillOpacity={1} 
+                fill="url(#colorViewers)" 
                 strokeWidth={2}
-                dot={false}
               />
             </AreaChart>
           </ResponsiveContainer>
         </CardContent>
       </Card>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Best Streaming Times */}
-        <Card className="bg-luxury-darker border-luxury-neutral/10">
-          <CardHeader>
-            <CardTitle className="text-white flex items-center gap-2">
-              <Calendar className="h-5 w-5 text-luxury-primary" />
-              Best Streaming Times
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={bestStreamingTimes}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#374151" opacity={0.3} />
-                <XAxis dataKey="day" stroke="#9CA3AF" />
-                <YAxis stroke="#9CA3AF" />
-                <Tooltip 
-                  contentStyle={{
-                    backgroundColor: '#1F2937',
-                    border: '1px solid #374151',
-                    borderRadius: '8px',
-                    color: '#fff'
-                  }}
-                />
-                <Bar dataKey="avgViewers" fill="#8B5CF6" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-
-        {/* Top Donors */}
-        <Card className="bg-luxury-darker border-luxury-neutral/10">
-          <CardHeader>
-            <CardTitle className="text-white flex items-center gap-2">
-              <Gift className="h-5 w-5 text-luxury-primary" />
-              Top Stream Donors
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {topDonors.map((donor, index) => (
-              <div key={index} className="flex items-center justify-between p-4 bg-luxury-dark/50 rounded-lg hover:bg-luxury-dark transition-colors">
-                <div className="flex items-center gap-4">
-                  <div className="relative">
-                    <div className="w-12 h-12 bg-gradient-to-br from-luxury-primary to-purple-600 rounded-full flex items-center justify-center text-xl">
-                      {donor.avatar}
-                    </div>
-                    <Badge className="absolute -top-1 -right-1 bg-luxury-primary text-xs p-1">
-                      #{index + 1}
-                    </Badge>
-                  </div>
-                  <div>
-                    <p className="font-medium text-white">{donor.username}</p>
-                    <div className="flex items-center gap-4 text-sm text-gray-400">
-                      <span>{donor.tips} tips</span>
-                      <span>Avg: ${donor.avgTip}</span>
-                    </div>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <p className="font-bold text-lg text-luxury-primary">
-                    ${donor.amount}
-                  </p>
-                  <p className="text-sm text-gray-400">Total donated</p>
-                </div>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-      </div>
-
       {/* Recent Streams */}
       <Card className="bg-luxury-darker border-luxury-neutral/10">
         <CardHeader>
           <CardTitle className="text-white flex items-center gap-2">
-            <Video className="h-5 w-5 text-luxury-primary" />
-            Recent Streams
+            <Play className="h-5 w-5 text-luxury-primary" />
+            Recent Streaming Sessions
           </CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {recentStreams.map((stream) => (
-              <div key={stream.id} className="flex items-center justify-between p-4 bg-luxury-dark/50 rounded-lg hover:bg-luxury-dark transition-colors">
-                <div className="flex items-center gap-4">
-                  <div className="w-16 h-16 bg-luxury-dark rounded-lg flex items-center justify-center">
-                    <PlayCircle className="h-8 w-8 text-luxury-primary" />
-                  </div>
-                  <div>
-                    <h4 className="font-medium text-white mb-1">{stream.title}</h4>
-                    <div className="flex items-center gap-4 text-sm text-gray-400">
-                      <span className="flex items-center gap-1">
-                        <Calendar className="h-3 w-3" />
-                        {new Date(stream.date).toLocaleDateString()}
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <Clock className="h-3 w-3" />
-                        {stream.duration}
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <Users className="h-3 w-3" />
-                        {stream.viewers.toLocaleString()} avg
-                      </span>
-                    </div>
-                  </div>
+        <CardContent className="space-y-4">
+          {recentStreams.map((stream) => (
+            <div key={stream.id} className="flex items-center justify-between p-4 bg-luxury-dark/50 rounded-lg hover:bg-luxury-dark transition-colors">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 bg-gradient-to-br from-luxury-primary to-purple-600 rounded-lg flex items-center justify-center">
+                  <Video className="h-6 w-6 text-white" />
                 </div>
-                <div className="text-right">
-                  <p className="font-bold text-lg text-luxury-primary mb-1">
-                    ${stream.revenue}
-                  </p>
-                  <div className="text-sm text-gray-400">
-                    <p>Peak: {stream.peakViewers.toLocaleString()}</p>
-                    <p>{stream.chatMessages.toLocaleString()} chats</p>
+                <div>
+                  <h4 className="font-medium text-white mb-1">{stream.title}</h4>
+                  <div className="flex items-center gap-4 text-sm text-gray-400">
+                    <span className="flex items-center gap-1">
+                      <Calendar className="h-3 w-3" />
+                      {stream.date}
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <Clock className="h-3 w-3" />
+                      {stream.duration}
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <Users className="h-3 w-3" />
+                      {stream.viewers} viewers
+                    </span>
                   </div>
                 </div>
               </div>
-            ))}
+              <div className="text-right">
+                <div className="flex items-center gap-4 mb-1">
+                  <div className="text-right">
+                    <p className="text-lg font-bold text-luxury-primary">
+                      ${stream.revenue}
+                    </p>
+                    <p className="text-xs text-gray-400">Revenue</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-lg font-bold text-green-400">
+                      {stream.engagement}%
+                    </p>
+                    <p className="text-xs text-gray-400">Engagement</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </CardContent>
+      </Card>
+
+      {/* Streaming Schedule */}
+      <Card className="bg-luxury-darker border-luxury-neutral/10">
+        <CardHeader>
+          <CardTitle className="text-white flex items-center gap-2">
+            <Calendar className="h-5 w-5 text-luxury-primary" />
+            Upcoming Streams
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center py-8">
+            <Video className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+            <p className="text-gray-400 mb-4">No upcoming streams scheduled</p>
+            <Button className="bg-luxury-primary hover:bg-luxury-primary/90">
+              Schedule New Stream
+            </Button>
           </div>
         </CardContent>
       </Card>

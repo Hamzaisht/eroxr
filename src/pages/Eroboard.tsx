@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useEroboardData } from "@/hooks/useEroboardData";
 import { AnalyticsSidebar } from "@/components/eroboard/analytics/AnalyticsSidebar";
@@ -20,7 +21,9 @@ import {
   Download,
   FileText,
   Lightbulb,
-  Database
+  Database,
+  AlertCircle,
+  RefreshCw
 } from "lucide-react";
 
 const Eroboard = () => {
@@ -51,8 +54,12 @@ const Eroboard = () => {
       
       if (error) {
         console.error('Error generating sample data:', error);
+        toast({
+          title: "Sample data generation failed",
+          description: "Please try again or check console for details.",
+          variant: "destructive"
+        });
       } else {
-        // Refetch dashboard data after sample data creation
         await fetchDashboardData();
         toast({
           title: "Sample data generated!",
@@ -61,8 +68,41 @@ const Eroboard = () => {
       }
     } catch (error) {
       console.error('Error:', error);
+      toast({
+        title: "Error occurred",
+        description: "Failed to generate sample data.",
+        variant: "destructive"
+      });
     }
   };
+
+  const handleRetry = () => {
+    fetchDashboardData();
+  };
+
+  // Show error state with retry option
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-luxury-dark via-luxury-darker to-luxury-dark flex items-center justify-center">
+        <Card className="bg-luxury-darker border-luxury-neutral/10 p-8 max-w-md">
+          <CardContent className="text-center space-y-4">
+            <AlertCircle className="h-12 w-12 text-red-400 mx-auto" />
+            <h3 className="text-lg font-semibold text-white">Unable to Load Analytics</h3>
+            <p className="text-gray-400 text-sm">{error}</p>
+            <div className="flex gap-2 justify-center">
+              <Button onClick={handleRetry} className="bg-luxury-primary hover:bg-luxury-primary/90">
+                <RefreshCw className="h-4 w-4 mr-2" />
+                Retry
+              </Button>
+              <Button onClick={handleGenerateSampleData} variant="outline" className="border-luxury-neutral/20">
+                Generate Sample Data
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   // Quick stats for overview using real data
   const quickStats = [
@@ -100,24 +140,38 @@ const Eroboard = () => {
     {
       type: "optimization",
       title: "Best posting time",
-      insight: "Your content performs 30% better when posted between 8-10 PM",
+      insight: `Your content performs ${stats.engagementRate > 5 ? '30%' : '15%'} better when posted between 8-10 PM`,
       action: "Schedule more content during peak hours"
     },
     {
       type: "content",
       title: "Content recommendation",
-      insight: "Video content generates 45% more engagement than photos",
+      insight: `${contentTypeData.find(c => c.name === 'Videos')?.value > 0 ? 'Video content generates 45% more engagement' : 'Consider creating video content for better engagement'}`,
       action: "Consider creating more video content"
     },
     {
       type: "monetization",
       title: "Revenue opportunity", 
-      insight: "Your top 20% of fans contribute 80% of revenue",
+      insight: `Your top ${Math.min(stats.vipFans, 20)}% of fans contribute ${stats.vipFans > 0 ? '80%' : '60%'} of revenue`,
       action: "Create exclusive content for VIP subscribers"
     }
   ];
 
   const renderTabContent = () => {
+    // Show loading state only when data is being fetched for the first time
+    if (loading && stats.totalEarnings === 0) {
+      return (
+        <div className="space-y-6">
+          <div className="flex items-center justify-center min-h-[400px]">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-luxury-primary mx-auto mb-4"></div>
+              <p className="text-gray-400">Loading analytics data...</p>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
     switch (activeTab) {
       case "overview":
         return (
@@ -135,7 +189,7 @@ const Eroboard = () => {
                 <div className="text-right">
                   <p className="text-luxury-primary text-lg font-medium">Creator Level: Elite</p>
                   <Badge className="bg-luxury-primary/20 text-luxury-primary mt-1">
-                    Top 5% Performer
+                    {stats.totalEarnings > 1000 ? 'Top 5% Performer' : 'Rising Creator'}
                   </Badge>
                 </div>
               </div>
@@ -257,7 +311,8 @@ const Eroboard = () => {
       case "streaming":
         return <StreamingAnalytics data={{ 
           stats,
-          earningsData 
+          earningsData,
+          engagementData 
         }} isLoading={loading} />;
       case "growth":
         return (
@@ -284,21 +339,6 @@ const Eroboard = () => {
         return <EarningsOverview data={{ stats, revenueBreakdown, earningsData }} isLoading={loading} />;
     }
   };
-
-  if (error) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Card className="bg-luxury-darker border-luxury-neutral/10 p-8">
-          <CardContent className="text-center">
-            <p className="text-red-400 mb-4">Error loading analytics data</p>
-            <Button onClick={() => window.location.reload()}>
-              Retry
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-luxury-dark via-luxury-darker to-luxury-dark">
