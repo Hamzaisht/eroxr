@@ -2323,6 +2323,60 @@ export type Database = {
           },
         ]
       }
+      user_sessions: {
+        Row: {
+          city: string | null
+          country: string | null
+          created_at: string | null
+          creator_id: string
+          device_type: string | null
+          id: string
+          ip_address: unknown | null
+          latitude: number | null
+          longitude: number | null
+          page_views: number | null
+          region: string | null
+          session_end: string | null
+          session_start: string | null
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          city?: string | null
+          country?: string | null
+          created_at?: string | null
+          creator_id: string
+          device_type?: string | null
+          id?: string
+          ip_address?: unknown | null
+          latitude?: number | null
+          longitude?: number | null
+          page_views?: number | null
+          region?: string | null
+          session_end?: string | null
+          session_start?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          city?: string | null
+          country?: string | null
+          created_at?: string | null
+          creator_id?: string
+          device_type?: string | null
+          id?: string
+          ip_address?: unknown | null
+          latitude?: number | null
+          longitude?: number | null
+          page_views?: number | null
+          region?: string | null
+          session_end?: string | null
+          session_start?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       user_subscriptions: {
         Row: {
           created_at: string
@@ -2968,6 +3022,19 @@ export type Database = {
         Returns: {
           date: string
           amount: number
+        }[]
+      }
+      get_geographic_analytics: {
+        Args: { p_creator_id: string; p_days?: number }
+        Returns: {
+          country: string
+          region: string
+          city: string
+          session_count: number
+          unique_users: number
+          total_page_views: number
+          avg_latitude: number
+          avg_longitude: number
         }[]
       }
       get_revenue_breakdown: {

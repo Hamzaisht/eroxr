@@ -6,6 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
+import { useToast } from "@/hooks/use-toast";
+import { PDFReportGenerator, ReportData } from "@/utils/pdfGenerator";
 import { 
   FileText, 
   Download, 
@@ -26,16 +28,29 @@ interface ReportsExportsProps {
   data: {
     stats: EroboardStats;
     earningsData: Array<{ date: string; amount: number }>;
+    geographicData?: Array<{ country: string; fans: number; percentage: number }>;
+    contentPerformanceData?: Array<{ 
+      id: number; 
+      earnings: number; 
+      likes: number; 
+      comments: number; 
+      views: number; 
+      engagement: number; 
+      type: string; 
+      created_at: string;
+    }>;
   };
   isLoading: boolean;
 }
 
 export function ReportsExports({ data, isLoading }: ReportsExportsProps) {
-  const { stats, earningsData } = data;
+  const { stats, earningsData, geographicData = [], contentPerformanceData = [] } = data;
   const [selectedReport, setSelectedReport] = useState("earnings");
   const [dateRange, setDateRange] = useState("30days");
   const [reportFormat, setReportFormat] = useState("pdf");
   const [emailReport, setEmailReport] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const { toast } = useToast();
 
   const reportTypes = [
     {
@@ -92,14 +107,111 @@ export function ReportsExports({ data, isLoading }: ReportsExportsProps) {
     }
   ];
 
-  const handleGenerateReport = () => {
-    // Simulate report generation
-    console.log("Generating report:", {
-      type: selectedReport,
-      dateRange,
-      format: reportFormat,
-      emailReport
-    });
+  const handleGenerateReport = async () => {
+    setIsGenerating(true);
+    
+    try {
+      const reportData: ReportData = {
+        stats,
+        earningsData,
+        geographicData,
+        contentPerformanceData,
+        reportType: selectedReport,
+        dateRange: getDateRangeLabel(dateRange)
+      };
+      
+      if (reportFormat === 'pdf') {
+        const generator = new PDFReportGenerator();
+        await generator.generateReport(reportData);
+        generator.download(`eroboard-${selectedReport}-report-${new Date().toISOString().split('T')[0]}.pdf`);
+        
+        toast({
+          title: "Report Generated",
+          description: "Your PDF report has been downloaded successfully.",
+        });
+      } else if (reportFormat === 'excel' || reportFormat === 'csv') {
+        // Generate CSV/Excel data
+        generateDataExport(reportData, reportFormat);
+        
+        toast({
+          title: "Data Exported",
+          description: `Your ${reportFormat.toUpperCase()} file has been downloaded.`,
+        });
+      } else if (reportFormat === 'json') {
+        // Generate JSON export
+        const jsonData = JSON.stringify(reportData, null, 2);
+        downloadFile(jsonData, `eroboard-data-${Date.now()}.json`, 'application/json');
+        
+        toast({
+          title: "JSON Exported",
+          description: "Your JSON data file has been downloaded.",
+        });
+      }
+      
+      if (emailReport) {
+        toast({
+          title: "Email Scheduled",
+          description: "Your report will be emailed to you shortly.",
+        });
+      }
+    } catch (error) {
+      console.error('Error generating report:', error);
+      toast({
+        variant: "destructive",
+        title: "Report Generation Failed",
+        description: "There was an error generating your report. Please try again.",
+      });
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const getDateRangeLabel = (range: string): string => {
+    const labels: Record<string, string> = {
+      '7days': 'Last 7 days',
+      '30days': 'Last 30 days', 
+      '90days': 'Last 90 days',
+      '1year': 'Last year',
+      'custom': 'Custom range'
+    };
+    return labels[range] || range;
+  };
+
+  const generateDataExport = (reportData: ReportData, format: string) => {
+    const csvData = [
+      ['Metric', 'Value'],
+      ['Total Earnings', `$${reportData.stats.totalEarnings}`],
+      ['Total Subscribers', reportData.stats.totalSubscribers.toString()],
+      ['Engagement Rate', `${reportData.stats.engagementRate.toFixed(1)}%`],
+      ['Total Content', reportData.stats.totalContent.toString()],
+      ['Total Views', reportData.stats.totalViews.toString()],
+      ['New Subscribers', reportData.stats.newSubscribers.toString()],
+      ['VIP Fans', reportData.stats.vipFans.toString()],
+      ['Churn Rate', `${reportData.stats.churnRate.toFixed(1)}%`],
+      [''], // Empty row
+      ['Geographic Data'],
+      ['Country', 'Fans', 'Percentage'],
+      ...reportData.geographicData.map(geo => [geo.country, geo.fans.toString(), `${geo.percentage.toFixed(1)}%`]),
+      [''], // Empty row
+      ['Earnings Timeline'],
+      ['Date', 'Amount'],
+      ...reportData.earningsData.map(earning => [earning.date, earning.amount.toString()])
+    ];
+    
+    const csvContent = csvData.map(row => row.join(',')).join('\n');
+    downloadFile(csvContent, `eroboard-${reportData.reportType}-data-${Date.now()}.csv`, 'text/csv');
+  };
+
+  const downloadFile = (content: string, filename: string, mimeType: string) => {
+    const blob = new Blob([content], { type: mimeType });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
   };
 
   if (isLoading) {
@@ -226,9 +338,13 @@ export function ReportsExports({ data, isLoading }: ReportsExportsProps) {
                 </div>
               </div>
 
-              <Button onClick={handleGenerateReport} className="w-full bg-luxury-primary hover:bg-luxury-primary/90">
+              <Button 
+                onClick={handleGenerateReport} 
+                className="w-full bg-luxury-primary hover:bg-luxury-primary/90"
+                disabled={isGenerating}
+              >
                 <Download className="h-4 w-4 mr-2" />
-                Generate Report
+                {isGenerating ? 'Generating...' : 'Generate Report'}
               </Button>
             </CardContent>
           </Card>

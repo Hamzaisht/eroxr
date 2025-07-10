@@ -74,6 +74,7 @@ export function useEroboardData() {
   const [contentPerformanceData, setContentPerformanceData] = useState([]);
   const [latestPayout, setLatestPayout] = useState<PayoutInfo | null>(null);
   const [creatorRankings, setCreatorRankings] = useState([]);
+  const [geographicData, setGeographicData] = useState([]);
 
   const fetchDashboardData = useCallback(async (dateRange?: DateRange, forceRefresh = false) => {
     if (!session?.user?.id) return;
@@ -279,6 +280,35 @@ export function useEroboardData() {
         revenueShare: 0.92
       });
 
+      // Fetch geographic analytics
+      const { data: geoData, error: geoError } = await supabase
+        .rpc('get_geographic_analytics', { 
+          p_creator_id: session.user.id,
+          p_days: 30
+        });
+
+      if (geoError) {
+        console.error("Error fetching geographic data:", geoError);
+      }
+
+      const geoAnalytics = geoData || [];
+      
+      // Calculate percentages and format for charts
+      const totalSessions = geoAnalytics.reduce((sum, item) => sum + Number(item.session_count), 0);
+      const formattedGeoData = geoAnalytics.map(item => ({
+        country: item.country,
+        region: item.region,
+        city: item.city,
+        fans: Number(item.unique_users),
+        sessions: Number(item.session_count),
+        pageViews: Number(item.total_page_views),
+        percentage: totalSessions > 0 ? (Number(item.session_count) / totalSessions * 100) : 0,
+        latitude: Number(item.avg_latitude),
+        longitude: Number(item.avg_longitude)
+      }));
+
+      setGeographicData(formattedGeoData);
+
       // Set empty creator rankings for now
       setCreatorRankings([]);
 
@@ -364,6 +394,7 @@ export function useEroboardData() {
     contentPerformanceData,
     latestPayout,
     creatorRankings,
+    geographicData,
     fetchDashboardData,
     setLatestPayout
   };

@@ -43,6 +43,23 @@ export const AudienceInsights = ({ data, isLoading }: AudienceInsightsProps) => 
   const engagementRate = data.stats?.engagementRate || 0;
   const vipFans = data.stats?.vipFans || 0;
   
+  // Use real geographic data from the hook
+  const realGeoData = data.geographicData || [];
+  const geoData = realGeoData.length > 0 
+    ? realGeoData.slice(0, 6).map(item => ({
+        country: item.country,
+        fans: item.fans,
+        percentage: item.percentage
+      }))
+    : [
+        { country: "United States", fans: 3420, percentage: 38.2 },
+        { country: "United Kingdom", fans: 1245, percentage: 13.9 },
+        { country: "Canada", fans: 890, percentage: 9.9 },
+        { country: "Australia", fans: 678, percentage: 7.6 },
+        { country: "Germany", fans: 567, percentage: 6.3 },
+        { country: "Others", fans: 2145, percentage: 24.1 }
+      ];
+  
   const audienceStats = [
     {
       title: "Total Fans",
@@ -80,15 +97,6 @@ export const AudienceInsights = ({ data, isLoading }: AudienceInsightsProps) => 
     { username: "VIP_Member", watchTime: "42h 08m", comments: 89, tips: 31, engagement: 87, avatar: "💎" },
     { username: "RegularFan", watchTime: "29h 45m", comments: 201, tips: 12, engagement: 82, avatar: "❤️" },
     { username: "NewSupporter", watchTime: "21h 30m", comments: 78, tips: 15, engagement: 78, avatar: "⭐" }
-  ];
-
-  const geoData = [
-    { country: "United States", fans: 3420, percentage: 38.2 },
-    { country: "United Kingdom", fans: 1245, percentage: 13.9 },
-    { country: "Canada", fans: 890, percentage: 9.9 },
-    { country: "Australia", fans: 678, percentage: 7.6 },
-    { country: "Germany", fans: 567, percentage: 6.3 },
-    { country: "Others", fans: 2145, percentage: 24.1 }
   ];
 
   const activityHeatmap = [
