@@ -25,7 +25,19 @@ import {
 
 const Eroboard = () => {
   const [activeTab, setActiveTab] = useState("overview");
-  const { loading, error, stats, revenueBreakdown, earningsData, creatorRankings, fetchDashboardData } = useEroboardData();
+  const { 
+    loading, 
+    error, 
+    stats, 
+    revenueBreakdown, 
+    earningsData, 
+    creatorRankings, 
+    engagementData,
+    contentTypeData,
+    contentPerformanceData,
+    latestPayout,
+    fetchDashboardData 
+  } = useEroboardData();
   const { toast } = useToast();
   
   const handleGenerateSampleData = async () => {
@@ -230,11 +242,23 @@ const Eroboard = () => {
       case "earnings":
         return <EarningsOverview data={{ stats, revenueBreakdown, earningsData }} isLoading={loading} />;
       case "content":
-        return <ContentPerformance data={{ stats }} isLoading={loading} />;
+        return <ContentPerformance data={{ 
+          stats, 
+          contentPerformanceData, 
+          contentTypeData, 
+          engagementData 
+        }} isLoading={loading} />;
       case "audience":
-        return <AudienceInsights data={{ stats }} isLoading={loading} />;
+        return <AudienceInsights data={{ 
+          stats, 
+          engagementData,
+          creatorRankings 
+        }} isLoading={loading} />;
       case "streaming":
-        return <StreamingAnalytics data={{ stats }} isLoading={loading} />;
+        return <StreamingAnalytics data={{ 
+          stats,
+          earningsData 
+        }} isLoading={loading} />;
       case "growth":
         return (
           <div className="space-y-6">
