@@ -1,5 +1,6 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSession } from "@supabase/auth-helpers-react";
 import { useEroboardData } from "@/hooks/useEroboardData";
 import { AnalyticsSidebar } from "@/components/eroboard/analytics/AnalyticsSidebar";
 import { EarningsOverview } from "@/components/eroboard/analytics/EarningsOverview";
@@ -14,6 +15,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { geoTracker } from "@/utils/geoTracker";
 import { LoadingOverlay } from "@/components/eroboard/LoadingOverlay";
 import { 
   BarChart3, 
@@ -32,6 +34,7 @@ import {
 
 const Eroboard = () => {
   const [activeTab, setActiveTab] = useState("overview");
+  const session = useSession();
   const { 
     loading, 
     error, 
@@ -47,6 +50,14 @@ const Eroboard = () => {
     fetchDashboardData 
   } = useEroboardData();
   const { toast } = useToast();
+
+  // Initialize real-time geographic tracking
+  useEffect(() => {
+    if (session?.user?.id) {
+      console.log('🌍 Initializing geographic tracking for user:', session.user.id);
+      geoTracker.trackUserSession(session.user.id, session.user.id);
+    }
+  }, [session?.user?.id]);
   
   const handleGenerateSampleData = async () => {
     try {

@@ -375,10 +375,23 @@ export function useEroboardData() {
         })
         .subscribe();
 
+      const geoChannel = supabase
+        .channel('geographic-updates')
+        .on('postgres_changes', {
+          event: '*',
+          schema: 'public',
+          table: 'user_sessions'
+        }, () => {
+          console.log('🌍 Real-time geographic update detected');
+          fetchDashboardData(undefined, true); // Force refresh for real-time updates
+        })
+        .subscribe();
+
       return () => {
         supabase.removeChannel(earningsChannel);
         supabase.removeChannel(postsChannel);
         supabase.removeChannel(subscriptionsChannel);
+        supabase.removeChannel(geoChannel);
       };
     }
   }, [session?.user?.id, fetchDashboardData]);
