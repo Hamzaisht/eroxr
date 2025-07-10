@@ -279,15 +279,15 @@ export function useEroboardData() {
         setCreatorRankings(rankingsData || []);
       }
 
-      // Fetch earnings ranking for current user
+      // Fetch earnings ranking for current user - use maybeSingle to handle no data gracefully
       const { data: creatorEarnings, error: creatorEarningsError } = await supabase
-        .from("top_creators_by_earnings")
-        .select("total_earnings, earnings_percentile")
-        .eq("id", session.user.id)
-        .single();
+        .from("creator_metrics")
+        .select("earnings")
+        .eq("user_id", session.user.id)
+        .maybeSingle();
 
-      if (creatorEarningsError && !creatorEarningsError.message.includes('No rows found')) {
-        console.error("Error fetching creator earnings ranking:", creatorEarningsError);
+      if (creatorEarningsError) {
+        console.error("Error fetching creator earnings:", creatorEarningsError);
       }
 
       // Fetch latest payout info
@@ -297,9 +297,9 @@ export function useEroboardData() {
         .eq('creator_id', session.user.id)
         .order('requested_at', { ascending: false })
         .limit(1)
-        .single();
+        .maybeSingle();
 
-      if (!payoutError) {
+      if (!payoutError && payoutData) {
         setLatestPayout(payoutData);
       }
 
@@ -319,7 +319,7 @@ export function useEroboardData() {
       // Set all stats using real data
       setStats({
         totalEarnings: Number(analytics.total_earnings) || 0,
-        earningsPercentile: creatorEarnings?.earnings_percentile || null,
+        earningsPercentile: null, // Will calculate based on position among all creators
         totalSubscribers: subAnalytics.total_subscribers,
         newSubscribers: subAnalytics.new_this_month,
         returningSubscribers: Math.max(0, subAnalytics.total_subscribers - subAnalytics.new_this_month),
