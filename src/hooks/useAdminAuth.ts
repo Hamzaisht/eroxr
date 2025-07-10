@@ -18,11 +18,14 @@ export const useAdminAuth = () => {
   useEffect(() => {
     const checkAdminStatus = async () => {
       if (!user?.id) {
+        console.log('🔍 Admin check: No user ID');
         setIsAdmin(false);
         setAdminUser(null);
         setIsLoading(false);
         return;
       }
+
+      console.log('🔍 Admin check: Checking for user', user.id);
 
       try {
         const { data, error } = await supabase
@@ -32,10 +35,14 @@ export const useAdminAuth = () => {
           .in('role', ['admin', 'super_admin'])
           .single();
 
+        console.log('🔍 Admin check: Query result', { data, error });
+
         if (error || !data) {
+          console.log('🔍 Admin check: No admin role found');
           setIsAdmin(false);
           setAdminUser(null);
         } else {
+          console.log('🔍 Admin check: Admin role found!', data.role);
           setIsAdmin(true);
           setAdminUser({
             id: user.id,
@@ -45,7 +52,7 @@ export const useAdminAuth = () => {
           });
         }
       } catch (err) {
-        console.error('Admin auth check failed:', err);
+        console.error('🔍 Admin auth check failed:', err);
         setIsAdmin(false);
         setAdminUser(null);
       } finally {
