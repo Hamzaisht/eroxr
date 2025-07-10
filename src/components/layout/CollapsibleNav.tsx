@@ -7,8 +7,7 @@ import { NavMenuItem } from "./nav/NavMenuItem";
 import { UserProfileSection } from "./nav/UserProfileSection";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { useSuperAdminCheck } from "@/hooks/useSuperAdminCheck";
-import { useGhostMode } from "@/hooks/useGhostMode";
+import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { useUser } from "@/hooks/useUser";
 
 const menuItems = [
@@ -25,8 +24,8 @@ export const CollapsibleNav = () => {
   const location = useLocation();
   const session = useSession();
   const { currentUser } = useUser();
-  const { isSuperAdmin } = useSuperAdminCheck();
-  const { isGhostMode } = useGhostMode();
+  const { isAdmin } = useAdminAuth();
+  const isGhostMode = false; // Will be implemented with proper context
 
   const handleItemClick = (path: string) => {
     navigate(path);
@@ -121,7 +120,7 @@ export const CollapsibleNav = () => {
                     </motion.div>
                   ))}
 
-                  {isSuperAdmin && (
+                   {isAdmin && (
                     <motion.div
                       initial={{ opacity: 0, x: -20 }}
                       animate={{ opacity: 1, x: 0 }}
@@ -156,7 +155,7 @@ export const CollapsibleNav = () => {
       </AnimatePresence>
 
       {/* Admin Badge */}
-      {isSuperAdmin && (
+      {isAdmin && (
         <motion.div
           className="fixed bottom-4 right-4 z-50"
           initial={{ opacity: 0, scale: 0 }}

@@ -14,60 +14,45 @@ export type Database = {
   }
   public: {
     Tables: {
-      admin_audit_logs: {
+      admin_action_logs: {
         Row: {
           action: string
+          action_type: string
+          admin_id: string
           created_at: string
           details: Json | null
           id: string
-          user_id: string
-        }
-        Insert: {
-          action: string
-          created_at?: string
-          details?: Json | null
-          id?: string
-          user_id: string
-        }
-        Update: {
-          action?: string
-          created_at?: string
-          details?: Json | null
-          id?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
-      admin_logs: {
-        Row: {
-          action: string
-          action_type: string
-          admin_id: string
-          created_at: string | null
-          details: Json | null
-          id: string
+          ip_address: unknown | null
+          target_data: Json | null
           target_id: string | null
           target_type: string | null
+          user_agent: string | null
         }
         Insert: {
           action: string
           action_type: string
           admin_id: string
-          created_at?: string | null
+          created_at?: string
           details?: Json | null
           id?: string
+          ip_address?: unknown | null
+          target_data?: Json | null
           target_id?: string | null
           target_type?: string | null
+          user_agent?: string | null
         }
         Update: {
           action?: string
           action_type?: string
           admin_id?: string
-          created_at?: string | null
+          created_at?: string
           details?: Json | null
           id?: string
+          ip_address?: unknown | null
+          target_data?: Json | null
           target_id?: string | null
           target_type?: string | null
+          user_agent?: string | null
         }
         Relationships: []
       }
@@ -75,26 +60,35 @@ export type Database = {
         Row: {
           activated_at: string | null
           admin_id: string
-          created_at: string | null
+          created_at: string
           ghost_mode: boolean
           id: string
-          last_active_at: string | null
+          ip_address: unknown | null
+          last_active_at: string
+          session_data: Json | null
+          user_agent: string | null
         }
         Insert: {
           activated_at?: string | null
           admin_id: string
-          created_at?: string | null
+          created_at?: string
           ghost_mode?: boolean
           id?: string
-          last_active_at?: string | null
+          ip_address?: unknown | null
+          last_active_at?: string
+          session_data?: Json | null
+          user_agent?: string | null
         }
         Update: {
           activated_at?: string | null
           admin_id?: string
-          created_at?: string | null
+          created_at?: string
           ghost_mode?: boolean
           id?: string
-          last_active_at?: string | null
+          ip_address?: unknown | null
+          last_active_at?: string
+          session_data?: Json | null
+          user_agent?: string | null
         }
         Relationships: []
       }
@@ -2218,6 +2212,39 @@ export type Database = {
         }
         Relationships: []
       }
+      user_activity_logs: {
+        Row: {
+          activity_data: Json | null
+          activity_type: string
+          created_at: string
+          id: string
+          ip_address: unknown | null
+          session_id: string | null
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          activity_data?: Json | null
+          activity_type: string
+          created_at?: string
+          id?: string
+          ip_address?: unknown | null
+          session_id?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          activity_data?: Json | null
+          activity_type?: string
+          created_at?: string
+          id?: string
+          ip_address?: unknown | null
+          session_id?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       user_analytics: {
         Row: {
           content_interactions: number | null
@@ -3140,6 +3167,10 @@ export type Database = {
       increment_counter: {
         Args: { row_id: string; counter_name: string; table_name?: string }
         Returns: undefined
+      }
+      is_admin_user: {
+        Args: { user_id: string; min_role?: string }
+        Returns: boolean
       }
       rls_bypass_profile_update: {
         Args: {

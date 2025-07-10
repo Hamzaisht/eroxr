@@ -10,8 +10,7 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
-import { useSuperAdminCheck } from "@/hooks/useSuperAdminCheck";
-import { useGhostMode } from "@/hooks/useGhostMode";
+import { useAdminAuth } from "@/hooks/useAdminAuth";
 // import { CreateBodyContactDialog } from "@/components/ads/body-contact"; // REMOVED - to be rebuilt 
 import { useUser } from "@/hooks/useUser";
 
@@ -32,8 +31,8 @@ export const InteractiveNav = () => {
   const session = useSession();
   const { currentUser } = useUser();
   const isMobile = useMediaQuery("(max-width: 768px)");
-  const { isSuperAdmin } = useSuperAdminCheck();
-  const { isGhostMode } = useGhostMode();
+  const { isAdmin } = useAdminAuth();
+  const isGhostMode = false; // Will be implemented with proper context
   
   // Add state for body contact dialog
   const [showBodyContactDialog, setShowBodyContactDialog] = useState(false);
@@ -84,7 +83,7 @@ export const InteractiveNav = () => {
                 onClick={() => handleItemClick(item.path, item.label)}
               />
             ))}
-            {isSuperAdmin && (
+            {isAdmin && (
               <NavMenuItem
                 icon={Shield}
                 label="Platform Control"
@@ -154,7 +153,7 @@ export const InteractiveNav = () => {
               onClick={() => handleItemClick(item.path, item.label)}
             />
           ))}
-          {isSuperAdmin && (
+          {isAdmin && (
             <NavMenuItem
               icon={Shield}
               label="Platform Control"
@@ -175,7 +174,7 @@ export const InteractiveNav = () => {
     <>
       <MobileNav />
       <DesktopNav />
-      {isSuperAdmin && (
+      {isAdmin && (
         <>
           <Button
             variant="destructive"
