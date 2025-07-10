@@ -5,6 +5,7 @@ import { GodmodeLayout } from '@/components/godmode/GodmodeLayout';
 import { LoadingScreen } from '@/components/layout/LoadingScreen';
 
 export const Godmode: React.FC = () => {
+  console.log('🚀 GODMODE COMPONENT LOADED');
   const { isAdmin, isLoading } = useAdminSession();
 
   console.log('🎯 Godmode: Component rendered', { isAdmin, isLoading });
