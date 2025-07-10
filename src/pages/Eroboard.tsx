@@ -197,41 +197,91 @@ const Eroboard = () => {
       case "overview":
         return (
           <div className="space-y-6">
-            {/* Welcome Header */}
-            <div className="bg-gradient-to-r from-luxury-primary/20 to-purple-600/20 border border-luxury-primary/30 rounded-xl p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h1 className="text-3xl font-bold text-white mb-2 flex items-center gap-3">
-                    <Crown className="h-8 w-8 text-luxury-primary" />
-                    Welcome to EroBoard
-                  </h1>
-                  <p className="text-gray-300">Your comprehensive creator analytics dashboard</p>
-                </div>
-                <div className="text-right">
-                  <p className="text-luxury-primary text-lg font-medium">Creator Level: Elite</p>
-                  <Badge className="bg-luxury-primary/20 text-luxury-primary mt-1">
-                    {stats.totalEarnings > 1000 ? 'Top 5% Performer' : 'Rising Creator'}
-                  </Badge>
+            {/* Hero Welcome Section */}
+            <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-primary/10 via-accent/5 to-primary/15 border border-primary/20 backdrop-blur-sm">
+              <div className="absolute inset-0">
+                <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-primary/5 to-accent/10" />
+                <div className="absolute top-4 right-4 w-32 h-32 bg-primary/10 rounded-full blur-2xl animate-pulse" />
+                <div className="absolute bottom-4 left-4 w-24 h-24 bg-accent/10 rounded-full blur-xl animate-pulse" style={{ animationDelay: '1s' }} />
+              </div>
+              
+              <div className="relative p-8">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-4">
+                      <div className="relative">
+                        <Crown className="h-10 w-10 text-primary animate-breathe" />
+                        <div className="absolute inset-0 rounded-full bg-primary/20 blur-lg animate-pulse" />
+                      </div>
+                      <div>
+                        <h1 className="text-4xl font-bold text-foreground">
+                          Welcome to EroBoard
+                        </h1>
+                        <p className="text-xl text-muted-foreground mt-1">Your comprehensive creator analytics hub</p>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center gap-6">
+                      <div className="flex items-center gap-2">
+                        <div className="w-3 h-3 rounded-full bg-emerald-400 animate-pulse" />
+                        <span className="text-sm text-muted-foreground">Real-time Analytics</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Zap className="w-4 h-4 text-primary" />
+                        <span className="text-sm text-muted-foreground">AI-Powered Insights</span>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="text-right space-y-3">
+                    <div className="bg-card/80 backdrop-blur-sm rounded-2xl p-4 border border-border/50">
+                      <p className="text-primary text-xl font-bold">Elite Creator</p>
+                      <Badge className="bg-primary/20 text-primary mt-2 px-3 py-1">
+                        {stats.totalEarnings > 1000 ? 'Top 5% Performer' : 'Rising Star'}
+                      </Badge>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
 
-            {/* Quick Stats */}
+            {/* Enhanced Stats Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               {quickStats.map((stat, index) => {
                 const Icon = stat.icon;
                 return (
-                  <Card key={index} className="bg-gradient-to-br from-luxury-darker to-luxury-dark border-luxury-neutral/10 hover:border-luxury-primary/20 transition-all duration-300">
-                    <CardContent className="p-6">
-                      <div className="flex items-center justify-between mb-4">
-                        <Icon className={`h-8 w-8 ${stat.color}`} />
-                        <Badge className="bg-green-500/20 text-green-400">
+                  <Card key={index} className="group relative overflow-hidden bg-card/80 backdrop-blur-xl border border-border/50 hover:border-primary/30 transition-all duration-500 hover:scale-105 hover:shadow-2xl hover:shadow-primary/10">
+                    {/* Ambient Background */}
+                    <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-accent/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                    
+                    {/* Floating Icon Background */}
+                    <div className="absolute top-4 right-4 w-16 h-16 rounded-full bg-gradient-to-br from-primary/10 to-accent/10 blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                    
+                    <CardContent className="relative p-6 space-y-4">
+                      <div className="flex items-center justify-between">
+                        <div className="relative">
+                          <Icon className={`h-8 w-8 ${stat.color} transition-all duration-300 group-hover:scale-110`} />
+                          <div className="absolute inset-0 rounded-full blur-md opacity-0 group-hover:opacity-50 transition-opacity duration-500" style={{ backgroundColor: stat.color.includes('blue') ? '#3b82f6' : stat.color.includes('green') ? '#10b981' : stat.color.includes('pink') ? '#ec4899' : '#9b87f5' }} />
+                        </div>
+                        <Badge className="bg-emerald-500/20 text-emerald-400 border border-emerald-500/20 transition-all duration-300 group-hover:bg-emerald-500/30">
+                          <TrendingUp className="h-3 w-3 mr-1" />
                           {stat.change}
                         </Badge>
                       </div>
-                      <div>
-                        <p className="text-2xl font-bold text-white mb-1">{stat.value}</p>
-                        <p className="text-sm text-gray-400">{stat.title}</p>
+                      
+                      <div className="space-y-2">
+                        <p className="text-3xl font-bold text-foreground transition-all duration-300 group-hover:text-primary">
+                          {stat.value}
+                        </p>
+                        <p className="text-sm text-muted-foreground font-medium">{stat.title}</p>
+                      </div>
+                      
+                      {/* Progress Indicator */}
+                      <div className="w-full h-1 bg-border rounded-full overflow-hidden">
+                        <div 
+                          className="h-full bg-gradient-to-r from-primary to-accent rounded-full transition-all duration-1000 group-hover:w-full"
+                          style={{ width: `${65 + index * 10}%` }}
+                        />
                       </div>
                     </CardContent>
                   </Card>
@@ -239,76 +289,155 @@ const Eroboard = () => {
               })}
             </div>
 
-            {/* AI Insights */}
-            <Card className="bg-luxury-darker border-luxury-neutral/10">
-              <CardHeader>
-                <CardTitle className="text-white flex items-center gap-2">
-                  <Zap className="h-5 w-5 text-luxury-primary" />
+            {/* AI Insights Hub */}
+            <Card className="relative overflow-hidden bg-card/80 backdrop-blur-xl border border-border/50">
+              <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-accent/5" />
+              
+              <CardHeader className="relative">
+                <CardTitle className="text-foreground flex items-center gap-3">
+                  <div className="relative">
+                    <Zap className="h-6 w-6 text-primary animate-pulse" />
+                    <div className="absolute inset-0 rounded-full bg-primary/20 blur-lg" />
+                  </div>
                   AI Insights & Recommendations
+                  <Badge className="bg-primary/20 text-primary border border-primary/30 ml-auto">
+                    Live Analysis
+                  </Badge>
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
+              
+              <CardContent className="relative space-y-4">
                 {aiInsights.map((insight, index) => (
-                  <div key={index} className="flex items-start gap-4 p-4 bg-luxury-dark/50 rounded-lg">
-                    <div className="w-10 h-10 bg-luxury-primary/20 rounded-full flex items-center justify-center flex-shrink-0">
-                      <Lightbulb className="h-5 w-5 text-luxury-primary" />
+                  <div key={index} className="group relative overflow-hidden rounded-2xl bg-card/50 backdrop-blur-sm border border-border/30 p-5 hover:border-primary/30 transition-all duration-500 hover:scale-[1.02]">
+                    <div className="absolute inset-0 bg-gradient-to-r from-primary/0 via-primary/5 to-primary/0 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                    
+                    <div className="relative flex items-start gap-4">
+                      <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-primary/20 to-accent/20 border border-primary/30 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform duration-300">
+                        <Lightbulb className="h-6 w-6 text-primary animate-breathe" />
+                      </div>
+                      
+                      <div className="flex-1 space-y-3">
+                        <div>
+                          <h4 className="font-semibold text-foreground mb-2 group-hover:text-primary transition-colors duration-300">
+                            {insight.title}
+                          </h4>
+                          <p className="text-muted-foreground text-sm leading-relaxed">
+                            {insight.insight}
+                          </p>
+                        </div>
+                        
+                        <div className="flex items-center justify-between">
+                          <p className="text-primary text-sm font-medium bg-primary/10 px-3 py-1 rounded-full">
+                            {insight.action}
+                          </p>
+                          <Button 
+                            size="sm" 
+                            variant="outline" 
+                            className="border-primary/30 text-primary hover:bg-primary/10 hover:border-primary/50 transition-all duration-300 rounded-xl"
+                          >
+                            Apply Insight
+                          </Button>
+                        </div>
+                      </div>
                     </div>
-                    <div className="flex-1">
-                      <h4 className="font-medium text-white mb-1">{insight.title}</h4>
-                      <p className="text-gray-300 text-sm mb-2">{insight.insight}</p>
-                      <p className="text-luxury-primary text-sm font-medium">{insight.action}</p>
-                    </div>
-                    <Button size="sm" variant="outline" className="border-luxury-primary/30 text-luxury-primary hover:bg-luxury-primary/10">
-                      Apply
-                    </Button>
                   </div>
                 ))}
               </CardContent>
             </Card>
 
-            {/* Sample Data Generation - Only show if user has no earnings */}
+            {/* Enhanced Sample Data Generation */}
             {stats.totalEarnings === 0 && (
-              <Card className="bg-gradient-to-r from-blue-600/20 to-purple-600/20 border border-blue-500/30">
-                <CardContent className="p-6 text-center">
-                  <Database className="h-12 w-12 text-blue-400 mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold text-white mb-2">No Analytics Data Found</h3>
-                  <p className="text-gray-300 text-sm mb-4">
-                    Generate sample data to explore all the features of your analytics dashboard
-                  </p>
+              <Card className="relative overflow-hidden bg-gradient-to-br from-blue-500/10 via-purple-500/5 to-blue-500/15 border border-blue-500/30 backdrop-blur-sm">
+                <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-purple-500/10" />
+                <div className="absolute top-4 right-4 w-32 h-32 bg-blue-500/10 rounded-full blur-2xl animate-pulse" />
+                
+                <CardContent className="relative p-8 text-center space-y-6">
+                  <div className="relative mx-auto w-20 h-20 rounded-3xl bg-gradient-to-br from-blue-500/20 to-purple-500/20 border border-blue-500/30 flex items-center justify-center">
+                    <Database className="h-10 w-10 text-blue-400 animate-breathe" />
+                    <div className="absolute inset-0 rounded-3xl bg-blue-500/20 blur-lg animate-pulse" />
+                  </div>
+                  
+                  <div className="space-y-3">
+                    <h3 className="text-2xl font-bold text-foreground">No Analytics Data Found</h3>
+                    <p className="text-muted-foreground leading-relaxed max-w-md mx-auto">
+                      Generate sample data to explore all the features of your analytics dashboard and see how it works
+                    </p>
+                  </div>
+                  
                   <Button 
                     onClick={handleGenerateSampleData}
-                    className="bg-blue-600 hover:bg-blue-700 text-white"
                     disabled={loading}
+                    className="bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white border-0 px-8 py-3 rounded-xl font-semibold transition-all duration-300 hover:scale-105 hover:shadow-2xl hover:shadow-blue-500/20"
                   >
-                    {loading ? "Generating..." : "Generate Sample Data"}
+                    {loading ? (
+                      <div className="flex items-center gap-2">
+                        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                        Generating Data...
+                      </div>
+                    ) : (
+                      "Generate Sample Data"
+                    )}
                   </Button>
                 </CardContent>
               </Card>
             )}
 
-            {/* Quick Access */}
+            {/* Enhanced Quick Access Grid */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <Card className="bg-luxury-darker border-luxury-neutral/10 hover:border-luxury-primary/20 transition-all duration-300 cursor-pointer" onClick={() => setActiveTab("earnings")}>
-                <CardContent className="p-6 text-center">
-                  <DollarSign className="h-12 w-12 text-luxury-primary mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold text-white mb-2">Earnings Deep Dive</h3>
-                  <p className="text-gray-400 text-sm">Detailed revenue analytics and forecasting</p>
+              <Card className="group relative overflow-hidden bg-card/80 backdrop-blur-xl border border-border/50 hover:border-primary/30 transition-all duration-500 cursor-pointer hover:scale-105 hover:shadow-2xl hover:shadow-primary/10" onClick={() => setActiveTab("earnings")}>
+                <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-accent/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                <div className="absolute top-4 right-4 w-20 h-20 bg-primary/10 rounded-full blur-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                
+                <CardContent className="relative p-8 text-center space-y-4">
+                  <div className="relative mx-auto w-16 h-16 rounded-2xl bg-gradient-to-br from-primary/20 to-accent/20 border border-primary/30 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                    <DollarSign className="h-8 w-8 text-primary animate-breathe" />
+                    <div className="absolute inset-0 rounded-2xl bg-primary/20 blur-lg opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                  </div>
+                  <div className="space-y-2">
+                    <h3 className="text-xl font-bold text-foreground group-hover:text-primary transition-colors duration-300">Earnings Deep Dive</h3>
+                    <p className="text-muted-foreground text-sm leading-relaxed">Detailed revenue analytics and forecasting</p>
+                  </div>
+                  <div className="w-full h-1 bg-border rounded-full overflow-hidden">
+                    <div className="h-full w-2/3 bg-gradient-to-r from-primary to-accent rounded-full transition-all duration-1000 group-hover:w-full" />
+                  </div>
                 </CardContent>
               </Card>
               
-              <Card className="bg-luxury-darker border-luxury-neutral/10 hover:border-luxury-primary/20 transition-all duration-300 cursor-pointer" onClick={() => setActiveTab("content")}>
-                <CardContent className="p-6 text-center">
-                  <BarChart3 className="h-12 w-12 text-blue-400 mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold text-white mb-2">Content Performance</h3>
-                  <p className="text-gray-400 text-sm">Track engagement and optimize content</p>
+              <Card className="group relative overflow-hidden bg-card/80 backdrop-blur-xl border border-border/50 hover:border-blue-400/30 transition-all duration-500 cursor-pointer hover:scale-105 hover:shadow-2xl hover:shadow-blue-400/10" onClick={() => setActiveTab("content")}>
+                <div className="absolute inset-0 bg-gradient-to-br from-blue-400/5 via-transparent to-cyan-400/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                <div className="absolute top-4 right-4 w-20 h-20 bg-blue-400/10 rounded-full blur-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                
+                <CardContent className="relative p-8 text-center space-y-4">
+                  <div className="relative mx-auto w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-400/20 to-cyan-400/20 border border-blue-400/30 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                    <BarChart3 className="h-8 w-8 text-blue-400 animate-breathe" />
+                    <div className="absolute inset-0 rounded-2xl bg-blue-400/20 blur-lg opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                  </div>
+                  <div className="space-y-2">
+                    <h3 className="text-xl font-bold text-foreground group-hover:text-blue-400 transition-colors duration-300">Content Performance</h3>
+                    <p className="text-muted-foreground text-sm leading-relaxed">Track engagement and optimize content</p>
+                  </div>
+                  <div className="w-full h-1 bg-border rounded-full overflow-hidden">
+                    <div className="h-full w-3/4 bg-gradient-to-r from-blue-400 to-cyan-400 rounded-full transition-all duration-1000 group-hover:w-full" />
+                  </div>
                 </CardContent>
               </Card>
               
-              <Card className="bg-luxury-darker border-luxury-neutral/10 hover:border-luxury-primary/20 transition-all duration-300 cursor-pointer" onClick={() => setActiveTab("audience")}>
-                <CardContent className="p-6 text-center">
-                  <Users className="h-12 w-12 text-green-400 mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold text-white mb-2">Audience Insights</h3>
-                  <p className="text-gray-400 text-sm">Understand your fans and grow your community</p>
+              <Card className="group relative overflow-hidden bg-card/80 backdrop-blur-xl border border-border/50 hover:border-emerald-400/30 transition-all duration-500 cursor-pointer hover:scale-105 hover:shadow-2xl hover:shadow-emerald-400/10" onClick={() => setActiveTab("audience")}>
+                <div className="absolute inset-0 bg-gradient-to-br from-emerald-400/5 via-transparent to-green-400/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                <div className="absolute top-4 right-4 w-20 h-20 bg-emerald-400/10 rounded-full blur-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                
+                <CardContent className="relative p-8 text-center space-y-4">
+                  <div className="relative mx-auto w-16 h-16 rounded-2xl bg-gradient-to-br from-emerald-400/20 to-green-400/20 border border-emerald-400/30 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                    <Users className="h-8 w-8 text-emerald-400 animate-breathe" />
+                    <div className="absolute inset-0 rounded-2xl bg-emerald-400/20 blur-lg opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                  </div>
+                  <div className="space-y-2">
+                    <h3 className="text-xl font-bold text-foreground group-hover:text-emerald-400 transition-colors duration-300">Audience Insights</h3>
+                    <p className="text-muted-foreground text-sm leading-relaxed">Understand your fans and grow your community</p>
+                  </div>
+                  <div className="w-full h-1 bg-border rounded-full overflow-hidden">
+                    <div className="h-full w-4/5 bg-gradient-to-r from-emerald-400 to-green-400 rounded-full transition-all duration-1000 group-hover:w-full" />
+                  </div>
                 </CardContent>
               </Card>
             </div>
@@ -361,15 +490,72 @@ const Eroboard = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-luxury-dark via-luxury-darker to-luxury-dark">
-      <div className="flex">
-        {/* Sidebar */}
+    <div className="min-h-screen bg-gradient-to-br from-background via-card to-background relative overflow-hidden">
+      {/* Ambient Background Elements */}
+      <div className="absolute inset-0 opacity-30">
+        <div className="absolute top-20 left-20 w-96 h-96 bg-primary/10 rounded-full blur-3xl animate-pulse" />
+        <div className="absolute bottom-20 right-20 w-64 h-64 bg-accent/10 rounded-full blur-2xl animate-pulse" style={{ animationDelay: '2s' }} />
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-128 h-128 bg-primary/5 rounded-full blur-3xl animate-breathe" />
+      </div>
+      
+      {/* Neural Network Grid */}
+      <div className="absolute inset-0 opacity-5">
+        <div className="w-full h-full" style={{
+          backgroundImage: `radial-gradient(circle at 25% 25%, hsl(var(--primary)) 1px, transparent 1px),
+                           radial-gradient(circle at 75% 75%, hsl(var(--accent)) 1px, transparent 1px)`,
+          backgroundSize: '50px 50px'
+        }} />
+      </div>
+
+      <div className="flex relative z-10">
+        {/* Enhanced Sidebar */}
         <AnalyticsSidebar activeTab={activeTab} onTabChange={setActiveTab} />
         
-        {/* Main Content */}
-        <div className="flex-1 overflow-auto">
-          <div className="p-6">
-            {renderTabContent()}
+        {/* Main Content Area */}
+        <div className="flex-1 overflow-hidden">
+          {/* Top Performance Bar */}
+          <div className="bg-card/80 backdrop-blur-xl border-b border-border/50 px-6 py-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse" />
+                  <span className="text-sm text-muted-foreground">Live Analytics</span>
+                </div>
+                <div className="h-4 w-px bg-border" />
+                <div className="text-sm text-muted-foreground">
+                  Last updated: <span className="text-foreground">just now</span>
+                </div>
+              </div>
+              
+              <div className="flex items-center gap-6">
+                <div className="flex items-center gap-3">
+                  <div className="text-right">
+                    <div className="text-sm font-medium text-foreground">${stats.totalEarnings.toLocaleString()}</div>
+                    <div className="text-xs text-muted-foreground">Total Earnings</div>
+                  </div>
+                  <div className="w-12 h-12 rounded-full bg-gradient-to-tr from-primary/20 to-accent/20 border border-primary/30 flex items-center justify-center">
+                    <DollarSign className="w-5 h-5 text-primary" />
+                  </div>
+                </div>
+                
+                <div className="flex items-center gap-3">
+                  <div className="text-right">
+                    <div className="text-sm font-medium text-foreground">{stats.followers.toLocaleString()}</div>
+                    <div className="text-xs text-muted-foreground">Followers</div>
+                  </div>
+                  <div className="w-12 h-12 rounded-full bg-gradient-to-tr from-blue-500/20 to-cyan-400/20 border border-blue-500/30 flex items-center justify-center">
+                    <Users className="w-5 h-5 text-blue-400" />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          {/* Scrollable Content */}
+          <div className="h-[calc(100vh-73px)] overflow-y-auto custom-scrollbar">
+            <div className="p-6 space-y-6">
+              {renderTabContent()}
+            </div>
           </div>
         </div>
       </div>
