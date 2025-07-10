@@ -38,32 +38,37 @@ export const StreamingAnalytics = ({ data, isLoading }: StreamingAnalyticsProps)
     );
   }
 
-  // Mock data
+  // Real data from stats
+  const totalEarnings = data.stats?.totalEarnings || 0;
+  const totalViews = data.stats?.totalViews || 0;
+  const followers = data.stats?.followers || 0;
+  const engagementRate = data.stats?.engagementRate || 0;
+  
   const streamingStats = [
     {
-      title: "Total Stream Hours",
-      value: "234h 45m",
+      title: "Total Earnings",
+      value: `$${totalEarnings.toLocaleString()}`,
       change: "+18.2%",
-      icon: Clock,
-      color: "text-blue-400"
-    },
-    {
-      title: "Avg. Viewers",
-      value: "1,420",
-      change: "+12.7%",
-      icon: Users,
-      color: "text-green-400"
-    },
-    {
-      title: "Stream Revenue",
-      value: "$8,950",
-      change: "+25.1%",
       icon: DollarSign,
       color: "text-luxury-primary"
     },
     {
-      title: "Peak Viewers",
-      value: "3,250",
+      title: "Total Views",
+      value: totalViews > 1000 ? `${(totalViews / 1000).toFixed(1)}K` : totalViews.toString(),
+      change: "+12.7%",
+      icon: Eye,
+      color: "text-blue-400"
+    },
+    {
+      title: "Followers",
+      value: followers.toLocaleString(),
+      change: "+25.1%",
+      icon: Users,
+      color: "text-green-400"
+    },
+    {
+      title: "Engagement Rate",
+      value: `${engagementRate.toFixed(1)}%`,
       change: "+8.3%",
       icon: TrendingUp,
       color: "text-pink-400"

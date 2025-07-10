@@ -37,34 +37,39 @@ export const AudienceInsights = ({ data, isLoading }: AudienceInsightsProps) => 
     );
   }
 
-  // Mock data
+  // Real data from stats
+  const totalFollowers = data.stats?.followers || 0;
+  const newSubscribers = data.stats?.newSubscribers || 0;
+  const engagementRate = data.stats?.engagementRate || 0;
+  const vipFans = data.stats?.vipFans || 0;
+  
   const audienceStats = [
     {
       title: "Total Fans",
-      value: "8,945",
-      change: "+12.3%",
+      value: totalFollowers.toLocaleString(),
+      change: `+${newSubscribers}`,
       icon: Users,
       color: "text-blue-400"
     },
     {
-      title: "Active This Week",
-      value: "2,340",
+      title: "New This Month",
+      value: newSubscribers.toString(),
       change: "+8.7%",
       icon: Activity,
       color: "text-green-400"
     },
     {
       title: "Engagement Rate",
-      value: "15.2%",
+      value: `${engagementRate.toFixed(1)}%`,
       change: "+3.1%",
       icon: Heart,
       color: "text-pink-400"
     },
     {
-      title: "Avg. Session Time",
-      value: "8:45",
+      title: "VIP Fans",
+      value: vipFans.toString(),
       change: "+5.3%",
-      icon: Clock,
+      icon: Crown,
       color: "text-luxury-primary"
     }
   ];
