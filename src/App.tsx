@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { SessionContextProvider } from "@supabase/auth-helpers-react";
 import { supabase } from "@/integrations/supabase/client";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { AdminSessionProvider } from "@/contexts/AdminSessionContext";
 import { ToastProvider } from "@/hooks/use-toast";
 import { ErrorBoundary } from "@/components/ui/ErrorBoundary";
 import Index from "./pages/Index";
@@ -19,6 +20,7 @@ import Messages from "./pages/Messages";
 import Shorts from "./pages/Shorts";
 import ShortsUpload from "./pages/ShortsUpload";
 import Eroboard from "./pages/Eroboard";
+import { Godmode } from "./pages/Godmode";
 import { MainLayout } from "@/components/layout/MainLayout";
 
 const queryClient = new QueryClient();
@@ -27,31 +29,34 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <SessionContextProvider supabaseClient={supabase}>
       <AuthProvider>
-        <ToastProvider>
-          <TooltipProvider>
-            <ErrorBoundary>
-              <Toaster />
-              <Sonner />
-              <BrowserRouter>
-                <Routes>
-                  <Route path="/" element={<Index />} />
-                  <Route path="/login" element={<Login />} />
-                  <Route path="/register" element={<Register />} />
-                  <Route element={<MainLayout />}>
-                    <Route path="/home" element={<Home />} />
-                    <Route path="/dating" element={<Dating />} />
-                    <Route path="/messages" element={<Messages />} />
-                    <Route path="/shorts" element={<Shorts />} />
-                    <Route path="/shorts/upload" element={<ShortsUpload />} />
-                    <Route path="/eroboard" element={<Eroboard />} />
-                    <Route path="/profile" element={<Profile />} />
-                    <Route path="/profile/:userId" element={<Profile />} />
-                  </Route>
-                </Routes>
-              </BrowserRouter>
-            </ErrorBoundary>
-          </TooltipProvider>
-        </ToastProvider>
+        <AdminSessionProvider>
+          <ToastProvider>
+            <TooltipProvider>
+              <ErrorBoundary>
+                <Toaster />
+                <Sonner />
+                <BrowserRouter>
+                  <Routes>
+                    <Route path="/" element={<Index />} />
+                    <Route path="/login" element={<Login />} />
+                    <Route path="/register" element={<Register />} />
+                    <Route path="/godmode" element={<Godmode />} />
+                    <Route element={<MainLayout />}>
+                      <Route path="/home" element={<Home />} />
+                      <Route path="/dating" element={<Dating />} />
+                      <Route path="/messages" element={<Messages />} />
+                      <Route path="/shorts" element={<Shorts />} />
+                      <Route path="/shorts/upload" element={<ShortsUpload />} />
+                      <Route path="/eroboard" element={<Eroboard />} />
+                      <Route path="/profile" element={<Profile />} />
+                      <Route path="/profile/:userId" element={<Profile />} />
+                    </Route>
+                  </Routes>
+                </BrowserRouter>
+              </ErrorBoundary>
+            </TooltipProvider>
+          </ToastProvider>
+        </AdminSessionProvider>
       </AuthProvider>
     </SessionContextProvider>
   </QueryClientProvider>
