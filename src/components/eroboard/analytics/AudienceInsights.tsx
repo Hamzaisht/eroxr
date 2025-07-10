@@ -222,11 +222,6 @@ export const AudienceInsights = ({ data, isLoading }: AudienceInsightsProps) => 
                         style={{ width: `${Math.max(country.percentage, 2)}%` }}
                       />
                     </div>
-                    {hasRealData && country.latitude && country.longitude && (
-                      <Badge className="text-xs bg-blue-500/20 text-blue-400">
-                        📍 {country.latitude.toFixed(2)}, {country.longitude.toFixed(2)}
-                      </Badge>
-                    )}
                   </div>
                 </div>
               ))}
