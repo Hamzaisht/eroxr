@@ -2992,6 +2992,14 @@ export type Database = {
         Args: { p_content_id: string; p_content_type: string }
         Returns: number
       }
+      get_conversion_funnel: {
+        Args: { p_creator_id: string; p_days?: number }
+        Returns: {
+          stage: string
+          count: number
+          percentage: number
+        }[]
+      }
       get_creator_analytics: {
         Args: {
           p_creator_id: string
@@ -3035,6 +3043,18 @@ export type Database = {
           total_page_views: number
           avg_latitude: number
           avg_longitude: number
+        }[]
+      }
+      get_most_engaged_fans: {
+        Args: { p_creator_id: string; p_limit?: number }
+        Returns: {
+          user_id: string
+          total_spent: number
+          total_purchases: number
+          total_likes: number
+          total_comments: number
+          engagement_score: number
+          last_interaction: string
         }[]
       }
       get_revenue_breakdown: {

@@ -75,6 +75,8 @@ export function useEroboardData() {
   const [latestPayout, setLatestPayout] = useState<PayoutInfo | null>(null);
   const [creatorRankings, setCreatorRankings] = useState([]);
   const [geographicData, setGeographicData] = useState([]);
+  const [engagedFansData, setEngagedFansData] = useState([]);
+  const [conversionFunnelData, setConversionFunnelData] = useState([]);
 
   const fetchDashboardData = useCallback(async (dateRange?: DateRange, forceRefresh = false) => {
     if (!session?.user?.id) return;
@@ -309,6 +311,51 @@ export function useEroboardData() {
 
       setGeographicData(formattedGeoData);
 
+      // Fetch most engaged fans
+      const { data: engagedFansData, error: fansError } = await supabase
+        .rpc('get_most_engaged_fans', { 
+          p_creator_id: session.user.id,
+          p_limit: 10
+        });
+
+      if (fansError) {
+        console.error("Error fetching engaged fans:", fansError);
+      }
+
+      const formattedFansData = (engagedFansData || []).map((fan, index) => ({
+        userId: fan.user_id,
+        username: `Fan_${fan.user_id.slice(0, 8)}`, // Use first 8 chars of UUID as username
+        totalSpent: Number(fan.total_spent),
+        totalPurchases: Number(fan.total_purchases),
+        totalLikes: Number(fan.total_likes),
+        totalComments: Number(fan.total_comments),
+        engagementScore: Number(fan.engagement_score),
+        lastInteraction: fan.last_interaction,
+        rank: index + 1,
+        avatar: ['🌟', '👑', '💎', '❤️', '⭐', '🔥', '💯', '🏆', '⚡', '🎉'][index] || '🎯'
+      }));
+
+      setEngagedFansData(formattedFansData);
+
+      // Fetch conversion funnel data
+      const { data: funnelData, error: funnelError } = await supabase
+        .rpc('get_conversion_funnel', { 
+          p_creator_id: session.user.id,
+          p_days: 30
+        });
+
+      if (funnelError) {
+        console.error("Error fetching conversion funnel:", funnelError);
+      }
+
+      const formattedFunnelData = (funnelData || []).map(stage => ({
+        stage: stage.stage,
+        count: Number(stage.count),
+        percentage: Number(stage.percentage)
+      }));
+
+      setConversionFunnelData(formattedFunnelData);
+
       // Set empty creator rankings for now
       setCreatorRankings([]);
 
@@ -408,6 +455,8 @@ export function useEroboardData() {
     latestPayout,
     creatorRankings,
     geographicData,
+    engagedFansData,
+    conversionFunnelData,
     fetchDashboardData,
     setLatestPayout
   };

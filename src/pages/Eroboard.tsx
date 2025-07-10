@@ -47,6 +47,8 @@ const Eroboard = () => {
     contentPerformanceData,
     latestPayout,
     geographicData,
+    engagedFansData,
+    conversionFunnelData,
     fetchDashboardData 
   } = useEroboardData();
   const { toast } = useToast();
@@ -323,7 +325,9 @@ const Eroboard = () => {
           stats, 
           engagementData,
           creatorRankings,
-          geographicData
+          geographicData,
+          engagedFansData,
+          conversionFunnelData
         }} isLoading={loading} />;
       case "streaming":
         return <StreamingAnalytics data={{ 
