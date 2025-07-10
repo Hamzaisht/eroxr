@@ -77,6 +77,9 @@ export function useEroboardData() {
   const [geographicData, setGeographicData] = useState([]);
   const [engagedFansData, setEngagedFansData] = useState([]);
   const [conversionFunnelData, setConversionFunnelData] = useState([]);
+  const [growthAnalyticsData, setGrowthAnalyticsData] = useState(null);
+  const [streamingAnalyticsData, setStreamingAnalyticsData] = useState(null);
+  const [contentAnalyticsData, setContentAnalyticsData] = useState(null);
 
   const fetchDashboardData = useCallback(async (dateRange?: DateRange, forceRefresh = false) => {
     if (!session?.user?.id) return;
@@ -356,6 +359,45 @@ export function useEroboardData() {
 
       setConversionFunnelData(formattedFunnelData);
 
+      // Fetch growth analytics data
+      const { data: growthData, error: growthError } = await supabase
+        .rpc('get_growth_analytics', { 
+          p_creator_id: session.user.id,
+          p_days: 30
+        });
+
+      if (growthError) {
+        console.error("Error fetching growth analytics:", growthError);
+      }
+
+      setGrowthAnalyticsData(growthData?.[0] || null);
+
+      // Fetch streaming analytics data
+      const { data: streamingData, error: streamingError } = await supabase
+        .rpc('get_streaming_analytics', { 
+          p_creator_id: session.user.id,
+          p_days: 30
+        });
+
+      if (streamingError) {
+        console.error("Error fetching streaming analytics:", streamingError);
+      }
+
+      setStreamingAnalyticsData(streamingData?.[0] || null);
+
+      // Fetch content analytics data
+      const { data: contentData, error: contentError } = await supabase
+        .rpc('get_content_analytics', { 
+          p_creator_id: session.user.id,
+          p_days: 30
+        });
+
+      if (contentError) {
+        console.error("Error fetching content analytics:", contentError);
+      }
+
+      setContentAnalyticsData(contentData?.[0] || null);
+
       // Set empty creator rankings for now
       setCreatorRankings([]);
 
@@ -457,6 +499,9 @@ export function useEroboardData() {
     geographicData,
     engagedFansData,
     conversionFunnelData,
+    growthAnalyticsData,
+    streamingAnalyticsData,
+    contentAnalyticsData,
     fetchDashboardData,
     setLatestPayout
   };

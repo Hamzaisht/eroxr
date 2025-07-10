@@ -49,7 +49,10 @@ const Eroboard = () => {
     geographicData,
     engagedFansData,
     conversionFunnelData,
-    fetchDashboardData 
+    growthAnalyticsData,
+    streamingAnalyticsData,
+    contentAnalyticsData,
+    fetchDashboardData
   } = useEroboardData();
   const { toast } = useToast();
 
@@ -328,17 +331,28 @@ const Eroboard = () => {
           geographicData,
           engagedFansData,
           conversionFunnelData
-        }} isLoading={loading} />;
+         }} isLoading={loading} />;
       case "streaming":
         return <StreamingAnalytics data={{ 
           stats,
           earningsData,
-          engagementData 
+          engagementData,
+          streamingAnalyticsData
         }} isLoading={loading} />;
       case "growth":
-        return <GrowthAnalytics data={{ stats, engagementData, geographicData }} isLoading={loading} />;
+        return <GrowthAnalytics data={{ 
+          stats, 
+          engagementData, 
+          geographicData,
+          growthAnalyticsData
+        }} isLoading={loading} />;
       case "insights":
-        return <AIInsights data={{ stats, contentTypeData, engagementData }} isLoading={loading} />;
+        return <AIInsights data={{ 
+          stats, 
+          contentTypeData, 
+          engagementData,
+          contentAnalyticsData
+        }} isLoading={loading} />;
       case "exports":
         return <ReportsExports data={{ stats, earningsData, geographicData, contentPerformanceData }} isLoading={loading} />;
       default:

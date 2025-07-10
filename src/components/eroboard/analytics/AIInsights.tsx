@@ -21,6 +21,7 @@ interface AIInsightsProps {
     stats: EroboardStats;
     contentTypeData: Array<{ name: string; value: number }>;
     engagementData: Array<{ date: string; count: number }>;
+    contentAnalyticsData?: any;
   };
   isLoading: boolean;
 }

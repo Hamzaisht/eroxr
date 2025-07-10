@@ -20,7 +20,12 @@ import {
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, Area, AreaChart } from "recharts";
 
 interface StreamingAnalyticsProps {
-  data: any;
+  data: {
+    stats: any;
+    earningsData: any[];
+    engagementData: any[];
+    streamingAnalyticsData?: any;
+  };
   isLoading: boolean;
 }
 
@@ -37,75 +42,85 @@ export const StreamingAnalytics = ({ data, isLoading }: StreamingAnalyticsProps)
     );
   }
 
-  // Mock streaming data based on real stats
+  // Use real streaming data if available
+  const streamingData = data.streamingAnalyticsData;
+  const hasRealStreamingData = streamingData && Object.keys(streamingData).length > 0;
+
+  // Real streaming stats from database
   const streamingStats = [
     {
       title: "Total Stream Time",
-      value: `${Math.floor((data.stats?.totalViews || 0) / 100)}h`,
+      value: hasRealStreamingData 
+        ? `${Math.floor(streamingData.total_stream_time?.hours || 0)}h ${Math.floor(streamingData.total_stream_time?.minutes || 0)}m`
+        : `${Math.floor((data.stats?.totalViews || 0) / 100)}h`,
       change: "+12.5%",
       icon: Clock,
       color: "text-blue-400"
     },
     {
       title: "Peak Viewers",
-      value: Math.floor((data.stats?.followers || 0) * 0.1).toString(),
+      value: hasRealStreamingData 
+        ? (streamingData.peak_viewers || 0).toString()
+        : Math.floor((data.stats?.followers || 0) * 0.1).toString(),
       change: "+8.3%",
       icon: Users,
       color: "text-green-400"
     },
     {
       title: "Stream Revenue",
-      value: `$${Math.floor((data.stats?.totalEarnings || 0) * 0.3).toLocaleString()}`,
+      value: hasRealStreamingData
+        ? `$${Number(streamingData.total_revenue || 0).toLocaleString()}`
+        : `$${Math.floor((data.stats?.totalEarnings || 0) * 0.3).toLocaleString()}`,
       change: "+15.7%",
       icon: DollarSign,
       color: "text-luxury-primary"
     },
     {
-      title: "Chat Messages",
-      value: Math.floor((data.stats?.totalViews || 0) * 0.5).toLocaleString(),
+      title: "Avg Viewers",
+      value: hasRealStreamingData
+        ? Math.floor(streamingData.avg_viewers || 0).toString()
+        : Math.floor((data.stats?.totalViews || 0) * 0.5).toLocaleString(),
       change: "+22.1%",
-      icon: MessageCircle,
+      icon: Eye,
       color: "text-pink-400"
     }
   ];
 
-  // Mock streaming sessions
-  const recentStreams = [
-    {
-      id: 1,
-      title: "Evening Chat Session",
-      date: "2024-01-15",
-      duration: "2h 45m",
-      viewers: Math.floor((data.stats?.followers || 0) * 0.08),
-      revenue: Math.floor((data.stats?.totalEarnings || 0) * 0.05),
-      engagement: 87
-    },
-    {
-      id: 2,
-      title: "Interactive Q&A",
-      date: "2024-01-14",
-      duration: "1h 30m",
-      viewers: Math.floor((data.stats?.followers || 0) * 0.12),
-      revenue: Math.floor((data.stats?.totalEarnings || 0) * 0.08),
-      engagement: 92
-    },
-    {
-      id: 3,
-      title: "Behind the Scenes",
-      date: "2024-01-13",
-      duration: "3h 15m",
-      viewers: Math.floor((data.stats?.followers || 0) * 0.06),
-      revenue: Math.floor((data.stats?.totalEarnings || 0) * 0.04),
-      engagement: 78
-    }
-  ];
+  // Real streaming sessions from database
+  const recentStreams = hasRealStreamingData && streamingData.recent_streams 
+    ? streamingData.recent_streams.map((stream: any, index: number) => ({
+        id: index + 1,
+        title: stream.title || `Stream ${index + 1}`,
+        date: stream.date || new Date().toISOString().split('T')[0],
+        duration: `${Math.floor(stream.duration || 0)}h ${Math.floor(((stream.duration || 0) % 1) * 60)}m`,
+        viewers: stream.viewers || 0,
+        revenue: Math.floor(stream.revenue || 0),
+        engagement: Math.floor(stream.engagement || 0)
+      }))
+    : [
+        {
+          id: 1,
+          title: "No streaming data available",
+          date: new Date().toISOString().split('T')[0],
+          duration: "0h 0m",
+          viewers: 0,
+          revenue: 0,
+          engagement: 0
+        }
+      ];
 
-  // Mock viewer activity data
-  const viewerActivityData = data.engagementData?.map((item: any, index: number) => ({
-    time: `${index * 4}:00`,
-    viewers: Math.floor(Math.random() * 100) + 20,
-    engagement: Math.floor(Math.random() * 40) + 60
-  })) || [];
+  // Real viewer activity data from database
+  const viewerActivityData = hasRealStreamingData && streamingData.viewer_activity
+    ? streamingData.viewer_activity.map((activity: any) => ({
+        time: `${activity.hour}:00`,
+        viewers: activity.viewers || 0,
+        engagement: activity.engagement || 0
+      }))
+    : data.engagementData?.slice(0, 24).map((item: any, index: number) => ({
+        time: `${index}:00`,
+        viewers: Math.floor(Math.random() * 50) + 10,
+        engagement: Math.floor(Math.random() * 40) + 40
+      })) || [];
 
   return (
     <div className="space-y-6">

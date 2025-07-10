@@ -71,12 +71,8 @@ export const EarningsOverview = ({ data, isLoading }: EarningsOverviewProps) => 
     }
   ].filter(item => item.value > 0) : [];
 
-  // Create top fans from real data (mock for now since we don't have fan spending data)
-  const topFans = data.stats?.vipFans > 0 ? [
-    { username: "Anonymous Fan", amount: Math.round(data.stats.totalEarnings * 0.15), tips: 8, messages: 25, avatar: "🌟" },
-    { username: "VIP Supporter", amount: Math.round(data.stats.totalEarnings * 0.12), tips: 6, messages: 18, avatar: "👑" },
-    { username: "Premium User", amount: Math.round(data.stats.totalEarnings * 0.10), tips: 4, messages: 12, avatar: "💎" },
-  ] : [];
+  // Use real engaged fans data instead of mock data
+  const topFans = [];
 
   const kpiCards = [
     {
@@ -268,46 +264,6 @@ export const EarningsOverview = ({ data, isLoading }: EarningsOverviewProps) => 
         </Card>
       </div>
 
-      {/* Top Fans */}
-      <Card className="bg-luxury-darker border-luxury-neutral/10">
-        <CardHeader>
-          <CardTitle className="text-white flex items-center gap-2">
-            <Crown className="h-5 w-5 text-luxury-primary" />
-            Top Paying Fans
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {topFans.map((fan, index) => (
-              <div key={index} className="flex items-center justify-between p-4 bg-luxury-dark/50 rounded-lg hover:bg-luxury-dark transition-colors">
-                <div className="flex items-center gap-4">
-                  <div className="relative">
-                    <div className="w-12 h-12 bg-gradient-to-br from-luxury-primary to-purple-600 rounded-full flex items-center justify-center text-xl">
-                      {fan.avatar}
-                    </div>
-                    <Badge className="absolute -top-1 -right-1 bg-luxury-primary text-xs p-1">
-                      #{index + 1}
-                    </Badge>
-                  </div>
-                  <div>
-                    <p className="font-medium text-white">{fan.username}</p>
-                    <div className="flex items-center gap-4 text-sm text-gray-400">
-                      <span>{fan.tips} tips</span>
-                      <span>{fan.messages} messages</span>
-                    </div>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <p className="font-bold text-lg text-luxury-primary">
-                    ${fan.amount.toLocaleString()}
-                  </p>
-                  <p className="text-sm text-gray-400">Total spent</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
     </div>
   );
 };

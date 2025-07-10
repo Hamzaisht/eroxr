@@ -2974,6 +2974,17 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: number
       }
+      get_content_analytics: {
+        Args: { p_creator_id: string; p_days?: number }
+        Returns: {
+          total_posts: number
+          total_views: number
+          avg_engagement_rate: number
+          top_performing_content: Json
+          content_type_breakdown: Json
+          posting_schedule_analysis: Json
+        }[]
+      }
       get_content_performance: {
         Args: { p_creator_id: string; p_limit?: number }
         Returns: {
@@ -3045,6 +3056,19 @@ export type Database = {
           avg_longitude: number
         }[]
       }
+      get_growth_analytics: {
+        Args: { p_creator_id: string; p_days?: number }
+        Returns: {
+          follower_growth_rate: number
+          subscription_rate: number
+          retention_rate: number
+          churn_rate: number
+          new_followers_today: number
+          daily_growth_data: Json
+          retention_data: Json
+          geographic_breakdown: Json
+        }[]
+      }
       get_most_engaged_fans: {
         Args: { p_creator_id: string; p_limit?: number }
         Returns: {
@@ -3068,6 +3092,17 @@ export type Database = {
           tips: number
           ppv_content: number
           live_streams: number
+        }[]
+      }
+      get_streaming_analytics: {
+        Args: { p_creator_id: string; p_days?: number }
+        Returns: {
+          total_stream_time: unknown
+          avg_viewers: number
+          peak_viewers: number
+          total_revenue: number
+          recent_streams: Json
+          viewer_activity: Json
         }[]
       }
       get_subscriber_analytics: {
