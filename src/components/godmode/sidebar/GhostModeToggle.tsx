@@ -1,5 +1,5 @@
 import React from 'react';
-import { Eye, EyeOff, Clock, Shield, Zap, AlertTriangle } from 'lucide-react';
+import { Eye, EyeOff, Clock, Shield, Zap, AlertTriangle, Sparkles } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { useAdminSession } from '@/contexts/AdminSessionContext';
@@ -16,96 +16,148 @@ export const GhostModeToggle: React.FC = () => {
 
   return (
     <div className={cn(
-      "relative p-6 rounded-xl border transition-all duration-500",
+      "relative p-6 rounded-xl border transition-all duration-700 hover-scale",
       isGhostMode 
-        ? "bg-card/50 border-primary/20 shadow-lg shadow-primary/10" 
-        : "bg-card/30 border-border hover:border-primary/30"
+        ? "bg-gradient-to-br from-purple-900/40 via-slate-800/30 to-purple-950/40 border-purple-500/30 shadow-2xl shadow-purple-500/20" 
+        : "bg-gradient-to-br from-slate-800/20 to-slate-900/30 border-slate-600/30 hover:border-purple-500/40"
     )}>
-      {/* Subtle glow effect when active */}
+      {/* Animated background effects */}
       {isGhostMode && (
-        <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-primary/5 to-primary/10 animate-pulse" />
+        <>
+          {/* Primary glow effect */}
+          <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-purple-500/10 via-blue-500/5 to-purple-500/10 animate-pulse" />
+          {/* Sparkle effect */}
+          <div className="absolute inset-0 overflow-hidden rounded-xl">
+            <div className="absolute top-2 right-4 w-1 h-1 bg-purple-400 rounded-full animate-ping" />
+            <div className="absolute top-4 left-8 w-0.5 h-0.5 bg-blue-400 rounded-full animate-ping" style={{ animationDelay: '0.5s' }} />
+            <div className="absolute bottom-3 right-8 w-0.5 h-0.5 bg-purple-300 rounded-full animate-ping" style={{ animationDelay: '1s' }} />
+          </div>
+        </>
       )}
       
-      <div className="relative flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="relative">
-            {isGhostMode ? (
-              <EyeOff className="h-6 w-6 text-primary" />
-            ) : (
-              <Eye className="h-6 w-6 text-muted-foreground" />
-            )}
-            {isGhostMode && (
-              <div className="absolute -top-1 -right-1 w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-            )}
-          </div>
-          
-          <div className="space-y-2">
-            <div className="flex items-center gap-3">
-              <p className={cn(
-                "text-lg font-semibold",
-                isGhostMode ? "text-primary" : "text-foreground"
-              )}>
-                Ghost Mode
-              </p>
+      <div className={cn(
+        "relative transition-all duration-500",
+        isGhostMode ? "animate-fade-in" : ""
+      )}>
+        {/* Header section with icon and status */}
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-4">
+            {/* Animated icon container */}
+            <div className={cn(
+              "relative p-3 rounded-full transition-all duration-500",
+              isGhostMode 
+                ? "bg-purple-500/20 shadow-lg shadow-purple-500/30" 
+                : "bg-slate-700/30"
+            )}>
+              {isGhostMode ? (
+                <EyeOff className={cn(
+                  "h-6 w-6 text-purple-400 transition-all duration-300",
+                  "animate-pulse"
+                )} />
+              ) : (
+                <Eye className="h-6 w-6 text-slate-400 transition-all duration-300" />
+              )}
+              
+              {/* Animated status indicator */}
               {isGhostMode && (
-                <Badge variant="secondary" className="text-xs bg-primary/20 text-primary border-primary/30">
-                  ACTIVE
-                </Badge>
+                <div className="absolute -top-1 -right-1">
+                  <div className="w-3 h-3 bg-green-400 rounded-full animate-ping" />
+                  <div className="absolute top-0 w-3 h-3 bg-green-500 rounded-full" />
+                </div>
               )}
             </div>
             
-            <p className="text-sm text-muted-foreground">
-              {isGhostMode ? "Invisible surveillance active" : "Normal admin mode"}
-            </p>
-            
-            {/* Session timer */}
-            {isGhostMode && sessionTimeRemaining && (
-              <div className="flex items-center gap-2 text-xs text-primary mt-2">
-                <Clock className="h-3 w-3" />
-                <span>Session: {formatTimeRemaining(sessionTimeRemaining)}</span>
+            {/* Title and status */}
+            <div className="space-y-1">
+              <div className="flex items-center gap-3">
+                <h3 className={cn(
+                  "text-lg font-bold transition-all duration-300",
+                  isGhostMode 
+                    ? "text-purple-300 animate-fade-in" 
+                    : "text-slate-300"
+                )}>
+                  Ghost Mode
+                </h3>
+                {isGhostMode && (
+                  <Badge className="animate-scale-in bg-purple-500/30 text-purple-200 border-purple-400/40 text-xs px-2 py-1">
+                    <Sparkles className="h-3 w-3 mr-1" />
+                    ACTIVE
+                  </Badge>
+                )}
               </div>
+              
+              <p className={cn(
+                "text-sm transition-all duration-300",
+                isGhostMode 
+                  ? "text-purple-200/80" 
+                  : "text-slate-400"
+              )}>
+                {isGhostMode ? "👻 Invisible surveillance mode" : "🔍 Standard admin access"}
+              </p>
+            </div>
+          </div>
+
+          {/* Toggle switch */}
+          <div className="flex items-center gap-3">
+            {isLoading && (
+              <div className="w-4 h-4 border-2 border-purple-500 border-t-transparent rounded-full animate-spin" />
             )}
+            
+            <Switch
+              checked={isGhostMode}
+              onCheckedChange={toggleGhostMode}
+              disabled={isLoading}
+              className={cn(
+                "transition-all duration-500 hover-scale",
+                isGhostMode && "data-[state=checked]:bg-purple-500 shadow-lg shadow-purple-500/30"
+              )}
+            />
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
-          {/* Ghost Mode capabilities indicators */}
-          {isGhostMode && (
-            <div className="flex items-center gap-1">
-              <div title="Invisible to users">
-                <Shield className="h-4 w-4 text-green-500" />
+        {/* Session info and capabilities */}
+        {isGhostMode && (
+          <div className="space-y-3 animate-fade-in">
+            {/* Session timer */}
+            {sessionTimeRemaining && (
+              <div className="flex items-center gap-2 p-2 bg-purple-500/10 rounded-lg border border-purple-500/20">
+                <Clock className="h-4 w-4 text-purple-400" />
+                <span className="text-sm text-purple-300">
+                  Session: {formatTimeRemaining(sessionTimeRemaining)}
+                </span>
               </div>
-              <div title="Full access enabled">
-                <Zap className="h-4 w-4 text-yellow-500" />
+            )}
+
+            {/* Capabilities indicators */}
+            <div className="flex items-center gap-3 p-3 bg-slate-800/40 rounded-lg">
+              <div className="flex items-center gap-1">
+                <Shield className="h-4 w-4 text-green-400 animate-pulse" />
+                <span className="text-xs text-green-300">Invisible</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <Zap className="h-4 w-4 text-yellow-400 animate-pulse" />
+                <span className="text-xs text-yellow-300">Full Access</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <Eye className="h-4 w-4 text-blue-400 animate-pulse" />
+                <span className="text-xs text-blue-300">Surveillance</span>
               </div>
             </div>
-          )}
-          
-          {isLoading && (
-            <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-          )}
-          
-          <Switch
-            checked={isGhostMode}
-            onCheckedChange={toggleGhostMode}
-            disabled={isLoading}
-            className={cn(
-              "transition-all duration-300",
-              isGhostMode && "data-[state=checked]:bg-primary"
-            )}
-          />
-        </div>
-      </div>
 
-      {/* Warning message for Ghost Mode */}
-      {isGhostMode && (
-        <div className="mt-4 p-3 bg-orange-500/10 border border-orange-500/20 rounded-lg text-xs text-orange-400">
-          <div className="flex items-center gap-2">
-            <AlertTriangle className="h-3 w-3" />
-            <span><strong>STEALTH MODE:</strong> All actions are logged. Users cannot see your activity.</span>
+            {/* Warning message */}
+            <div className="p-3 bg-orange-500/10 border border-orange-500/30 rounded-lg animate-fade-in">
+              <div className="flex items-start gap-2">
+                <AlertTriangle className="h-4 w-4 text-orange-400 mt-0.5 animate-pulse" />
+                <div className="text-xs text-orange-300">
+                  <span className="font-bold">⚡ STEALTH MODE ACTIVE</span>
+                  <br />
+                  All actions are logged. You are invisible to users.
+                </div>
+              </div>
+            </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 };
