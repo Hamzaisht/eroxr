@@ -14,6 +14,9 @@ interface AdminSessionContextType {
   liveAlerts: any[];
   refreshAlerts: () => Promise<boolean>;
   startSurveillance: (session: any) => Promise<boolean>;
+  sessionTimeRemaining: number | null;
+  activeSurveillance: string[];
+  ghostCapabilities: any;
 }
 
 const AdminSessionContext = createContext<AdminSessionContextType | undefined>(undefined);
@@ -27,11 +30,15 @@ export const AdminSessionProvider: React.FC<{ children: ReactNode }> = ({ childr
     canUseGhostMode,
     liveAlerts,
     refreshAlerts,
-    startSurveillance
+    startSurveillance,
+    sessionTimeRemaining,
+    activeSurveillance,
+    ghostCapabilities,
+    logGhostAction: ghostLog
   } = useGhostMode();
   
   const logGhostAction = async (action: string, targetType?: string, targetId?: string, details?: any) => {
-    if (!adminUser?.id) return;
+    if (!adminUser?.id || !isGhostMode) return;
     
     try {
       await supabase.from('admin_action_logs').insert({
@@ -40,10 +47,21 @@ export const AdminSessionProvider: React.FC<{ children: ReactNode }> = ({ childr
         action_type: 'ghost_mode',
         target_type: targetType,
         target_id: targetId,
-        details: details || {},
+        details: { 
+          ...details, 
+          ghost_mode: true,
+          surveillance_mode: true,
+          invisible_to_users: true,
+          timestamp: new Date().toISOString()
+        },
         ip_address: null,
         user_agent: navigator.userAgent
       });
+      
+      // Also log via the ghost mode system
+      if (ghostLog) {
+        await ghostLog(action, targetType || 'unknown', targetId || 'unknown', details);
+      }
     } catch (error) {
       console.error('Failed to log ghost action:', error);
     }
@@ -59,7 +77,10 @@ export const AdminSessionProvider: React.FC<{ children: ReactNode }> = ({ childr
     canUseGhostMode,
     liveAlerts,
     refreshAlerts,
-    startSurveillance
+    startSurveillance,
+    sessionTimeRemaining,
+    activeSurveillance,
+    ghostCapabilities
   };
 
   return (
