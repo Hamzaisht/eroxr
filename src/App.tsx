@@ -33,9 +33,16 @@ import { GodmodeSearch } from "@/components/godmode/search/GodmodeSearch";
 import { GodmodeSettings } from "@/components/godmode/settings/GodmodeSettings";
 import { MainLayout } from "@/components/layout/MainLayout";
 
-const queryClient = new QueryClient();
-
 const App = () => {
+  const [queryClient] = React.useState(() => new QueryClient({
+    defaultOptions: {
+      queries: {
+        retry: false,
+        refetchOnWindowFocus: false,
+      },
+    },
+  }));
+
   return (
     <React.Fragment>
       <QueryClientProvider client={queryClient}>
