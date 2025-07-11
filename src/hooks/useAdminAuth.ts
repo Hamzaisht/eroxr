@@ -34,23 +34,26 @@ export const useAdminAuth = () => {
           .from('user_roles')
           .select('role')
           .eq('user_id', user.id)
-          .in('role', ['admin', 'super_admin'])
-          .single();
+          .in('role', ['admin', 'super_admin']);
 
         console.log('🔍 Admin check: Query result', { data, error });
 
-        if (error || !data) {
+        if (error || !data || data.length === 0) {
           console.log('🔍 Admin check: No admin role found');
           setIsAdmin(false);
           setAdminUser(null);
         } else {
-          console.log('🔍 Admin check: Admin role found!', data.role);
+          // Check for highest privilege role
+          const roles = data.map(r => r.role);
+          const highestRole = roles.includes('super_admin') ? 'super_admin' : 'admin';
+          
+          console.log('🔍 Admin check: Admin role found!', { roles, highestRole });
           setIsAdmin(true);
           setAdminUser({
             id: user.id,
             email: user.email || '',
-            role: data.role as 'admin' | 'super_admin',
-            permissions: data.role === 'super_admin' ? ['all'] : ['moderate', 'view']
+            role: highestRole,
+            permissions: highestRole === 'super_admin' ? ['all'] : ['moderate', 'view']
           });
         }
       } catch (err) {
