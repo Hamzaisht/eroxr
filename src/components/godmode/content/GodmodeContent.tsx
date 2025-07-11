@@ -28,7 +28,18 @@ interface ContentItem {
   comments_count: number;
   view_count: number;
   created_at: string;
-  content_type: 'post' | 'story' | 'video';
+  content_type: 'post' | 'story' | 'video' | 'message' | 'media' | 'profile_photo';
+  // Additional fields for different content types
+  message_type?: string;
+  sender_id?: string;
+  recipient_id?: string;
+  duration?: number;
+  expires_at?: string;
+  is_expired?: boolean;
+  file_size?: number;
+  media_type?: string;
+  mime_type?: string;
+  access_level?: string;
 }
 
 export const GodmodeContent: React.FC = () => {
@@ -41,8 +52,9 @@ export const GodmodeContent: React.FC = () => {
   const [realTimeStats, setRealTimeStats] = useState({
     totalPosts: 0,
     totalStories: 0,
-    totalVideos: 0,
-    pendingReview: 0,
+    totalMessages: 0,
+    totalMedia: 0,
+    totalProfiles: 0,
     flagged: 0,
     totalStorage: '0 GB'
   });
@@ -62,20 +74,23 @@ export const GodmodeContent: React.FC = () => {
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const [postsResult, storiesResult, videosResult, flaggedResult] = await Promise.all([
+        const [postsResult, storiesResult, messagesResult, mediaResult, profilesResult, flaggedResult] = await Promise.all([
           supabase.from('posts').select('id', { count: 'exact', head: true }),
           supabase.from('stories').select('id', { count: 'exact', head: true }),
-          supabase.from('live_streams').select('id', { count: 'exact', head: true }),
+          supabase.from('direct_messages').select('id', { count: 'exact', head: true }),
+          supabase.from('media_assets').select('id', { count: 'exact', head: true }),
+          supabase.from('profiles').select('id', { count: 'exact', head: true }),
           supabase.from('flagged_content').select('id', { count: 'exact', head: true })
         ]);
 
         setRealTimeStats({
           totalPosts: postsResult.count || 0,
           totalStories: storiesResult.count || 0, 
-          totalVideos: videosResult.count || 0,
-          pendingReview: Math.floor((postsResult.count || 0) * 0.02), // 2% pending
+          totalMessages: messagesResult.count || 0,
+          totalMedia: mediaResult.count || 0,
+          totalProfiles: profilesResult.count || 0,
           flagged: flaggedResult.count || 0,
-          totalStorage: `${((postsResult.count || 0) * 2.5 / 1000).toFixed(1)} TB`
+          totalStorage: `${(((postsResult.count || 0) + (mediaResult.count || 0)) * 2.5 / 1000).toFixed(1)} TB`
         });
       } catch (error) {
         console.error('Error fetching stats:', error);
@@ -87,13 +102,17 @@ export const GodmodeContent: React.FC = () => {
     return () => clearInterval(interval);
   }, []);
 
-  // Fetch content with filters
+  // Fetch content with filters - ALL CONTENT TYPES
   useEffect(() => {
-    const fetchContent = async (page: number) => {
+    const fetchAllContent = async () => {
       if (loading) return;
 
       try {
-        let query = supabase
+        // Fetch all content types in parallel
+        const contentPromises = [];
+
+        // 1. Posts
+        let postsQuery = supabase
           .from('posts')
           .select(`
             id,
@@ -112,45 +131,262 @@ export const GodmodeContent: React.FC = () => {
             creator:profiles(username, avatar_url)
           `)
           .order('created_at', { ascending: false })
-          .range(page * 20, (page + 1) * 20 - 1);
+          .limit(50);
 
-        // Apply filters
-        if (searchTerm) {
-          query = query.ilike('content', `%${searchTerm}%`);
-        }
-        if (filterUser) {
-          query = query.eq('creator.username', filterUser);
-        }
-        if (filterType !== 'all') {
-          if (filterType === 'ppv') {
-            query = query.eq('is_ppv', true);
-          } else if (filterType === 'public') {
-            query = query.eq('visibility', 'public');
-          } else if (filterType === 'private') {
-            query = query.eq('visibility', 'subscribers_only');
-          }
-        }
-
-        const { data, error } = await query;
+        if (searchTerm) postsQuery = postsQuery.ilike('content', `%${searchTerm}%`);
+        if (filterUser) postsQuery = postsQuery.eq('creator.username', filterUser);
         
-        if (error) throw error;
+        contentPromises.push(
+          postsQuery.then(({ data, error }) => {
+            if (error) throw error;
+            return data?.map(item => ({
+              ...item,
+              content_type: 'post' as const,
+              creator: Array.isArray(item.creator) ? item.creator[0] : item.creator
+            })) || [];
+          })
+        );
 
-        const formattedData = data?.map(item => ({
-          ...item,
-          content_type: 'post' as const,
-          creator: Array.isArray(item.creator) ? item.creator[0] : item.creator
-        })) || [];
+        // 2. Stories
+        let storiesQuery = supabase
+          .from('stories')
+          .select(`
+            id,
+            content,
+            media_url,
+            video_url,
+            creator_id,
+            visibility,
+            view_count,
+            created_at,
+            expires_at,
+            is_active,
+            creator:profiles(username, avatar_url)
+          `)
+          .order('created_at', { ascending: false })
+          .limit(50);
 
-        if (page === 0) {
-          contentItems.splice(0);
+        if (searchTerm) storiesQuery = storiesQuery.ilike('content', `%${searchTerm}%`);
+        if (filterUser) storiesQuery = storiesQuery.eq('creator.username', filterUser);
+        
+        contentPromises.push(
+          storiesQuery.then(({ data, error }) => {
+            if (error) throw error;
+            return data?.map(item => ({
+              ...item,
+              content_type: 'story' as const,
+              media_url: item.media_url ? [item.media_url] : null,
+              video_urls: item.video_url ? [item.video_url] : null,
+              is_ppv: false,
+              ppv_amount: null,
+              tags: null,
+              likes_count: 0,
+              comments_count: 0,
+              creator: Array.isArray(item.creator) ? item.creator[0] : item.creator
+            })) || [];
+          })
+        );
+
+        // 3. Direct Messages (with media attachments)
+        let messagesQuery = supabase
+          .from('direct_messages')
+          .select(`
+            id,
+            content,
+            message_type,
+            sender_id,
+            recipient_id,
+            duration,
+            expires_at,
+            is_expired,
+            created_at,
+            sender:sender_id(username, avatar_url),
+            recipient:recipient_id(username, avatar_url)
+          `)
+          .order('created_at', { ascending: false })
+          .limit(50);
+
+        if (searchTerm) messagesQuery = messagesQuery.ilike('content', `%${searchTerm}%`);
+        
+        contentPromises.push(
+          messagesQuery.then(({ data, error }) => {
+            if (error) throw error;
+            return data?.map(item => ({
+              ...item,
+              content_type: 'message' as const,
+              creator_id: item.sender_id,
+              creator: Array.isArray(item.sender) ? item.sender[0] : item.sender,
+              media_url: null,
+              video_urls: null,
+              visibility: 'private',
+              is_ppv: false,
+              ppv_amount: null,
+              tags: null,
+              likes_count: 0,
+              comments_count: 0,
+              view_count: 0
+            })) || [];
+          })
+        );
+
+        // 4. Media Assets (profile photos, uploads, etc.)
+        let mediaQuery = supabase
+          .from('media_assets')
+          .select(`
+            id,
+            original_name,
+            storage_path,
+            user_id,
+            media_type,
+            mime_type,
+            file_size,
+            access_level,
+            post_id,
+            created_at,
+            creator:user_id(username, avatar_url)
+          `)
+          .order('created_at', { ascending: false })
+          .limit(50);
+
+        if (searchTerm) mediaQuery = mediaQuery.ilike('original_name', `%${searchTerm}%`);
+        if (filterUser) mediaQuery = mediaQuery.eq('creator.username', filterUser);
+        
+        contentPromises.push(
+          mediaQuery.then(({ data, error }) => {
+            if (error) throw error;
+            return data?.map(item => ({
+              ...item,
+              content_type: 'media' as const,
+              content: item.original_name,
+              creator_id: item.user_id,
+              creator: Array.isArray(item.creator) ? item.creator[0] : item.creator,
+              media_url: item.media_type === 'image' ? [item.storage_path] : null,
+              video_urls: item.media_type === 'video' ? [item.storage_path] : null,
+              visibility: item.access_level,
+              is_ppv: false,
+              ppv_amount: null,
+              tags: null,
+              likes_count: 0,
+              comments_count: 0,
+              view_count: 0
+            })) || [];
+          })
+        );
+
+        // 5. Profile Photos (from profiles table)
+        let profilesQuery = supabase
+          .from('profiles')
+          .select(`
+            id,
+            username,
+            avatar_url,
+            banner_url,
+            bio,
+            created_at,
+            updated_at
+          `)
+          .order('updated_at', { ascending: false })
+          .limit(50);
+
+        if (searchTerm) profilesQuery = profilesQuery.ilike('username', `%${searchTerm}%`);
+        if (filterUser) profilesQuery = profilesQuery.eq('username', filterUser);
+        
+        contentPromises.push(
+          profilesQuery.then(({ data, error }) => {
+            if (error) throw error;
+            const profileContent = [];
+            data?.forEach(profile => {
+              // Add avatar as content
+              if (profile.avatar_url) {
+                profileContent.push({
+                  id: `${profile.id}_avatar`,
+                  content_type: 'profile_photo' as const,
+                  content: `${profile.username}'s profile photo`,
+                  creator_id: profile.id,
+                  creator: { username: profile.username, avatar_url: profile.avatar_url },
+                  media_url: [profile.avatar_url],
+                  video_urls: null,
+                  visibility: 'public',
+                  is_ppv: false,
+                  ppv_amount: null,
+                  tags: null,
+                  likes_count: 0,
+                  comments_count: 0,
+                  view_count: 0,
+                  created_at: profile.updated_at
+                });
+              }
+              // Add banner as content
+              if (profile.banner_url) {
+                profileContent.push({
+                  id: `${profile.id}_banner`,
+                  content_type: 'profile_photo' as const,
+                  content: `${profile.username}'s banner photo`,
+                  creator_id: profile.id,
+                  creator: { username: profile.username, avatar_url: profile.avatar_url },
+                  media_url: [profile.banner_url],
+                  video_urls: null,
+                  visibility: 'public',
+                  is_ppv: false,
+                  ppv_amount: null,
+                  tags: null,
+                  likes_count: 0,
+                  comments_count: 0,
+                  view_count: 0,
+                  created_at: profile.updated_at
+                });
+              }
+            });
+            return profileContent;
+          })
+        );
+
+        // Execute all queries and combine results
+        const allResults = await Promise.all(contentPromises);
+        const allContent = allResults.flat();
+
+        // Apply additional filters
+        let filteredContent = allContent;
+
+        if (filterType !== 'all') {
+          filteredContent = allContent.filter(item => {
+            switch (filterType) {
+              case 'posts': return item.content_type === 'post';
+              case 'stories': return item.content_type === 'story';
+              case 'messages': return item.content_type === 'message';
+              case 'media': return item.content_type === 'media';
+              case 'profile_photos': return item.content_type === 'profile_photo';
+              case 'ppv': return item.is_ppv;
+              case 'public': return item.visibility === 'public';
+              case 'private': return item.visibility === 'private' || item.visibility === 'subscribers_only';
+              case 'videos': return item.video_urls && item.video_urls.length > 0;
+              case 'images': return item.media_url && item.media_url.length > 0;
+              default: return true;
+            }
+          });
         }
-        contentItems.push(...formattedData);
+
+        if (filterTags) {
+          filteredContent = filteredContent.filter(item => 
+            item.tags && item.tags.some(tag => 
+              tag.toLowerCase().includes(filterTags.toLowerCase())
+            )
+          );
+        }
+
+        // Sort by creation date (most recent first)
+        filteredContent.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+
+        // Update state
+        contentItems.splice(0);
+        contentItems.push(...filteredContent);
+
       } catch (error) {
         console.error('Error fetching content:', error);
       }
     };
 
-    fetchContent(0);
+    fetchAllContent();
   }, [searchTerm, filterType, filterUser, filterTags]);
 
   const getMediaType = (item: ContentItem) => {
@@ -196,7 +432,7 @@ export const GodmodeContent: React.FC = () => {
       </div>
 
       {/* Real-time Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-4">
         <div className="premium-glass-panel p-4">
           <div className="flex items-center gap-2 mb-2">
             <FileText className="w-4 h-4 text-blue-400" />
@@ -214,16 +450,23 @@ export const GodmodeContent: React.FC = () => {
         <div className="premium-glass-panel p-4">
           <div className="flex items-center gap-2 mb-2">
             <Video className="w-4 h-4 text-red-400" />
-            <span className="text-sm text-muted-foreground">Videos</span>
+            <span className="text-sm text-muted-foreground">Messages</span>
           </div>
-          <div className="text-2xl font-bold text-white">{realTimeStats.totalVideos.toLocaleString()}</div>
+          <div className="text-2xl font-bold text-white">{realTimeStats.totalMessages.toLocaleString()}</div>
         </div>
         <div className="premium-glass-panel p-4">
           <div className="flex items-center gap-2 mb-2">
-            <Eye className="w-4 h-4 text-yellow-400" />
-            <span className="text-sm text-muted-foreground">Pending</span>
+            <Image className="w-4 h-4 text-yellow-400" />
+            <span className="text-sm text-muted-foreground">Media</span>
           </div>
-          <div className="text-2xl font-bold text-yellow-400">{realTimeStats.pendingReview}</div>
+          <div className="text-2xl font-bold text-yellow-400">{realTimeStats.totalMedia.toLocaleString()}</div>
+        </div>
+        <div className="premium-glass-panel p-4">
+          <div className="flex items-center gap-2 mb-2">
+            <Users className="w-4 h-4 text-cyan-400" />
+            <span className="text-sm text-muted-foreground">Profiles</span>
+          </div>
+          <div className="text-2xl font-bold text-cyan-400">{realTimeStats.totalProfiles.toLocaleString()}</div>
         </div>
         <div className="premium-glass-panel p-4">
           <div className="flex items-center gap-2 mb-2">
@@ -257,14 +500,21 @@ export const GodmodeContent: React.FC = () => {
           </div>
           
           <Select value={filterType} onValueChange={setFilterType}>
-            <SelectTrigger className="w-40 bg-black/20 border-white/10">
-              <SelectValue placeholder="Type" />
+            <SelectTrigger className="w-48 bg-black/20 border-white/10">
+              <SelectValue placeholder="Content Type" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Types</SelectItem>
-              <SelectItem value="public">Public</SelectItem>
-              <SelectItem value="private">Subscribers Only</SelectItem>
+              <SelectItem value="all">All Content</SelectItem>
+              <SelectItem value="posts">Posts</SelectItem>
+              <SelectItem value="stories">Stories</SelectItem>
+              <SelectItem value="messages">Messages</SelectItem>
+              <SelectItem value="media">Media Assets</SelectItem>
+              <SelectItem value="profile_photos">Profile Photos</SelectItem>
+              <SelectItem value="videos">Videos</SelectItem>
+              <SelectItem value="images">Images</SelectItem>
               <SelectItem value="ppv">PPV Content</SelectItem>
+              <SelectItem value="public">Public</SelectItem>
+              <SelectItem value="private">Private</SelectItem>
             </SelectContent>
           </Select>
 
@@ -359,10 +609,25 @@ export const GodmodeContent: React.FC = () => {
                   className="w-6 h-6 rounded-full"
                 />
                 <span className="text-sm text-white font-medium">{item.creator?.username}</span>
+                <Badge 
+                  variant="outline" 
+                  className={`text-xs ${
+                    item.content_type === 'post' ? 'border-blue-400 text-blue-400' :
+                    item.content_type === 'story' ? 'border-purple-400 text-purple-400' :
+                    item.content_type === 'message' ? 'border-orange-400 text-orange-400' :
+                    item.content_type === 'media' ? 'border-green-400 text-green-400' :
+                    item.content_type === 'profile_photo' ? 'border-pink-400 text-pink-400' :
+                    'border-gray-400 text-gray-400'
+                  }`}
+                >
+                  {item.content_type.replace('_', ' ').toUpperCase()}
+                </Badge>
                 <div className="flex items-center gap-1">
                   {getContentTypeIcon(getMediaType(item))}
                   {item.is_ppv && <DollarSign className="w-3 h-3 text-green-400" />}
                   {item.visibility === 'subscribers_only' && <Users className="w-3 h-3 text-purple-400" />}
+                  {item.visibility === 'private' && <Eye className="w-3 h-3 text-red-400" />}
+                  {item.expires_at && <Clock className="w-3 h-3 text-yellow-400" />}
                 </div>
               </div>
 
