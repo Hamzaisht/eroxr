@@ -20,13 +20,10 @@ export const SignupForm = ({ onToggleMode, isLoginMode = false }: SignupFormProp
   const { toast } = useToast();
   const { signIn, signUp } = useAuth();
 
-  // Use different schemas and default values based on mode
-  const form = useForm<SignupFormValues | LoginFormValues>({
-    resolver: zodResolver(isLoginMode ? loginSchema : signupSchema),
-    defaultValues: isLoginMode ? {
-      email: "",
-      password: "",
-    } : {
+  // Create separate forms for login and signup
+  const signupForm = useForm<SignupFormValues>({
+    resolver: zodResolver(signupSchema),
+    defaultValues: {
       email: "",
       password: "",
       confirmPassword: "",
@@ -37,6 +34,16 @@ export const SignupForm = ({ onToggleMode, isLoginMode = false }: SignupFormProp
       lastName: "",
     },
   });
+
+  const loginForm = useForm<LoginFormValues>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: {
+      email: "",
+      password: "",
+    },
+  });
+
+  const form = isLoginMode ? loginForm : signupForm;
 
   const onSubmit = async (values: SignupFormValues | LoginFormValues) => {
     console.log("Form submission started", { isLoginMode, email: values.email });

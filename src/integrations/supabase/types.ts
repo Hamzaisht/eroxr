@@ -674,42 +674,6 @@ export type Database = {
           },
         ]
       }
-      creator_subscriptions: {
-        Row: {
-          created_at: string
-          creator_id: string
-          id: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          creator_id: string
-          id?: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          creator_id?: string
-          id?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "creator_subscriptions_creator_id_fkey"
-            columns: ["creator_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "creator_subscriptions_creator_id_fkey"
-            columns: ["creator_id"]
-            isOneToOne: false
-            referencedRelation: "top_creators_by_earnings"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       dating_ads: {
         Row: {
           about_me: string | null
@@ -1718,7 +1682,6 @@ export type Database = {
           allow_custom_requests: boolean | null
           allow_direct_messages: boolean | null
           allow_tips: boolean | null
-          auto_renew_subscriptions: boolean | null
           avatar_url: string | null
           banner_url: string | null
           bio: string | null
@@ -1747,7 +1710,6 @@ export type Database = {
           show_online_status: boolean | null
           social_links: Json | null
           status: string | null
-          subscription_price: number | null
           suspended_at: string | null
           two_factor_enabled: boolean | null
           updated_at: string
@@ -1757,7 +1719,6 @@ export type Database = {
           allow_custom_requests?: boolean | null
           allow_direct_messages?: boolean | null
           allow_tips?: boolean | null
-          auto_renew_subscriptions?: boolean | null
           avatar_url?: string | null
           banner_url?: string | null
           bio?: string | null
@@ -1786,7 +1747,6 @@ export type Database = {
           show_online_status?: boolean | null
           social_links?: Json | null
           status?: string | null
-          subscription_price?: number | null
           suspended_at?: string | null
           two_factor_enabled?: boolean | null
           updated_at?: string
@@ -1796,7 +1756,6 @@ export type Database = {
           allow_custom_requests?: boolean | null
           allow_direct_messages?: boolean | null
           allow_tips?: boolean | null
-          auto_renew_subscriptions?: boolean | null
           avatar_url?: string | null
           banner_url?: string | null
           bio?: string | null
@@ -1825,7 +1784,6 @@ export type Database = {
           show_online_status?: boolean | null
           social_links?: Json | null
           status?: string | null
-          subscription_price?: number | null
           suspended_at?: string | null
           two_factor_enabled?: boolean | null
           updated_at?: string
@@ -2091,30 +2049,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
-      }
-      subscription_tiers: {
-        Row: {
-          created_at: string
-          features: Json
-          id: string
-          name: string
-          price: number
-        }
-        Insert: {
-          created_at?: string
-          features: Json
-          id?: string
-          name: string
-          price: number
-        }
-        Update: {
-          created_at?: string
-          features?: Json
-          id?: string
-          name?: string
-          price?: number
-        }
-        Relationships: []
       }
       temp_demo_content: {
         Row: {
@@ -2403,50 +2337,6 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: []
-      }
-      user_subscriptions: {
-        Row: {
-          created_at: string
-          current_period_end: string
-          current_period_start: string
-          id: string
-          status: string
-          stripe_customer_id: string | null
-          stripe_subscription_id: string | null
-          subscription_tier_id: string | null
-          user_id: string | null
-        }
-        Insert: {
-          created_at?: string
-          current_period_end: string
-          current_period_start: string
-          id?: string
-          status?: string
-          stripe_customer_id?: string | null
-          stripe_subscription_id?: string | null
-          subscription_tier_id?: string | null
-          user_id?: string | null
-        }
-        Update: {
-          created_at?: string
-          current_period_end?: string
-          current_period_start?: string
-          id?: string
-          status?: string
-          stripe_customer_id?: string | null
-          stripe_subscription_id?: string | null
-          subscription_tier_id?: string | null
-          user_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "user_subscriptions_subscription_tier_id_fkey"
-            columns: ["subscription_tier_id"]
-            isOneToOne: false
-            referencedRelation: "subscription_tiers"
-            referencedColumns: ["id"]
-          },
-        ]
       }
       video_comments: {
         Row: {
@@ -3108,19 +2998,6 @@ export type Database = {
           last_interaction: string
         }[]
       }
-      get_revenue_breakdown: {
-        Args: {
-          p_creator_id: string
-          p_start_date?: string
-          p_end_date?: string
-        }
-        Returns: {
-          subscriptions: number
-          tips: number
-          ppv_content: number
-          live_streams: number
-        }[]
-      }
       get_streaming_analytics: {
         Args: { p_creator_id: string; p_days?: number }
         Returns: {
@@ -3130,16 +3007,6 @@ export type Database = {
           total_revenue: number
           recent_streams: Json
           viewer_activity: Json
-        }[]
-      }
-      get_subscriber_analytics: {
-        Args: { p_creator_id: string }
-        Returns: {
-          total_subscribers: number
-          new_this_month: number
-          growth_rate: number
-          top_countries: string[]
-          retention_rate: number
         }[]
       }
       get_top_trending_hashtags: {

@@ -1,7 +1,7 @@
 
 import { motion } from "framer-motion";
 import { UseFormReturn } from "react-hook-form";
-import { SignupFormValues } from "../types";
+import { SignupFormValues, LoginFormValues } from "../types";
 import { EmailField } from "../form-fields/EmailField";
 import { PasswordField } from "../form-fields/PasswordField";
 import { DateOfBirthField } from "../form-fields/DateOfBirthField";
@@ -9,7 +9,7 @@ import { UsernameField } from "../form-fields/UsernameField";
 import { CountrySelect } from "../form-fields/CountrySelect";
 
 interface AnimatedFormFieldsProps {
-  form: UseFormReturn<SignupFormValues>;
+  form: UseFormReturn<SignupFormValues> | UseFormReturn<LoginFormValues>;
   isLoading: boolean;
   isLoginMode?: boolean;
 }
