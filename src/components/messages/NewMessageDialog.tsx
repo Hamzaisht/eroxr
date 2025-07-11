@@ -1,13 +1,12 @@
 
-import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Search, MessageSquare } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { useSession } from '@supabase/auth-helpers-react';
+import { useAuth } from '@/contexts/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface NewMessageDialogProps {
@@ -25,25 +24,39 @@ interface Profile {
 
 export const NewMessageDialog = ({ open, onOpenChange, onSelectUser }: NewMessageDialogProps) => {
   const [searchTerm, setSearchTerm] = useState('');
-  const session = useSession();
+  const [users, setUsers] = useState<Profile[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const { user } = useAuth();
 
-  const { data: users, isLoading } = useQuery({
-    queryKey: ['users-search', searchTerm],
-    queryFn: async () => {
-      if (!searchTerm.trim()) return [];
+  useEffect(() => {
+    const searchUsers = async () => {
+      if (!searchTerm.trim() || !user?.id) {
+        setUsers([]);
+        return;
+      }
       
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('id, username, avatar_url, bio')
-        .neq('id', session?.user?.id)
-        .ilike('username', `%${searchTerm}%`)
-        .limit(10);
+      setIsLoading(true);
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('id, username, avatar_url, bio')
+          .neq('id', user.id)
+          .ilike('username', `%${searchTerm}%`)
+          .limit(10);
 
-      if (error) throw error;
-      return data as Profile[];
-    },
-    enabled: !!searchTerm.trim() && !!session?.user?.id
-  });
+        if (error) throw error;
+        setUsers(data || []);
+      } catch (error) {
+        console.error('Error searching users:', error);
+        setUsers([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    const timeoutId = setTimeout(searchUsers, 300);
+    return () => clearTimeout(timeoutId);
+  }, [searchTerm, user?.id]);
 
   const handleUserSelect = (userId: string) => {
     onSelectUser(userId);

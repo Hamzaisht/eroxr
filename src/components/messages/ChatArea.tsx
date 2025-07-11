@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { useSession } from '@supabase/auth-helpers-react';
+import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Phone, Video, Info, Search, MoreVertical, Smile, Paperclip, Mic, Send, Camera, Calendar, Edit3, Trash2, Heart, HeartOff } from 'lucide-react';
@@ -53,14 +53,14 @@ export const ChatArea = ({ conversationId, onShowDetails }: ChatAreaProps) => {
   const [callType, setCallType] = useState<'audio' | 'video'>('audio');
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const session = useSession();
+  const { user } = useAuth();
   const { toast } = useToast();
 
   // Enable disappearing messages cleanup
   useDisappearingMessages();
 
   useEffect(() => {
-    if (!conversationId || !session?.user?.id) return;
+    if (!conversationId || !user?.id) return;
 
     const fetchUserProfile = async () => {
       try {
@@ -86,7 +86,7 @@ export const ChatArea = ({ conversationId, onShowDetails }: ChatAreaProps) => {
         const { data, error } = await supabase
           .from('direct_messages')
           .select('*')
-          .or(`and(sender_id.eq.${session.user.id},recipient_id.eq.${conversationId}),and(sender_id.eq.${conversationId},recipient_id.eq.${session.user.id})`)
+          .or(`and(sender_id.eq.${user.id},recipient_id.eq.${conversationId}),and(sender_id.eq.${conversationId},recipient_id.eq.${user.id})`)
           .order('created_at', { ascending: true });
 
         if (error) throw error;
@@ -98,11 +98,11 @@ export const ChatArea = ({ conversationId, onShowDetails }: ChatAreaProps) => {
 
     fetchUserProfile();
     fetchMessages();
-  }, [conversationId, session?.user?.id]);
+  }, [conversationId, user?.id]);
 
   // Real-time message subscription
   useEffect(() => {
-    if (!conversationId || !session?.user?.id) return;
+    if (!conversationId || !user?.id) return;
 
     const channel = supabase
       .channel(`chat-${conversationId}`)
@@ -112,7 +112,7 @@ export const ChatArea = ({ conversationId, onShowDetails }: ChatAreaProps) => {
           event: 'INSERT',
           schema: 'public',
           table: 'direct_messages',
-          filter: `or(and(sender_id.eq.${session.user.id},recipient_id.eq.${conversationId}),and(sender_id.eq.${conversationId},recipient_id.eq.${session.user.id}))`
+          filter: `or(and(sender_id.eq.${user.id},recipient_id.eq.${conversationId}),and(sender_id.eq.${conversationId},recipient_id.eq.${user.id}))`
         },
         (payload) => {
           const newMessage = payload.new as Message;
@@ -124,7 +124,7 @@ export const ChatArea = ({ conversationId, onShowDetails }: ChatAreaProps) => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [conversationId, session?.user?.id]);
+  }, [conversationId, user?.id]);
 
   useEffect(() => {
     scrollToBottom();
@@ -135,7 +135,7 @@ export const ChatArea = ({ conversationId, onShowDetails }: ChatAreaProps) => {
   };
 
   const sendMessage = async () => {
-    if (!newMessage.trim() || sending || !session?.user?.id) return;
+    if (!newMessage.trim() || sending || !user?.id) return;
 
     setSending(true);
     const messageContent = newMessage;
@@ -150,7 +150,7 @@ export const ChatArea = ({ conversationId, onShowDetails }: ChatAreaProps) => {
         .from('direct_messages')
         .insert({
           content: messageContent,
-          sender_id: session.user.id,
+          sender_id: user.id,
           recipient_id: conversationId,
           message_type: 'text'
         });
@@ -369,7 +369,7 @@ export const ChatArea = ({ conversationId, onShowDetails }: ChatAreaProps) => {
       <div className="flex-1 overflow-y-auto p-4 space-y-4 fade-scrollbar">
         <AnimatePresence>
           {messages.map((message) => {
-            const isOwn = message.sender_id === session?.user?.id;
+            const isOwn = message.sender_id === user?.id;
             
             return (
               <motion.div
@@ -699,7 +699,7 @@ export const ChatArea = ({ conversationId, onShowDetails }: ChatAreaProps) => {
               const { error: messageError } = await supabase
                 .from('direct_messages')
                 .insert({
-                  sender_id: session?.user?.id,
+                  sender_id: user?.id,
                   recipient_id: conversationId,
                   media_url: [publicUrl],
                   message_type: 'snap',

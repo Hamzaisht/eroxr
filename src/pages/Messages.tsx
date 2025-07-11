@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { ConversationSidebar } from '@/components/messages/ConversationSidebar';
 import { ChatArea } from '@/components/messages/ChatArea';
 import { ChatDetails } from '@/components/messages/ChatDetails';
+import { DemoConversations } from '@/components/messages/DemoConversations';
 
 const Messages = () => {
   const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
@@ -20,6 +21,9 @@ const Messages = () => {
         />
       </div>
 
+      {/* Demo data utility */}
+      <DemoConversations />
+      
       <div className="relative z-10 flex h-full">
         {/* Conversations Sidebar */}
         <div className="w-80 border-r border-white/10 bg-black/20 backdrop-blur-xl">

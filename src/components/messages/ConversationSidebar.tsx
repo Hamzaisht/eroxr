@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useSession } from '@supabase/auth-helpers-react';
+import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Search, Plus, Archive, Settings, MoreVertical } from 'lucide-react';
@@ -33,10 +33,10 @@ export const ConversationSidebar = ({ selectedConversationId, onSelectConversati
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [showNewMessage, setShowNewMessage] = useState(false);
-  const session = useSession();
+  const { user } = useAuth();
 
   useEffect(() => {
-    if (!session?.user?.id) return;
+    if (!user?.id) return;
 
     const fetchConversations = async () => {
       try {
@@ -48,7 +48,7 @@ export const ConversationSidebar = ({ selectedConversationId, onSelectConversati
             sender:profiles!direct_messages_sender_id_fkey(id, username, avatar_url),
             recipient:profiles!direct_messages_recipient_id_fkey(id, username, avatar_url)
           `)
-          .or(`sender_id.eq.${session.user.id},recipient_id.eq.${session.user.id}`)
+          .or(`sender_id.eq.${user.id},recipient_id.eq.${user.id}`)
           .order('created_at', { ascending: false });
 
         if (error) throw error;
@@ -57,7 +57,7 @@ export const ConversationSidebar = ({ selectedConversationId, onSelectConversati
         const conversationMap = new Map();
         
         messages?.forEach(message => {
-          const isOwn = message.sender_id === session.user.id;
+          const isOwn = message.sender_id === user.id;
           const partner = isOwn ? message.recipient : message.sender;
           
           if (!conversationMap.has(partner.id)) {
@@ -88,7 +88,7 @@ export const ConversationSidebar = ({ selectedConversationId, onSelectConversati
           event: 'INSERT',
           schema: 'public',
           table: 'direct_messages',
-          filter: `or(sender_id.eq.${session.user.id},recipient_id.eq.${session.user.id})`
+          filter: `or(sender_id.eq.${user.id},recipient_id.eq.${user.id})`
         },
         () => {
           fetchConversations(); // Refresh conversations when new message arrives
@@ -99,7 +99,7 @@ export const ConversationSidebar = ({ selectedConversationId, onSelectConversati
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [session?.user?.id]);
+  }, [user?.id]);
 
   const filteredConversations = conversations.filter(conv =>
     conv.user.username.toLowerCase().includes(searchQuery.toLowerCase())
@@ -193,7 +193,7 @@ export const ConversationSidebar = ({ selectedConversationId, onSelectConversati
                   
                   <div className="flex items-center justify-between">
                     <p className="text-sm text-white/70 truncate max-w-48">
-                      {conversation.lastMessage?.sender_id === session?.user?.id && (
+                      {conversation.lastMessage?.sender_id === user?.id && (
                         <span className="text-primary">You: </span>
                       )}
                       {conversation.lastMessage?.content || 'No messages yet'}
@@ -248,7 +248,7 @@ export const ConversationSidebar = ({ selectedConversationId, onSelectConversati
         open={showNewMessage}
         onOpenChange={setShowNewMessage}
         onSelectUser={(userId) => {
-          // Handle user selection
+          onSelectConversation(userId);
           setShowNewMessage(false);
         }}
       />
