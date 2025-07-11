@@ -111,7 +111,7 @@ export const GodmodeContent: React.FC = () => {
         // Fetch all content types in parallel
         const contentPromises = [];
 
-        // 1. Posts
+        // 1. Posts - Fix relationship query
         let postsQuery = supabase
           .from('posts')
           .select(`
@@ -128,62 +128,74 @@ export const GodmodeContent: React.FC = () => {
             comments_count,
             view_count,
             created_at,
-            creator:profiles(username, avatar_url)
+            profiles!fk_posts_creator_id(username, avatar_url)
           `)
           .order('created_at', { ascending: false })
           .limit(50);
 
         if (searchTerm) postsQuery = postsQuery.ilike('content', `%${searchTerm}%`);
-        if (filterUser) postsQuery = postsQuery.eq('creator.username', filterUser);
         
         contentPromises.push(
           postsQuery.then(({ data, error }) => {
-            if (error) throw error;
+            if (error) {
+              console.error('Posts error:', error);
+              return [];
+            }
             return data?.map(item => ({
               ...item,
               content_type: 'post' as const,
-              creator: Array.isArray(item.creator) ? item.creator[0] : item.creator
+              creator: item.profiles || { username: 'Unknown', avatar_url: '' }
             })) || [];
           })
         );
 
-        // 2. Stories
+        // 2. Stories - Remove content column that doesn't exist
         let storiesQuery = supabase
           .from('stories')
           .select(`
             id,
-            content,
             media_url,
             video_url,
             creator_id,
-            visibility,
             view_count,
             created_at,
             expires_at,
-            is_active,
-            creator:profiles(username, avatar_url)
+            is_active
           `)
           .order('created_at', { ascending: false })
           .limit(50);
-
-        if (searchTerm) storiesQuery = storiesQuery.ilike('content', `%${searchTerm}%`);
-        if (filterUser) storiesQuery = storiesQuery.eq('creator.username', filterUser);
         
         contentPromises.push(
-          storiesQuery.then(({ data, error }) => {
-            if (error) throw error;
-            return data?.map(item => ({
-              ...item,
-              content_type: 'story' as const,
-              media_url: item.media_url ? [item.media_url] : null,
-              video_urls: item.video_url ? [item.video_url] : null,
-              is_ppv: false,
-              ppv_amount: null,
-              tags: null,
-              likes_count: 0,
-              comments_count: 0,
-              creator: Array.isArray(item.creator) ? item.creator[0] : item.creator
-            })) || [];
+          storiesQuery.then(async ({ data, error }) => {
+            if (error) {
+              console.error('Stories error:', error);
+              return [];
+            }
+            
+            // Get creator info separately
+            const creatorIds = data?.map(s => s.creator_id).filter(Boolean) || [];
+            const { data: creators } = await supabase
+              .from('profiles')
+              .select('id, username, avatar_url')
+              .in('id', creatorIds);
+            
+            return data?.map(item => {
+              const creator = creators?.find(c => c.id === item.creator_id);
+              return {
+                ...item,
+                content: 'Story content',
+                content_type: 'story' as const,
+                media_url: item.media_url ? [item.media_url] : null,
+                video_urls: item.video_url ? [item.video_url] : null,
+                visibility: 'public',
+                is_ppv: false,
+                ppv_amount: null,
+                tags: null,
+                likes_count: 0,
+                comments_count: 0,
+                creator: creator || { username: 'Unknown', avatar_url: '' }
+              };
+            }) || [];
           })
         );
 
@@ -199,9 +211,7 @@ export const GodmodeContent: React.FC = () => {
             duration,
             expires_at,
             is_expired,
-            created_at,
-            sender:sender_id(username, avatar_url),
-            recipient:recipient_id(username, avatar_url)
+            created_at
           `)
           .order('created_at', { ascending: false })
           .limit(50);
@@ -209,23 +219,37 @@ export const GodmodeContent: React.FC = () => {
         if (searchTerm) messagesQuery = messagesQuery.ilike('content', `%${searchTerm}%`);
         
         contentPromises.push(
-          messagesQuery.then(({ data, error }) => {
-            if (error) throw error;
-            return data?.map(item => ({
-              ...item,
-              content_type: 'message' as const,
-              creator_id: item.sender_id,
-              creator: Array.isArray(item.sender) ? item.sender[0] : item.sender,
-              media_url: null,
-              video_urls: null,
-              visibility: 'private',
-              is_ppv: false,
-              ppv_amount: null,
-              tags: null,
-              likes_count: 0,
-              comments_count: 0,
-              view_count: 0
-            })) || [];
+          messagesQuery.then(async ({ data, error }) => {
+            if (error) {
+              console.error('Messages error:', error);
+              return [];
+            }
+            
+            // Get sender info separately
+            const senderIds = data?.map(m => m.sender_id).filter(Boolean) || [];
+            const { data: senders } = await supabase
+              .from('profiles')
+              .select('id, username, avatar_url')
+              .in('id', senderIds);
+            
+            return data?.map(item => {
+              const sender = senders?.find(s => s.id === item.sender_id);
+              return {
+                ...item,
+                content_type: 'message' as const,
+                creator_id: item.sender_id,
+                creator: sender || { username: 'Unknown', avatar_url: '' },
+                media_url: null,
+                video_urls: null,
+                visibility: 'private',
+                is_ppv: false,
+                ppv_amount: null,
+                tags: null,
+                likes_count: 0,
+                comments_count: 0,
+                view_count: 0
+              };
+            }) || [];
           })
         );
 
@@ -242,34 +266,46 @@ export const GodmodeContent: React.FC = () => {
             file_size,
             access_level,
             post_id,
-            created_at,
-            creator:user_id(username, avatar_url)
+            created_at
           `)
           .order('created_at', { ascending: false })
           .limit(50);
 
         if (searchTerm) mediaQuery = mediaQuery.ilike('original_name', `%${searchTerm}%`);
-        if (filterUser) mediaQuery = mediaQuery.eq('creator.username', filterUser);
         
         contentPromises.push(
-          mediaQuery.then(({ data, error }) => {
-            if (error) throw error;
-            return data?.map(item => ({
-              ...item,
-              content_type: 'media' as const,
-              content: item.original_name,
-              creator_id: item.user_id,
-              creator: Array.isArray(item.creator) ? item.creator[0] : item.creator,
-              media_url: item.media_type === 'image' ? [item.storage_path] : null,
-              video_urls: item.media_type === 'video' ? [item.storage_path] : null,
-              visibility: item.access_level,
-              is_ppv: false,
-              ppv_amount: null,
-              tags: null,
-              likes_count: 0,
-              comments_count: 0,
-              view_count: 0
-            })) || [];
+          mediaQuery.then(async ({ data, error }) => {
+            if (error) {
+              console.error('Media error:', error);
+              return [];
+            }
+            
+            // Get user info separately
+            const userIds = data?.map(m => m.user_id).filter(Boolean) || [];
+            const { data: users } = await supabase
+              .from('profiles')
+              .select('id, username, avatar_url')
+              .in('id', userIds);
+            
+            return data?.map(item => {
+              const user = users?.find(u => u.id === item.user_id);
+              return {
+                ...item,
+                content_type: 'media' as const,
+                content: item.original_name,
+                creator_id: item.user_id,
+                creator: user || { username: 'Unknown', avatar_url: '' },
+                media_url: item.media_type === 'image' ? [item.storage_path] : null,
+                video_urls: item.media_type === 'video' ? [item.storage_path] : null,
+                visibility: item.access_level,
+                is_ppv: false,
+                ppv_amount: null,
+                tags: null,
+                likes_count: 0,
+                comments_count: 0,
+                view_count: 0
+              };
+            }) || [];
           })
         );
 
