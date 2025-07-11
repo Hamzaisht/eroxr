@@ -30,7 +30,7 @@ import { GodmodeVerification } from "@/components/godmode/verification/GodmodeVe
 import { GodmodePayouts } from "@/components/godmode/payouts/GodmodePayouts";
 import { GodmodeFlagged } from "@/components/godmode/flagged/GodmodeFlagged";
 import { GodmodeSearch } from "@/components/godmode/search/GodmodeSearch";
-import { GodmodeLogs } from "@/components/godmode/logs/GodmodeLogs";
+// import { GodmodeLogs } from "@/components/godmode/logs/GodmodeLogs"; // Temporarily disabled due to build issues
 import { GodmodeSettings } from "@/components/godmode/settings/GodmodeSettings";
 import { MainLayout } from "@/components/layout/MainLayout";
 
@@ -61,7 +61,7 @@ const App = () => (
                         <Route path="payouts" element={<GodmodePayouts />} />
                         <Route path="flagged" element={<GodmodeFlagged />} />
                         <Route path="search" element={<GodmodeSearch />} />
-                        <Route path="logs" element={<GodmodeLogs />} />
+                        {/* <Route path="logs" element={<GodmodeLogs />} /> */}
                         <Route path="settings" element={<GodmodeSettings />} />
                       </Route>
                     <Route element={<MainLayout />}>
