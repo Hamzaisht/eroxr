@@ -17,6 +17,7 @@ export interface RendererProps {
   mediaUrl: string;
   isLoading: boolean;
   showWatermark: boolean;
+  username?: string;
   onLoad: () => void;
   onError: () => void;
 }

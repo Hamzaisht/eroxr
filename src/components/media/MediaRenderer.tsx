@@ -2,6 +2,7 @@
 import { useState, useRef, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useInView } from "react-intersection-observer";
+import { Watermark } from "@/components/shared/Watermark";
 
 interface MediaAsset {
   id: string;
@@ -15,10 +16,11 @@ interface MediaAsset {
 interface MediaRendererProps {
   assets: MediaAsset[];
   className?: string;
+  username?: string;
   media?: MediaAsset[]; // Legacy prop for backward compatibility
 }
 
-export const MediaRenderer = ({ assets, media, className = "" }: MediaRendererProps) => {
+export const MediaRenderer = ({ assets, media, className = "", username }: MediaRendererProps) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isLoading, setIsLoading] = useState<Record<string, boolean>>({});
   const [hasError, setHasError] = useState<Record<string, boolean>>({});
@@ -162,6 +164,9 @@ export const MediaRenderer = ({ assets, media, className = "" }: MediaRendererPr
             </div>
           </div>
         )}
+
+        {/* Watermark */}
+        {username && <Watermark username={username} />}
       </div>
 
       {/* Multiple media navigation */}

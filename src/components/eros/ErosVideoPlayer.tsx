@@ -1,6 +1,7 @@
 
 import { AlertCircle, Play } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Watermark } from "@/components/shared/Watermark";
 
 interface ErosVideoPlayerProps {
   videoUrl: string;
@@ -10,6 +11,7 @@ interface ErosVideoPlayerProps {
   loop?: boolean;
   muted?: boolean;
   className?: string;
+  username?: string;
   onError?: () => void;
   onVideoEnd?: () => void;
 }
@@ -22,6 +24,7 @@ export function ErosVideoPlayer({
   loop = true,
   muted = true,
   className = "",
+  username,
   onError,
   onVideoEnd
 }: ErosVideoPlayerProps) {
@@ -41,6 +44,7 @@ export function ErosVideoPlayer({
           <p className="text-white/80">Video player coming soon</p>
         </div>
       </div>
+      {username && <Watermark username={username} />}
     </div>
   );
 }

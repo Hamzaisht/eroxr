@@ -1,6 +1,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { Play, Volume2, VolumeX, X } from 'lucide-react';
+import { Watermark } from '@/components/shared/Watermark';
 
 interface VideoPlayerProps {
   url: string;
@@ -12,6 +13,7 @@ interface VideoPlayerProps {
   playOnHover?: boolean;
   poster?: string;
   showCloseButton?: boolean;
+  username?: string;
   onClose?: () => void;
   onPlay?: () => void;
   onPause?: () => void;
@@ -29,6 +31,7 @@ export const VideoPlayer = ({
   playOnHover = false,
   poster,
   showCloseButton = false,
+  username,
   onClose,
   onPlay,
   onPause,
@@ -177,6 +180,9 @@ export const VideoPlayer = ({
           <X className="w-4 h-4" />
         </button>
       )}
+      
+      {/* Watermark */}
+      {username && <Watermark username={username} />}
     </div>
   );
 };

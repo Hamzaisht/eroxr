@@ -5,9 +5,10 @@ import { ImageRenderer } from "./renderers/ImageRenderer";
 import { VideoRenderer } from "./renderers/VideoRenderer";
 import { AudioRenderer } from "./renderers/AudioRenderer";
 import { UniversalMedia } from "../shared/media/UniversalMedia";
+import { Watermark } from "@/components/shared/Watermark";
 
 export const UniversalMediaRenderer = (props: MediaRendererProps) => {
-  const { media, className, controls = true, autoPlay = false, muted = true, showWatermark = false } = props;
+  const { media, className, controls = true, autoPlay = false, muted = true, showWatermark = false, username } = props;
   const [isLoading, setIsLoading] = useState(true);
   const [isMuted, setIsMuted] = useState(muted);
 
@@ -39,6 +40,7 @@ export const UniversalMediaRenderer = (props: MediaRendererProps) => {
     mediaUrl: media.url,
     isLoading,
     showWatermark,
+    username,
     onLoad: handleLoad,
     onError: handleError
   };
@@ -79,8 +81,9 @@ export const UniversalMediaRenderer = (props: MediaRendererProps) => {
     
     default:
       return (
-        <div className={`flex items-center justify-center bg-gray-900 p-8 ${className}`}>
+        <div className={`relative flex items-center justify-center bg-gray-900 p-8 ${className}`}>
           <p className="text-gray-400">Unsupported media type</p>
+          {showWatermark && username && <Watermark username={username} />}
         </div>
       );
   }

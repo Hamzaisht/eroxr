@@ -16,6 +16,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { MediaRenderer } from '@/components/media/MediaRenderer';
+import { useCreatorUsername } from '@/hooks/useUserFromPost';
 import { formatDistanceToNow } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -224,6 +225,7 @@ export const EnhancedPostCard = ({
               <MediaRenderer 
                 assets={validMediaAssets}
                 className="w-full max-h-96"
+                username={post.creator.username}
               />
             </div>
           )}

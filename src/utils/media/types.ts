@@ -30,6 +30,7 @@ export interface MediaRendererProps {
   muted?: boolean;
   loop?: boolean;
   showWatermark?: boolean;
+  username?: string;
   onAccessRequired?: (type: 'subscription' | 'purchase' | 'login') => void;
 }
 
