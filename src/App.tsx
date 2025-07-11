@@ -25,6 +25,13 @@ import { GodmodeDashboard } from "@/components/godmode/dashboard/GodmodeDashboar
 import { GodmodeUsers } from "@/components/godmode/users/GodmodeUsers";
 import { GodmodeContent } from "@/components/godmode/content/GodmodeContent";
 import { GodmodeMessages } from "@/components/godmode/messages/GodmodeMessages";
+import { GodmodeStreams } from "@/components/godmode/streams/GodmodeStreams";
+import { GodmodeVerification } from "@/components/godmode/verification/GodmodeVerification";
+import { GodmodePayouts } from "@/components/godmode/payouts/GodmodePayouts";
+import { GodmodeFlagged } from "@/components/godmode/flagged/GodmodeFlagged";
+import { GodmodeSearch } from "@/components/godmode/search/GodmodeSearch";
+import { GodmodeLogs } from "@/components/godmode/logs/GodmodeLogs";
+import { GodmodeSettings } from "@/components/godmode/settings/GodmodeSettings";
 import { MainLayout } from "@/components/layout/MainLayout";
 
 const queryClient = new QueryClient();
@@ -44,19 +51,19 @@ const App = () => (
                     <Route path="/" element={<Index />} />
                     <Route path="/login" element={<Login />} />
                     <Route path="/register" element={<Register />} />
-                    <Route path="/godmode" element={<Godmode />}>
-                      <Route index element={<GodmodeDashboard />} />
-                      <Route path="users" element={<GodmodeUsers />} />
-                      <Route path="content" element={<GodmodeContent />} />
-                      <Route path="messages" element={<GodmodeMessages />} />
-                      <Route path="streams" element={<div className="text-white">Streams Management - Coming Soon</div>} />
-                      <Route path="verification" element={<div className="text-white">Verification Management - Coming Soon</div>} />
-                      <Route path="payouts" element={<div className="text-white">Payout Management - Coming Soon</div>} />
-                      <Route path="flagged" element={<div className="text-white">Flagged Content - Coming Soon</div>} />
-                      <Route path="search" element={<div className="text-white">Search Management - Coming Soon</div>} />
-                      <Route path="logs" element={<div className="text-white">System Logs - Coming Soon</div>} />
-                      <Route path="settings" element={<div className="text-white">Settings - Coming Soon</div>} />
-                    </Route>
+                      <Route path="/godmode" element={<Godmode />}>
+                        <Route index element={<GodmodeDashboard />} />
+                        <Route path="users" element={<GodmodeUsers />} />
+                        <Route path="content" element={<GodmodeContent />} />
+                        <Route path="messages" element={<GodmodeMessages />} />
+                        <Route path="streams" element={<GodmodeStreams />} />
+                        <Route path="verification" element={<GodmodeVerification />} />
+                        <Route path="payouts" element={<GodmodePayouts />} />
+                        <Route path="flagged" element={<GodmodeFlagged />} />
+                        <Route path="search" element={<GodmodeSearch />} />
+                        <Route path="logs" element={<GodmodeLogs />} />
+                        <Route path="settings" element={<GodmodeSettings />} />
+                      </Route>
                     <Route element={<MainLayout />}>
                       <Route path="/home" element={<Home />} />
                       <Route path="/dating" element={<Dating />} />
