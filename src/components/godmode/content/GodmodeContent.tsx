@@ -736,11 +736,13 @@ export const GodmodeContent: React.FC = () => {
           <div
             key={item.id}
             ref={index === contentItems.length - 1 ? lastElementRef : null}
-            className={`premium-glass-panel p-4 hover:bg-white/5 transition-all duration-300 group ${viewMode === 'list' ? 'flex gap-4' : ''}`}
+            className={`premium-glass-panel hover:bg-white/5 transition-all duration-300 group ${
+              viewMode === 'list' ? 'flex gap-4 p-4' : 'flex flex-col h-full'
+            }`}
           >
             {/* Media Preview */}
             {viewMode === 'grid' && (
-              <div className="aspect-square mb-3 rounded-lg overflow-hidden">
+              <div className="aspect-square rounded-lg overflow-hidden flex-shrink-0">
                 <MediaPreview item={item} className="w-full h-full" />
               </div>
             )}
@@ -751,7 +753,7 @@ export const GodmodeContent: React.FC = () => {
               </div>
             )}
 
-            <div className="flex-1">
+            <div className={`${viewMode === 'grid' ? 'p-4 flex-1 flex flex-col' : 'flex-1'}`}>
               {/* Creator Info */}
               <div className="flex items-center gap-2 mb-2">
                 <img 
@@ -759,7 +761,7 @@ export const GodmodeContent: React.FC = () => {
                   alt={item.creator?.username}
                   className="w-6 h-6 rounded-full"
                 />
-                <span className="text-sm text-white font-medium">{item.creator?.username}</span>
+                <span className="text-sm text-white font-medium truncate">{item.creator?.username}</span>
                 <Badge 
                   variant="outline" 
                   className={`text-xs ${
@@ -773,53 +775,58 @@ export const GodmodeContent: React.FC = () => {
                 >
                   {item.content_type.replace('_', ' ').toUpperCase()}
                 </Badge>
-                <div className="flex items-center gap-1">
-                  {getContentTypeIcon(getMediaType(item))}
-                  {item.is_ppv && <DollarSign className="w-3 h-3 text-green-400" />}
-                  {item.visibility === 'subscribers_only' && <Users className="w-3 h-3 text-purple-400" />}
-                  {item.visibility === 'private' && <Eye className="w-3 h-3 text-red-400" />}
-                  {item.expires_at && <Clock className="w-3 h-3 text-yellow-400" />}
-                </div>
+              </div>
+
+              {/* Icons row */}
+              <div className="flex items-center gap-1 mb-2">
+                {getContentTypeIcon(getMediaType(item))}
+                {item.is_ppv && <DollarSign className="w-3 h-3 text-green-400" />}
+                {item.visibility === 'subscribers_only' && <Users className="w-3 h-3 text-purple-400" />}
+                {item.visibility === 'private' && <Eye className="w-3 h-3 text-red-400" />}
+                {item.expires_at && <Clock className="w-3 h-3 text-yellow-400" />}
               </div>
 
               {/* Content Preview */}
-              <p className="text-sm text-muted-foreground mb-2 line-clamp-2">
+              <p className="text-sm text-muted-foreground mb-2 line-clamp-2 flex-1">
                 {item.content}
               </p>
 
               {/* Tags */}
               {item.tags && item.tags.length > 0 && (
                 <div className="flex flex-wrap gap-1 mb-2">
-                  {item.tags.slice(0, 3).map((tag) => (
+                  {item.tags.slice(0, 2).map((tag) => (
                     <Badge key={tag} variant="secondary" className="text-xs">
                       #{tag}
                     </Badge>
                   ))}
-                  {item.tags.length > 3 && (
+                  {item.tags.length > 2 && (
                     <Badge variant="outline" className="text-xs">
-                      +{item.tags.length - 3}
+                      +{item.tags.length - 2}
                     </Badge>
                   )}
                 </div>
               )}
 
-              {/* Stats */}
-              <div className="flex items-center justify-between text-xs text-muted-foreground">
-                <div className="flex items-center gap-3">
-                  <span>{item.likes_count || 0} likes</span>
-                  <span>{item.comments_count || 0} comments</span>
-                  <span>{item.view_count || 0} views</span>
+              {/* Bottom section */}
+              <div className="mt-auto space-y-1">
+                {/* Stats */}
+                <div className="flex items-center justify-between text-xs text-muted-foreground">
+                  <div className="flex items-center gap-2">
+                    <span>{item.likes_count || 0}</span>
+                    <span>{item.comments_count || 0}</span>
+                    <span>{item.view_count || 0}</span>
+                  </div>
+                  {item.is_ppv && (
+                    <span className="text-green-400 font-medium">
+                      ${item.ppv_amount}
+                    </span>
+                  )}
                 </div>
-                {item.is_ppv && (
-                  <span className="text-green-400 font-medium">
-                    ${item.ppv_amount}
-                  </span>
-                )}
-              </div>
 
-              {/* Timestamp */}
-              <div className="text-xs text-muted-foreground mt-1">
-                {new Date(item.created_at).toLocaleDateString()}
+                {/* Timestamp */}
+                <div className="text-xs text-muted-foreground">
+                  {new Date(item.created_at).toLocaleDateString()}
+                </div>
               </div>
             </div>
           </div>
