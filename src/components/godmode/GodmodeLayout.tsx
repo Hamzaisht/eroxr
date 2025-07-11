@@ -11,23 +11,21 @@ export const GodmodeLayout: React.FC = () => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
   return (
-    <div className="min-h-screen bg-black relative overflow-hidden">
-      {/* Vanta Black Background with Neon Effects */}
+    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 relative overflow-hidden">
+      {/* Sophisticated Background */}
       <div className="fixed inset-0">
-        {/* Animated grid background */}
-        <div className="absolute inset-0 opacity-20">
-          <div className="absolute inset-0 bg-[linear-gradient(to_right,#00f5ff11_1px,transparent_1px),linear-gradient(to_bottom,#00f5ff11_1px,transparent_1px)] bg-[size:50px_50px]" />
-        </div>
+        {/* Subtle grid pattern */}
+        <div className="absolute inset-0 premium-grid opacity-30" />
         
-        {/* Neon glow effects */}
+        {/* Elegant gradient overlays */}
         <div className="absolute inset-0">
-          <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl animate-pulse" />
-          <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl animate-pulse delay-1000" />
-          <div className="absolute top-1/2 left-1/2 w-72 h-72 bg-pink-500/10 rounded-full blur-3xl animate-pulse delay-2000" />
+          <div className="absolute top-0 left-0 w-1/3 h-1/3 bg-gradient-radial from-blue-500/5 to-transparent blur-3xl" />
+          <div className="absolute bottom-0 right-0 w-1/3 h-1/3 bg-gradient-radial from-purple-500/5 to-transparent blur-3xl" />
+          <div className="absolute top-1/2 left-1/2 w-1/4 h-1/4 bg-gradient-radial from-indigo-500/3 to-transparent blur-2xl transform -translate-x-1/2 -translate-y-1/2" />
         </div>
         
-        {/* Glassmorphism overlay */}
-        <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/5 via-transparent to-purple-500/5 backdrop-blur-[1px]" />
+        {/* Professional overlay */}
+        <div className="absolute inset-0 bg-gradient-to-br from-slate-950/50 via-transparent to-slate-950/30" />
       </div>
 
       <div className="relative z-10 flex h-screen overflow-hidden">
