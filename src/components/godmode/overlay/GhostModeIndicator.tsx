@@ -23,8 +23,8 @@ export const GhostModeIndicator: React.FC = () => {
   };
 
   return (
-    <div className="fixed top-6 right-6 z-50">
-      <Card className="glass-panel subtle-pulse border border-white/10 shadow-2xl backdrop-blur-sm p-4 bg-gradient-to-br from-slate-900/95 to-slate-800/95">
+    <div className="fixed top-20 right-4 z-40 max-w-xs">
+      <Card className="glass-panel subtle-pulse border border-white/10 shadow-2xl backdrop-blur-sm p-4 bg-gradient-to-br from-slate-900/95 to-slate-800/95 animate-fade-in">
         <div className="flex items-center gap-3 mb-3">
           <div className="relative">
             <Eye className="h-5 w-5 text-blue-400" />

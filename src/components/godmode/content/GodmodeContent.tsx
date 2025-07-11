@@ -748,30 +748,34 @@ export const GodmodeContent: React.FC = () => {
       </div>
 
       {/* Content Grid/List */}
-      <div className={`${viewMode === 'grid' ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6' : 'space-y-4'}`}>
+      <div className={`${
+        viewMode === 'grid' 
+          ? 'grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4' 
+          : 'space-y-4'
+      }`}>
         {contentItems.map((item, index) => (
           <div
             key={item.id}
             ref={index === contentItems.length - 1 ? lastElementRef : null}
-            className={`premium-glass-panel hover:border-white/20 transition-all duration-300 group ${
-              viewMode === 'list' ? 'flex gap-4 p-4' : 'flex flex-col'
+            className={`premium-glass-panel hover:border-white/20 transition-all duration-300 group animate-fade-in ${
+              viewMode === 'list' ? 'flex gap-4 p-4' : 'flex flex-col overflow-hidden'
             }`}
-            style={viewMode === 'grid' ? { height: '400px' } : undefined}
+            style={viewMode === 'grid' ? { height: '320px' } : undefined}
           >
             {/* Media Preview */}
             {viewMode === 'grid' && (
-              <div className="aspect-square rounded-lg overflow-hidden flex-shrink-0 relative">
-                <MediaPreview item={item} className="w-full h-full" />
+              <div className="relative w-full h-48 overflow-hidden rounded-t-lg bg-black/20">
+                <MediaPreview item={item} className="w-full h-full object-cover" />
               </div>
             )}
 
             {viewMode === 'list' && (
-              <div className="w-16 h-16 flex-shrink-0 rounded-lg overflow-hidden">
-                <MediaPreview item={item} className="w-full h-full" />
+              <div className="w-20 h-20 flex-shrink-0 rounded-lg overflow-hidden bg-black/20">
+                <MediaPreview item={item} className="w-full h-full object-cover" />
               </div>
             )}
 
-            <div className={`${viewMode === 'grid' ? 'p-4 flex-1 flex flex-col' : 'flex-1'}`}>
+            <div className={`${viewMode === 'grid' ? 'p-3 flex-1 flex flex-col justify-between' : 'flex-1'}`}>
               {/* Creator Info */}
               <div className="flex items-center gap-2 mb-2">
                 <img 
