@@ -17,6 +17,8 @@ export const AdminSessionProvider: React.FC<{ children: ReactNode }> = ({ childr
   const { isAdmin, adminUser, isLoading: authLoading } = useAdminAuth();
   const ghostMode = useGhostMode();
   
+  console.log('🏛️ AdminSessionContext: Provider rendered', { isAdmin, adminUser, authLoading });
+  
   // Temporary logGhostAction until full implementation
   const logGhostAction = async (action: string, targetType?: string, targetId?: string, details?: any) => {
     console.log('Ghost action:', { action, targetType, targetId, details });
@@ -30,6 +32,8 @@ export const AdminSessionProvider: React.FC<{ children: ReactNode }> = ({ childr
     toggleGhostMode: async () => {}, // Temporary
     logGhostAction
   };
+
+  console.log('🏛️ AdminSessionContext: Context value', contextValue);
 
   return (
     <AdminSessionContext.Provider value={contextValue}>
