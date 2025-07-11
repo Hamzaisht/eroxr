@@ -3,6 +3,8 @@ import { useState, useRef, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useInView } from "react-intersection-observer";
 import { Watermark } from "@/components/shared/Watermark";
+import { Maximize, Minimize, X } from "lucide-react";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 
 interface MediaAsset {
   id: string;
@@ -24,7 +26,9 @@ export const MediaRenderer = ({ assets, media, className = "", username }: Media
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isLoading, setIsLoading] = useState<Record<string, boolean>>({});
   const [hasError, setHasError] = useState<Record<string, boolean>>({});
+  const [isFullscreen, setIsFullscreen] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const fullscreenVideoRef = useRef<HTMLVideoElement>(null);
   
   // Use intersection observer to detect when video is in viewport
   const { ref: inViewRef, inView } = useInView({
@@ -106,9 +110,18 @@ export const MediaRenderer = ({ assets, media, className = "", username }: Media
   });
 
   return (
-    <div className={`relative overflow-hidden rounded-lg ${className}`} ref={inViewRef}>
-      {/* Media Content */}
-      <div className="relative aspect-video bg-gray-900">
+    <>
+      <div className={`relative overflow-hidden rounded-lg ${className}`} ref={inViewRef}>
+        {/* Fullscreen Toggle Button */}
+        <button
+          onClick={() => setIsFullscreen(true)}
+          className="absolute top-3 right-3 z-10 p-2 bg-black/50 hover:bg-black/70 text-white rounded-full transition-all duration-200 opacity-0 group-hover:opacity-100"
+        >
+          <Maximize className="w-4 h-4" />
+        </button>
+
+        {/* Media Content */}
+        <div className="relative aspect-video bg-gray-900">
         {currentAsset.media_type === 'image' ? (
           <img
             src={mediaUrl}
@@ -212,5 +225,89 @@ export const MediaRenderer = ({ assets, media, className = "", username }: Media
         </>
       )}
     </div>
+
+    {/* Fullscreen Modal */}
+    <Dialog open={isFullscreen} onOpenChange={setIsFullscreen}>
+      <DialogContent className="max-w-[95vw] max-h-[95vh] w-auto h-auto p-0 bg-black/95 border-none">
+        <div className="relative w-full h-full flex items-center justify-center">
+          {/* Close Button */}
+          <button
+            onClick={() => setIsFullscreen(false)}
+            className="absolute top-4 right-4 z-50 p-2 bg-black/50 hover:bg-black/70 text-white rounded-full transition-all duration-200"
+          >
+            <X className="w-6 h-6" />
+          </button>
+
+          {/* Fullscreen Media */}
+          <div className="relative max-w-full max-h-full">
+            {currentAsset.media_type === 'image' ? (
+              <img
+                src={mediaUrl}
+                alt={currentAsset.alt_text || currentAsset.original_name}
+                className="max-w-full max-h-[90vh] object-contain"
+              />
+            ) : currentAsset.media_type === 'video' ? (
+              <video
+                ref={fullscreenVideoRef}
+                src={mediaUrl}
+                className="max-w-full max-h-[90vh] object-contain"
+                controls
+                autoPlay
+                playsInline
+              >
+                Your browser does not support the video tag.
+              </video>
+            ) : null}
+
+            {/* Watermark in fullscreen */}
+            {username && <Watermark username={username} />}
+
+            {/* Fullscreen Navigation for multiple media */}
+            {mediaAssets.length > 1 && (
+              <>
+                {/* Dots indicator */}
+                <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 flex space-x-3">
+                  {mediaAssets.map((_, index) => (
+                    <button
+                      key={index}
+                      onClick={() => setCurrentIndex(index)}
+                      className={`w-3 h-3 rounded-full transition-all duration-200 ${
+                        index === currentIndex 
+                          ? 'bg-white' 
+                          : 'bg-white/50 hover:bg-white/70'
+                      }`}
+                    />
+                  ))}
+                </div>
+
+                {/* Navigation arrows */}
+                {currentIndex > 0 && (
+                  <button
+                    onClick={() => setCurrentIndex(prev => prev - 1)}
+                    className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white rounded-full p-3 transition-all duration-200"
+                  >
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                    </svg>
+                  </button>
+                )}
+                
+                {currentIndex < mediaAssets.length - 1 && (
+                  <button
+                    onClick={() => setCurrentIndex(prev => prev + 1)}
+                    className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white rounded-full p-3 transition-all duration-200"
+                  >
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                  </button>
+                )}
+              </>
+            )}
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  </>
   );
 };
