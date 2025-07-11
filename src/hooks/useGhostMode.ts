@@ -74,8 +74,8 @@ export const useGhostMode = () => {
 
     checkGhostMode();
     
-    // Check every 5 minutes instead of every minute to avoid frequent checks
-    const interval = setInterval(checkGhostMode, 5 * 60 * 1000);
+    // Check every 10 minutes to avoid frequent auto-deactivation
+    const interval = setInterval(checkGhostMode, 10 * 60 * 1000);
     return () => clearInterval(interval);
   }, []);
 
