@@ -511,6 +511,8 @@ export const GodmodeContent: React.FC = () => {
 
   const MediaPreview = ({ item, className = "" }: { item: ContentItem, className?: string }) => {
     const mediaUrl = item.video_urls?.[0] || item.media_url?.[0];
+    const isHovered = hoveredMedia === item.id;
+    
     if (!mediaUrl) {
       return (
         <div className={`bg-black/30 flex items-center justify-center ${className}`}>
@@ -521,63 +523,78 @@ export const GodmodeContent: React.FC = () => {
 
     return (
       <div 
-        className={`relative group cursor-pointer overflow-hidden ${className}`}
+        className={`relative group cursor-pointer overflow-hidden ${className} transition-all duration-300 ease-out`}
         onMouseEnter={() => setHoveredMedia(item.id)}
         onMouseLeave={() => setHoveredMedia(null)}
         onClick={() => openFullscreenMedia(item)}
       >
-        {item.video_urls?.[0] ? (
-          <div className="w-full h-full bg-black/50 flex items-center justify-center">
-            <video 
-              src={item.video_urls[0]}
+        {/* Media Content */}
+        <div className={`w-full h-full transition-transform duration-300 ease-out ${isHovered ? 'scale-105' : 'scale-100'}`}>
+          {item.video_urls?.[0] ? (
+            <div className="w-full h-full bg-black/50 flex items-center justify-center relative">
+              <video 
+                src={item.video_urls[0]}
+                className="w-full h-full object-cover"
+                muted
+                preload="metadata"
+                poster=""
+              />
+              <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
+                <div className={`bg-white/90 rounded-full flex items-center justify-center transition-all duration-300 ${isHovered ? 'w-10 h-10' : 'w-8 h-8'}`}>
+                  <Play className={`text-gray-800 ml-0.5 transition-all duration-300 ${isHovered ? 'w-5 h-5' : 'w-4 h-4'}`} />
+                </div>
+              </div>
+            </div>
+          ) : (
+            <img 
+              src={item.media_url![0]} 
+              alt="Content"
               className="w-full h-full object-cover"
-              muted
-              preload="metadata"
             />
-            <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
-              <div className="w-8 h-8 bg-white/80 rounded-full flex items-center justify-center">
-                <Play className="w-4 h-4 text-gray-800 ml-0.5" />
+          )}
+        </div>
+        
+        {/* Smooth Hover Overlay */}
+        <div className={`absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent transition-opacity duration-300 ${isHovered ? 'opacity-100' : 'opacity-0'}`}>
+          <div className={`absolute bottom-4 left-4 right-4 transform transition-all duration-300 ${isHovered ? 'translate-y-0 opacity-100' : 'translate-y-2 opacity-0'}`}>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
+                  {getContentTypeIcon(getMediaType(item))}
+                </div>
+                <div className="text-white text-xs">
+                  <div className="font-medium">{item.creator?.username}</div>
+                  <div className="opacity-75">{item.content_type}</div>
+                </div>
+              </div>
+              <div className="flex gap-1">
+                <button 
+                  className="p-2 bg-white/20 backdrop-blur-sm rounded-full hover:bg-white/30 transition-colors"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    openFullscreenMedia(item);
+                  }}
+                >
+                  <Maximize2 className="w-3 h-3 text-white" />
+                </button>
+                <button 
+                  className="p-2 bg-white/20 backdrop-blur-sm rounded-full hover:bg-white/30 transition-colors"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    const link = document.createElement('a');
+                    link.href = mediaUrl;
+                    link.download = `content-${item.id}`;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                  }}
+                >
+                  <Download className="w-3 h-3 text-white" />
+                </button>
               </div>
             </div>
           </div>
-        ) : (
-          <img 
-            src={item.media_url![0]} 
-            alt="Content"
-            className="w-full h-full object-cover"
-          />
-        )}
-        
-        {hoveredMedia === item.id && (
-          <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
-            <div className="flex gap-2">
-              <button 
-                className="p-2 bg-white/20 rounded-full hover:bg-white/30 transition-colors"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  openFullscreenMedia(item);
-                }}
-              >
-                <Maximize2 className="w-4 h-4 text-white" />
-              </button>
-              <button 
-                className="p-2 bg-white/20 rounded-full hover:bg-white/30 transition-colors"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  // Download functionality
-                  const link = document.createElement('a');
-                  link.href = mediaUrl;
-                  link.download = `content-${item.id}`;
-                  document.body.appendChild(link);
-                  link.click();
-                  document.body.removeChild(link);
-                }}
-              >
-                <Download className="w-4 h-4 text-white" />
-              </button>
-            </div>
-          </div>
-        )}
+        </div>
       </div>
     );
   };
@@ -731,18 +748,19 @@ export const GodmodeContent: React.FC = () => {
       </div>
 
       {/* Content Grid/List */}
-      <div className={`${viewMode === 'grid' ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4' : 'space-y-4'}`}>
+      <div className={`${viewMode === 'grid' ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6' : 'space-y-4'}`}>
         {contentItems.map((item, index) => (
           <div
             key={item.id}
             ref={index === contentItems.length - 1 ? lastElementRef : null}
-            className={`premium-glass-panel hover:bg-white/5 transition-all duration-300 group ${
-              viewMode === 'list' ? 'flex gap-4 p-4' : 'flex flex-col h-full'
+            className={`premium-glass-panel hover:border-white/20 transition-all duration-300 group ${
+              viewMode === 'list' ? 'flex gap-4 p-4' : 'flex flex-col'
             }`}
+            style={viewMode === 'grid' ? { height: '400px' } : undefined}
           >
             {/* Media Preview */}
             {viewMode === 'grid' && (
-              <div className="aspect-square rounded-lg overflow-hidden flex-shrink-0">
+              <div className="aspect-square rounded-lg overflow-hidden flex-shrink-0 relative">
                 <MediaPreview item={item} className="w-full h-full" />
               </div>
             )}
