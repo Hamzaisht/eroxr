@@ -3,12 +3,13 @@ import { useAdminSession } from '@/contexts/AdminSessionContext';
 import { useGhostCapabilities } from '@/hooks/useGhostCapabilities';
 import { supabase } from '@/integrations/supabase/client';
 import { useInfiniteScroll } from '@/hooks/useInfiniteScroll';
-import { Search, Filter, Grid, List, Eye, Flag, Download, Video, Image, FileText, Clock, Users, Tag, DollarSign } from 'lucide-react';
+import { Search, Filter, Grid, List, Eye, Flag, Download, Video, Image, FileText, Clock, Users, Tag, DollarSign, Play, Maximize2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { UniversalMedia } from '@/components/shared/media/UniversalMedia';
+import { FullscreenMediaViewer } from '@/components/media/FullscreenMediaViewer';
 
 interface ContentItem {
   id: string;
@@ -49,6 +50,12 @@ export const GodmodeContent: React.FC = () => {
   const [filterUser, setFilterUser] = useState('');
   const [filterTags, setFilterTags] = useState('');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [hoveredMedia, setHoveredMedia] = useState<string | null>(null);
+  const [fullscreenMedia, setFullscreenMedia] = useState<{
+    url: string;
+    type: 'image' | 'video';
+    alt: string;
+  } | null>(null);
   const [realTimeStats, setRealTimeStats] = useState({
     totalPosts: 0,
     totalStories: 0,
@@ -490,6 +497,91 @@ export const GodmodeContent: React.FC = () => {
     }
   };
 
+  const openFullscreenMedia = (item: ContentItem) => {
+    const mediaUrl = item.video_urls?.[0] || item.media_url?.[0];
+    if (!mediaUrl) return;
+
+    const mediaType = item.video_urls?.[0] ? 'video' : 'image';
+    setFullscreenMedia({
+      url: mediaUrl,
+      type: mediaType,
+      alt: `${item.creator?.username}'s ${item.content_type}`
+    });
+  };
+
+  const MediaPreview = ({ item, className = "" }: { item: ContentItem, className?: string }) => {
+    const mediaUrl = item.video_urls?.[0] || item.media_url?.[0];
+    if (!mediaUrl) {
+      return (
+        <div className={`bg-black/30 flex items-center justify-center ${className}`}>
+          <FileText className="w-8 h-8 text-muted-foreground" />
+        </div>
+      );
+    }
+
+    return (
+      <div 
+        className={`relative group cursor-pointer overflow-hidden ${className}`}
+        onMouseEnter={() => setHoveredMedia(item.id)}
+        onMouseLeave={() => setHoveredMedia(null)}
+        onClick={() => openFullscreenMedia(item)}
+      >
+        {item.video_urls?.[0] ? (
+          <div className="w-full h-full bg-black/50 flex items-center justify-center">
+            <video 
+              src={item.video_urls[0]}
+              className="w-full h-full object-cover"
+              muted
+              preload="metadata"
+            />
+            <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+              <div className="w-8 h-8 bg-white/80 rounded-full flex items-center justify-center">
+                <Play className="w-4 h-4 text-gray-800 ml-0.5" />
+              </div>
+            </div>
+          </div>
+        ) : (
+          <img 
+            src={item.media_url![0]} 
+            alt="Content"
+            className="w-full h-full object-cover"
+          />
+        )}
+        
+        {hoveredMedia === item.id && (
+          <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
+            <div className="flex gap-2">
+              <button 
+                className="p-2 bg-white/20 rounded-full hover:bg-white/30 transition-colors"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  openFullscreenMedia(item);
+                }}
+              >
+                <Maximize2 className="w-4 h-4 text-white" />
+              </button>
+              <button 
+                className="p-2 bg-white/20 rounded-full hover:bg-white/30 transition-colors"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  // Download functionality
+                  const link = document.createElement('a');
+                  link.href = mediaUrl;
+                  link.download = `content-${item.id}`;
+                  document.body.appendChild(link);
+                  link.click();
+                  document.body.removeChild(link);
+                }}
+              >
+                <Download className="w-4 h-4 text-white" />
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
+
   if (!isGhostMode) {
     return (
       <div className="space-y-6">
@@ -648,42 +740,14 @@ export const GodmodeContent: React.FC = () => {
           >
             {/* Media Preview */}
             {viewMode === 'grid' && (
-              <div className="aspect-square mb-3 overflow-hidden rounded-lg">
-                {item.video_urls?.[0] ? (
-                  <div className="w-full h-full bg-black/50 flex items-center justify-center">
-                    <Video className="w-8 h-8 text-white" />
-                  </div>
-                ) : item.media_url?.[0] ? (
-                  <img 
-                    src={item.media_url[0]} 
-                    alt="Content"
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <div className="w-full h-full bg-black/30 flex items-center justify-center">
-                    <FileText className="w-8 h-8 text-muted-foreground" />
-                  </div>
-                )}
+              <div className="aspect-square mb-3 rounded-lg overflow-hidden">
+                <MediaPreview item={item} className="w-full h-full" />
               </div>
             )}
 
             {viewMode === 'list' && (
-              <div className="w-16 h-16 flex-shrink-0 overflow-hidden rounded-lg">
-                {item.video_urls?.[0] ? (
-                  <div className="w-full h-full bg-black/50 flex items-center justify-center">
-                    <Video className="w-4 h-4 text-white" />
-                  </div>
-                ) : item.media_url?.[0] ? (
-                  <img 
-                    src={item.media_url[0]} 
-                    alt="Content"
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <div className="w-full h-full bg-black/30 flex items-center justify-center">
-                    <FileText className="w-4 h-4 text-muted-foreground" />
-                  </div>
-                )}
+              <div className="w-16 h-16 flex-shrink-0 rounded-lg overflow-hidden">
+                <MediaPreview item={item} className="w-full h-full" />
               </div>
             )}
 
@@ -786,6 +850,17 @@ export const GodmodeContent: React.FC = () => {
           <h3 className="text-xl font-semibold text-white mb-2">No content found</h3>
           <p className="text-muted-foreground">Try adjusting your filters or search terms</p>
         </div>
+      )}
+
+      {/* Fullscreen Media Viewer */}
+      {fullscreenMedia && (
+        <FullscreenMediaViewer
+          isOpen={!!fullscreenMedia}
+          onClose={() => setFullscreenMedia(null)}
+          mediaUrl={fullscreenMedia.url}
+          mediaType={fullscreenMedia.type}
+          alt={fullscreenMedia.alt}
+        />
       )}
     </div>
   );
