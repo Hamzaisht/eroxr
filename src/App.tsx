@@ -35,51 +35,55 @@ import { MainLayout } from "@/components/layout/MainLayout";
 
 const queryClient = new QueryClient();
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <AuthProvider>
-        <AdminSessionProvider>
-          <ToastProvider>
-            <TooltipProvider>
-              <ErrorBoundary>
-                <Toaster />
-                <Sonner />
-                <BrowserRouter>
-                  <Routes>
-                    <Route path="/" element={<Index />} />
-                    <Route path="/login" element={<Login />} />
-                    <Route path="/register" element={<Register />} />
-                      <Route path="/godmode" element={<Godmode />}>
-                        <Route index element={<GodmodeDashboard />} />
-                        <Route path="users" element={<GodmodeUsers />} />
-                        <Route path="content" element={<GodmodeContent />} />
-                        <Route path="messages" element={<GodmodeMessages />} />
-                        <Route path="streams" element={<GodmodeStreams />} />
-                        <Route path="verification" element={<GodmodeVerification />} />
-                        <Route path="payouts" element={<GodmodePayouts />} />
-                        <Route path="flagged" element={<GodmodeFlagged />} />
-                        <Route path="search" element={<GodmodeSearch />} />
-                        {/* <Route path="logs" element={<GodmodeLogs />} /> */}
-                        <Route path="settings" element={<GodmodeSettings />} />
+const App = () => {
+  return (
+    <React.Fragment>
+      <QueryClientProvider client={queryClient}>
+        <AuthProvider>
+          <AdminSessionProvider>
+            <ToastProvider>
+              <TooltipProvider>
+                <ErrorBoundary>
+                  <Toaster />
+                  <Sonner />
+                  <BrowserRouter>
+                    <Routes>
+                      <Route path="/" element={<Index />} />
+                      <Route path="/login" element={<Login />} />
+                      <Route path="/register" element={<Register />} />
+                        <Route path="/godmode" element={<Godmode />}>
+                          <Route index element={<GodmodeDashboard />} />
+                          <Route path="users" element={<GodmodeUsers />} />
+                          <Route path="content" element={<GodmodeContent />} />
+                          <Route path="messages" element={<GodmodeMessages />} />
+                          <Route path="streams" element={<GodmodeStreams />} />
+                          <Route path="verification" element={<GodmodeVerification />} />
+                          <Route path="payouts" element={<GodmodePayouts />} />
+                          <Route path="flagged" element={<GodmodeFlagged />} />
+                          <Route path="search" element={<GodmodeSearch />} />
+                          {/* <Route path="logs" element={<GodmodeLogs />} /> */}
+                          <Route path="settings" element={<GodmodeSettings />} />
+                        </Route>
+                      <Route element={<MainLayout />}>
+                        <Route path="/home" element={<Home />} />
+                        <Route path="/dating" element={<Dating />} />
+                        <Route path="/messages" element={<Messages />} />
+                        <Route path="/shorts" element={<Shorts />} />
+                        <Route path="/shorts/upload" element={<ShortsUpload />} />
+                        <Route path="/eroboard" element={<Eroboard />} />
+                        <Route path="/profile" element={<Profile />} />
+                        <Route path="/profile/:userId" element={<Profile />} />
                       </Route>
-                    <Route element={<MainLayout />}>
-                      <Route path="/home" element={<Home />} />
-                      <Route path="/dating" element={<Dating />} />
-                      <Route path="/messages" element={<Messages />} />
-                      <Route path="/shorts" element={<Shorts />} />
-                      <Route path="/shorts/upload" element={<ShortsUpload />} />
-                      <Route path="/eroboard" element={<Eroboard />} />
-                      <Route path="/profile" element={<Profile />} />
-                      <Route path="/profile/:userId" element={<Profile />} />
-                    </Route>
-                  </Routes>
-                </BrowserRouter>
-              </ErrorBoundary>
-            </TooltipProvider>
-          </ToastProvider>
-        </AdminSessionProvider>
-      </AuthProvider>
-  </QueryClientProvider>
-);
+                    </Routes>
+                  </BrowserRouter>
+                </ErrorBoundary>
+              </TooltipProvider>
+            </ToastProvider>
+          </AdminSessionProvider>
+        </AuthProvider>
+      </QueryClientProvider>
+    </React.Fragment>
+  );
+};
 
 export default App;
