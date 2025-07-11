@@ -24,19 +24,19 @@ export const GhostModeIndicator: React.FC = () => {
 
   return (
     <div className="fixed top-4 right-4 z-50">
-      <Card className="p-4 bg-gradient-to-br from-purple-900/95 to-red-900/95 border-purple-500/50 shadow-2xl backdrop-blur-sm">
+      <Card className="glass-panel neon-pulse border-cyan-500/50 shadow-2xl backdrop-blur-sm p-4 bg-gradient-to-br from-black/90 to-cyan-900/20">
         <div className="flex items-center gap-3 mb-3">
           <div className="relative">
             <Eye className="h-6 w-6 text-purple-300 animate-pulse" />
             <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full animate-ping" />
           </div>
           <div>
-            <h3 className="text-sm font-bold text-purple-200 tracking-wide">
+            <h3 className="text-sm font-bold holographic-text tracking-wide">
               👁 GHOST MODE ACTIVE
             </h3>
-            <p className="text-xs text-purple-400">Invisible Surveillance</p>
+            <p className="text-xs text-cyan-400">Invisible Surveillance</p>
           </div>
-          <Badge className="bg-red-600/80 text-white animate-pulse ml-auto">
+          <Badge className="bg-gradient-to-r from-cyan-500 to-purple-500 text-white animate-pulse ml-auto neon-glow">
             LIVE
           </Badge>
         </div>

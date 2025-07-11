@@ -19,23 +19,23 @@ export const GhostModeToggle: React.FC = () => {
 
   return (
     <div className={cn(
-      "relative p-4 rounded-lg border transition-all duration-300",
+      "relative p-4 rounded-lg border transition-all duration-300 glass-panel-hover",
       isGhostMode 
-        ? "bg-gradient-to-r from-purple-900/30 to-red-900/30 border-purple-500/50 shadow-lg shadow-purple-500/20" 
-        : "bg-black/20 border-white/10"
+        ? "glass-panel neon-pulse border-cyan-500/50" 
+        : "bg-black/20 border-cyan-500/20"
     )}>
       {/* Pulsing glow effect when active */}
       {isGhostMode && (
-        <div className="absolute inset-0 rounded-lg bg-gradient-to-r from-purple-600/20 to-red-600/20 animate-pulse" />
+        <div className="absolute inset-0 rounded-lg bg-gradient-to-r from-cyan-500/10 to-purple-500/10 animate-pulse" />
       )}
       
       <div className="relative flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="relative">
             {isGhostMode ? (
-              <EyeOff className="h-6 w-6 text-purple-400 animate-pulse" />
+              <EyeOff className="h-6 w-6 text-cyan-400 animate-pulse" />
             ) : (
-              <Eye className="h-6 w-6 text-gray-400" />
+              <Eye className="h-6 w-6 text-cyan-400/50" />
             )}
             {isGhostMode && (
               <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full animate-ping" />
@@ -46,24 +46,24 @@ export const GhostModeToggle: React.FC = () => {
             <div className="flex items-center gap-2">
               <p className={cn(
                 "text-sm font-bold tracking-wide",
-                isGhostMode ? "text-purple-300" : "text-gray-300"
+                isGhostMode ? "holographic-text" : "text-cyan-400/70"
               )}>
                 👁 GHOST MODE
               </p>
               {isGhostMode && (
-                <Badge variant="destructive" className="text-xs px-2 py-0 bg-red-600/80 animate-pulse">
+                <Badge className="text-xs px-2 py-0 bg-gradient-to-r from-cyan-500 to-purple-500 text-white animate-pulse neon-glow">
                   ACTIVE
                 </Badge>
               )}
             </div>
             
-            <p className="text-xs text-gray-500">
+            <p className="text-xs text-cyan-400/70">
               {isGhostMode ? "🔒 Invisible surveillance active" : "Normal admin mode"}
             </p>
             
             {/* Session timer */}
             {isGhostMode && sessionTimeRemaining && (
-              <div className="flex items-center gap-1 text-xs text-purple-400">
+              <div className="flex items-center gap-1 text-xs text-cyan-400">
                 <Clock className="h-3 w-3" />
                 <span>Session: {formatTimeRemaining(sessionTimeRemaining)}</span>
               </div>
@@ -104,7 +104,7 @@ export const GhostModeToggle: React.FC = () => {
 
       {/* Warning message for Ghost Mode */}
       {isGhostMode && (
-        <div className="mt-3 p-2 bg-red-900/20 border border-red-500/30 rounded text-xs text-red-300">
+        <div className="mt-3 p-2 bg-cyan-900/20 border border-cyan-500/30 rounded text-xs text-cyan-300">
           ⚠️ <strong>STEALTH MODE:</strong> All actions are logged. Users cannot see your activity.
         </div>
       )}

@@ -53,10 +53,11 @@ export const useGhostMode = () => {
           
           if (isActive && session?.activated_at) {
             setSessionStartTime(new Date(session.activated_at));
-            // Check for 4h time limit
+            // Only check for 4h time limit, don't auto-deactivate
             const fourHoursAgo = new Date(Date.now() - 4 * 60 * 60 * 1000);
             if (new Date(session.activated_at) < fourHoursAgo) {
-              await deactivateGhostMode();
+              console.warn('Ghost Mode session has exceeded 4 hours');
+              // Just warn, don't auto-deactivate
             }
           }
         } else {
