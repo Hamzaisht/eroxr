@@ -1,8 +1,8 @@
-
 import React from 'react';
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { AdminSessionProvider } from "@/contexts/AdminSessionContext";
@@ -31,20 +31,31 @@ import { GodmodeSearch } from "@/components/godmode/search/GodmodeSearch";
 import { GodmodeSettings } from "@/components/godmode/settings/GodmodeSettings";
 import { MainLayout } from "@/components/layout/MainLayout";
 
+// Create QueryClient instance outside component to prevent recreation
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 1,
+      refetchOnWindowFocus: false,
+    },
+  },
+});
+
 function App() {
   return (
-    <AuthProvider>
-      <AdminSessionProvider>
-        <ToastProvider>
-          <TooltipProvider>
-            <ErrorBoundary>
-              <Toaster />
-              <Sonner />
-              <BrowserRouter>
-                <Routes>
-                  <Route path="/" element={<Index />} />
-                  <Route path="/login" element={<Login />} />
-                  <Route path="/register" element={<Register />} />
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <AdminSessionProvider>
+          <ToastProvider>
+            <TooltipProvider>
+              <ErrorBoundary>
+                <Toaster />
+                <Sonner />
+                <BrowserRouter>
+                  <Routes>
+                    <Route path="/" element={<Index />} />
+                    <Route path="/login" element={<Login />} />
+                    <Route path="/register" element={<Register />} />
                     <Route path="/godmode" element={<Godmode />}>
                       <Route index element={<GodmodeDashboard />} />
                       <Route path="users" element={<GodmodeUsers />} />
@@ -57,23 +68,24 @@ function App() {
                       <Route path="search" element={<GodmodeSearch />} />
                       <Route path="settings" element={<GodmodeSettings />} />
                     </Route>
-                  <Route element={<MainLayout />}>
-                    <Route path="/home" element={<Home />} />
-                    <Route path="/dating" element={<Dating />} />
-                    <Route path="/messages" element={<Messages />} />
-                    <Route path="/shorts" element={<Shorts />} />
-                    <Route path="/shorts/upload" element={<ShortsUpload />} />
-                    <Route path="/eroboard" element={<Eroboard />} />
-                    <Route path="/profile" element={<Profile />} />
-                    <Route path="/profile/:userId" element={<Profile />} />
-                  </Route>
-                </Routes>
-              </BrowserRouter>
-            </ErrorBoundary>
-          </TooltipProvider>
-        </ToastProvider>
-      </AdminSessionProvider>
-    </AuthProvider>
+                    <Route element={<MainLayout />}>
+                      <Route path="/home" element={<Home />} />
+                      <Route path="/dating" element={<Dating />} />
+                      <Route path="/messages" element={<Messages />} />
+                      <Route path="/shorts" element={<Shorts />} />
+                      <Route path="/shorts/upload" element={<ShortsUpload />} />
+                      <Route path="/eroboard" element={<Eroboard />} />
+                      <Route path="/profile" element={<Profile />} />
+                      <Route path="/profile/:userId" element={<Profile />} />
+                    </Route>
+                  </Routes>
+                </BrowserRouter>
+              </ErrorBoundary>
+            </TooltipProvider>
+          </ToastProvider>
+        </AdminSessionProvider>
+      </AuthProvider>
+    </QueryClientProvider>
   );
 }
 
