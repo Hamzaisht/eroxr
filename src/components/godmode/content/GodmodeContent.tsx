@@ -511,7 +511,6 @@ export const GodmodeContent: React.FC = () => {
 
   const MediaPreview = ({ item, className = "" }: { item: ContentItem, className?: string }) => {
     const mediaUrl = item.video_urls?.[0] || item.media_url?.[0];
-    const isHovered = hoveredMedia === item.id;
     
     if (!mediaUrl) {
       return (
@@ -523,13 +522,11 @@ export const GodmodeContent: React.FC = () => {
 
     return (
       <div 
-        className={`relative group cursor-pointer overflow-hidden ${className} transition-all duration-300 ease-out`}
-        onMouseEnter={() => setHoveredMedia(item.id)}
-        onMouseLeave={() => setHoveredMedia(null)}
+        className={`relative group cursor-pointer overflow-hidden ${className}`}
         onClick={() => openFullscreenMedia(item)}
       >
-        {/* Media Content */}
-        <div className={`w-full h-full transition-transform duration-300 ease-out ${isHovered ? 'scale-105' : 'scale-100'}`}>
+        {/* Media Content - No conditional rendering to prevent video re-render */}
+        <div className="w-full h-full transform transition-transform duration-300 ease-out group-hover:scale-105">
           {item.video_urls?.[0] ? (
             <div className="w-full h-full bg-black/50 flex items-center justify-center relative">
               <video 
@@ -538,10 +535,11 @@ export const GodmodeContent: React.FC = () => {
                 muted
                 preload="metadata"
                 poster=""
+                key={item.id} // Stable key to prevent re-mounting
               />
               <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
-                <div className={`bg-white/90 rounded-full flex items-center justify-center transition-all duration-300 ${isHovered ? 'w-10 h-10' : 'w-8 h-8'}`}>
-                  <Play className={`text-gray-800 ml-0.5 transition-all duration-300 ${isHovered ? 'w-5 h-5' : 'w-4 h-4'}`} />
+                <div className="bg-white/90 rounded-full w-8 h-8 flex items-center justify-center transition-all duration-300 group-hover:w-10 group-hover:h-10">
+                  <Play className="text-gray-800 ml-0.5 w-4 h-4 transition-all duration-300 group-hover:w-5 group-hover:h-5" />
                 </div>
               </div>
             </div>
@@ -550,13 +548,14 @@ export const GodmodeContent: React.FC = () => {
               src={item.media_url![0]} 
               alt="Content"
               className="w-full h-full object-cover"
+              loading="lazy"
             />
           )}
         </div>
         
         {/* Smooth Hover Overlay */}
-        <div className={`absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent transition-opacity duration-300 ${isHovered ? 'opacity-100' : 'opacity-0'}`}>
-          <div className={`absolute bottom-4 left-4 right-4 transform transition-all duration-300 ${isHovered ? 'translate-y-0 opacity-100' : 'translate-y-2 opacity-0'}`}>
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+          <div className="absolute bottom-4 left-4 right-4 transform transition-all duration-300 translate-y-2 opacity-0 group-hover:translate-y-0 group-hover:opacity-100">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <div className="w-8 h-8 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
