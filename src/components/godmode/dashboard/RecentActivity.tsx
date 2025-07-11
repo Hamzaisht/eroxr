@@ -1,27 +1,35 @@
 import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { supabase } from '@/integrations/supabase/client';
 import { formatDistanceToNow } from 'date-fns';
 import { 
   User, 
-  FileImage, 
+  FileText, 
   MessageSquare, 
   Flag, 
   Shield,
   Eye,
   DollarSign,
-  Activity
+  Activity,
+  UserPlus,
+  Heart,
+  Zap
 } from 'lucide-react';
 
 interface ActivityItem {
   id: string;
   type: string;
   description: string;
-  user: string;
+  user: {
+    id: string;
+    username: string;
+    avatar_url?: string;
+  };
   timestamp: string;
   severity?: 'low' | 'medium' | 'high' | 'critical';
+  metadata?: any;
 }
 
 export const RecentActivity: React.FC = () => {
@@ -31,6 +39,59 @@ export const RecentActivity: React.FC = () => {
   useEffect(() => {
     const fetchRecentActivity = async () => {
       try {
+        const activities: ActivityItem[] = [];
+
+        // Fetch recent users
+        const { data: newUsers } = await supabase
+          .from('profiles')
+          .select('id, username, avatar_url, created_at')
+          .order('created_at', { ascending: false })
+          .limit(5);
+
+        newUsers?.forEach(user => {
+          activities.push({
+            id: `user_${user.id}`,
+            type: 'new_user',
+            description: `New user joined`,
+            user: {
+              id: user.id,
+              username: user.username || 'Anonymous',
+              avatar_url: user.avatar_url
+            },
+            timestamp: user.created_at,
+            severity: 'low'
+          });
+        });
+
+        // Fetch recent posts
+        const { data: newPosts } = await supabase
+          .from('posts')
+          .select(`
+            id, 
+            content, 
+            created_at,
+            creator_id,
+            profiles:creator_id (username, avatar_url)
+          `)
+          .order('created_at', { ascending: false })
+          .limit(5);
+
+        newPosts?.forEach(post => {
+          const profile = Array.isArray(post.profiles) ? post.profiles[0] : post.profiles;
+          activities.push({
+            id: `post_${post.id}`,
+            type: 'new_post',
+            description: `Published new content`,
+            user: {
+              id: post.creator_id,
+              username: profile?.username || 'Anonymous',
+              avatar_url: profile?.avatar_url
+            },
+            timestamp: post.created_at,
+            severity: 'low'
+          });
+        });
+
         // Fetch recent admin action logs
         const { data: logs } = await supabase
           .from('admin_action_logs')
@@ -40,22 +101,30 @@ export const RecentActivity: React.FC = () => {
             action,
             target_type,
             created_at,
-            details,
-            profiles:admin_id(username, email)
+            admin_id
           `)
           .order('created_at', { ascending: false })
-          .limit(20);
+          .limit(5);
 
-        const formattedActivities: ActivityItem[] = (logs || []).map(log => ({
-          id: log.id,
-          type: log.action_type,
-          description: `${log.action.replace(/_/g, ' ')} ${log.target_type || ''}`.trim(),
-          user: (log.profiles as any)?.username || (log.profiles as any)?.email || 'System',
-          timestamp: log.created_at,
-          severity: getSeverityFromAction(log.action_type)
-        }));
+        logs?.forEach(log => {
+          activities.push({
+            id: `admin_${log.id}`,
+            type: log.action_type,
+            description: `${log.action.replace(/_/g, ' ')} ${log.target_type || ''}`.trim(),
+            user: {
+              id: log.admin_id || 'system',
+              username: 'Admin',
+              avatar_url: undefined
+            },
+            timestamp: log.created_at,
+            severity: getSeverityFromAction(log.action_type)
+          });
+        });
 
-        setActivities(formattedActivities);
+        // Sort all activities by timestamp
+        activities.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+
+        setActivities(activities);
       } catch (error) {
         console.error('Failed to fetch activity:', error);
       } finally {
@@ -82,7 +151,7 @@ export const RecentActivity: React.FC = () => {
   const getActionIcon = (type: string) => {
     switch (type) {
       case 'user_action': return <User className="h-4 w-4" />;
-      case 'content_moderation': return <FileImage className="h-4 w-4" />;
+      case 'content_moderation': return <FileText className="h-4 w-4" />;
       case 'ghost_surveillance': return <Eye className="h-4 w-4" />;
       case 'verification': return <Shield className="h-4 w-4" />;
       case 'payout_management': return <DollarSign className="h-4 w-4" />;
@@ -147,11 +216,12 @@ export const RecentActivity: React.FC = () => {
                   </div>
                   <div className="flex items-center gap-2 mt-1">
                     <Avatar className="h-5 w-5">
+                      <AvatarImage src={activity.user.avatar_url} />
                       <AvatarFallback className="bg-purple-600 text-white text-xs">
-                        {activity.user[0]?.toUpperCase() || 'S'}
+                        {activity.user.username[0]?.toUpperCase() || 'S'}
                       </AvatarFallback>
                     </Avatar>
-                    <span className="text-xs text-gray-400">{activity.user}</span>
+                    <span className="text-xs text-gray-400">{activity.user.username}</span>
                     <span className="text-xs text-gray-500">
                       {formatDistanceToNow(new Date(activity.timestamp), { addSuffix: true })}
                     </span>

@@ -3,6 +3,7 @@ import { DashboardStats } from './DashboardStats';
 import { RecentActivity } from './RecentActivity';
 import { LiveStreams } from './LiveStreams';
 import { SystemHealth } from './SystemHealth';
+import { GhostModePanel } from '../surveillance/GhostModePanel';
 
 export const GodmodeDashboard: React.FC = () => {
   return (
@@ -31,6 +32,9 @@ export const GodmodeDashboard: React.FC = () => {
 
       {/* Live Streams */}
       <LiveStreams />
+
+      {/* Ghost Mode Panel */}
+      <GhostModePanel />
     </div>
   );
 };

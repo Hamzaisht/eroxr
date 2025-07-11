@@ -1,6 +1,7 @@
 import React, { createContext, useContext, ReactNode } from 'react';
 import { useAdminAuth, AdminUser } from '@/hooks/useAdminAuth';
 import { useGhostMode } from '@/hooks/useGhostMode';
+import { supabase } from '@/integrations/supabase/client';
 
 interface AdminSessionContextType {
   isAdmin: boolean;
@@ -9,31 +10,57 @@ interface AdminSessionContextType {
   isGhostMode: boolean;
   toggleGhostMode: () => Promise<void>;
   logGhostAction: (action: string, targetType?: string, targetId?: string, details?: any) => Promise<void>;
+  canUseGhostMode: boolean;
+  liveAlerts: any[];
+  refreshAlerts: () => Promise<boolean>;
+  startSurveillance: (session: any) => Promise<boolean>;
 }
 
 const AdminSessionContext = createContext<AdminSessionContextType | undefined>(undefined);
 
 export const AdminSessionProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const { isAdmin, adminUser, isLoading: authLoading } = useAdminAuth();
-  const ghostMode = useGhostMode();
+  const { 
+    isGhostMode, 
+    isLoading: ghostLoading, 
+    toggleGhostMode, 
+    canUseGhostMode,
+    liveAlerts,
+    refreshAlerts,
+    startSurveillance
+  } = useGhostMode();
   
-  console.log('🏛️ AdminSessionContext: Provider rendered', { isAdmin, adminUser, authLoading });
-  
-  // Temporary logGhostAction until full implementation
   const logGhostAction = async (action: string, targetType?: string, targetId?: string, details?: any) => {
-    console.log('Ghost action:', { action, targetType, targetId, details });
+    if (!adminUser?.id) return;
+    
+    try {
+      await supabase.from('admin_action_logs').insert({
+        admin_id: adminUser.id,
+        action,
+        action_type: 'ghost_mode',
+        target_type: targetType,
+        target_id: targetId,
+        details: details || {},
+        ip_address: null,
+        user_agent: navigator.userAgent
+      });
+    } catch (error) {
+      console.error('Failed to log ghost action:', error);
+    }
   };
 
   const contextValue: AdminSessionContextType = {
     isAdmin,
     adminUser,
-    isLoading: authLoading,
-    isGhostMode: false, // Temporary
-    toggleGhostMode: async () => {}, // Temporary
-    logGhostAction
+    isLoading: authLoading || ghostLoading,
+    isGhostMode,
+    toggleGhostMode,
+    logGhostAction,
+    canUseGhostMode,
+    liveAlerts,
+    refreshAlerts,
+    startSurveillance
   };
-
-  console.log('🏛️ AdminSessionContext: Context value', contextValue);
 
   return (
     <AdminSessionContext.Provider value={contextValue}>
