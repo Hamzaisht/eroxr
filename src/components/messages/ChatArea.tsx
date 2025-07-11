@@ -13,6 +13,9 @@ import { BookingDialog } from './BookingDialog';
 import { CameraDialog } from './CameraDialog';
 import { EmojiPicker } from './chat/EmojiPicker';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { CallDialog } from './calls/CallDialog';
+import { SnapCamera } from './chat/SnapCamera';
+import { useDisappearingMessages } from '@/hooks/useDisappearingMessages';
 import '../../styles/scrollbar.css';
 
 interface Message {
@@ -45,10 +48,16 @@ export const ChatArea = ({ conversationId, onShowDetails }: ChatAreaProps) => {
   const [editContent, setEditContent] = useState('');
   const [savedMessages, setSavedMessages] = useState<Set<string>>(new Set());
   const [showCameraDialog, setShowCameraDialog] = useState(false);
+  const [showSnapCamera, setShowSnapCamera] = useState(false);
+  const [showCallDialog, setShowCallDialog] = useState(false);
+  const [callType, setCallType] = useState<'audio' | 'video'>('audio');
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const session = useSession();
   const { toast } = useToast();
+
+  // Enable disappearing messages cleanup
+  useDisappearingMessages();
 
   useEffect(() => {
     if (!conversationId || !session?.user?.id) return;
@@ -326,6 +335,10 @@ export const ChatArea = ({ conversationId, onShowDetails }: ChatAreaProps) => {
               variant="ghost"
               size="icon"
               className="text-white/70 hover:text-white hover:bg-white/10"
+              onClick={() => {
+                setCallType('audio');
+                setShowCallDialog(true);
+              }}
             >
               <Phone className="h-5 w-5" />
             </Button>
@@ -333,6 +346,10 @@ export const ChatArea = ({ conversationId, onShowDetails }: ChatAreaProps) => {
               variant="ghost"
               size="icon"
               className="text-white/70 hover:text-white hover:bg-white/10"
+              onClick={() => {
+                setCallType('video');
+                setShowCallDialog(true);
+              }}
             >
               <Video className="h-5 w-5" />
             </Button>
@@ -660,6 +677,68 @@ export const ChatArea = ({ conversationId, onShowDetails }: ChatAreaProps) => {
         recipientId={userProfile?.id}
         recipientName={userProfile?.username}
       />
+
+      {showSnapCamera && (
+        <SnapCamera
+          onCapture={async (blob) => {
+            try {
+              // Upload snap to Supabase storage
+              const fileName = `snap_${Date.now()}.${blob.type.includes('video') ? 'webm' : 'jpg'}`;
+              const { error: uploadError } = await supabase.storage
+                .from('messages')
+                .upload(fileName, blob);
+
+              if (uploadError) throw uploadError;
+
+              const { data: { publicUrl } } = supabase.storage
+                .from('messages')
+                .getPublicUrl(fileName);
+
+              // Send snap message with expiration
+              const expiresAt = new Date(Date.now() + 10 * 1000); // 10 seconds after view
+              const { error: messageError } = await supabase
+                .from('direct_messages')
+                .insert({
+                  sender_id: session?.user?.id,
+                  recipient_id: conversationId,
+                  media_url: [publicUrl],
+                  message_type: 'snap',
+                  expires_at: expiresAt.toISOString(),
+                  duration: blob.type.includes('video') ? 10 : undefined
+                });
+
+              if (messageError) throw messageError;
+
+              toast({
+                title: "Snap sent!",
+                description: "Your snap will disappear after viewing"
+              });
+              setShowSnapCamera(false);
+            } catch (error) {
+              console.error('Error sending snap:', error);
+              toast({
+                title: "Failed to send snap",
+                description: "Please try again",
+                variant: "destructive"
+              });
+            }
+          }}
+          onClose={() => setShowSnapCamera(false)}
+        />
+      )}
+
+      {showCallDialog && userProfile && (
+        <CallDialog
+          isOpen={showCallDialog}
+          onClose={() => setShowCallDialog(false)}
+          callType={callType}
+          recipient={{
+            id: conversationId,
+            username: userProfile.username,
+            avatar_url: userProfile.avatar_url
+          }}
+        />
+      )}
     </div>
   );
 };

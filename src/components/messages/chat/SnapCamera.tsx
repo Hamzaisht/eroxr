@@ -19,16 +19,42 @@ export const SnapCamera = ({ onCapture, onClose }: SnapCameraProps) => {
 
   const startCamera = async () => {
     try {
+      // First check if devices are available
+      const devices = await navigator.mediaDevices.enumerateDevices();
+      const videoDevices = devices.filter(device => device.kind === 'videoinput');
+      
+      if (videoDevices.length === 0) {
+        throw new Error('No camera found');
+      }
+
       const stream = await navigator.mediaDevices.getUserMedia({ 
-        video: { facingMode: 'user' }, 
+        video: { 
+          facingMode: 'user',
+          width: { min: 640, ideal: 1280, max: 1920 },
+          height: { min: 480, ideal: 720, max: 1080 }
+        }, 
         audio: true 
       });
+      
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
         mediaStreamRef.current = stream;
       }
     } catch (error) {
       console.error('Error accessing camera:', error);
+      // Try with basic constraints as fallback
+      try {
+        const basicStream = await navigator.mediaDevices.getUserMedia({ 
+          video: true, 
+          audio: true 
+        });
+        if (videoRef.current) {
+          videoRef.current.srcObject = basicStream;
+          mediaStreamRef.current = basicStream;
+        }
+      } catch (fallbackError) {
+        console.error('Fallback camera access failed:', fallbackError);
+      }
     }
   };
 

@@ -4,6 +4,7 @@ import { cn } from "@/lib/utils";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { SnapPreview } from "./SnapPreview";
+import { SnapViewerModal } from "../SnapViewerModal";
 import { formatMessageTime } from "@/utils/date";
 import { useUser } from "@/hooks/useUser";
 
@@ -35,6 +36,7 @@ export const MessageBubbleContent = ({
   onSnapView
 }: MessageBubbleContentProps) => {
   const [isHovering, setIsHovering] = useState(false);
+  const [showSnapViewer, setShowSnapViewer] = useState(false);
   const { currentUser } = useUser();
   
   // Function to render media content if present
@@ -44,10 +46,19 @@ export const MessageBubbleContent = ({
     // For snap messages, render specialized preview
     if (message.message_type === 'snap') {
       return (
-        <SnapPreview
-          message={message}
-          onClick={onSnapView}
-        />
+        <>
+          <SnapPreview
+            message={message}
+            onClick={() => setShowSnapViewer(true)}
+          />
+          <SnapViewerModal
+            isOpen={showSnapViewer}
+            onClose={() => setShowSnapViewer(false)}
+            snapUrl={message.media_url?.[0] || ''}
+            isVideo={message.media_url?.[0]?.includes('.webm')}
+            duration={message.duration || 10}
+          />
+        </>
       );
     }
     
