@@ -111,271 +111,322 @@ export const GodmodeContent: React.FC = () => {
         // Fetch all content types in parallel
         const contentPromises = [];
 
+        // Skip certain content types based on filter
+        const shouldFetchPosts = filterType === 'all' || filterType === 'posts' || filterType === 'ppv' || filterType === 'public' || filterType === 'private' || filterType === 'videos' || filterType === 'images';
+        const shouldFetchStories = filterType === 'all' || filterType === 'stories' || filterType === 'videos' || filterType === 'images';
+        const shouldFetchMessages = filterType === 'all' || filterType === 'messages' || filterType === 'private';
+        const shouldFetchMedia = filterType === 'all' || filterType === 'media' || filterType === 'videos' || filterType === 'images';
+        const shouldFetchProfiles = filterType === 'all' || filterType === 'profile_photos' || filterType === 'images';
+
         // 1. Posts - Fix relationship query
-        let postsQuery = supabase
-          .from('posts')
-          .select(`
-            id,
-            content,
-            media_url,
-            video_urls,
-            creator_id,
-            visibility,
-            is_ppv,
-            ppv_amount,
-            tags,
-            likes_count,
-            comments_count,
-            view_count,
-            created_at,
-            profiles!fk_posts_creator_id(username, avatar_url)
-          `)
-          .order('created_at', { ascending: false })
-          .limit(50);
+        if (shouldFetchPosts) {
+          let postsQuery = supabase
+            .from('posts')
+            .select(`
+              id,
+              content,
+              media_url,
+              video_urls,
+              creator_id,
+              visibility,
+              is_ppv,
+              ppv_amount,
+              tags,
+              likes_count,
+              comments_count,
+              view_count,
+              created_at,
+              profiles!fk_posts_creator_id(username, avatar_url)
+            `)
+            .order('created_at', { ascending: false })
+            .limit(50);
 
-        if (searchTerm) postsQuery = postsQuery.ilike('content', `%${searchTerm}%`);
-        
-        contentPromises.push(
-          postsQuery.then(({ data, error }) => {
-            if (error) {
-              console.error('Posts error:', error);
-              return [];
-            }
-            return data?.map(item => ({
-              ...item,
-              content_type: 'post' as const,
-              creator: item.profiles || { username: 'Unknown', avatar_url: '' }
-            })) || [];
-          })
-        );
-
-        // 2. Stories - Remove content column that doesn't exist
-        let storiesQuery = supabase
-          .from('stories')
-          .select(`
-            id,
-            media_url,
-            video_url,
-            creator_id,
-            view_count,
-            created_at,
-            expires_at,
-            is_active
-          `)
-          .order('created_at', { ascending: false })
-          .limit(50);
-        
-        contentPromises.push(
-          storiesQuery.then(async ({ data, error }) => {
-            if (error) {
-              console.error('Stories error:', error);
-              return [];
-            }
-            
-            // Get creator info separately
-            const creatorIds = data?.map(s => s.creator_id).filter(Boolean) || [];
-            const { data: creators } = await supabase
-              .from('profiles')
-              .select('id, username, avatar_url')
-              .in('id', creatorIds);
-            
-            return data?.map(item => {
-              const creator = creators?.find(c => c.id === item.creator_id);
-              return {
+          if (searchTerm) postsQuery = postsQuery.ilike('content', `%${searchTerm}%`);
+          if (filterUser) postsQuery = postsQuery.eq('profiles.username', filterUser);
+          
+          contentPromises.push(
+            postsQuery.then(({ data, error }) => {
+              if (error) {
+                console.error('Posts error:', error);
+                return [];
+              }
+              return data?.map(item => ({
                 ...item,
-                content: 'Story content',
-                content_type: 'story' as const,
-                media_url: item.media_url ? [item.media_url] : null,
-                video_urls: item.video_url ? [item.video_url] : null,
-                visibility: 'public',
-                is_ppv: false,
-                ppv_amount: null,
-                tags: null,
-                likes_count: 0,
-                comments_count: 0,
-                creator: creator || { username: 'Unknown', avatar_url: '' }
-              };
-            }) || [];
-          })
-        );
+                content_type: 'post' as const,
+                creator: item.profiles || { username: 'Unknown', avatar_url: '' }
+              })) || [];
+            })
+          );
+        }
+
+        // 2. Stories - with user filtering
+        if (shouldFetchStories) {
+          let storiesQuery = supabase
+            .from('stories')
+            .select(`
+              id,
+              media_url,
+              video_url,
+              creator_id,
+              view_count,
+              created_at,
+              expires_at,
+              is_active
+            `)
+            .order('created_at', { ascending: false })
+            .limit(50);
+          
+          contentPromises.push(
+            storiesQuery.then(async ({ data, error }) => {
+              if (error) {
+                console.error('Stories error:', error);
+                return [];
+              }
+              
+              // Get creator info separately
+              const creatorIds = data?.map(s => s.creator_id).filter(Boolean) || [];
+              const { data: creators } = await supabase
+                .from('profiles')
+                .select('id, username, avatar_url')
+                .in('id', creatorIds);
+              
+              // Apply user filter
+              let filteredData = data || [];
+              if (filterUser) {
+                const matchingCreators = creators?.filter(c => 
+                  c.username.toLowerCase().includes(filterUser.toLowerCase())
+                );
+                const matchingIds = matchingCreators?.map(c => c.id) || [];
+                filteredData = filteredData.filter(item => matchingIds.includes(item.creator_id));
+              }
+              
+              return filteredData.map(item => {
+                const creator = creators?.find(c => c.id === item.creator_id);
+                return {
+                  ...item,
+                  content: 'Story content',
+                  content_type: 'story' as const,
+                  media_url: item.media_url ? [item.media_url] : null,
+                  video_urls: item.video_url ? [item.video_url] : null,
+                  visibility: 'public',
+                  is_ppv: false,
+                  ppv_amount: null,
+                  tags: null,
+                  likes_count: 0,
+                  comments_count: 0,
+                  creator: creator || { username: 'Unknown', avatar_url: '' }
+                };
+              });
+            })
+          );
+        }
 
         // 3. Direct Messages (with media attachments)
-        let messagesQuery = supabase
-          .from('direct_messages')
-          .select(`
-            id,
-            content,
-            message_type,
-            sender_id,
-            recipient_id,
-            duration,
-            expires_at,
-            is_expired,
-            created_at
-          `)
-          .order('created_at', { ascending: false })
-          .limit(50);
+        if (shouldFetchMessages) {
+          let messagesQuery = supabase
+            .from('direct_messages')
+            .select(`
+              id,
+              content,
+              message_type,
+              sender_id,
+              recipient_id,
+              duration,
+              expires_at,
+              is_expired,
+              created_at
+            `)
+            .order('created_at', { ascending: false })
+            .limit(50);
 
-        if (searchTerm) messagesQuery = messagesQuery.ilike('content', `%${searchTerm}%`);
-        
-        contentPromises.push(
-          messagesQuery.then(async ({ data, error }) => {
-            if (error) {
-              console.error('Messages error:', error);
-              return [];
-            }
-            
-            // Get sender info separately
-            const senderIds = data?.map(m => m.sender_id).filter(Boolean) || [];
-            const { data: senders } = await supabase
-              .from('profiles')
-              .select('id, username, avatar_url')
-              .in('id', senderIds);
-            
-            return data?.map(item => {
-              const sender = senders?.find(s => s.id === item.sender_id);
-              return {
-                ...item,
-                content_type: 'message' as const,
-                creator_id: item.sender_id,
-                creator: sender || { username: 'Unknown', avatar_url: '' },
-                media_url: null,
-                video_urls: null,
-                visibility: 'private',
-                is_ppv: false,
-                ppv_amount: null,
-                tags: null,
-                likes_count: 0,
-                comments_count: 0,
-                view_count: 0
-              };
-            }) || [];
-          })
-        );
+          if (searchTerm) messagesQuery = messagesQuery.ilike('content', `%${searchTerm}%`);
+          
+          contentPromises.push(
+            messagesQuery.then(async ({ data, error }) => {
+              if (error) {
+                console.error('Messages error:', error);
+                return [];
+              }
+              
+              // Get sender info separately
+              const senderIds = data?.map(m => m.sender_id).filter(Boolean) || [];
+              const { data: senders } = await supabase
+                .from('profiles')
+                .select('id, username, avatar_url')
+                .in('id', senderIds);
+              
+              // Apply user filter
+              let filteredData = data || [];
+              if (filterUser) {
+                const matchingSenders = senders?.filter(s => 
+                  s.username.toLowerCase().includes(filterUser.toLowerCase())
+                );
+                const matchingIds = matchingSenders?.map(s => s.id) || [];
+                filteredData = filteredData.filter(item => matchingIds.includes(item.sender_id));
+              }
+              
+              return filteredData.map(item => {
+                const sender = senders?.find(s => s.id === item.sender_id);
+                return {
+                  ...item,
+                  content_type: 'message' as const,
+                  creator_id: item.sender_id,
+                  creator: sender || { username: 'Unknown', avatar_url: '' },
+                  media_url: null,
+                  video_urls: null,
+                  visibility: 'private',
+                  is_ppv: false,
+                  ppv_amount: null,
+                  tags: null,
+                  likes_count: 0,
+                  comments_count: 0,
+                  view_count: 0
+                };
+              });
+            })
+          );
+        }
 
         // 4. Media Assets (profile photos, uploads, etc.)
-        let mediaQuery = supabase
-          .from('media_assets')
-          .select(`
-            id,
-            original_name,
-            storage_path,
-            user_id,
-            media_type,
-            mime_type,
-            file_size,
-            access_level,
-            post_id,
-            created_at
-          `)
-          .order('created_at', { ascending: false })
-          .limit(50);
+        if (shouldFetchMedia) {
+          let mediaQuery = supabase
+            .from('media_assets')
+            .select(`
+              id,
+              original_name,
+              storage_path,
+              user_id,
+              media_type,
+              mime_type,
+              file_size,
+              access_level,
+              post_id,
+              created_at
+            `)
+            .order('created_at', { ascending: false })
+            .limit(50);
 
-        if (searchTerm) mediaQuery = mediaQuery.ilike('original_name', `%${searchTerm}%`);
-        
-        contentPromises.push(
-          mediaQuery.then(async ({ data, error }) => {
-            if (error) {
-              console.error('Media error:', error);
-              return [];
-            }
-            
-            // Get user info separately
-            const userIds = data?.map(m => m.user_id).filter(Boolean) || [];
-            const { data: users } = await supabase
-              .from('profiles')
-              .select('id, username, avatar_url')
-              .in('id', userIds);
-            
-            return data?.map(item => {
-              const user = users?.find(u => u.id === item.user_id);
-              return {
-                ...item,
-                content_type: 'media' as const,
-                content: item.original_name,
-                creator_id: item.user_id,
-                creator: user || { username: 'Unknown', avatar_url: '' },
-                media_url: item.media_type === 'image' ? [item.storage_path] : null,
-                video_urls: item.media_type === 'video' ? [item.storage_path] : null,
-                visibility: item.access_level,
-                is_ppv: false,
-                ppv_amount: null,
-                tags: null,
-                likes_count: 0,
-                comments_count: 0,
-                view_count: 0
-              };
-            }) || [];
-          })
-        );
+          if (searchTerm) mediaQuery = mediaQuery.ilike('original_name', `%${searchTerm}%`);
+          
+          contentPromises.push(
+            mediaQuery.then(async ({ data, error }) => {
+              if (error) {
+                console.error('Media error:', error);
+                return [];
+              }
+              
+              // Get user info separately
+              const userIds = data?.map(m => m.user_id).filter(Boolean) || [];
+              const { data: users } = await supabase
+                .from('profiles')
+                .select('id, username, avatar_url')
+                .in('id', userIds);
+              
+              // Apply user filter
+              let filteredData = data || [];
+              if (filterUser) {
+                const matchingUsers = users?.filter(u => 
+                  u.username.toLowerCase().includes(filterUser.toLowerCase())
+                );
+                const matchingIds = matchingUsers?.map(u => u.id) || [];
+                filteredData = filteredData.filter(item => matchingIds.includes(item.user_id));
+              }
+              
+              return filteredData.map(item => {
+                const user = users?.find(u => u.id === item.user_id);
+                return {
+                  ...item,
+                  content_type: 'media' as const,
+                  content: item.original_name,
+                  creator_id: item.user_id,
+                  creator: user || { username: 'Unknown', avatar_url: '' },
+                  media_url: item.media_type === 'image' ? [item.storage_path] : null,
+                  video_urls: item.media_type === 'video' ? [item.storage_path] : null,
+                  visibility: item.access_level,
+                  is_ppv: false,
+                  ppv_amount: null,
+                  tags: null,
+                  likes_count: 0,
+                  comments_count: 0,
+                  view_count: 0
+                };
+              });
+            })
+          );
+        }
 
         // 5. Profile Photos (from profiles table)
-        let profilesQuery = supabase
-          .from('profiles')
-          .select(`
-            id,
-            username,
-            avatar_url,
-            banner_url,
-            bio,
-            created_at,
-            updated_at
-          `)
-          .order('updated_at', { ascending: false })
-          .limit(50);
+        if (shouldFetchProfiles) {
+          let profilesQuery = supabase
+            .from('profiles')
+            .select(`
+              id,
+              username,
+              avatar_url,
+              banner_url,
+              bio,
+              created_at,
+              updated_at
+            `)
+            .order('updated_at', { ascending: false })
+            .limit(50);
 
-        if (searchTerm) profilesQuery = profilesQuery.ilike('username', `%${searchTerm}%`);
-        if (filterUser) profilesQuery = profilesQuery.eq('username', filterUser);
-        
-        contentPromises.push(
-          profilesQuery.then(({ data, error }) => {
-            if (error) throw error;
-            const profileContent = [];
-            data?.forEach(profile => {
-              // Add avatar as content
-              if (profile.avatar_url) {
-                profileContent.push({
-                  id: `${profile.id}_avatar`,
-                  content_type: 'profile_photo' as const,
-                  content: `${profile.username}'s profile photo`,
-                  creator_id: profile.id,
-                  creator: { username: profile.username, avatar_url: profile.avatar_url },
-                  media_url: [profile.avatar_url],
-                  video_urls: null,
-                  visibility: 'public',
-                  is_ppv: false,
-                  ppv_amount: null,
-                  tags: null,
-                  likes_count: 0,
-                  comments_count: 0,
-                  view_count: 0,
-                  created_at: profile.updated_at
-                });
+          if (searchTerm) profilesQuery = profilesQuery.ilike('username', `%${searchTerm}%`);
+          if (filterUser) profilesQuery = profilesQuery.ilike('username', `%${filterUser}%`);
+          
+          contentPromises.push(
+            profilesQuery.then(({ data, error }) => {
+              if (error) {
+                console.error('Profiles error:', error);
+                return [];
               }
-              // Add banner as content
-              if (profile.banner_url) {
-                profileContent.push({
-                  id: `${profile.id}_banner`,
-                  content_type: 'profile_photo' as const,
-                  content: `${profile.username}'s banner photo`,
-                  creator_id: profile.id,
-                  creator: { username: profile.username, avatar_url: profile.avatar_url },
-                  media_url: [profile.banner_url],
-                  video_urls: null,
-                  visibility: 'public',
-                  is_ppv: false,
-                  ppv_amount: null,
-                  tags: null,
-                  likes_count: 0,
-                  comments_count: 0,
-                  view_count: 0,
-                  created_at: profile.updated_at
-                });
-              }
-            });
-            return profileContent;
-          })
-        );
+              const profileContent = [];
+              data?.forEach(profile => {
+                // Add avatar as content
+                if (profile.avatar_url) {
+                  profileContent.push({
+                    id: `${profile.id}_avatar`,
+                    content_type: 'profile_photo' as const,
+                    content: `${profile.username}'s profile photo`,
+                    creator_id: profile.id,
+                    creator: { username: profile.username, avatar_url: profile.avatar_url },
+                    media_url: [profile.avatar_url],
+                    video_urls: null,
+                    visibility: 'public',
+                    is_ppv: false,
+                    ppv_amount: null,
+                    tags: null,
+                    likes_count: 0,
+                    comments_count: 0,
+                    view_count: 0,
+                    created_at: profile.updated_at
+                  });
+                }
+                // Add banner as content
+                if (profile.banner_url) {
+                  profileContent.push({
+                    id: `${profile.id}_banner`,
+                    content_type: 'profile_photo' as const,
+                    content: `${profile.username}'s banner photo`,
+                    creator_id: profile.id,
+                    creator: { username: profile.username, avatar_url: profile.avatar_url },
+                    media_url: [profile.banner_url],
+                    video_urls: null,
+                    visibility: 'public',
+                    is_ppv: false,
+                    ppv_amount: null,
+                    tags: null,
+                    likes_count: 0,
+                    comments_count: 0,
+                    view_count: 0,
+                    created_at: profile.updated_at
+                  });
+                }
+              });
+              return profileContent;
+            })
+          );
+        }
 
         // Execute all queries and combine results
         const allResults = await Promise.all(contentPromises);
