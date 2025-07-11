@@ -22,7 +22,7 @@ export const AnimatedFormFields = ({ form, isLoading, isLoginMode = false }: Ani
         animate={{ opacity: 1, x: 0 }}
         transition={{ delay: 0.5, duration: 0.4 }}
       >
-        <EmailField form={form} isLoading={isLoading} />
+        <EmailField form={form as any} isLoading={isLoading} />
       </motion.div>
       
       <motion.div
@@ -32,14 +32,14 @@ export const AnimatedFormFields = ({ form, isLoading, isLoginMode = false }: Ani
         transition={{ delay: 0.6, duration: 0.4 }}
       >
         <PasswordField
-          form={form}
+          form={form as any}
           name="password"
           placeholder="Password"
           isLoading={isLoading}
         />
         {!isLoginMode && (
           <PasswordField
-            form={form}
+            form={form as UseFormReturn<SignupFormValues>}
             name="confirmPassword"
             placeholder="Confirm Password"
             isLoading={isLoading}
@@ -54,7 +54,7 @@ export const AnimatedFormFields = ({ form, isLoading, isLoginMode = false }: Ani
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.7, duration: 0.4 }}
           >
-            <UsernameField form={form} isLoading={isLoading} />
+            <UsernameField form={form as UseFormReturn<SignupFormValues>} isLoading={isLoading} />
           </motion.div>
 
           <motion.div
@@ -62,7 +62,7 @@ export const AnimatedFormFields = ({ form, isLoading, isLoginMode = false }: Ani
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.8, duration: 0.4 }}
           >
-            <DateOfBirthField form={form} isLoading={isLoading} />
+            <DateOfBirthField form={form as UseFormReturn<SignupFormValues>} isLoading={isLoading} />
           </motion.div>
           
           <motion.div
@@ -70,7 +70,7 @@ export const AnimatedFormFields = ({ form, isLoading, isLoginMode = false }: Ani
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.9, duration: 0.4 }}
           >
-            <CountrySelect form={form} isLoading={isLoading} />
+            <CountrySelect form={form as UseFormReturn<SignupFormValues>} isLoading={isLoading} />
           </motion.div>
         </>
       )}

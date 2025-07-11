@@ -130,42 +130,66 @@ export const SignupForm = ({ onToggleMode, isLoginMode = false }: SignupFormProp
   };
 
   return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-        <AnimatePresence mode="wait">
-          <motion.div
-            key="form-fields"
-            variants={stepVariants}
-            initial="hidden"
-            animate="visible"
-            exit="exit"
-            transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-            className="space-y-4"
+    <>
+      {isLoginMode ? (
+        <Form {...loginForm}>
+          <form onSubmit={loginForm.handleSubmit(onSubmit)} className="space-y-6">
+            <AnimatePresence mode="wait">
+              <motion.div
+                key="form-fields"
+                variants={stepVariants}
+                initial="hidden"
+                animate="visible"
+                exit="exit"
+                transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+                className="space-y-4"
+              >
+                <AnimatedFormFields form={form} isLoading={isLoading} isLoginMode={isLoginMode} />
+              </motion.div>
+            </AnimatePresence>
+
+            <AnimatedSubmitButton isLoading={isLoading} isLoginMode={isLoginMode} />
+          </form>
+        </Form>
+      ) : (
+        <Form {...signupForm}>
+          <form onSubmit={signupForm.handleSubmit(onSubmit)} className="space-y-6">
+            <AnimatePresence mode="wait">
+              <motion.div
+                key="form-fields"
+                variants={stepVariants}
+                initial="hidden"
+                animate="visible"
+                exit="exit"
+                transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+                className="space-y-4"
+              >
+                <AnimatedFormFields form={form} isLoading={isLoading} isLoginMode={isLoginMode} />
+              </motion.div>
+            </AnimatePresence>
+
+            <AnimatedSubmitButton isLoading={isLoading} isLoginMode={isLoginMode} />
+          </form>
+        </Form>
+      )}
+
+      <motion.div
+        className="text-center pt-4"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.6, duration: 0.4 }}
+      >
+        <p className="text-sm text-gray-400">
+          {isLoginMode ? "Don't have an account?" : "Already have an account?"}{" "}
+          <button
+            type="button"
+            onClick={onToggleMode}
+            className="text-cyan-400 hover:text-cyan-300 font-medium transition-colors"
           >
-            <AnimatedFormFields form={form} isLoading={isLoading} isLoginMode={isLoginMode} />
-          </motion.div>
-        </AnimatePresence>
-
-        <AnimatedSubmitButton isLoading={isLoading} isLoginMode={isLoginMode} />
-
-        <motion.div
-          className="text-center pt-4"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.6, duration: 0.4 }}
-        >
-          <p className="text-sm text-gray-400">
-            {isLoginMode ? "Don't have an account?" : "Already have an account?"}{" "}
-            <button
-              type="button"
-              onClick={onToggleMode}
-              className="text-cyan-400 hover:text-cyan-300 font-medium transition-colors"
-            >
-              {isLoginMode ? "Sign up" : "Sign in"}
-            </button>
-          </p>
-        </motion.div>
-      </form>
-    </Form>
+            {isLoginMode ? "Sign up" : "Sign in"}
+          </button>
+        </p>
+      </motion.div>
+    </>
   );
 };
