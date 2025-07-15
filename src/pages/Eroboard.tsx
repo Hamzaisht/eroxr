@@ -1,6 +1,7 @@
 
 import { useState, useEffect } from "react";
 import { useSession } from "@supabase/auth-helpers-react";
+import { InteractiveNav } from "@/components/layout/InteractiveNav";
 import { useEroboardData } from "@/hooks/useEroboardData";
 import { AnalyticsSidebar } from "@/components/eroboard/analytics/AnalyticsSidebar";
 import { EarningsOverview } from "@/components/eroboard/analytics/EarningsOverview";
@@ -104,7 +105,9 @@ const Eroboard = () => {
   // Show error state with retry option
   if (error) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-luxury-dark via-luxury-darker to-luxury-dark flex items-center justify-center">
+      <>
+        <InteractiveNav />
+        <div className="min-h-screen bg-gradient-to-br from-luxury-dark via-luxury-darker to-luxury-dark flex items-center justify-center md:ml-20">
         <Card className="bg-luxury-darker border-luxury-neutral/10 p-8 max-w-md">
           <CardContent className="text-center space-y-4">
             <AlertCircle className="h-12 w-12 text-red-400 mx-auto" />
@@ -121,7 +124,8 @@ const Eroboard = () => {
             </div>
           </CardContent>
         </Card>
-      </div>
+        </div>
+      </>
     );
   }
 

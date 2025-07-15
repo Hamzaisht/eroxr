@@ -7,6 +7,10 @@ import { ToastProvider } from './hooks/use-toast';
 
 import Landing from './pages/Landing';
 import Home from './pages/Home';
+import Dating from './pages/Dating';
+import Messages from './pages/Messages';
+import Eroboard from './pages/Eroboard';
+import Shorts from './pages/Shorts';
 import Profile from './pages/Profile';
 import Login from './pages/Login';
 import Settings from './pages/Settings';
@@ -37,6 +41,10 @@ function App() {
               
               {/* Main app routes */}
               <Route path="/home" element={<Home />} />
+              <Route path="/dating" element={<Dating />} />
+              <Route path="/messages" element={<Messages />} />
+              <Route path="/eroboard" element={<Eroboard />} />
+              <Route path="/shorts" element={<Shorts />} />
               <Route path="/profile/:userId" element={<Profile />} />
               <Route path="/settings" element={<Settings />} />
               <Route path="/search" element={<Search />} />

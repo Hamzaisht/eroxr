@@ -1,5 +1,6 @@
 
 import { useState, useEffect } from "react";
+import { InteractiveNav } from "@/components/layout/InteractiveNav";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2, ArrowLeft, MoreHorizontal, Edit3, Trash2 } from "lucide-react";
@@ -277,12 +278,14 @@ const Shorts = () => {
   }
 
   return (
-    <div 
-      className="fixed inset-0 bg-black overflow-hidden z-50"
-      onWheel={handleScroll}
-      onTouchStart={handleTouchStart}
-      onTouchEnd={handleTouchEnd}
-    >
+    <>
+      <InteractiveNav />
+      <div 
+        className="fixed inset-0 bg-black overflow-hidden z-50 md:ml-20"
+        onWheel={handleScroll}
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
+      >
 
       {/* Video Container */}
       <div className="relative w-full h-full">
@@ -438,7 +441,8 @@ const Shorts = () => {
         videoId={currentVideo.id}
         videoTitle={currentVideo.title}
       />
-    </div>
+      </div>
+    </>
   );
 };
 
