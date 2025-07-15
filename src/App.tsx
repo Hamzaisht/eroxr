@@ -46,7 +46,7 @@ function App() {
           <Toaster />
         </BrowserRouter>
       </AuthProvider>
-      </ToastProvider>
+    </ToastProvider>
     </QueryClientProvider>
   );
 }
