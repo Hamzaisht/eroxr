@@ -88,19 +88,12 @@ const Home = () => {
           )}
         </div>
         
-        {/* Create Post Area - Show teaser for freemium users */}
-        {hasPremium ? (
+        {/* Create Post Area - Only show for premium users */}
+        {hasPremium && (
           <CreatePostArea 
             onCreatePost={createPostDialog.openDialog}
             onGoLive={goLiveDialog.openDialog}
           />
-        ) : (
-          <FreemiumTeaser contentType="upload" className="h-24">
-            <CreatePostArea 
-              onCreatePost={() => {}}
-              onGoLive={() => {}}
-            />
-          </FreemiumTeaser>
         )}
         
         {/* Feed Header with Tabs */}
