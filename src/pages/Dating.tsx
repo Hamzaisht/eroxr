@@ -32,13 +32,7 @@ const Dating = () => {
       <InteractiveNav />
       <HomeLayout>
         <div className="md:ml-20">
-          {!hasPremium ? (
-            <FreemiumTeaser contentType="media" className="w-full">
-              <DatingMainContent />
-            </FreemiumTeaser>
-          ) : (
-            <DatingMainContent />
-          )}
+          <DatingMainContent />
         </div>
       </HomeLayout>
     </>

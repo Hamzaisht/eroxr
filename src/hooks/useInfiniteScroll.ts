@@ -27,11 +27,12 @@ export function useInfiniteScroll<T>({
     }
     
     observer.current = new IntersectionObserver(entries => {
-      if (entries[0].isIntersecting && hasMore) {
+      if (entries[0].isIntersecting && hasMore && !loading) {
         setPage(prevPage => prevPage + 1);
       }
     }, { 
       rootMargin: `0px 0px ${threshold}px 0px`,
+      threshold: 0.1
     });
     
     if (node) {
@@ -39,6 +40,15 @@ export function useInfiniteScroll<T>({
       lastElementRef.current = node;
     }
   }, [loading, hasMore, threshold]);
+  
+  // Cleanup observer on unmount
+  useEffect(() => {
+    return () => {
+      if (observer.current) {
+        observer.current.disconnect();
+      }
+    };
+  }, []);
   
   const reset = useCallback(() => {
     setData([]);

@@ -18,6 +18,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { geoTracker } from "@/utils/geoTracker";
 import { LoadingOverlay } from "@/components/eroboard/LoadingOverlay";
+import { BackButton } from "@/components/ui/back-button";
 import { 
   BarChart3, 
   DollarSign, 
@@ -104,10 +105,13 @@ const Eroboard = () => {
 
   // Show error state with retry option
   if (error) {
-    return (
-      <>
-        <InteractiveNav />
-        <div className="min-h-screen bg-gradient-to-br from-luxury-dark via-luxury-darker to-luxury-dark flex items-center justify-center md:ml-20">
+  return (
+    <>
+      <InteractiveNav />
+      <div className="md:ml-20 p-4">
+        <BackButton />
+      </div>
+      <div className="min-h-screen bg-gradient-to-br from-luxury-dark via-luxury-darker to-luxury-dark flex items-center justify-center md:ml-20">
         <Card className="bg-luxury-darker border-luxury-neutral/10 p-8 max-w-md">
           <CardContent className="text-center space-y-4">
             <AlertCircle className="h-12 w-12 text-red-400 mx-auto" />
@@ -494,7 +498,12 @@ const Eroboard = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-card to-background relative overflow-hidden">
+    <>
+      <InteractiveNav />
+      <div className="md:ml-20 p-4">
+        <BackButton />
+      </div>
+      <div className="min-h-screen bg-gradient-to-br from-background via-card to-background relative overflow-hidden md:ml-20">
       {/* Ambient Background Elements */}
       <div className="absolute inset-0 opacity-30">
         <div className="absolute top-20 left-20 w-96 h-96 bg-primary/10 rounded-full blur-3xl animate-pulse" />
@@ -563,7 +572,8 @@ const Eroboard = () => {
           </div>
         </div>
       </div>
-    </div>
+      </div>
+    </>
   );
 };
 
