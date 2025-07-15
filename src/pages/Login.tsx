@@ -24,7 +24,7 @@ const Login = () => {
     
     // If we have a session and not loading, redirect immediately
     if (!loading && session && user) {
-      const from = location.state?.from || "/";
+      const from = location.state?.from || "/home";
       console.log("User already authenticated, redirecting to:", from);
       navigate(from, { replace: true });
     }
