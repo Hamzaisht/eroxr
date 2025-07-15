@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -59,6 +60,7 @@ export const PricingForm = () => {
     setIsSubmitting(true);
     try {
       if (values.tier_type === "single") {
+        // Update creator_content_prices table
         const { error } = await supabase
           .from('creator_content_prices')
           .upsert({
@@ -66,19 +68,24 @@ export const PricingForm = () => {
             monthly_price: Number(values.monthly_price),
             description: values.description,
             features: values.features.split('\n').map(f => f.trim()),
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
           });
 
         if (error) throw error;
       } else {
+        // For multiple tiers, create subscription plans
         const { error } = await supabase
-          .from('subscription_tiers')
+          .from('subscription_plans')
           .insert({
+            creator_id: session.user.id,
+            stripe_product_id: `temp_${Date.now()}`, // Will be updated when Stripe product is created
             name: values.tier_name || values.tier_level,
-            price: Number(values.monthly_price),
-            features: {
-              description: values.description,
-              items: values.features.split('\n').map(f => f.trim()),
-            },
+            description: values.description,
+            monthly_price_sek: Math.round(Number(values.monthly_price) * 100), // Convert to öre
+            is_active: true,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
           });
 
         if (error) throw error;
@@ -86,13 +93,14 @@ export const PricingForm = () => {
 
       toast({
         title: "Pricing updated",
-        description: "Your subscription pricing has been updated successfully.",
+        description: "Your subscription pricing has been saved successfully. Your Stripe products will be created automatically when customers subscribe.",
       });
-    } catch (error) {
+    } catch (error: any) {
+      console.error('Pricing update error:', error);
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Failed to update pricing. Please try again.",
+        description: error.message || "Failed to update pricing. Please try again.",
       });
     } finally {
       setIsSubmitting(false);
@@ -181,6 +189,9 @@ export const PricingForm = () => {
                 <FormControl>
                   <Input type="number" min="0" step="0.01" {...field} />
                 </FormControl>
+                <FormDescription>
+                  Set your monthly subscription price. This will be processed through Stripe.
+                </FormDescription>
                 <FormMessage />
               </FormItem>
             )}

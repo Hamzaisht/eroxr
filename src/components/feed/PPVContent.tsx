@@ -30,28 +30,32 @@ export const PPVContent = ({ postId, amount, mediaUrl }: PPVContentProps) => {
     }
 
     try {
-      const { error } = await supabase
-        .from('post_purchases')
-        .insert([
-          {
-            post_id: postId,
-            user_id: session.user.id,
-            amount: amount
-          }
-        ]);
-
-      if (error) throw error;
-
-      toast({
-        title: "Purchase successful",
-        description: "You now have access to this content",
+      console.log('Creating PPV payment for post:', postId, 'amount:', amount);
+      
+      const { data, error } = await supabase.functions.invoke('create-ppv-payment', {
+        body: { 
+          post_id: postId,
+          amount: amount 
+        }
       });
 
-      queryClient.invalidateQueries({ queryKey: ['posts'] });
-    } catch (error) {
+      if (error) {
+        console.error('PPV payment error:', error);
+        throw error;
+      }
+
+      if (data?.url) {
+        console.log('Redirecting to Stripe checkout:', data.url);
+        // Open Stripe checkout in a new tab
+        window.open(data.url, '_blank');
+      } else {
+        throw new Error('No checkout URL received');
+      }
+    } catch (error: any) {
+      console.error('Error creating PPV payment:', error);
       toast({
-        title: "Purchase failed",
-        description: "Please try again later",
+        title: "Payment failed",
+        description: error.message || "Please try again later",
         variant: "destructive",
       });
     }
