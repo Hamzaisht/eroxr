@@ -1,6 +1,7 @@
 
 import { useState } from "react";
 import { HomeLayout } from "@/components/home/HomeLayout";
+import { InteractiveNav } from "@/components/layout/InteractiveNav";
 import { FeedHeader } from "@/components/home/FeedHeader";
 import { FeedContent } from "@/components/home/feed/FeedContent";
 import { StoryReel } from "@/components/StoryReel";
@@ -67,8 +68,10 @@ const Home = () => {
   };
 
   return (
-    <HomeLayout>
-      <div className="space-y-6">
+    <>
+      <InteractiveNav />
+      <HomeLayout>
+        <div className="md:ml-20 space-y-6">
         {/* Welcome Banner */}
         {showWelcome && (
           <WelcomeBanner 
@@ -130,7 +133,8 @@ const Home = () => {
         open={goLiveDialog.isOpen}
         onOpenChange={goLiveDialog.closeDialog}
       />
-    </HomeLayout>
+      </HomeLayout>
+    </>
   );
 };
 
