@@ -39,6 +39,9 @@
     --glow-accent: 0 0 30px hsl(0, 0%, 20%, 0.5);
     --blur-glass: blur(20px);
     --blur-heavy: blur(40px);
+    
+    /* OnlyFans-style animations */
+    --shimmer-duration: 2s;
   }
 
   * {
@@ -711,4 +714,30 @@ body.story-viewer-open {
     transparent 70%,
     rgba(217, 70, 239, 0.1) 100%);
   backdrop-filter: blur(2px);
+}
+
+/* OnlyFans-Style Shimmer Animation */
+@keyframes shimmer-slide {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+.animate-shimmer {
+  animation: shimmer-slide 2s ease-in-out infinite;
+}
+
+/* OnlyFans-Style Lock Animation */
+@keyframes lock-pulse {
+  0%, 100% { 
+    transform: scale(1);
+    filter: drop-shadow(0 0 5px rgba(255, 193, 7, 0.3));
+  }
+  50% { 
+    transform: scale(1.1);
+    filter: drop-shadow(0 0 20px rgba(255, 193, 7, 0.6));
+  }
+}
+
+.animate-lock-pulse {
+  animation: lock-pulse 2s ease-in-out infinite;
 }
