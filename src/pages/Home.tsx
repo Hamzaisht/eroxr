@@ -77,16 +77,12 @@ const Home = () => {
           />
         )}
         
-        {/* Stories Section */}
-        <div className="w-full">
-          {hasPremium ? (
+        {/* Stories Section - Hidden for freemium users */}
+        {hasPremium && (
+          <div className="w-full">
             <StoryReel />
-          ) : (
-            <FreemiumTeaser contentType="media" className="h-24">
-              <StoryReel />
-            </FreemiumTeaser>
-          )}
-        </div>
+          </div>
+        )}
         
         {/* Create Post Area - Only show for premium users */}
         {hasPremium && (
