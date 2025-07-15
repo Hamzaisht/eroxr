@@ -43,6 +43,8 @@
     "@radix-ui/react-visually-hidden": "^1.1.1",
     "@react-three/drei": "^9.120.5",
     "@react-three/fiber": "^8.18.0",
+    "@stripe/react-stripe-js": "^3.7.0",
+    "@stripe/stripe-js": "^7.4.0",
     "@supabase/auth-helpers-react": "^0.5.0",
     "@supabase/auth-ui-react": "^0.4.7",
     "@supabase/auth-ui-shared": "^0.1.8",

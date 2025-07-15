@@ -11,7 +11,7 @@ import { useSession } from "@supabase/auth-helpers-react";
 import { supabase } from "@/integrations/supabase/client";
 import { DollarSign, Heart, Loader2 } from "lucide-react";
 
-const stripePromise = loadStripe("pk_test_YOUR_PUBLISHABLE_KEY"); // Replace with your publishable key
+const stripePromise = loadStripe("pk_test_51QQBjZFJo4PFMNJFrOdKwTCOGjwvnqpCdH7wHpKRMoRKJDfYHRXP7mfkJvXCDCvZhpKJdGKY2K3mC7mQKmLJK9E00yZ6cQ6nZ");
 
 interface TipFormProps {
   recipientId: string;

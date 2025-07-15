@@ -38,7 +38,9 @@ export const TipDialog = ({ open, onOpenChange, recipientId }: TipDialogProps) =
     return (
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="bg-luxury-darker border-luxury-primary/20 max-w-2xl">
-          <PremiumGate feature="tipping creators" />
+          <PremiumGate feature="tipping creators">
+            <div />
+          </PremiumGate>
         </DialogContent>
       </Dialog>
     );
