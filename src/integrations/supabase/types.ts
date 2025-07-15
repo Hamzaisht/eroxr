@@ -1498,6 +1498,42 @@ export type Database = {
         }
         Relationships: []
       }
+      platform_subscriptions: {
+        Row: {
+          created_at: string
+          current_period_end: string | null
+          current_period_start: string | null
+          id: string
+          status: string
+          stripe_customer_id: string | null
+          stripe_subscription_id: string | null
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          current_period_end?: string | null
+          current_period_start?: string | null
+          id?: string
+          status?: string
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          current_period_end?: string | null
+          current_period_start?: string | null
+          id?: string
+          status?: string
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       post_likes: {
         Row: {
           created_at: string
@@ -2185,6 +2221,33 @@ export type Database = {
         }
         Relationships: []
       }
+      stripe_customers: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          stripe_customer_id: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+          stripe_customer_id: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          stripe_customer_id?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       subscription_plans: {
         Row: {
           created_at: string
@@ -2333,28 +2396,40 @@ export type Database = {
           amount: number
           call_id: string | null
           created_at: string
+          creator_amount: number | null
           id: string
+          platform_fee_amount: number | null
           recipient_id: string
           sender_id: string
           sender_name: string | null
+          status: string | null
+          stripe_payment_intent_id: string | null
         }
         Insert: {
           amount: number
           call_id?: string | null
           created_at?: string
+          creator_amount?: number | null
           id?: string
+          platform_fee_amount?: number | null
           recipient_id: string
           sender_id: string
           sender_name?: string | null
+          status?: string | null
+          stripe_payment_intent_id?: string | null
         }
         Update: {
           amount?: number
           call_id?: string | null
           created_at?: string
+          creator_amount?: number | null
           id?: string
+          platform_fee_amount?: number | null
           recipient_id?: string
           sender_id?: string
           sender_name?: string | null
+          status?: string | null
+          stripe_payment_intent_id?: string | null
         }
         Relationships: []
       }
@@ -3276,6 +3351,14 @@ export type Database = {
           last_interaction: string
         }[]
       }
+      get_platform_subscription_status: {
+        Args: { p_user_id: string }
+        Returns: {
+          has_premium: boolean
+          status: string
+          current_period_end: string
+        }[]
+      }
       get_streaming_analytics: {
         Args: { p_creator_id: string; p_days?: number }
         Returns: {
@@ -3349,6 +3432,10 @@ export type Database = {
       update_trending_score: {
         Args: { p_post_id: string }
         Returns: undefined
+      }
+      user_has_premium_access: {
+        Args: { p_user_id: string }
+        Returns: boolean
       }
     }
     Enums: {
