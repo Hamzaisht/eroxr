@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider } from './contexts/AuthContext';
 import { Toaster } from './components/ui/toaster';
+import { ToastProvider } from './hooks/use-toast';
 import Landing from './pages/Landing';
 import Home from './pages/Home';
 import Profile from './pages/Profile';
@@ -25,8 +26,9 @@ const queryClient = new QueryClient({
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <BrowserRouter>
+      <ToastProvider>
+        <AuthProvider>
+          <BrowserRouter>
           <div className="min-h-screen bg-gradient-to-br from-luxury-darker via-luxury-dark to-luxury-darker">
             <Routes>
               <Route path="/" element={<Landing />} />
@@ -44,6 +46,7 @@ function App() {
           <Toaster />
         </BrowserRouter>
       </AuthProvider>
+      </ToastProvider>
     </QueryClientProvider>
   );
 }

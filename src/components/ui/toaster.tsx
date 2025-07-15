@@ -4,7 +4,6 @@ import {
   Toast,
   ToastClose,
   ToastDescription,
-  ToastProvider,
   ToastTitle,
   ToastViewport,
 } from "@/components/ui/toast";
@@ -13,7 +12,7 @@ export function Toaster() {
   const { toasts } = useToast();
 
   return (
-    <ToastProvider>
+    <>
       {toasts.map(function ({ id, title, description, action, variant, ...props }) {
         // Filter out unsupported variants, defaulting to "default"
         const safeVariant = 
@@ -35,6 +34,6 @@ export function Toaster() {
         );
       })}
       <ToastViewport />
-    </ToastProvider>
+    </>
   );
 }
