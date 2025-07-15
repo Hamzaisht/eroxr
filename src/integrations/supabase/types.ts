@@ -3228,6 +3228,10 @@ export type Database = {
       }
     }
     Functions: {
+      assign_super_admin: {
+        Args: { target_user_id: string }
+        Returns: boolean
+      }
       check_column_exists: {
         Args: { p_table_name: string; p_column_name: string }
         Returns: boolean
@@ -3392,12 +3396,20 @@ export type Database = {
           media_count: number
         }[]
       }
+      get_user_role: {
+        Args: { user_id: string }
+        Returns: string
+      }
       increment_counter: {
         Args: { row_id: string; counter_name: string; table_name?: string }
         Returns: undefined
       }
       is_admin_user: {
         Args: { user_id: string; min_role?: string }
+        Returns: boolean
+      }
+      is_super_admin: {
+        Args: { user_id?: string }
         Returns: boolean
       }
       rls_bypass_profile_update: {

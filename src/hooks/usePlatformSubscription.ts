@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useUserRole } from './useUserRole';
 
 interface PlatformSubscriptionStatus {
   hasPremium: boolean;
@@ -13,10 +14,16 @@ interface PlatformSubscriptionStatus {
 export const usePlatformSubscription = () => {
   const { user, session } = useAuth();
   const queryClient = useQueryClient();
+  const { isSuperAdmin } = useUserRole();
 
   const { data: subscriptionStatus, isLoading, refetch } = useQuery({
     queryKey: ['platform-subscription', user?.id],
     queryFn: async () => {
+      // Super admins always have premium
+      if (isSuperAdmin) {
+        return { hasPremium: true, status: 'active' };
+      }
+
       if (!user) {
         return { hasPremium: false, status: 'inactive' };
       }
@@ -36,6 +43,11 @@ export const usePlatformSubscription = () => {
   });
 
   const createPlatformSubscription = async () => {
+    // Super admins don't need to subscribe
+    if (isSuperAdmin) {
+      return { success: true, message: 'Super admin has full access' };
+    }
+
     if (!user) {
       throw new Error('User not authenticated');
     }
@@ -59,8 +71,8 @@ export const usePlatformSubscription = () => {
   };
 
   return {
-    hasPremium: subscriptionStatus?.hasPremium || false,
-    status: subscriptionStatus?.status || 'inactive',
+    hasPremium: isSuperAdmin || subscriptionStatus?.hasPremium || false,
+    status: isSuperAdmin ? 'active' : (subscriptionStatus?.status || 'inactive'),
     currentPeriodEnd: subscriptionStatus?.currentPeriodEnd,
     isLoading,
     createPlatformSubscription,

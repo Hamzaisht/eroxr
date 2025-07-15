@@ -2,6 +2,8 @@
 import { useState, useEffect } from "react";
 import { useSession } from "@supabase/auth-helpers-react";
 import { InteractiveNav } from "@/components/layout/InteractiveNav";
+import { BackButton } from "@/components/ui/back-button";
+import { useUserRole } from "@/hooks/useUserRole";
 import { useEroboardData } from "@/hooks/useEroboardData";
 import { AnalyticsSidebar } from "@/components/eroboard/analytics/AnalyticsSidebar";
 import { EarningsOverview } from "@/components/eroboard/analytics/EarningsOverview";
@@ -18,7 +20,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { geoTracker } from "@/utils/geoTracker";
 import { LoadingOverlay } from "@/components/eroboard/LoadingOverlay";
-import { BackButton } from "@/components/ui/back-button";
 import { 
   BarChart3, 
   DollarSign, 
@@ -37,7 +38,8 @@ import {
 const Eroboard = () => {
   const [activeTab, setActiveTab] = useState("overview");
   const session = useSession();
-  const { 
+  const { isSuperAdmin } = useUserRole();
+  const {
     loading, 
     error, 
     stats, 

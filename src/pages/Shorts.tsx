@@ -1,6 +1,9 @@
 
 import { useState, useEffect } from "react";
 import { InteractiveNav } from "@/components/layout/InteractiveNav";
+import { useCurrentUser } from "@/hooks/useCurrentUser";
+import { usePlatformSubscription } from "@/hooks/usePlatformSubscription";
+import { useUserRole } from "@/hooks/useUserRole";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2, ArrowLeft, MoreHorizontal, Edit3, Trash2 } from "lucide-react";
@@ -39,13 +42,16 @@ interface ShortVideo {
 }
 
 const Shorts = () => {
+  const { user } = useCurrentUser();
+  const { hasPremium } = usePlatformSubscription();
+  const { isSuperAdmin } = useUserRole();
   const [currentVideoIndex, setCurrentVideoIndex] = useState(0);
   const [isMuted, setIsMuted] = useState(true);
   const [showComments, setShowComments] = useState(false);
   const [userInteractions, setUserInteractions] = useState<Record<string, { hasLiked: boolean; hasSaved: boolean }>>({});
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { user } = useAuth();
+  const { user: authUser } = useAuth();
   const { likeShort, unlikeShort, saveShort, unsaveShort, deleteShort, shareShort, checkUserInteractions } = useShortActions();
 
   const { data: shorts, isLoading, error, refetch } = useQuery({
@@ -101,9 +107,10 @@ const Shorts = () => {
     setIsMuted
   });
 
-  // Define variables early but safely
+  // Define variables early but safely - Super admins and premium users have full access
+  const hasFullAccess = hasPremium || isSuperAdmin;
   const currentVideo = shorts?.[currentVideoIndex];
-  const isCreator = user?.id === currentVideo?.creator_id;
+  const isCreator = authUser?.id === currentVideo?.creator_id;
 
   // Load user interactions when video changes - ensure hooks are called consistently
   useEffect(() => {

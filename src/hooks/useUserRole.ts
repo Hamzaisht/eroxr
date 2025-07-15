@@ -1,46 +1,56 @@
+import { useState, useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { useCurrentUser } from './useCurrentUser';
 
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { useSession } from "@supabase/auth-helpers-react";
+export type UserRole = 'user' | 'admin' | 'super_admin';
 
 export const useUserRole = () => {
-  const session = useSession();
+  const [role, setRole] = useState<UserRole>('user');
+  const [isLoading, setIsLoading] = useState(true);
+  const { user } = useCurrentUser();
 
-  return useQuery({
-    queryKey: ["userRole", session?.user?.id],
-    queryFn: async () => {
-      if (!session?.user?.id) return null;
+  useEffect(() => {
+    const fetchUserRole = async () => {
+      if (!user?.id) {
+        setRole('user');
+        setIsLoading(false);
+        return;
+      }
 
       try {
-        const { data, error } = await supabase
-          .from("user_roles")
-          .select("role")
-          .eq("user_id", session.user.id);
+        // Check if user is super admin
+        const { data: isSuperAdmin } = await supabase
+          .rpc('is_super_admin', { user_id: user.id });
 
-        if (error) {
-          console.error("Error fetching user roles:", error);
-          throw error;
+        if (isSuperAdmin) {
+          setRole('super_admin');
+        } else {
+          // Check other roles
+          const { data: userRole } = await supabase
+            .rpc('get_user_role', { user_id: user.id });
+          
+          setRole(userRole as UserRole || 'user');
         }
-
-        // If no roles found, default to 'user'
-        if (!data || data.length === 0) {
-          return 'user';
-        }
-
-        // Check for the highest privilege role
-        // Priority: super_admin > admin > moderator > user
-        const roles = data.map(r => r.role);
-        
-        if (roles.includes('super_admin')) return 'super_admin';
-        if (roles.includes('admin')) return 'admin';
-        if (roles.includes('moderator')) return 'moderator';
-        
-        return 'user';
       } catch (error) {
-        console.error("Error in useUserRole:", error);
-        return 'user'; // Default to 'user' on error
+        console.error('Error fetching user role:', error);
+        setRole('user');
+      } finally {
+        setIsLoading(false);
       }
-    },
-    enabled: !!session?.user?.id,
-  });
+    };
+
+    fetchUserRole();
+  }, [user?.id]);
+
+  const isSuperAdmin = role === 'super_admin';
+  const isAdmin = role === 'admin' || role === 'super_admin';
+  const isPremiumUser = role !== 'user' || isSuperAdmin;
+
+  return {
+    role,
+    isLoading,
+    isSuperAdmin,
+    isAdmin,
+    isPremiumUser
+  };
 };

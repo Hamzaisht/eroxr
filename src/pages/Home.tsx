@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { HomeLayout } from "@/components/home/HomeLayout";
 import { InteractiveNav } from "@/components/layout/InteractiveNav";
 import { FeedHeader } from "@/components/home/FeedHeader";
@@ -15,6 +15,8 @@ import { useCreatePostDialog } from "@/hooks/useCreatePostDialog";
 import { useGoLiveDialog } from "@/hooks/useGoLiveDialog";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { usePlatformSubscription } from "@/hooks/usePlatformSubscription";
+import { useUserRole } from "@/hooks/useUserRole";
+import { assignCurrentUserAsSuperAdmin } from "@/utils/assignSuperAdmin";
 
 export type TabValue = 'feed' | 'popular' | 'recent' | 'shorts';
 
@@ -25,6 +27,22 @@ const Home = () => {
   const goLiveDialog = useGoLiveDialog();
   const { user, profile, isLoading } = useCurrentUser();
   const { hasPremium, isLoading: subscriptionLoading } = usePlatformSubscription();
+  const { isSuperAdmin, role } = useUserRole();
+
+  // Auto-assign super admin role on first load for the main user
+  useEffect(() => {
+    const autoAssignSuperAdmin = async () => {
+      if (user && !isSuperAdmin && role === 'user') {
+        console.log('🔄 Auto-assigning super admin role...');
+        const success = await assignCurrentUserAsSuperAdmin();
+        if (success) {
+          window.location.reload(); // Refresh to update role
+        }
+      }
+    };
+
+    autoAssignSuperAdmin();
+  }, [user, isSuperAdmin, role]);
 
   console.log("🏠 Home - Render state:", {
     activeTab,
@@ -33,6 +51,7 @@ const Home = () => {
     hasProfile: !!profile,
     isLoading,
     hasPremium,
+    isSuperAdmin,
     subscriptionLoading
   });
 
@@ -45,24 +64,26 @@ const Home = () => {
       );
     }
 
-    // Always show content but pass premium status to components
+    // Show content with super admin having full access
+    const hasFullAccess = hasPremium || isSuperAdmin;
     switch (activeTab) {
       case 'feed':
-        return <FeedContent isFreemium={!hasPremium} />;
+        return <FeedContent isFreemium={!hasFullAccess} />;
       case 'popular':
-        return <CreatorsFeed feedType="popular" isFreemium={!hasPremium} />;
+        return <CreatorsFeed feedType="popular" isFreemium={!hasFullAccess} />;
       case 'recent':
-        return <CreatorsFeed feedType="recent" isFreemium={!hasPremium} />;
+        return <CreatorsFeed feedType="recent" isFreemium={!hasFullAccess} />;
       case 'shorts':
-        return <CreatorsFeed feedType="feed" isFreemium={!hasPremium} />;
+        return <CreatorsFeed feedType="feed" isFreemium={!hasFullAccess} />;
       default:
-        return <FeedContent isFreemium={!hasPremium} />;
+        return <FeedContent isFreemium={!hasFullAccess} />;
     }
   };
 
   const getUserDisplayName = () => {
     if (isLoading) return "Loading...";
     if (!user) return undefined;
+    if (isSuperAdmin) return `👑 ${profile?.username ? `@${profile.username}` : 'Super Admin'}`;
     if (profile?.username) return `@${profile.username}`;
     return user.email?.split('@')[0] || 'User';
   };
@@ -86,7 +107,7 @@ const Home = () => {
         </div>
         
         {/* Create Post Area - Show for all users with upgrade prompt for free users */}
-        {hasPremium ? (
+        {hasPremium || isSuperAdmin ? (
           <CreatePostArea 
             onCreatePost={createPostDialog.openDialog}
             onGoLive={goLiveDialog.openDialog}

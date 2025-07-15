@@ -4,12 +4,16 @@ import { InteractiveNav } from "@/components/layout/InteractiveNav";
 import { HomeLayout } from "@/components/home/HomeLayout";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { usePlatformSubscription } from "@/hooks/usePlatformSubscription";
-import { FreemiumTeaser } from "@/components/subscription/FreemiumTeaser";
+import { useUserRole } from "@/hooks/useUserRole";
 import DatingMainContent from "./DatingMainContent";
 
 const Dating = () => {
   const { user } = useCurrentUser();
   const { hasPremium } = usePlatformSubscription();
+  const { isSuperAdmin } = useUserRole();
+
+  // Super admins and premium users have full access
+  const hasFullAccess = hasPremium || isSuperAdmin;
 
   if (!user) {
     return (
