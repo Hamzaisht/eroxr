@@ -13,14 +13,16 @@ import { Loader2, RefreshCw } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "./ui/button";
 import { Alert, AlertDescription } from "./ui/alert";
+import { FreemiumPostCard } from "./subscription/FreemiumPostCard";
 
 interface CreatorsFeedProps {
   feedType?: 'feed' | 'popular' | 'recent';
+  isFreemium?: boolean;
 }
 
 const MemoizedPostCard = memo(EnhancedPostCard);
 
-export const CreatorsFeed = memo(({ feedType = 'feed' }: CreatorsFeedProps) => {
+export const CreatorsFeed = memo(({ feedType = 'feed', isFreemium = false }: CreatorsFeedProps) => {
   const session = useSession();
   const { handleLike, handleDelete } = usePostActions();
   const { ref, inView } = useInView({
@@ -142,12 +144,32 @@ export const CreatorsFeed = memo(({ feedType = 'feed' }: CreatorsFeedProps) => {
                   transition={{ duration: 0.3 }}
                   layout
                 >
-                  <MemoizedPostCard
-                    post={typedPost}
-                    onLike={handleLikePost}
-                    onDelete={handleDeletePost}
-                    currentUserId={currentUserId}
-                  />
+                  {isFreemium ? (
+                    <FreemiumPostCard
+                      creator={{
+                        username: typedPost.creator.username,
+                        avatar_url: typedPost.creator.avatar_url
+                      }}
+                      preview={{
+                        content: typedPost.content,
+                        timestamp: new Date(typedPost.created_at).toLocaleDateString(),
+                        hasMedia: (typedPost.media_url?.length > 0) || (typedPost.video_urls?.length > 0),
+                        mediaCount: (typedPost.media_url?.length || 0) + (typedPost.video_urls?.length || 0)
+                      }}
+                      engagement={{
+                        likes: typedPost.likes_count,
+                        comments: typedPost.comments_count,
+                        shares: typedPost.screenshots_count || 0
+                      }}
+                    />
+                  ) : (
+                    <MemoizedPostCard
+                      post={typedPost}
+                      onLike={handleLikePost}
+                      onDelete={handleDeletePost}
+                      currentUserId={currentUserId}
+                    />
+                  )}
                 </motion.div>
               );
             })}

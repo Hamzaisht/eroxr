@@ -9,7 +9,7 @@ import { CreatePostArea } from "@/components/home/CreatePostArea";
 import { CreatePostDialog } from "@/components/CreatePostDialog";
 import { GoLiveDialog } from "@/components/home/GoLiveDialog";
 import { WelcomeBanner } from "@/components/home/WelcomeBanner";
-import { PremiumGate } from "@/components/subscription/PremiumGate";
+import { FreemiumTeaser } from "@/components/subscription/FreemiumTeaser";
 import { useCreatePostDialog } from "@/hooks/useCreatePostDialog";
 import { useGoLiveDialog } from "@/hooks/useGoLiveDialog";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
@@ -44,25 +44,18 @@ const Home = () => {
       );
     }
 
-    if (!hasPremium && !subscriptionLoading) {
-      return (
-        <PremiumGate feature="browsing content and accessing premium features">
-          <div className="p-8" />
-        </PremiumGate>
-      );
-    }
-
+    // Always show content but pass premium status to components
     switch (activeTab) {
       case 'feed':
-        return <FeedContent />;
+        return <FeedContent isFreemium={!hasPremium} />;
       case 'popular':
-        return <CreatorsFeed feedType="popular" />;
+        return <CreatorsFeed feedType="popular" isFreemium={!hasPremium} />;
       case 'recent':
-        return <CreatorsFeed feedType="recent" />;
+        return <CreatorsFeed feedType="recent" isFreemium={!hasPremium} />;
       case 'shorts':
-        return <CreatorsFeed feedType="feed" />;
+        return <CreatorsFeed feedType="feed" isFreemium={!hasPremium} />;
       default:
-        return <FeedContent />;
+        return <FeedContent isFreemium={!hasPremium} />;
     }
   };
 
@@ -86,14 +79,29 @@ const Home = () => {
         
         {/* Stories Section */}
         <div className="w-full">
-          <StoryReel />
+          {hasPremium ? (
+            <StoryReel />
+          ) : (
+            <FreemiumTeaser contentType="media" className="h-24">
+              <StoryReel />
+            </FreemiumTeaser>
+          )}
         </div>
         
-        {/* Create Post Area */}
-        <CreatePostArea 
-          onCreatePost={createPostDialog.openDialog}
-          onGoLive={goLiveDialog.openDialog}
-        />
+        {/* Create Post Area - Show teaser for freemium users */}
+        {hasPremium ? (
+          <CreatePostArea 
+            onCreatePost={createPostDialog.openDialog}
+            onGoLive={goLiveDialog.openDialog}
+          />
+        ) : (
+          <FreemiumTeaser contentType="upload" className="h-24">
+            <CreatePostArea 
+              onCreatePost={() => {}}
+              onGoLive={() => {}}
+            />
+          </FreemiumTeaser>
+        )}
         
         {/* Feed Header with Tabs */}
         <FeedHeader 

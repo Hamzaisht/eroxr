@@ -5,8 +5,13 @@ import { useSession } from "@supabase/auth-helpers-react";
 import { usePostActions } from "@/hooks/usePostActions";
 import { useHomePosts } from "@/hooks/useHomePosts";
 import { Button } from "@/components/ui/button";
+import { FreemiumPostCard } from "@/components/subscription/FreemiumPostCard";
 
-export const FeedContent = () => {
+interface FeedContentProps {
+  isFreemium?: boolean;
+}
+
+export const FeedContent = ({ isFreemium = false }: FeedContentProps) => {
   const session = useSession();
   const { handleLike, handleDelete } = usePostActions();
   const { data: posts, isLoading, error, refetch } = useHomePosts();
@@ -80,8 +85,33 @@ export const FeedContent = () => {
           id: post.id,
           hasCreator: !!post.creator,
           creatorUsername: post.creator?.username,
-          mediaCount: post.media_assets?.length || 0
+          mediaCount: post.media_assets?.length || 0,
+          isFreemium
         });
+        
+        // Show teaser cards for freemium users
+        if (isFreemium) {
+          return (
+            <FreemiumPostCard
+              key={post.id}
+              creator={{
+                username: post.creator?.username || 'Anonymous',
+                avatar_url: post.creator?.avatar_url
+              }}
+              preview={{
+                content: post.content || 'Exclusive content awaits...',
+                timestamp: new Date(post.created_at).toLocaleDateString(),
+                hasMedia: (post.media_assets?.length > 0) || (post.video_urls?.length > 0),
+                mediaCount: (post.media_assets?.length || 0) + (post.video_urls?.length || 0)
+              }}
+              engagement={{
+                likes: post.likes_count || Math.floor(Math.random() * 50) + 10,
+                comments: post.comments_count || Math.floor(Math.random() * 20) + 5,
+                shares: post.share_count || Math.floor(Math.random() * 15) + 2
+              }}
+            />
+          );
+        }
         
         return (
           <EnhancedPostCard
