@@ -9,6 +9,8 @@ import Profile from './pages/Profile';
 import Login from './pages/Login';
 import Settings from './pages/Settings';
 import Search from './pages/Search';
+import Subscription from './pages/Subscription';
+import PlatformTest from './pages/PlatformTest';
 import PremiumSuccessPage from "./pages/PremiumSuccessPage";
 import PremiumCancelledPage from "./pages/PremiumCancelledPage";
 
@@ -33,6 +35,8 @@ function App() {
               <Route path="/auth" element={<Login />} />
               <Route path="/settings" element={<Settings />} />
               <Route path="/search" element={<Search />} />
+              <Route path="/subscription" element={<Subscription />} />
+              <Route path="/test" element={<PlatformTest />} />
               <Route path="/premium-success" element={<PremiumSuccessPage />} />
               <Route path="/premium-cancelled" element={<PremiumCancelledPage />} />
             </Routes>

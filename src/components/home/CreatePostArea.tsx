@@ -2,11 +2,13 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Image, Video, Mic, Camera, UserPlus } from "lucide-react";
+import { Image, Video, Mic, Camera, UserPlus, Crown } from "lucide-react";
 import { UserAvatar } from "@/components/avatar/UserAvatar";
 import { AudioRecordingDialog } from "./AudioRecordingDialog";
+import { PremiumGate } from "@/components/subscription/PremiumGate";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
+import { usePlatformSubscription } from "@/hooks/usePlatformSubscription";
 import { useNavigate } from "react-router-dom";
 
 interface CreatePostAreaProps {
@@ -16,6 +18,7 @@ interface CreatePostAreaProps {
 
 export const CreatePostArea = ({ onCreatePost, onGoLive }: CreatePostAreaProps) => {
   const { user, session } = useAuth();
+  const { hasPremium } = usePlatformSubscription();
   const [isAudioDialogOpen, setIsAudioDialogOpen] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -48,6 +51,15 @@ export const CreatePostArea = ({ onCreatePost, onGoLive }: CreatePostAreaProps) 
   const handleCreatePost = () => {
     if (!isLoggedIn) {
       handleAuthRequired();
+      return;
+    }
+    if (!hasPremium) {
+      toast({
+        title: "Premium Required",
+        description: "Upgrade to premium to create posts and share content.",
+        variant: "destructive",
+      });
+      navigate('/subscription');
       return;
     }
     onCreatePost();
@@ -91,6 +103,14 @@ export const CreatePostArea = ({ onCreatePost, onGoLive }: CreatePostAreaProps) 
           </div>
         </CardContent>
       </Card>
+    );
+  }
+
+  if (!hasPremium) {
+    return (
+      <PremiumGate feature="creating posts and sharing content" showUpgrade={true}>
+        <div className="p-8" />
+      </PremiumGate>
     );
   }
 

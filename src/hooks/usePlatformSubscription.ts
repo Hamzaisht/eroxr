@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { useSession } from '@supabase/auth-helpers-react';
+import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 
@@ -11,13 +11,13 @@ interface PlatformSubscriptionStatus {
 }
 
 export const usePlatformSubscription = () => {
-  const session = useSession();
+  const { user, session } = useAuth();
   const queryClient = useQueryClient();
 
   const { data: subscriptionStatus, isLoading, refetch } = useQuery({
-    queryKey: ['platform-subscription', session?.user?.id],
+    queryKey: ['platform-subscription', user?.id],
     queryFn: async () => {
-      if (!session?.user) {
+      if (!user) {
         return { hasPremium: false, status: 'inactive' };
       }
 
@@ -30,13 +30,13 @@ export const usePlatformSubscription = () => {
 
       return data as PlatformSubscriptionStatus;
     },
-    enabled: !!session?.user,
+    enabled: !!user,
     staleTime: 5 * 60 * 1000, // 5 minutes
     refetchInterval: 10 * 60 * 1000, // 10 minutes
   });
 
   const createPlatformSubscription = async () => {
-    if (!session?.user) {
+    if (!user) {
       throw new Error('User not authenticated');
     }
 

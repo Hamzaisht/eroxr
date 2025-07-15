@@ -9,9 +9,11 @@ import { CreatePostArea } from "@/components/home/CreatePostArea";
 import { CreatePostDialog } from "@/components/CreatePostDialog";
 import { GoLiveDialog } from "@/components/home/GoLiveDialog";
 import { WelcomeBanner } from "@/components/home/WelcomeBanner";
+import { PremiumGate } from "@/components/subscription/PremiumGate";
 import { useCreatePostDialog } from "@/hooks/useCreatePostDialog";
 import { useGoLiveDialog } from "@/hooks/useGoLiveDialog";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
+import { usePlatformSubscription } from "@/hooks/usePlatformSubscription";
 
 export type TabValue = 'feed' | 'popular' | 'recent' | 'shorts';
 
@@ -21,16 +23,35 @@ const Home = () => {
   const createPostDialog = useCreatePostDialog();
   const goLiveDialog = useGoLiveDialog();
   const { user, profile, isLoading } = useCurrentUser();
+  const { hasPremium, isLoading: subscriptionLoading } = usePlatformSubscription();
 
   console.log("🏠 Home - Render state:", {
     activeTab,
     showWelcome,
     hasUser: !!user,
     hasProfile: !!profile,
-    isLoading
+    isLoading,
+    hasPremium,
+    subscriptionLoading
   });
 
   const renderContent = () => {
+    if (!user) {
+      return (
+        <div className="text-center py-12">
+          <p className="text-white mb-4">Please sign in to view content</p>
+        </div>
+      );
+    }
+
+    if (!hasPremium && !subscriptionLoading) {
+      return (
+        <PremiumGate feature="browsing content and accessing premium features">
+          <div className="p-8" />
+        </PremiumGate>
+      );
+    }
+
     switch (activeTab) {
       case 'feed':
         return <FeedContent />;

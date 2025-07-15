@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { useSession } from "@supabase/auth-helpers-react";
+import { useAuth } from "@/contexts/AuthContext";
 import { usePlatformSubscription } from "@/hooks/usePlatformSubscription";
 import { PremiumGate } from "@/components/subscription/PremiumGate";
 import { EnhancedTipDialog } from "@/components/tips/EnhancedTipDialog";
@@ -16,10 +16,10 @@ interface TipDialogProps {
 
 export const TipDialog = ({ open, onOpenChange, recipientId }: TipDialogProps) => {
   const { hasPremium } = usePlatformSubscription();
-  const session = useSession();
+  const { user } = useAuth();
   const { toast } = useToast();
 
-  if (!session?.user) {
+  if (!user) {
     return (
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="bg-luxury-darker border-luxury-primary/20">

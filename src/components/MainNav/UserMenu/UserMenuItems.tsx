@@ -30,10 +30,10 @@ export const UserMenuItems = ({ onLogout }: UserMenuItemsProps) => {
         Settings
       </DropdownMenuItem>
       <DropdownMenuItem 
-        onClick={() => navigate("/subscriptions")}
+        onClick={() => navigate("/subscription")}
         className="cursor-pointer"
       >
-        Subscriptions
+        Premium Subscription
       </DropdownMenuItem>
       <DropdownMenuSeparator />
       <DropdownMenuItem 
