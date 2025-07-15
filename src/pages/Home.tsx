@@ -77,8 +77,14 @@ const Home = () => {
           />
         )}
         
-        {/* Stories Section - Hidden for freemium users */}
-        {hasPremium && (
+        {/* Stories Section - Show for all users, blur for freemium */}
+        {!hasPremium ? (
+          <FreemiumTeaser contentType="media" className="w-full">
+            <div className="w-full">
+              <StoryReel />
+            </div>
+          </FreemiumTeaser>
+        ) : (
           <div className="w-full">
             <StoryReel />
           </div>
@@ -90,6 +96,16 @@ const Home = () => {
             onCreatePost={createPostDialog.openDialog}
             onGoLive={goLiveDialog.openDialog}
           />
+        )}
+        
+        {/* Freemium Teaser for Content Creation */}
+        {!hasPremium && (
+          <FreemiumTeaser contentType="upload" className="w-full">
+            <div className="p-8 text-center">
+              <h3 className="text-xl font-semibold text-white mb-2">Create Amazing Content</h3>
+              <p className="text-white/70">Share photos, videos, and stories with your audience</p>
+            </div>
+          </FreemiumTeaser>
         )}
         
         {/* Feed Header with Tabs */}
