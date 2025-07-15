@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider } from './contexts/AuthContext';
 import { Toaster } from './components/ui/toaster';
 import { ToastProvider } from './hooks/use-toast';
+import { MainLayout } from './components/layout/MainLayout';
 import Landing from './pages/Landing';
 import Home from './pages/Home';
 import Profile from './pages/Profile';
@@ -29,24 +30,25 @@ function App() {
       <ToastProvider>
         <AuthProvider>
           <BrowserRouter>
-          <div className="min-h-screen bg-gradient-to-br from-luxury-darker via-luxury-dark to-luxury-darker">
             <Routes>
+              {/* Landing page without main layout */}
               <Route path="/" element={<Landing />} />
-              <Route path="/home" element={<Home />} />
-              <Route path="/profile/:userId" element={<Profile />} />
               <Route path="/auth" element={<Login />} />
-              <Route path="/settings" element={<Settings />} />
-              <Route path="/search" element={<Search />} />
-              <Route path="/subscription" element={<Subscription />} />
-              <Route path="/test" element={<PlatformTest />} />
-              <Route path="/premium-success" element={<PremiumSuccessPage />} />
-              <Route path="/premium-cancelled" element={<PremiumCancelledPage />} />
+              
+              {/* Main app routes with navigation */}
+              <Route path="/home" element={<MainLayout><Home /></MainLayout>} />
+              <Route path="/profile/:userId" element={<MainLayout><Profile /></MainLayout>} />
+              <Route path="/settings" element={<MainLayout><Settings /></MainLayout>} />
+              <Route path="/search" element={<MainLayout><Search /></MainLayout>} />
+              <Route path="/subscription" element={<MainLayout><Subscription /></MainLayout>} />
+              <Route path="/test" element={<MainLayout><PlatformTest /></MainLayout>} />
+              <Route path="/premium-success" element={<MainLayout><PremiumSuccessPage /></MainLayout>} />
+              <Route path="/premium-cancelled" element={<MainLayout><PremiumCancelledPage /></MainLayout>} />
             </Routes>
-          </div>
-          <Toaster />
-        </BrowserRouter>
-      </AuthProvider>
-    </ToastProvider>
+            <Toaster />
+          </BrowserRouter>
+        </AuthProvider>
+      </ToastProvider>
     </QueryClientProvider>
   );
 }
