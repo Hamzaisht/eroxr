@@ -118,15 +118,67 @@ const Messages = () => {
                   )}
                 </div>
               ) : (
-                <div className="flex-1 flex items-center justify-center">
-                  <div className="text-center">
-                    <div className="text-6xl mb-4">💬</div>
-                    <h3 className="text-xl font-semibold text-white mb-2">
-                      Welcome to Messages
-                    </h3>
-                    <p className="text-white/60">
-                      Select a conversation to start chatting
-                    </p>
+                <div className="flex-1 flex items-center justify-center p-8">
+                  <div className="text-center max-w-md">
+                    <motion.div
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.6 }}
+                      className="mb-8"
+                    >
+                      <div className="text-8xl mb-6">💬</div>
+                      <h3 className="text-3xl font-bold text-white mb-4">
+                        Start Connecting!
+                      </h3>
+                      <p className="text-white/70 mb-8 text-lg leading-relaxed">
+                        Connect with people through messages, voice calls, and video chats. Your conversations await!
+                      </p>
+                    </motion.div>
+
+                    <motion.div
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.6, delay: 0.2 }}
+                      className="space-y-4"
+                    >
+                      <div className="flex justify-center gap-4 mb-6">
+                        <motion.div
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                          className="bg-gradient-to-br from-primary/20 to-purple-500/20 backdrop-blur-xl border border-white/20 rounded-2xl p-4 cursor-pointer hover:from-primary/30 hover:to-purple-500/30 transition-all duration-300"
+                        >
+                          <div className="text-3xl mb-2">📞</div>
+                          <p className="text-white text-sm font-medium">Voice Calls</p>
+                        </motion.div>
+                        
+                        <motion.div
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                          className="bg-gradient-to-br from-primary/20 to-purple-500/20 backdrop-blur-xl border border-white/20 rounded-2xl p-4 cursor-pointer hover:from-primary/30 hover:to-purple-500/30 transition-all duration-300"
+                        >
+                          <div className="text-3xl mb-2">📹</div>
+                          <p className="text-white text-sm font-medium">Video Chats</p>
+                        </motion.div>
+                        
+                        <motion.div
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                          className="bg-gradient-to-br from-primary/20 to-purple-500/20 backdrop-blur-xl border border-white/20 rounded-2xl p-4 cursor-pointer hover:from-primary/30 hover:to-purple-500/30 transition-all duration-300"
+                        >
+                          <div className="text-3xl mb-2">⚡</div>
+                          <p className="text-white text-sm font-medium">Instant Messages</p>
+                        </motion.div>
+                      </div>
+
+                      <motion.p
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ delay: 0.4 }}
+                        className="text-white/50 text-sm"
+                      >
+                        Select a conversation from the sidebar to begin
+                      </motion.p>
+                    </motion.div>
                   </div>
                 </div>
               )}

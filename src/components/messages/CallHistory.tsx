@@ -5,7 +5,6 @@ import { motion } from 'framer-motion';
 import { Phone, PhoneCall, PhoneIncoming, PhoneMissed, Video, Clock, MessageCircle } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { useToast } from '@/hooks/use-toast';
 
 interface CallRecord {
   id: string;
@@ -35,7 +34,6 @@ export const CallHistory = ({ onCallUser, onMessageUser }: CallHistoryProps) => 
   const [callHistory, setCallHistory] = useState<CallRecord[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { user } = useAuth();
-  const { toast } = useToast();
 
   useEffect(() => {
     if (!user?.id) return;
@@ -53,15 +51,15 @@ export const CallHistory = ({ onCallUser, onMessageUser }: CallHistoryProps) => 
           .order('started_at', { ascending: false })
           .limit(50);
 
-        if (error) throw error;
-        setCallHistory(data || []);
+        if (error) {
+          console.log('No call history available yet');
+          setCallHistory([]);
+        } else {
+          setCallHistory(data || []);
+        }
       } catch (error) {
-        console.error('Error fetching call history:', error);
-        toast({
-          title: "Failed to load call history",
-          description: "Please try again later",
-          variant: "destructive"
-        });
+        console.log('Call history will be available once you make your first call');
+        setCallHistory([]);
       } finally {
         setIsLoading(false);
       }
@@ -85,7 +83,7 @@ export const CallHistory = ({ onCallUser, onMessageUser }: CallHistoryProps) => 
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [user?.id, toast]);
+  }, [user?.id]);
 
   const formatDuration = (seconds: number) => {
     const minutes = Math.floor(seconds / 60);
