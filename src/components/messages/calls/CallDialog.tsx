@@ -1,5 +1,5 @@
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useSession } from '@supabase/auth-helpers-react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -21,9 +21,10 @@ interface CallDialogProps {
 }
 
 export const CallDialog = ({ isOpen, onClose, callType, recipient }: CallDialogProps) => {
-  const [callState, setCallState] = useState<'initiating' | 'ringing' | 'connected' | 'ended'>('initiating');
+  const [callState, setCallState] = useState<'initiating' | 'ringing' | 'connected' | 'ended' | 'failed'>('initiating');
   const [callDuration, setCallDuration] = useState(0);
   const [callId, setCallId] = useState<string | null>(null);
+  const [callStartTime, setCallStartTime] = useState<Date | null>(null);
   
   const localVideoRef = useRef<HTMLVideoElement>(null);
   const remoteVideoRef = useRef<HTMLVideoElement>(null);
@@ -37,6 +38,7 @@ export const CallDialog = ({ isOpen, onClose, callType, recipient }: CallDialogP
     isConnected,
     isMuted,
     isVideoEnabled,
+    connectionState,
     startCall,
     endCall,
     toggleMute,
@@ -45,28 +47,77 @@ export const CallDialog = ({ isOpen, onClose, callType, recipient }: CallDialogP
     callId: callId || undefined,
     isInitiator: true,
     onRemoteStream: (stream) => {
+      console.log('🎥 Setting remote stream');
       if (remoteVideoRef.current) {
         remoteVideoRef.current.srcObject = stream;
       }
     },
     onCallEnded: () => {
-      setCallState('ended');
-      setTimeout(onClose, 1000);
+      console.log('📞 Call ended callback');
+      handleCallEnd();
+    },
+    onConnectionStateChange: (state) => {
+      console.log('🔗 Connection state:', state);
+      if (state === 'connected' && callState !== 'connected') {
+        setCallState('connected');
+        setCallStartTime(new Date());
+        startCallTimer();
+        
+        // Update database
+        if (callId) {
+          supabase.from('call_history').update({
+            status: 'connected',
+            connected_at: new Date().toISOString()
+          }).eq('id', callId);
+        }
+      } else if (state === 'failed') {
+        setCallState('failed');
+        toast({
+          title: "Call Failed",
+          description: "Connection failed. Please try again.",
+          variant: "destructive"
+        });
+      }
     }
   });
+
+  const handleCallEnd = useCallback(() => {
+    if (callTimerRef.current) {
+      clearInterval(callTimerRef.current);
+      callTimerRef.current = null;
+    }
+    
+    setCallState('ended');
+    
+    // Calculate duration for database
+    const duration = callStartTime ? Math.floor((Date.now() - callStartTime.getTime()) / 1000) : 0;
+    
+    // Update database with final call status
+    if (callId) {
+      supabase.from('call_history').update({
+        status: 'ended',
+        ended_at: new Date().toISOString(),
+        duration
+      }).eq('id', callId);
+    }
+    
+    setTimeout(onClose, 1500);
+  }, [callStartTime, callId, onClose]);
   
   // Initialize call
   useEffect(() => {
     const initializeCall = async () => {
-      if (!isOpen || !session?.user?.id) return;
+      if (!isOpen || !session?.user?.id || callId) return;
 
       try {
+        console.log('🚀 Initializing call');
+        
         // Generate unique call ID
-        const newCallId = `${session.user.id}-${recipient.id}-${Date.now()}`;
+        const newCallId = `call_${session.user.id}_${recipient.id}_${Date.now()}`;
         setCallId(newCallId);
 
         // Create call record in database
-        await supabase.from('call_history').insert({
+        const { error } = await supabase.from('call_history').insert({
           id: newCallId,
           caller_id: session.user.id,
           recipient_id: recipient.id,
@@ -74,32 +125,37 @@ export const CallDialog = ({ isOpen, onClose, callType, recipient }: CallDialogP
           status: 'initiated'
         });
 
+        if (error) throw error;
+
+        // Send notification to recipient
+        await supabase.from('call_notifications').insert({
+          user_id: recipient.id,
+          call_id: newCallId,
+          notification_type: 'incoming_call'
+        });
+
         // Start call using signaling hook
         await startCall(callType === 'video');
         
         setCallState('ringing');
-        setTimeout(() => {
-          if (isConnected) {
-            setCallState('connected');
-            startCallTimer();
-          }
-        }, 2000);
+        console.log('📞 Call initiated, state: ringing');
 
       } catch (error) {
-        console.error('Error starting call:', error);
+        console.error('❌ Error starting call:', error);
         toast({
           title: "Call Failed",
-          description: "Could not start the call",
+          description: "Could not start the call. Please check your permissions.",
           variant: "destructive"
         });
-        handleEndCall();
+        setCallState('failed');
+        setTimeout(onClose, 1500);
       }
     };
 
     if (isOpen) {
       initializeCall();
     }
-  }, [isOpen, session?.user?.id, recipient.id, callType, startCall, isConnected, toast]);
+  }, [isOpen, session?.user?.id, recipient.id, callType, startCall, toast, callId, onClose]);
   
   // Set up local video stream display
   useEffect(() => {
@@ -124,17 +180,11 @@ export const CallDialog = ({ isOpen, onClose, callType, recipient }: CallDialogP
   
   // Use the functions from the hook instead of duplicating
   
-  // End call
+  // End call handler that uses the hook's endCall function
   const handleEndCall = async () => {
-    if (callTimerRef.current) {
-      clearInterval(callTimerRef.current);
-    }
-    
-    // Use the hook's endCall function
+    console.log('🔚 Ending call manually');
     await endCall();
-    
-    setCallState('ended');
-    setTimeout(onClose, 1000);
+    handleCallEnd();
   };
   
   // UI for different call states
@@ -234,11 +284,22 @@ export const CallDialog = ({ isOpen, onClose, callType, recipient }: CallDialogP
           </div>
         );
         
-      case 'ended':
+      case 'failed':
         return (
           <div className="flex flex-col items-center justify-center space-y-6">
             <div className="bg-red-500/20 p-4 rounded-full">
               <PhoneOff size={32} className="text-red-500" />
+            </div>
+            <h3 className="text-xl font-medium text-red-400">Call Failed</h3>
+            <p className="text-luxury-neutral/70">Could not connect to {recipient.username}</p>
+          </div>
+        );
+        
+      case 'ended':
+        return (
+          <div className="flex flex-col items-center justify-center space-y-6">
+            <div className="bg-gray-500/20 p-4 rounded-full">
+              <PhoneOff size={32} className="text-gray-400" />
             </div>
             <p className="text-luxury-neutral/70">Call ended</p>
           </div>
