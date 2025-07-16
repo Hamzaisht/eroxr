@@ -7,186 +7,207 @@ import { CallHistory } from '@/components/messages/CallHistory';
 import { CallNotifications } from '@/components/messages/CallNotifications';
 import { DemoConversations } from '@/components/messages/DemoConversations';
 import { InteractiveNav } from '@/components/layout/InteractiveNav';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { PermissionHandler } from '@/components/messages/PermissionHandler';
+import { Luxury3DBackground } from '@/components/ui/luxury-3d-background';
+import { LuxuryGlassCard } from '@/components/ui/luxury-glass-card';
+import { LuxuryTabs } from '@/components/ui/luxury-tabs';
+import { Luxury3DButton } from '@/components/ui/luxury-3d-button';
 import { motion } from 'framer-motion';
+import { MessageCircle, Phone, Video, Sparkles, Zap } from 'lucide-react';
 
 const Messages = () => {
   const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
   const [showDetails, setShowDetails] = useState(false);
+  const [activeTab, setActiveTab] = useState('conversations');
   const { user } = useCurrentUser();
 
   if (!user) {
     return (
       <>
         <InteractiveNav />
-        <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
-          <div className="flex items-center justify-center min-h-screen">
+        <Luxury3DBackground />
+        <div className="min-h-screen flex items-center justify-center p-8">
+          <LuxuryGlassCard variant="accent" className="max-w-md w-full p-8">
             <div className="text-center">
-              <h2 className="text-2xl font-bold text-white mb-4">Sign In Required</h2>
-              <p className="text-white/70">Please sign in to access messages</p>
+              <motion.div
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                className="text-6xl mb-6"
+              >
+                💎
+              </motion.div>
+              <h2 className="text-3xl font-bold text-white mb-4 bg-gradient-to-r from-purple-400 to-cyan-400 bg-clip-text text-transparent">
+                Luxury Access Required
+              </h2>
+              <p className="text-white/70 text-lg leading-relaxed">
+                Please sign in to experience our premium messaging suite
+              </p>
             </div>
-          </div>
+          </LuxuryGlassCard>
         </div>
       </>
     );
   }
 
+  const tabs = [
+    { id: 'conversations', label: 'Messages', icon: MessageCircle },
+    { id: 'calls', label: 'Calls', icon: Phone }
+  ];
+
+  const renderLuxuryWelcome = () => (
+    <div className="flex-1 flex items-center justify-center p-12">
+      <motion.div
+        initial={{ opacity: 0, y: 30 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.8, ease: "easeOut" }}
+        className="text-center max-w-2xl"
+      >
+        <motion.div
+          initial={{ scale: 0 }}
+          animate={{ scale: 1 }}
+          transition={{ type: "spring", stiffness: 300, damping: 20, delay: 0.2 }}
+          className="text-8xl mb-8"
+        >
+          💎
+        </motion.div>
+        
+        <motion.h1
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 }}
+          className="text-5xl font-bold mb-6 bg-gradient-to-r from-purple-400 via-pink-400 to-cyan-400 bg-clip-text text-transparent"
+        >
+          Luxury Communications
+        </motion.h1>
+        
+        <motion.p
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.6 }}
+          className="text-white/80 text-xl mb-12 leading-relaxed"
+        >
+          Experience the pinnacle of digital communication with our award-winning platform
+        </motion.p>
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.8 }}
+          className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12"
+        >
+          <LuxuryGlassCard variant="primary" className="p-6 text-center" floating>
+            <Video className="h-12 w-12 text-purple-400 mx-auto mb-4" />
+            <h3 className="text-white font-semibold mb-2">4K Video Calls</h3>
+            <p className="text-white/60 text-sm">Crystal clear communication</p>
+          </LuxuryGlassCard>
+          
+          <LuxuryGlassCard variant="accent" className="p-6 text-center" floating>
+            <Zap className="h-12 w-12 text-cyan-400 mx-auto mb-4" />
+            <h3 className="text-white font-semibold mb-2">Instant Messaging</h3>
+            <p className="text-white/60 text-sm">Lightning-fast delivery</p>
+          </LuxuryGlassCard>
+          
+          <LuxuryGlassCard variant="secondary" className="p-6 text-center" floating>
+            <Sparkles className="h-12 w-12 text-pink-400 mx-auto mb-4" />
+            <h3 className="text-white font-semibold mb-2">Premium Features</h3>
+            <p className="text-white/60 text-sm">Exclusive luxury experience</p>
+          </LuxuryGlassCard>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: 1.0, type: "spring", stiffness: 300, damping: 25 }}
+        >
+          <Luxury3DButton 
+            variant="primary" 
+            size="lg"
+            className="font-semibold tracking-wide"
+          >
+            <Sparkles className="h-5 w-5" />
+            Select a conversation to begin
+          </Luxury3DButton>
+        </motion.div>
+      </motion.div>
+    </div>
+  );
+
   const renderMessagesContent = () => {
     return (
       <PermissionHandler>
-        <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
-          {/* Greek pattern overlay */}
-          <div className="absolute inset-0 opacity-5">
-            <div 
-              className="w-full h-full"
-              style={{
-                backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
-              }}
-            />
-          </div>
-
-          {/* Demo data utility */}
+        <Luxury3DBackground />
+        <div className="min-h-screen relative z-10">
           <DemoConversations />
           
-          <div className="relative z-10 flex min-h-screen">
-            {/* Sidebar with Messages and Calls tabs */}
-            <div className="w-80 border-r border-white/10 bg-black/20 backdrop-blur-xl">
-              <Tabs defaultValue="conversations" className="h-full">
-                <div className="p-4 border-b border-white/10">
-                  <TabsList className="grid w-full grid-cols-2 bg-white/5 backdrop-blur-2xl border border-white/10 rounded-2xl p-1 shadow-2xl shadow-black/20">
-                    <TabsTrigger 
-                      value="conversations" 
-                      className="relative text-white/70 data-[state=active]:text-white data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary/80 data-[state=active]:to-purple-500/80 data-[state=active]:shadow-lg data-[state=active]:shadow-primary/30 data-[state=active]:border data-[state=active]:border-white/20 rounded-xl font-medium transition-all duration-300 hover:text-white hover:bg-white/10 hover:backdrop-blur-xl overflow-hidden"
-                    >
-                      <motion.div
-                        className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full"
-                        whileHover={{
-                          translateX: '100%',
-                          transition: { duration: 0.6, ease: 'easeInOut' }
-                        }}
-                      />
-                      <span className="relative z-10">Messages</span>
-                    </TabsTrigger>
-                    <TabsTrigger 
-                      value="calls" 
-                      className="relative text-white/70 data-[state=active]:text-white data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary/80 data-[state=active]:to-purple-500/80 data-[state=active]:shadow-lg data-[state=active]:shadow-primary/30 data-[state=active]:border data-[state=active]:border-white/20 rounded-xl font-medium transition-all duration-300 hover:text-white hover:bg-white/10 hover:backdrop-blur-xl overflow-hidden"
-                    >
-                      <motion.div
-                        className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full"
-                        whileHover={{
-                          translateX: '100%',
-                          transition: { duration: 0.6, ease: 'easeInOut' }
-                        }}
-                      />
-                      <span className="relative z-10">Calls</span>
-                    </TabsTrigger>
-                  </TabsList>
-                </div>
-                
-                <TabsContent value="conversations" className="h-full mt-0">
+          <div className="flex min-h-screen">
+            {/* Luxury Sidebar */}
+            <LuxuryGlassCard 
+              variant="secondary" 
+              className="w-96 m-4 mr-2 flex flex-col border-slate-700/30"
+              intensity="heavy"
+            >
+              <div className="p-6 border-b border-white/10">
+                <LuxuryTabs 
+                  tabs={tabs}
+                  activeTab={activeTab}
+                  onTabChange={setActiveTab}
+                />
+              </div>
+              
+              <div className="flex-1 overflow-hidden">
+                {activeTab === 'conversations' ? (
                   <ConversationSidebar 
                     selectedConversationId={selectedConversationId}
                     onSelectConversation={setSelectedConversationId}
                   />
-                </TabsContent>
-                
-                <TabsContent value="calls" className="h-full mt-0">
+                ) : (
                   <CallHistory />
-                </TabsContent>
-              </Tabs>
-            </div>
+                )}
+              </div>
+            </LuxuryGlassCard>
 
-            {/* Chat Area */}
-            <div className="flex-1 min-w-0 flex">
+            {/* Main Chat Area */}
+            <div className="flex-1 flex m-4 ml-2 gap-4">
               {selectedConversationId ? (
-                <div className="flex-1 flex">
-                  <div className="flex-1 min-w-0">
+                <>
+                  <LuxuryGlassCard 
+                    variant="primary" 
+                    className="flex-1 flex flex-col"
+                    intensity="heavy"
+                  >
                     <ChatArea 
                       conversationId={selectedConversationId}
                       onShowDetails={() => setShowDetails(true)}
                     />
-                  </div>
+                  </LuxuryGlassCard>
                   
                   {showDetails && (
-                    <div className="w-80 border-l border-white/10">
+                    <LuxuryGlassCard 
+                      variant="accent" 
+                      className="w-80 flex flex-col"
+                      intensity="heavy"
+                    >
                       <ChatDetails 
                         conversationId={selectedConversationId}
                         onClose={() => setShowDetails(false)}
                       />
-                    </div>
+                    </LuxuryGlassCard>
                   )}
-                </div>
+                </>
               ) : (
-                <div className="flex-1 flex items-center justify-center p-8">
-                  <div className="text-center max-w-md">
-                    <motion.div
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.6 }}
-                      className="mb-8"
-                    >
-                      <div className="text-8xl mb-6">💬</div>
-                      <h3 className="text-3xl font-bold text-white mb-4">
-                        Start Connecting!
-                      </h3>
-                      <p className="text-white/70 mb-8 text-lg leading-relaxed">
-                        Connect with people through messages, voice calls, and video chats. Your conversations await!
-                      </p>
-                    </motion.div>
-
-                    <motion.div
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.6, delay: 0.2 }}
-                      className="space-y-4"
-                    >
-                      <div className="flex justify-center gap-4 mb-6">
-                        <motion.div
-                          whileHover={{ scale: 1.05 }}
-                          whileTap={{ scale: 0.95 }}
-                          className="bg-gradient-to-br from-primary/20 to-purple-500/20 backdrop-blur-xl border border-white/20 rounded-2xl p-4 cursor-pointer hover:from-primary/30 hover:to-purple-500/30 transition-all duration-300"
-                        >
-                          <div className="text-3xl mb-2">📞</div>
-                          <p className="text-white text-sm font-medium">Voice Calls</p>
-                        </motion.div>
-                        
-                        <motion.div
-                          whileHover={{ scale: 1.05 }}
-                          whileTap={{ scale: 0.95 }}
-                          className="bg-gradient-to-br from-primary/20 to-purple-500/20 backdrop-blur-xl border border-white/20 rounded-2xl p-4 cursor-pointer hover:from-primary/30 hover:to-purple-500/30 transition-all duration-300"
-                        >
-                          <div className="text-3xl mb-2">📹</div>
-                          <p className="text-white text-sm font-medium">Video Chats</p>
-                        </motion.div>
-                        
-                        <motion.div
-                          whileHover={{ scale: 1.05 }}
-                          whileTap={{ scale: 0.95 }}
-                          className="bg-gradient-to-br from-primary/20 to-purple-500/20 backdrop-blur-xl border border-white/20 rounded-2xl p-4 cursor-pointer hover:from-primary/30 hover:to-purple-500/30 transition-all duration-300"
-                        >
-                          <div className="text-3xl mb-2">⚡</div>
-                          <p className="text-white text-sm font-medium">Instant Messages</p>
-                        </motion.div>
-                      </div>
-
-                      <motion.p
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        transition={{ delay: 0.4 }}
-                        className="text-white/50 text-sm"
-                      >
-                        Select a conversation from the sidebar to begin
-                      </motion.p>
-                    </motion.div>
-                  </div>
-                </div>
+                <LuxuryGlassCard 
+                  variant="primary" 
+                  className="flex-1"
+                  intensity="heavy"
+                >
+                  {renderLuxuryWelcome()}
+                </LuxuryGlassCard>
               )}
             </div>
-
-            {/* Call Notifications */}
-            <CallNotifications />
           </div>
+
+          <CallNotifications />
         </div>
       </PermissionHandler>
     );
