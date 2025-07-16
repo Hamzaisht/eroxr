@@ -8,7 +8,7 @@ import { CallNotifications } from '@/components/messages/CallNotifications';
 import { DemoConversations } from '@/components/messages/DemoConversations';
 import { InteractiveNav } from '@/components/layout/InteractiveNav';
 import { PermissionHandler } from '@/components/messages/PermissionHandler';
-import { Luxury3DBackground } from '@/components/ui/luxury-3d-background';
+import { LuxuryGradientBackground } from '@/components/ui/luxury-gradient-background';
 import { LuxuryGlassCard } from '@/components/ui/luxury-glass-card';
 import { LuxuryTabs } from '@/components/ui/luxury-tabs';
 import { Luxury3DButton } from '@/components/ui/luxury-3d-button';
@@ -25,7 +25,7 @@ const Messages = () => {
     return (
       <>
         <InteractiveNav />
-        <Luxury3DBackground />
+        <LuxuryGradientBackground />
         <div className="min-h-screen flex items-center justify-center p-8">
           <LuxuryGlassCard variant="accent" className="max-w-md w-full p-8">
             <div className="text-center">
@@ -136,7 +136,7 @@ const Messages = () => {
   const renderMessagesContent = () => {
     return (
       <PermissionHandler>
-        <Luxury3DBackground />
+        <LuxuryGradientBackground />
         <div className="min-h-screen relative z-10">
           <DemoConversations />
           

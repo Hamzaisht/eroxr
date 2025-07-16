@@ -1,5 +1,5 @@
 import { Canvas } from '@react-three/fiber';
-import { Float, Text3D, Environment, MeshDistortMaterial, Sphere } from '@react-three/drei';
+import { Float, Environment, MeshDistortMaterial, Sphere } from '@react-three/drei';
 import { motion } from 'framer-motion';
 
 interface Luxury3DBackgroundProps {
