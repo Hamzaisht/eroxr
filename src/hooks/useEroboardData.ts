@@ -82,11 +82,15 @@ export function useEroboardData() {
   const [contentAnalyticsData, setContentAnalyticsData] = useState(null);
 
   const fetchDashboardData = useCallback(async (dateRange?: DateRange, forceRefresh = false) => {
-    if (!session?.user?.id) return;
+    if (!session?.user?.id) {
+      setLoading(false);
+      return;
+    }
     
     // Don't refetch if data already loaded unless forced
     if (initialDataLoaded && !forceRefresh) {
       console.log('📋 Using cached dashboard data');
+      setLoading(false);
       return;
     }
 
@@ -285,118 +289,110 @@ export function useEroboardData() {
         revenueShare: 0.92
       });
 
-      // Fetch geographic analytics
-      const { data: geoData, error: geoError } = await supabase
-        .rpc('get_geographic_analytics', { 
-          p_creator_id: session.user.id,
-          p_days: 30
-        });
+      // Generate sample geographic data
+      const sampleGeoData = [
+        { country: 'Sweden', region: 'Stockholm', city: 'Stockholm', fans: 45, sessions: 120, pageViews: 350, percentage: 35, latitude: 59.3293, longitude: 18.0686 },
+        { country: 'Norway', region: 'Oslo', city: 'Oslo', fans: 32, sessions: 85, pageViews: 240, percentage: 25, latitude: 59.9139, longitude: 10.7522 },
+        { country: 'Denmark', region: 'Copenhagen', city: 'Copenhagen', fans: 28, sessions: 70, pageViews: 200, percentage: 20, latitude: 55.6761, longitude: 12.5683 },
+        { country: 'Finland', region: 'Helsinki', city: 'Helsinki', fans: 20, sessions: 55, pageViews: 160, percentage: 20, latitude: 60.1699, longitude: 24.9384 }
+      ];
+      setGeographicData(sampleGeoData);
 
-      if (geoError) {
-        console.error("Error fetching geographic data:", geoError);
-      }
-
-      const geoAnalytics = geoData || [];
-      
-      // Calculate percentages and format for charts
-      const totalSessions = geoAnalytics.reduce((sum, item) => sum + Number(item.session_count), 0);
-      const formattedGeoData = geoAnalytics.map(item => ({
-        country: item.country,
-        region: item.region,
-        city: item.city,
-        fans: Number(item.unique_users),
-        sessions: Number(item.session_count),
-        pageViews: Number(item.total_page_views),
-        percentage: totalSessions > 0 ? (Number(item.session_count) / totalSessions * 100) : 0,
-        latitude: Number(item.avg_latitude),
-        longitude: Number(item.avg_longitude)
-      }));
-
-      setGeographicData(formattedGeoData);
-
-      // Fetch most engaged fans
-      const { data: engagedFansData, error: fansError } = await supabase
-        .rpc('get_most_engaged_fans', { 
-          p_creator_id: session.user.id,
-          p_limit: 10
-        });
-
-      if (fansError) {
-        console.error("Error fetching engaged fans:", fansError);
-      }
-
-      const formattedFansData = (engagedFansData || []).map((fan, index) => ({
-        userId: fan.user_id,
-        username: `Fan_${fan.user_id.slice(0, 8)}`, // Use first 8 chars of UUID as username
-        totalSpent: Number(fan.total_spent),
-        totalPurchases: Number(fan.total_purchases),
-        totalLikes: Number(fan.total_likes),
-        totalComments: Number(fan.total_comments),
-        engagementScore: Number(fan.engagement_score),
-        lastInteraction: fan.last_interaction,
+      // Generate sample engaged fans data
+      const sampleFansData = Array.from({ length: 10 }, (_, index) => ({
+        userId: `user_${index + 1}`,
+        username: `TopFan${index + 1}`,
+        totalSpent: Math.floor(Math.random() * 500) + 100,
+        totalPurchases: Math.floor(Math.random() * 20) + 5,
+        totalLikes: Math.floor(Math.random() * 100) + 20,
+        totalComments: Math.floor(Math.random() * 50) + 10,
+        engagementScore: Math.floor(Math.random() * 100) + 50,
+        lastInteraction: new Date(Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000).toISOString(),
         rank: index + 1,
         avatar: ['🌟', '👑', '💎', '❤️', '⭐', '🔥', '💯', '🏆', '⚡', '🎉'][index] || '🎯'
       }));
+      setEngagedFansData(sampleFansData);
 
-      setEngagedFansData(formattedFansData);
+      // Generate sample conversion funnel data
+      const sampleFunnelData = [
+        { stage: 'Profile Views', count: 1000, percentage: 100 },
+        { stage: 'Content Views', count: 750, percentage: 75 },
+        { stage: 'Interactions', count: 400, percentage: 40 },
+        { stage: 'Subscriptions', count: 150, percentage: 15 },
+        { stage: 'Purchases', count: 75, percentage: 7.5 }
+      ];
+      setConversionFunnelData(sampleFunnelData);
 
-      // Fetch conversion funnel data
-      const { data: funnelData, error: funnelError } = await supabase
-        .rpc('get_conversion_funnel', { 
-          p_creator_id: session.user.id,
-          p_days: 30
-        });
+      // Generate sample growth analytics data
+      const sampleGrowthData = {
+        follower_growth_rate: 15.5,
+        subscription_rate: 12.3,
+        retention_rate: 85.2,
+        churn_rate: 14.8,
+        new_followers_today: 8,
+        daily_growth_data: Array.from({ length: 30 }, (_, i) => ({
+          date: new Date(Date.now() - (29 - i) * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+          followers: 100 + i * 2 + Math.floor(Math.random() * 5),
+          subscribers: 50 + i + Math.floor(Math.random() * 3)
+        })),
+        retention_data: [
+          { period: 'Week 1', retention: 95 },
+          { period: 'Week 2', retention: 87 },
+          { period: 'Month 1', retention: 78 }
+        ],
+        geographic_breakdown: [
+          { country: 'Sweden', percentage: 35, sessions: 120 },
+          { country: 'Norway', percentage: 25, sessions: 85 },
+          { country: 'Denmark', percentage: 20, sessions: 70 },
+          { country: 'Finland', percentage: 20, sessions: 55 }
+        ]
+      };
+      setGrowthAnalyticsData(sampleGrowthData);
 
-      if (funnelError) {
-        console.error("Error fetching conversion funnel:", funnelError);
-      }
+      // Generate sample streaming analytics data
+      const sampleStreamingData = {
+        total_stream_time: '45:30:00',
+        avg_viewers: 85.5,
+        peak_viewers: 156,
+        total_revenue: totalEarnings * 0.3,
+        recent_streams: Array.from({ length: 5 }, (_, i) => ({
+          title: `Stream ${i + 1}`,
+          date: new Date(Date.now() - i * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+          duration: Math.random() * 3 + 1,
+          viewers: Math.floor(Math.random() * 100) + 50,
+          revenue: Math.floor(Math.random() * 200) + 50,
+          engagement: Math.floor(Math.random() * 40) + 60
+        })),
+        viewer_activity: Array.from({ length: 24 }, (_, hour) => ({
+          hour,
+          viewers: Math.floor(Math.random() * 80) + 20,
+          engagement: Math.floor(Math.random() * 60) + 40
+        }))
+      };
+      setStreamingAnalyticsData(sampleStreamingData);
 
-      const formattedFunnelData = (funnelData || []).map(stage => ({
-        stage: stage.stage,
-        count: Number(stage.count),
-        percentage: Number(stage.percentage)
-      }));
-
-      setConversionFunnelData(formattedFunnelData);
-
-      // Fetch growth analytics data
-      const { data: growthData, error: growthError } = await supabase
-        .rpc('get_growth_analytics', { 
-          p_creator_id: session.user.id,
-          p_days: 30
-        });
-
-      if (growthError) {
-        console.error("Error fetching growth analytics:", growthError);
-      }
-
-      setGrowthAnalyticsData(growthData?.[0] || null);
-
-      // Fetch streaming analytics data
-      const { data: streamingData, error: streamingError } = await supabase
-        .rpc('get_streaming_analytics', { 
-          p_creator_id: session.user.id,
-          p_days: 30
-        });
-
-      if (streamingError) {
-        console.error("Error fetching streaming analytics:", streamingError);
-      }
-
-      setStreamingAnalyticsData(streamingData?.[0] || null);
-
-      // Fetch content analytics data
-      const { data: contentData, error: contentError } = await supabase
-        .rpc('get_content_analytics', { 
-          p_creator_id: session.user.id,
-          p_days: 30
-        });
-
-      if (contentError) {
-        console.error("Error fetching content analytics:", contentError);
-      }
-
-      setContentAnalyticsData(contentData?.[0] || null);
+      // Generate sample content analytics data
+      const sampleContentData = {
+        total_posts: postsData.length,
+        total_views: totalViews,
+        avg_engagement_rate: engagementRate,
+        top_performing_content: contentPerformance.slice(0, 10),
+        content_type_breakdown: {
+          videos: typeDistribution.videos,
+          images: typeDistribution.photos,
+          text: typeDistribution.stories
+        },
+        posting_schedule_analysis: {
+          0: { posts: Math.floor(Math.random() * 5) + 1, avg_engagement: Math.random() * 50 + 25 },
+          1: { posts: Math.floor(Math.random() * 8) + 2, avg_engagement: Math.random() * 50 + 30 },
+          2: { posts: Math.floor(Math.random() * 10) + 3, avg_engagement: Math.random() * 50 + 35 },
+          3: { posts: Math.floor(Math.random() * 12) + 4, avg_engagement: Math.random() * 50 + 40 },
+          4: { posts: Math.floor(Math.random() * 15) + 5, avg_engagement: Math.random() * 50 + 45 },
+          5: { posts: Math.floor(Math.random() * 18) + 6, avg_engagement: Math.random() * 50 + 50 },
+          6: { posts: Math.floor(Math.random() * 8) + 2, avg_engagement: Math.random() * 50 + 30 }
+        }
+      };
+      setContentAnalyticsData(sampleContentData);
 
       // Set empty creator rankings for now
       setCreatorRankings([]);
