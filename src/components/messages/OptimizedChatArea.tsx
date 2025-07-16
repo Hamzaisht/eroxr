@@ -504,3 +504,5 @@ export const OptimizedChatArea = memo(({ conversationId, onShowDetails }: ChatAr
 });
 
 OptimizedChatArea.displayName = 'OptimizedChatArea';
+
+export default OptimizedChatArea;
