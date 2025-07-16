@@ -29,37 +29,33 @@ const Home = () => {
   const { hasPremium, isLoading: subscriptionLoading } = usePlatformSubscription();
   const { isSuperAdmin, role } = useUserRole();
 
-  // Auto-assign super admin role on first load for the main user
+  // Auto-assign super admin role on first load for the main user (only once per session)
   useEffect(() => {
-    let hasAssigned = false;
+    const hasAssigned = sessionStorage.getItem('super_admin_assigned');
     
     const autoAssignSuperAdmin = async () => {
       if (user && !isSuperAdmin && role === 'user' && !hasAssigned) {
-        hasAssigned = true;
-        console.log('🔄 Auto-assigning super admin role...');
-        const success = await assignCurrentUserAsSuperAdmin();
-        if (success) {
-          // Use a timeout to avoid immediate re-render
-          setTimeout(() => {
-            window.location.reload();
-          }, 1000);
+        try {
+          console.log('🔄 Auto-assigning super admin role...');
+          sessionStorage.setItem('super_admin_assigned', 'true');
+          const success = await assignCurrentUserAsSuperAdmin();
+          if (success) {
+            // Force refetch instead of page reload
+            window.location.href = '/home';
+          }
+        } catch (error) {
+          console.error('Failed to assign super admin:', error);
+          sessionStorage.removeItem('super_admin_assigned');
         }
       }
     };
 
-    autoAssignSuperAdmin();
-  }, [user?.id]); // Only depend on user ID to prevent loops
+    if (user && role && !hasAssigned) {
+      autoAssignSuperAdmin();
+    }
+  }, [user?.id, role, isSuperAdmin]); // Include all necessary dependencies
 
-  console.log("🏠 Home - Render state:", {
-    activeTab,
-    showWelcome,
-    hasUser: !!user,
-    hasProfile: !!profile,
-    isLoading,
-    hasPremium,
-    isSuperAdmin,
-    subscriptionLoading
-  });
+  // Removed excessive console logging to prevent re-render issues
 
   const renderContent = () => {
     if (!user) {

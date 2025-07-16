@@ -86,14 +86,7 @@ export const EnhancedPostCard = ({
   const [isDeleting, setIsDeleting] = useState(false);
   const navigate = useNavigate();
 
-  console.log(`EnhancedPostCard - Rendering post ${post.id} with media:`, {
-    hasMediaAssets: !!post.media_assets,
-    mediaCount: post.media_assets?.length || 0,
-    hasValidMedia: post.media_assets && post.media_assets.length > 0,
-    validAssets: post.media_assets?.filter(asset => asset && asset.storage_path).length || 0,
-    isLiked: post.isLiked,
-    likesCount: post.likes_count
-  });
+  // Removed console logging to prevent re-render issues
 
   const handleLike = useCallback(() => {
     setIsLiked(!isLiked);

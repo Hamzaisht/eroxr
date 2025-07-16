@@ -39,32 +39,30 @@ export const MediaRenderer = ({ assets, media, className = "", username }: Media
   // Use assets or fall back to media prop for backward compatibility
   const mediaAssets = assets || media || [];
 
-  console.log("MediaRenderer - Received assets:", mediaAssets);
+  // Removed console logging to prevent re-render issues
 
+  const currentAsset = mediaAssets[currentIndex];
+  
   // Handle autoplay when video comes into view
   useEffect(() => {
     if (videoRef.current && currentAsset?.media_type === 'video') {
       if (inView) {
         videoRef.current.play().catch(err => {
-          console.log("Autoplay prevented:", err);
+          // Silent fail for autoplay
         });
       } else {
         videoRef.current.pause();
       }
     }
-  }, [inView]);
+  }, [inView, currentAsset]);
 
   if (!mediaAssets || mediaAssets.length === 0) {
-    console.log("MediaRenderer - No media assets to render");
     return null;
   }
 
   const getMediaUrl = (storagePath: string) => {
-    console.log("MediaRenderer - Getting URL for path:", storagePath);
-    
     // Check if it's already a full URL
     if (storagePath.startsWith('http')) {
-      console.log("MediaRenderer - Using full URL:", storagePath);
       return storagePath;
     }
     
@@ -75,39 +73,23 @@ export const MediaRenderer = ({ assets, media, className = "", username }: Media
     const { data } = supabase.storage.from('media').getPublicUrl(cleanPath);
     const publicUrl = data?.publicUrl;
     
-    console.log("MediaRenderer - Generated public URL:", {
-      originalPath: storagePath,
-      cleanPath,
-      publicUrl
-    });
-    
     return publicUrl || storagePath;
   };
 
   const handleImageLoad = (assetId: string) => {
-    console.log("MediaRenderer - Image loaded successfully:", assetId);
     setIsLoading(prev => ({ ...prev, [assetId]: false }));
   };
 
   const handleImageError = (assetId: string) => {
-    console.error(`MediaRenderer - Failed to load media asset: ${assetId}`);
     setIsLoading(prev => ({ ...prev, [assetId]: false }));
     setHasError(prev => ({ ...prev, [assetId]: true }));
   };
 
-  const currentAsset = mediaAssets[currentIndex];
   if (!currentAsset) {
-    console.log("MediaRenderer - No current asset available");
     return null;
   }
 
   const mediaUrl = getMediaUrl(currentAsset.storage_path);
-
-  console.log("MediaRenderer - Rendering asset:", {
-    currentAsset,
-    mediaUrl,
-    mediaType: currentAsset.media_type
-  });
 
   return (
     <>
@@ -130,7 +112,6 @@ export const MediaRenderer = ({ assets, media, className = "", username }: Media
             onLoad={() => handleImageLoad(currentAsset.id)}
             onError={() => handleImageError(currentAsset.id)}
             onLoadStart={() => {
-              console.log("MediaRenderer - Image load started for:", mediaUrl);
               setIsLoading(prev => ({ ...prev, [currentAsset.id]: true }));
             }}
           />
@@ -145,7 +126,6 @@ export const MediaRenderer = ({ assets, media, className = "", username }: Media
             playsInline
             preload="metadata"
             onLoadStart={() => {
-              console.log("MediaRenderer - Video load started for:", mediaUrl);
               setIsLoading(prev => ({ ...prev, [currentAsset.id]: true }));
             }}
             onLoadedData={() => handleImageLoad(currentAsset.id)}

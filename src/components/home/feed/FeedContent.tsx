@@ -16,12 +16,7 @@ export const FeedContent = ({ isFreemium = false }: FeedContentProps) => {
   const { handleLike, handleDelete } = usePostActions();
   const { data: posts, isLoading, error, refetch } = useHomePosts();
   
-  console.log("🏠 FeedContent - Render state:", {
-    isLoading,
-    hasError: !!error,
-    postsCount: posts?.length || 0,
-    hasSession: !!session
-  });
+  // Removed console logging to prevent re-render issues
 
   if (isLoading) {
     return (
@@ -33,7 +28,6 @@ export const FeedContent = ({ isFreemium = false }: FeedContentProps) => {
   }
 
   if (error) {
-    console.error("❌ FeedContent - Error:", error);
     return (
       <div className="flex flex-col items-center justify-center p-8 space-y-4">
         <AlertCircle className="h-12 w-12 text-red-400" />
@@ -81,14 +75,6 @@ export const FeedContent = ({ isFreemium = false }: FeedContentProps) => {
   return (
     <div className="space-y-6">
       {posts.map((post: any) => {
-        console.log("🎯 FeedContent - Rendering post:", {
-          id: post.id,
-          hasCreator: !!post.creator,
-          creatorUsername: post.creator?.username,
-          mediaCount: post.media_assets?.length || 0,
-          isFreemium
-        });
-        
         // Show teaser cards for freemium users
         if (isFreemium) {
           return (

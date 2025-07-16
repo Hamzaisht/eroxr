@@ -9,29 +9,24 @@ export const useHomePosts = () => {
   const { session, user } = useAuth();
   const { cleanupOrphanedAssets } = useOrphanedAssetsCleanup();
 
-  // Trigger cleanup periodically but less frequently to avoid performance issues
+  // Disabled automatic cleanup to prevent performance issues and infinite re-renders
+  // Cleanup will be triggered manually when needed
   useEffect(() => {
     if (user?.id) {
-      const cleanup = () => cleanupOrphanedAssets(user.id);
-      
-      // Run cleanup on mount but with a delay
-      const timeoutId = setTimeout(cleanup, 2000);
-      
-      // Set up periodic cleanup every 15 minutes (increased from 10)
-      const interval = setInterval(cleanup, 15 * 60 * 1000);
+      // Only run cleanup once on mount after a significant delay
+      const timeoutId = setTimeout(() => {
+        cleanupOrphanedAssets(user.id);
+      }, 30000); // 30 seconds delay
       
       return () => {
         clearTimeout(timeoutId);
-        clearInterval(interval);
       };
     }
-  }, [user?.id, cleanupOrphanedAssets]);
+  }, [user?.id]); // Removed cleanupOrphanedAssets dependency to prevent re-renders
 
   return useQuery(
     ['home-posts', user?.id],
     async () => {
-      console.log("🏠 Home - Fetching posts with optimized RLS...");
-      
       const { data: postsData, error: postsError } = await supabase
         .from('posts')
         .select(`
@@ -73,24 +68,11 @@ export const useHomePosts = () => {
         .limit(20);
 
       if (postsError) {
-        console.error("❌ Home - Error fetching posts:", postsError);
         throw new Error(postsError.message || "Failed to fetch posts");
       }
 
-      console.log("✅ Home - Posts fetched successfully:", {
-        count: postsData?.length || 0,
-        hasData: !!postsData,
-        sample: postsData?.[0] ? {
-          id: postsData[0].id,
-          hasMediaAssets: !!postsData[0].media_assets,
-          mediaCount: postsData[0].media_assets?.length || 0,
-          creatorExists: !!postsData[0].creator
-        } : null
-      });
-
       // Return empty array if no data to prevent loading issues
       if (!postsData || postsData.length === 0) {
-        console.log("📭 Home - No posts found, returning empty array");
         return [];
       }
 
@@ -112,12 +94,6 @@ export const useHomePosts = () => {
           isLiked: false, // Will be updated by post actions hook
           isSaved: false // TODO: Add saved posts functionality
         };
-      });
-
-      console.log("🔄 Home - Data transformed successfully:", {
-        originalCount: postsData.length,
-        transformedCount: transformedData.length,
-        firstPostHasCreator: !!transformedData[0]?.creator?.username
       });
 
       return transformedData;
