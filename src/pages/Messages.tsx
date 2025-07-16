@@ -1,7 +1,7 @@
 import { useState, memo, useCallback, useMemo } from 'react';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { ConversationSidebar } from '@/components/messages/ConversationSidebar';
-import { OptimizedChatArea } from '@/components/messages/OptimizedChatArea';
+import { SimpleOptimizedChatArea } from '@/components/messages/SimpleOptimizedChatArea';
 import { ChatDetails } from '@/components/messages/ChatDetails';
 import { CallHistory } from '@/components/messages/CallHistory';
 import { CallNotifications } from '@/components/messages/CallNotifications';
@@ -196,7 +196,7 @@ const Messages = memo(() => {
                     className="flex-1 flex flex-col"
                     intensity="heavy"
                   >
-                    <OptimizedChatArea 
+                    <SimpleOptimizedChatArea 
                       conversationId={selectedConversationId}
                       onShowDetails={handleShowDetails}
                     />
