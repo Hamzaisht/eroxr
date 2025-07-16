@@ -16,7 +16,7 @@ interface SystemMetric {
   label: string;
   value: number;
   status: 'healthy' | 'warning' | 'critical';
-  icon: React.ElementType;
+  icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
   unit?: string;
 }
 

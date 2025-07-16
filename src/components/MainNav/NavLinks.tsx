@@ -8,7 +8,7 @@ import { useLocation } from "react-router-dom";
 
 interface NavItemProps {
   to: string;
-  icon: React.ElementType;
+  icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
   label: string;
   onClick?: () => void;
 }

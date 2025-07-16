@@ -7,7 +7,7 @@ interface StatCard {
   title: string;
   value: string;
   change: string;
-  icon: React.ElementType;
+  icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
   color: string;
   trend: 'up' | 'down' | 'neutral';
 }
