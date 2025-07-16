@@ -13,6 +13,7 @@ import Eroboard from './pages/Eroboard';
 import Shorts from './pages/Shorts';
 import Profile from './pages/Profile';
 import Login from './pages/Login';
+import Register from './pages/Register';
 import Settings from './pages/Settings';
 import Search from './pages/Search';
 import Subscription from './pages/Subscription';
@@ -38,6 +39,7 @@ function App() {
               {/* Landing page without main layout */}
               <Route path="/" element={<Landing />} />
               <Route path="/auth" element={<Login />} />
+              <Route path="/register" element={<Register />} />
               
               {/* Main app routes */}
               <Route path="/home" element={<Home />} />

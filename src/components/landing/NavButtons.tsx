@@ -20,7 +20,7 @@ export const NavButtons = ({ orientation = "horizontal" }: NavButtonsProps) => {
         </Link>
       </Button>
       <Button variant="ghost" asChild className="nav-item-liquid">
-        <Link to="/login" className="text-luxury-neutral hover:text-white">
+        <Link to="/auth" className="text-luxury-neutral hover:text-white">
           Log In
         </Link>
       </Button>

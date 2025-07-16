@@ -7,6 +7,8 @@ import { PasswordField } from "../form-fields/PasswordField";
 import { DateOfBirthField } from "../form-fields/DateOfBirthField";
 import { UsernameField } from "../form-fields/UsernameField";
 import { CountrySelect } from "../form-fields/CountrySelect";
+import { FirstNameField } from "../form-fields/FirstNameField";
+import { LastNameField } from "../form-fields/LastNameField";
 
 interface AnimatedFormFieldsProps {
   form: UseFormReturn<SignupFormValues> | UseFormReturn<LoginFormValues>;
@@ -50,11 +52,13 @@ export const AnimatedFormFields = ({ form, isLoading, isLoginMode = false }: Ani
       {!isLoginMode && (
         <>
           <motion.div
+            className="grid grid-cols-2 gap-4"
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.7, duration: 0.4 }}
           >
-            <UsernameField form={form as UseFormReturn<SignupFormValues>} isLoading={isLoading} />
+            <FirstNameField form={form as UseFormReturn<SignupFormValues>} isLoading={isLoading} />
+            <LastNameField form={form as UseFormReturn<SignupFormValues>} isLoading={isLoading} />
           </motion.div>
 
           <motion.div
@@ -62,13 +66,21 @@ export const AnimatedFormFields = ({ form, isLoading, isLoginMode = false }: Ani
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.8, duration: 0.4 }}
           >
+            <UsernameField form={form as UseFormReturn<SignupFormValues>} isLoading={isLoading} />
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.9, duration: 0.4 }}
+          >
             <DateOfBirthField form={form as UseFormReturn<SignupFormValues>} isLoading={isLoading} />
           </motion.div>
           
           <motion.div
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.9, duration: 0.4 }}
+            transition={{ delay: 1.0, duration: 0.4 }}
           >
             <CountrySelect form={form as UseFormReturn<SignupFormValues>} isLoading={isLoading} />
           </motion.div>

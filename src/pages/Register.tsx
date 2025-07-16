@@ -1,16 +1,16 @@
-
 import { useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { SignupForm } from "@/components/auth/signup/SignupForm";
 import { motion, AnimatePresence } from "framer-motion";
 import { LoadingScreen } from "@/components/layout/LoadingScreen";
 import { BackgroundVideo } from "@/components/video/BackgroundVideo";
 import { BackgroundEffects } from "@/components/layout/BackgroundEffects";
 import { useAuth } from "@/contexts/AuthContext";
+import { SignupForm } from "@/components/auth/signup/SignupForm";
 import { ErosPatternBackground } from "@/components/auth/backgrounds/ErosPatternBackground";
+import { ErrorState } from "@/components/ui/ErrorState";
 
 const Register = () => {
-  const { user, session, loading } = useAuth();
+  const { user, session, loading, error, clearError } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -18,16 +18,17 @@ const Register = () => {
     console.log("Register page - auth state:", { 
       user: user ? "exists" : "null", 
       session: session ? "exists" : "null",
-      loading 
+      loading,
+      error: error || "none"
     });
     
-    // If we have a session and not loading, redirect
+    // If we have a session and not loading, redirect immediately
     if (!loading && session && user) {
       const from = location.state?.from || "/home";
       console.log("User already authenticated, redirecting to:", from);
       navigate(from, { replace: true });
     }
-  }, [user, session, loading, navigate, location]);
+  }, [user, session, loading, navigate, location, error]);
 
   // Show loading while checking session
   if (loading) {
@@ -42,7 +43,8 @@ const Register = () => {
   }
 
   const handleToggleMode = () => {
-    navigate("/login");
+    clearError(); // Clear any existing errors
+    navigate("/auth");
   };
 
   return (
@@ -61,6 +63,16 @@ const Register = () => {
       <ErosPatternBackground />
       
       <div className="relative z-10 w-full max-w-md mx-auto px-4">
+        {error && (
+          <div className="mb-4">
+            <ErrorState 
+              title="Registration Error"
+              description={error}
+              onRetry={clearError}
+            />
+          </div>
+        )}
+        
         <AnimatePresence>
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -73,7 +85,7 @@ const Register = () => {
               className="relative backdrop-blur-xl bg-gray-900/40 border border-gray-700/50 rounded-2xl overflow-hidden shadow-2xl"
               whileHover={{ 
                 scale: 1.02,
-                boxShadow: "0 25px 50px rgba(217, 70, 239, 0.2)"
+                boxShadow: "0 25px 50px rgba(6, 182, 212, 0.2)"
               }}
               transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
             >
@@ -91,7 +103,7 @@ const Register = () => {
                     transition={{ delay: 0.3, duration: 0.6 }}
                   >
                     <motion.span
-                      className="bg-gradient-to-r from-pink-400 via-purple-400 to-cyan-400 bg-clip-text text-transparent"
+                      className="bg-gradient-to-r from-cyan-400 via-purple-400 to-pink-400 bg-clip-text text-transparent"
                       animate={{
                         backgroundPosition: ['0% 50%', '100% 50%', '0% 50%'],
                       }}
@@ -104,7 +116,7 @@ const Register = () => {
                         backgroundSize: '200% auto',
                       }}
                     >
-                      Join Eroxr
+                      Join Eros
                     </motion.span>
                   </motion.h1>
                   
@@ -116,7 +128,7 @@ const Register = () => {
                   >
                     Create your{" "}
                     <motion.span
-                      className="text-transparent bg-gradient-to-r from-pink-400 to-purple-400 bg-clip-text font-semibold"
+                      className="text-transparent bg-gradient-to-r from-cyan-400 to-purple-400 bg-clip-text font-semibold"
                       animate={{
                         backgroundPosition: ['0% 50%', '100% 50%', '0% 50%'],
                       }}
@@ -132,6 +144,23 @@ const Register = () => {
                       premium account
                     </motion.span>
                   </motion.p>
+
+                  {/* Security badges */}
+                  <motion.div
+                    className="flex items-center justify-center gap-4 text-xs text-gray-400"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.5, duration: 0.6 }}
+                  >
+                    <div className="flex items-center gap-1">
+                      <span>🔒</span>
+                      <span>Secure signup</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <span>🔐</span>
+                      <span>Data protected</span>
+                    </div>
+                  </motion.div>
                 </motion.div>
                 
                 <motion.div
@@ -150,7 +179,7 @@ const Register = () => {
                   className="absolute w-1.5 h-1.5 rounded-full opacity-40"
                   style={{
                     background: `linear-gradient(45deg, ${
-                      i % 3 === 0 ? '#ec4899' : i % 3 === 1 ? '#8b5cf6' : '#06b6d4'
+                      i % 3 === 0 ? '#06b6d4' : i % 3 === 1 ? '#8b5cf6' : '#ec4899'
                     }, transparent)`,
                     left: `${20 + i * 15}%`,
                     top: `${15 + (i % 3) * 25}%`,
@@ -175,6 +204,6 @@ const Register = () => {
       </div>
     </div>
   );
-}
+};
 
 export default Register;

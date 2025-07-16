@@ -100,8 +100,8 @@ export const HeroSection = ({ scrollOpacity }: HeroSectionProps) => {
                   variant="ghost" 
                   className="text-lg py-7 px-10 text-white border border-luxury-primary/30 hover:bg-luxury-primary/10"
                 >
-                  <Link to="/creators">
-                    Explore Creators <ArrowRight className="ml-2 h-5 w-5" />
+                  <Link to="/auth">
+                    Sign In <ArrowRight className="ml-2 h-5 w-5" />
                   </Link>
                 </Button>
               </MagneticButton>
