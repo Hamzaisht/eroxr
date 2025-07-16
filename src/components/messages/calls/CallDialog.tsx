@@ -7,7 +7,7 @@ import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { PhoneOff, Mic, MicOff, Video, VideoOff, Phone } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { v4 as uuidv4 } from 'uuid';
+import { useCallSignaling } from '../hooks/useCallSignaling';
 
 interface CallDialogProps {
   isOpen: boolean;
@@ -22,132 +22,91 @@ interface CallDialogProps {
 
 export const CallDialog = ({ isOpen, onClose, callType, recipient }: CallDialogProps) => {
   const [callState, setCallState] = useState<'initiating' | 'ringing' | 'connected' | 'ended'>('initiating');
-  const [isMuted, setIsMuted] = useState(false);
-  const [isVideoEnabled, setIsVideoEnabled] = useState(callType === 'video');
   const [callDuration, setCallDuration] = useState(0);
-  const [callId] = useState(uuidv4());
+  const [callId, setCallId] = useState<string | null>(null);
   
   const localVideoRef = useRef<HTMLVideoElement>(null);
   const remoteVideoRef = useRef<HTMLVideoElement>(null);
-  const peerConnectionRef = useRef<RTCPeerConnection | null>(null);
-  const localStreamRef = useRef<MediaStream | null>(null);
   const callTimerRef = useRef<number | null>(null);
   
   const session = useSession();
   const { toast } = useToast();
+
+  const {
+    localStream,
+    isConnected,
+    isMuted,
+    isVideoEnabled,
+    startCall,
+    endCall,
+    toggleMute,
+    toggleVideo
+  } = useCallSignaling({
+    callId: callId || undefined,
+    isInitiator: true,
+    onRemoteStream: (stream) => {
+      if (remoteVideoRef.current) {
+        remoteVideoRef.current.srcObject = stream;
+      }
+    },
+    onCallEnded: () => {
+      setCallState('ended');
+      setTimeout(onClose, 1000);
+    }
+  });
   
-  // Initialize media devices
+  // Initialize call
   useEffect(() => {
-    const initializeMedia = async () => {
+    const initializeCall = async () => {
+      if (!isOpen || !session?.user?.id) return;
+
       try {
-        const constraints = {
-          audio: true,
-          video: callType === 'video'
-        };
+        // Generate unique call ID
+        const newCallId = `${session.user.id}-${recipient.id}-${Date.now()}`;
+        setCallId(newCallId);
+
+        // Create call record in database
+        await supabase.from('call_history').insert({
+          id: newCallId,
+          caller_id: session.user.id,
+          recipient_id: recipient.id,
+          call_type: callType,
+          status: 'initiated'
+        });
+
+        // Start call using signaling hook
+        await startCall(callType === 'video');
         
-        const stream = await navigator.mediaDevices.getUserMedia(constraints);
-        localStreamRef.current = stream;
-        
-        if (localVideoRef.current && callType === 'video') {
-          localVideoRef.current.srcObject = stream;
-        }
-        
-        // Set up peer connection
-        initializePeerConnection();
-        
-        // Simulate call state progression (for demo)
         setCallState('ringing');
         setTimeout(() => {
-          setCallState('connected');
-          startCallTimer();
+          if (isConnected) {
+            setCallState('connected');
+            startCallTimer();
+          }
         }, 2000);
-        
+
       } catch (error) {
-        console.error('Error accessing media devices:', error);
+        console.error('Error starting call:', error);
         toast({
-          title: "Media Error",
-          description: "Could not access camera or microphone",
+          title: "Call Failed",
+          description: "Could not start the call",
           variant: "destructive"
         });
         handleEndCall();
       }
     };
-    
+
     if (isOpen) {
-      initializeMedia();
-      
-      // Send call notification through Supabase channel
-      const callChannel = supabase.channel(`call:${callId}`);
-      callChannel.subscribe(async (status) => {
-        if (status === 'SUBSCRIBED') {
-          await callChannel.send({
-            type: 'broadcast',
-            event: 'call_request',
-            payload: {
-              call_id: callId,
-              caller_id: session?.user?.id,
-              caller_name: session?.user?.email, // Use profile name in production
-              call_type: callType,
-              recipient_id: recipient.id
-            }
-          });
-        }
-      });
-      
-      return () => {
-        supabase.removeChannel(callChannel);
-      };
+      initializeCall();
     }
-    
-    return () => {
-      cleanup();
-    };
-  }, [isOpen, callType, recipient.id, session?.user?.id, toast]);
+  }, [isOpen, session?.user?.id, recipient.id, callType, startCall, isConnected, toast]);
   
-  // Initialize WebRTC peer connection
-  const initializePeerConnection = () => {
-    // This is a simplified version - in a real app, you would need:
-    // 1. ICE servers configuration
-    // 2. Signaling server or channel
-    // 3. STUN/TURN servers for NAT traversal
-    
-    const configuration = {
-      iceServers: [
-        { urls: 'stun:stun.l.google.com:19302' }
-      ]
-    };
-    
-    const pc = new RTCPeerConnection(configuration);
-    peerConnectionRef.current = pc;
-    
-    // Add local tracks to the connection
-    if (localStreamRef.current) {
-      localStreamRef.current.getTracks().forEach(track => {
-        pc.addTrack(track, localStreamRef.current!);
-      });
+  // Set up local video stream display
+  useEffect(() => {
+    if (localStream && localVideoRef.current && callType === 'video') {
+      localVideoRef.current.srcObject = localStream;
     }
-    
-    // Handle incoming remote tracks
-    pc.ontrack = (event) => {
-      if (remoteVideoRef.current && event.streams[0]) {
-        remoteVideoRef.current.srcObject = event.streams[0];
-      }
-    };
-    
-    // Handle connection state changes
-    pc.oniceconnectionstatechange = () => {
-      console.log('ICE connection state:', pc.iceConnectionState);
-      
-      if (pc.iceConnectionState === 'disconnected' || 
-          pc.iceConnectionState === 'failed' ||
-          pc.iceConnectionState === 'closed') {
-        handleEndCall();
-      }
-    };
-    
-    // Note: In a real application, you would handle signaling here
-    // For demo purposes, we're simulating a successful connection
-  };
+  }, [localStream, callType]);
   
   // Start call timer
   const startCallTimer = () => {
@@ -163,71 +122,19 @@ export const CallDialog = ({ isOpen, onClose, callType, recipient }: CallDialogP
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
   
-  // Toggle mute
-  const toggleMute = () => {
-    if (localStreamRef.current) {
-      const audioTracks = localStreamRef.current.getAudioTracks();
-      audioTracks.forEach(track => {
-        track.enabled = isMuted;
-      });
-      setIsMuted(!isMuted);
-    }
-  };
-  
-  // Toggle video
-  const toggleVideo = () => {
-    if (callType === 'video' && localStreamRef.current) {
-      const videoTracks = localStreamRef.current.getVideoTracks();
-      videoTracks.forEach(track => {
-        track.enabled = !isVideoEnabled;
-      });
-      setIsVideoEnabled(!isVideoEnabled);
-    }
-  };
+  // Use the functions from the hook instead of duplicating
   
   // End call
-  const handleEndCall = () => {
-    cleanup();
-    setCallState('ended');
-    
-    // Record call in database (in a real app)
-    const logCall = async () => {
-      if (session?.user?.id && recipient.id) {
-        try {
-          await supabase.from('call_logs').insert({
-            caller_id: session.user.id,
-            recipient_id: recipient.id,
-            call_type: callType,
-            duration_seconds: callDuration,
-            call_id: callId
-          });
-        } catch (error) {
-          console.error('Error logging call:', error);
-        }
-      }
-    };
-    
-    // Log call attempt even if table doesn't exist yet
-    logCall().catch(() => {});
-    
-    setTimeout(onClose, 1000);
-  };
-  
-  // Cleanup resources
-  const cleanup = () => {
+  const handleEndCall = async () => {
     if (callTimerRef.current) {
       clearInterval(callTimerRef.current);
     }
     
-    if (localStreamRef.current) {
-      localStreamRef.current.getTracks().forEach(track => track.stop());
-      localStreamRef.current = null;
-    }
+    // Use the hook's endCall function
+    await endCall();
     
-    if (peerConnectionRef.current) {
-      peerConnectionRef.current.close();
-      peerConnectionRef.current = null;
-    }
+    setCallState('ended');
+    setTimeout(onClose, 1000);
   };
   
   // UI for different call states

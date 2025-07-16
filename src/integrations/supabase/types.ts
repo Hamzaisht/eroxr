@@ -285,6 +285,83 @@ export type Database = {
           },
         ]
       }
+      call_history: {
+        Row: {
+          call_type: string
+          caller_id: string
+          connected_at: string | null
+          created_at: string
+          duration: number | null
+          ended_at: string | null
+          id: string
+          recipient_id: string
+          started_at: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          call_type: string
+          caller_id: string
+          connected_at?: string | null
+          created_at?: string
+          duration?: number | null
+          ended_at?: string | null
+          id?: string
+          recipient_id: string
+          started_at?: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          call_type?: string
+          caller_id?: string
+          connected_at?: string | null
+          created_at?: string
+          duration?: number | null
+          ended_at?: string | null
+          id?: string
+          recipient_id?: string
+          started_at?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      call_notifications: {
+        Row: {
+          call_id: string
+          created_at: string
+          id: string
+          is_read: boolean
+          notification_type: string
+          user_id: string
+        }
+        Insert: {
+          call_id: string
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          notification_type: string
+          user_id: string
+        }
+        Update: {
+          call_id?: string
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          notification_type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "call_notifications_call_id_fkey"
+            columns: ["call_id"]
+            isOneToOne: false
+            referencedRelation: "call_history"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       comments: {
         Row: {
           content: string

@@ -36,31 +36,16 @@ export const GoLiveDialog = ({ open, onOpenChange }: GoLiveDialogProps) => {
     try {
       setIsLoading(true);
 
-      // Generate a unique stream key
-      const streamKey = `${session.user.id}-${Date.now()}`;
-      
-      // Create a new live stream record
-      const { data: stream, error } = await supabase
-        .from('live_streams')
-        .insert([
-          {
-            creator_id: session.user.id,
-            title,
-            is_private: isPrivate,
-            status: 'live',
-            stream_key: streamKey,
-            started_at: new Date().toISOString(),
-            // In a real implementation, this would be your streaming service URL
-            playback_url: `https://stream.your-service.com/live/${streamKey}/index.m3u8`
-          }
-        ])
-        .select()
-        .single();
+      // Call the edge function to start the stream
+      const { data, error } = await supabase.functions.invoke('start-live-stream', {
+        body: { title, isPrivate }
+      });
 
       if (error) throw error;
 
-      setStreamKey(stream.stream_key);
-      setPlaybackUrl(stream.playback_url);
+      const { stream } = data;
+      setStreamKey(stream.streamKey);
+      setPlaybackUrl(stream.playbackUrl);
 
       // Subscribe to viewer count updates
       const channel = supabase
@@ -79,7 +64,7 @@ export const GoLiveDialog = ({ open, onOpenChange }: GoLiveDialogProps) => {
 
       toast({
         title: "Stream started!",
-        description: "Your stream is now live. Share your stream key with your streaming software.",
+        description: "Use OBS or similar software with the provided RTMP details.",
       });
 
     } catch (error) {
@@ -120,9 +105,24 @@ export const GoLiveDialog = ({ open, onOpenChange }: GoLiveDialogProps) => {
           </div>
 
           {streamKey && (
-            <div className="p-4 bg-luxury-dark/20 rounded-lg">
-              <p className="text-sm font-medium mb-2">Stream Key:</p>
-              <code className="text-xs break-all">{streamKey}</code>
+            <div className="p-4 bg-luxury-dark/20 rounded-lg space-y-3">
+              <div>
+                <p className="text-sm font-medium mb-1">RTMP Server:</p>
+                <code className="text-xs break-all bg-luxury-darker p-2 rounded block">
+                  rtmp://ingest.example.com/live
+                </code>
+              </div>
+              <div>
+                <p className="text-sm font-medium mb-1">Stream Key:</p>
+                <code className="text-xs break-all bg-luxury-darker p-2 rounded block">
+                  {streamKey}
+                </code>
+              </div>
+              <div className="text-xs text-luxury-neutral/70">
+                <p>Use these settings in OBS Studio:</p>
+                <p>• Server: rtmp://ingest.example.com/live</p>
+                <p>• Stream Key: {streamKey}</p>
+              </div>
             </div>
           )}
 

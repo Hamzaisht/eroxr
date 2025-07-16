@@ -7,7 +7,10 @@ import { FreemiumTeaser } from "@/components/subscription/FreemiumTeaser";
 import { ConversationSidebar } from '@/components/messages/ConversationSidebar';
 import { ChatArea } from '@/components/messages/ChatArea';
 import { ChatDetails } from '@/components/messages/ChatDetails';
+import { CallHistory } from '@/components/messages/CallHistory';
+import { CallNotifications } from '@/components/messages/CallNotifications';
 import { DemoConversations } from '@/components/messages/DemoConversations';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 const Messages = () => {
   const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
@@ -48,12 +51,31 @@ const Messages = () => {
         <DemoConversations />
         
         <div className="relative z-10 flex h-full">
-          {/* Conversations Sidebar */}
+          {/* Sidebar with Messages and Calls tabs */}
           <div className="w-80 border-r border-white/10 bg-black/20 backdrop-blur-xl">
-            <ConversationSidebar 
-              selectedConversationId={selectedConversationId}
-              onSelectConversation={setSelectedConversationId}
-            />
+            <Tabs defaultValue="conversations" className="h-full">
+              <div className="p-4 border-b border-white/10">
+                <TabsList className="grid w-full grid-cols-2 bg-black/40">
+                  <TabsTrigger value="conversations" className="text-white/70 data-[state=active]:text-white data-[state=active]:bg-primary/20">
+                    Messages
+                  </TabsTrigger>
+                  <TabsTrigger value="calls" className="text-white/70 data-[state=active]:text-white data-[state=active]:bg-primary/20">
+                    Calls
+                  </TabsTrigger>
+                </TabsList>
+              </div>
+              
+              <TabsContent value="conversations" className="h-full mt-0">
+                <ConversationSidebar 
+                  selectedConversationId={selectedConversationId}
+                  onSelectConversation={setSelectedConversationId}
+                />
+              </TabsContent>
+              
+              <TabsContent value="calls" className="h-full mt-0">
+                <CallHistory />
+              </TabsContent>
+            </Tabs>
           </div>
 
           {/* Chat Area */}
@@ -99,6 +121,9 @@ const Messages = () => {
             )}
           </div>
         </div>
+        
+        {/* Call Notifications */}
+        <CallNotifications />
       </div>
     );
   };
