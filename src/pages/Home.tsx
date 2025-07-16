@@ -31,18 +31,24 @@ const Home = () => {
 
   // Auto-assign super admin role on first load for the main user
   useEffect(() => {
+    let hasAssigned = false;
+    
     const autoAssignSuperAdmin = async () => {
-      if (user && !isSuperAdmin && role === 'user') {
+      if (user && !isSuperAdmin && role === 'user' && !hasAssigned) {
+        hasAssigned = true;
         console.log('🔄 Auto-assigning super admin role...');
         const success = await assignCurrentUserAsSuperAdmin();
         if (success) {
-          window.location.reload(); // Refresh to update role
+          // Use a timeout to avoid immediate re-render
+          setTimeout(() => {
+            window.location.reload();
+          }, 1000);
         }
       }
     };
 
     autoAssignSuperAdmin();
-  }, [user, isSuperAdmin, role]);
+  }, [user?.id]); // Only depend on user ID to prevent loops
 
   console.log("🏠 Home - Render state:", {
     activeTab,
