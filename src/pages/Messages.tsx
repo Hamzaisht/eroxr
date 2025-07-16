@@ -36,7 +36,7 @@ const Messages = () => {
 
   const renderMessagesContent = () => {
     return (
-      <div className="h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 overflow-hidden">
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
         {/* Greek pattern overlay */}
         <div className="absolute inset-0 opacity-5">
           <div 
@@ -50,7 +50,7 @@ const Messages = () => {
         {/* Demo data utility */}
         <DemoConversations />
         
-        <div className="relative z-10 flex h-full">
+        <div className="relative z-10 flex min-h-screen">
           {/* Sidebar with Messages and Calls tabs */}
           <div className="w-80 border-r border-white/10 bg-black/20 backdrop-blur-xl">
             <Tabs defaultValue="conversations" className="h-full">
