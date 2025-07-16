@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useState, memo, useCallback, useMemo } from 'react';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { ConversationSidebar } from '@/components/messages/ConversationSidebar';
-import { ChatArea } from '@/components/messages/ChatArea';
+import { OptimizedChatArea } from '@/components/messages/OptimizedChatArea';
 import { ChatDetails } from '@/components/messages/ChatDetails';
 import { CallHistory } from '@/components/messages/CallHistory';
 import { CallNotifications } from '@/components/messages/CallNotifications';
@@ -15,11 +15,34 @@ import { Luxury3DButton } from '@/components/ui/luxury-3d-button';
 import { motion } from 'framer-motion';
 import { MessageCircle, Phone, Video, Sparkles, Zap } from 'lucide-react';
 
-const Messages = () => {
+const Messages = memo(() => {
   const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
   const [showDetails, setShowDetails] = useState(false);
   const [activeTab, setActiveTab] = useState('conversations');
   const { user } = useCurrentUser();
+
+  // Memoize callbacks to prevent unnecessary re-renders
+  const handleSelectConversation = useCallback((id: string | null) => {
+    setSelectedConversationId(id);
+  }, []);
+
+  const handleShowDetails = useCallback(() => {
+    setShowDetails(true);
+  }, []);
+
+  const handleCloseDetails = useCallback(() => {
+    setShowDetails(false);
+  }, []);
+
+  const handleTabChange = useCallback((tab: string) => {
+    setActiveTab(tab);
+  }, []);
+
+  // Memoize tabs to prevent recreation
+  const tabs = useMemo(() => [
+    { id: 'conversations', label: 'Messages', icon: MessageCircle },
+    { id: 'calls', label: 'Calls', icon: Phone }
+  ], []);
 
   if (!user) {
     return (
@@ -50,12 +73,9 @@ const Messages = () => {
     );
   }
 
-  const tabs = [
-    { id: 'conversations', label: 'Messages', icon: MessageCircle },
-    { id: 'calls', label: 'Calls', icon: Phone }
-  ];
 
-  const renderLuxuryWelcome = () => (
+  // Memoize luxury welcome content to prevent re-renders
+  const renderLuxuryWelcome = useMemo(() => (
     <div className="flex-1 flex items-center justify-center p-12">
       <motion.div
         initial={{ opacity: 0, y: 30 }}
@@ -131,7 +151,7 @@ const Messages = () => {
         </motion.div>
       </motion.div>
     </div>
-  );
+  ), []);
 
   const renderMessagesContent = () => {
     return (
@@ -151,7 +171,7 @@ const Messages = () => {
                 <LuxuryTabs 
                   tabs={tabs}
                   activeTab={activeTab}
-                  onTabChange={setActiveTab}
+                  onTabChange={handleTabChange}
                 />
               </div>
               
@@ -159,7 +179,7 @@ const Messages = () => {
                 {activeTab === 'conversations' ? (
                   <ConversationSidebar 
                     selectedConversationId={selectedConversationId}
-                    onSelectConversation={setSelectedConversationId}
+                    onSelectConversation={handleSelectConversation}
                   />
                 ) : (
                   <CallHistory />
@@ -176,9 +196,9 @@ const Messages = () => {
                     className="flex-1 flex flex-col"
                     intensity="heavy"
                   >
-                    <ChatArea 
+                    <OptimizedChatArea 
                       conversationId={selectedConversationId}
-                      onShowDetails={() => setShowDetails(true)}
+                      onShowDetails={handleShowDetails}
                     />
                   </LuxuryGlassCard>
                   
@@ -190,7 +210,7 @@ const Messages = () => {
                     >
                       <ChatDetails 
                         conversationId={selectedConversationId}
-                        onClose={() => setShowDetails(false)}
+                        onClose={handleCloseDetails}
                       />
                     </LuxuryGlassCard>
                   )}
@@ -201,7 +221,7 @@ const Messages = () => {
                   className="flex-1"
                   intensity="heavy"
                 >
-                  {renderLuxuryWelcome()}
+                  {renderLuxuryWelcome}
                 </LuxuryGlassCard>
               )}
             </div>
@@ -221,6 +241,8 @@ const Messages = () => {
       </div>
     </>
   );
-};
+});
+
+Messages.displayName = 'Messages';
 
 export default Messages;
