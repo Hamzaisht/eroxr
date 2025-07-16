@@ -1,7 +1,7 @@
 import { useState, memo, useCallback, useMemo } from 'react';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { ConversationSidebar } from '@/components/messages/ConversationSidebar';
-import OptimizedChatArea from '@/components/messages/OptimizedChatArea';
+import { OptimizedChatArea } from '@/components/messages/OptimizedChatArea';
 import { ChatDetails } from '@/components/messages/ChatDetails';
 import { CallHistory } from '@/components/messages/CallHistory';
 import { CallNotifications } from '@/components/messages/CallNotifications';
