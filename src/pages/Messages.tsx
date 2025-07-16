@@ -55,11 +55,17 @@ const Messages = () => {
           <div className="w-80 border-r border-white/10 bg-black/20 backdrop-blur-xl">
             <Tabs defaultValue="conversations" className="h-full">
               <div className="p-4 border-b border-white/10">
-                <TabsList className="grid w-full grid-cols-2 bg-black/40">
-                  <TabsTrigger value="conversations" className="text-white/70 data-[state=active]:text-white data-[state=active]:bg-primary/20">
+                <TabsList className="grid w-full grid-cols-2 bg-white/5 backdrop-blur-2xl border border-white/10 rounded-2xl p-1 shadow-2xl shadow-black/20">
+                  <TabsTrigger 
+                    value="conversations" 
+                    className="text-white/70 data-[state=active]:text-white data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary/80 data-[state=active]:to-purple-500/80 data-[state=active]:shadow-lg data-[state=active]:shadow-primary/30 data-[state=active]:border data-[state=active]:border-white/20 rounded-xl font-medium transition-all duration-300 hover:text-white hover:bg-white/10 hover:backdrop-blur-xl"
+                  >
                     Messages
                   </TabsTrigger>
-                  <TabsTrigger value="calls" className="text-white/70 data-[state=active]:text-white data-[state=active]:bg-primary/20">
+                  <TabsTrigger 
+                    value="calls" 
+                    className="text-white/70 data-[state=active]:text-white data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary/80 data-[state=active]:to-purple-500/80 data-[state=active]:shadow-lg data-[state=active]:shadow-primary/30 data-[state=active]:border data-[state=active]:border-white/20 rounded-xl font-medium transition-all duration-300 hover:text-white hover:bg-white/10 hover:backdrop-blur-xl"
+                  >
                     Calls
                   </TabsTrigger>
                 </TabsList>

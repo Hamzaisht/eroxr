@@ -286,10 +286,10 @@ export const ChatArea = ({ conversationId, onShowDetails }: ChatAreaProps) => {
   };
 
   return (
-    <div className="h-full flex flex-col bg-black/10">
+    <div className="h-full flex flex-col bg-black/10 overflow-hidden">
       {/* Chat Header */}
       <motion.div 
-        className="p-4 border-b border-white/10 bg-black/20 backdrop-blur-xl"
+        className="flex-shrink-0 p-4 border-b border-white/10 bg-black/20 backdrop-blur-xl"
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
       >
@@ -366,7 +366,7 @@ export const ChatArea = ({ conversationId, onShowDetails }: ChatAreaProps) => {
       </motion.div>
 
       {/* Messages Area */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4 fade-scrollbar">
+      <div className="flex-1 overflow-y-auto p-4 space-y-4 fade-scrollbar min-h-0">
         <AnimatePresence>
           {messages.map((message) => {
             const isOwn = message.sender_id === user?.id;
@@ -581,9 +581,10 @@ export const ChatArea = ({ conversationId, onShowDetails }: ChatAreaProps) => {
 
       {/* Message Input */}
       <motion.div 
-        className="p-4 border-t border-white/10 bg-black/20 backdrop-blur-xl"
+        className="flex-shrink-0 p-4 border-t border-white/10 bg-black/20 backdrop-blur-xl"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.3 }}
       >
         <div className="flex items-end gap-3">
           <Button
