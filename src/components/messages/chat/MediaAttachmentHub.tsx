@@ -1,18 +1,13 @@
 import { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Camera, 
   Image, 
   FileText, 
-  Music, 
   Video, 
   Mic,
-  X,
-  Zap,
-  Plus
+  Zap
 } from 'lucide-react';
 import { SnapCamera } from './SnapCamera';
-import { cn } from '@/lib/utils';
 
 interface MediaAttachmentHubProps {
   onClose: () => void;
@@ -21,7 +16,6 @@ interface MediaAttachmentHubProps {
 
 export const MediaAttachmentHub = ({ onClose, onMediaSelect }: MediaAttachmentHubProps) => {
   const [showCamera, setShowCamera] = useState(false);
-  const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
 
   const categories = [
     { id: 'snax', name: 'Snax', icon: Zap, action: () => setShowCamera(true) },
@@ -51,6 +45,11 @@ export const MediaAttachmentHub = ({ onClose, onMediaSelect }: MediaAttachmentHu
     onClose();
   };
 
+  const handleItemClick = (category: typeof categories[0]) => {
+    console.log('Button clicked:', category.name);
+    category.action();
+  };
+
   if (showCamera) {
     return (
       <SnapCamera
@@ -61,170 +60,45 @@ export const MediaAttachmentHub = ({ onClose, onMediaSelect }: MediaAttachmentHu
   }
 
   return (
-    <>
-      {/* Close overlay */}
-      <div
-        className="fixed inset-0 z-40"
+    <div className="fixed inset-0 z-50 flex items-end justify-center pb-16 pointer-events-none">
+      {/* Background overlay */}
+      <div 
+        className="absolute inset-0 pointer-events-auto" 
         onClick={onClose}
       />
       
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: 10 }}
-        transition={{ duration: 0.2, ease: "easeOut" }}
-        className="absolute bottom-12 left-1/2 transform -translate-x-1/2 z-50"
+      {/* Menu container */}
+      <div 
+        className="relative bg-gray-900 rounded-lg border border-gray-700 shadow-xl overflow-hidden pointer-events-auto"
+        style={{ width: '200px' }}
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Fluid container with dark theme */}
-        <motion.div 
-          className="relative rounded-lg overflow-hidden"
-          style={{
-            background: 'linear-gradient(145deg, #0D1117, #161B22)',
-            border: '1px solid hsla(var(--border) / 0.3)',
-            backdropFilter: 'blur(20px)',
-            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4)',
-            width: '200px'
-          }}
-          initial={{ scale: 0.9, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ delay: 0.05, type: "spring", stiffness: 300, damping: 25 }}
-          onMouseLeave={() => setHoveredIndex(null)}
-        >
-        {/* Vertical stack layout */}
-        <div 
-          className="flex flex-col"
-          style={{
-            filter: hoveredIndex !== null ? 'none' : 'none'
-          }}
-        >
-          {categories.map((category, index) => {
-            const Icon = category.icon;
-            const isSnax = category.id === 'snax';
-            const isHovered = hoveredIndex === index;
-            const hasHover = hoveredIndex !== null;
-            
-            return (
-              <div
-                key={category.id}
-                className="relative flex items-center gap-3 px-4 py-3 cursor-pointer text-left transition-all duration-300"
-                style={{
-                  color: isSnax ? 'hsl(var(--primary))' : 'white',
-                  backgroundColor: isHovered ? '#21262C' : 'transparent',
-                  filter: hasHover && !isHovered ? 'blur(1px)' : 'blur(0px)',
-                  transform: hasHover && !isHovered ? 'scale(0.95)' : 'scale(1)',
-                }}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  console.log('Clicked:', category.name);
-                  category.action();
-                }}
-                onMouseEnter={() => setHoveredIndex(index)}
-                onMouseLeave={() => setHoveredIndex(null)}
-              >
-                {/* Left accent line */}
-                <div
-                  className="absolute left-0 top-1 w-1 rounded-full transition-opacity duration-200"
-                  style={{
-                    height: 'calc(100% - 8px)',
-                    backgroundColor: '#2F81F7',
-                    opacity: isHovered ? 1 : 0
-                  }}
-                />
-                
-                {/* Icon */}
-                <Icon 
-                  className="h-4 w-4 flex-shrink-0"
-                  style={{
-                    color: isSnax ? 'hsl(var(--primary))' : '#8B949E'
-                  }}
-                />
-                
-                {/* Label */}
-                <span className="text-sm font-medium">
-                  {category.name}
-                </span>
-              </div>
-            );
-          })}
-        </div>
-        
-        {/* Enhanced floating label */}
-        <AnimatePresence>
-          {hoveredIndex !== null && (
-            <motion.div
-              className="absolute -top-16 left-1/2 transform -translate-x-1/2 pointer-events-none"
-              initial={{ 
-                opacity: 0, 
-                y: 10, 
-                scale: 0.8,
-                filter: "blur(4px)"
-              }}
-              animate={{ 
-                opacity: 1, 
-                y: 0, 
-                scale: 1,
-                filter: "blur(0px)"
-              }}
-              exit={{ 
-                opacity: 0, 
-                y: 10, 
-                scale: 0.8,
-                filter: "blur(4px)"
-              }}
-              transition={{ 
-                type: "spring",
-                stiffness: 400,
-                damping: 25,
-                duration: 0.2
+        {categories.map((category) => {
+          const Icon = category.icon;
+          const isSnax = category.id === 'snax';
+          
+          return (
+            <button
+              key={category.id}
+              className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-gray-800 transition-colors border-none bg-transparent"
+              onClick={() => handleItemClick(category)}
+              style={{
+                color: isSnax ? 'hsl(var(--primary))' : 'white'
               }}
             >
-              <div
-                className="px-4 py-2 rounded-xl text-sm font-medium tracking-wide whitespace-nowrap"
+              <Icon 
+                className="h-4 w-4 flex-shrink-0"
                 style={{
-                  background: 'linear-gradient(135deg, hsla(var(--primary) / 0.9), hsla(var(--primary) / 0.7))',
-                  backdropFilter: 'blur(20px)',
-                  border: '1px solid hsla(var(--primary) / 0.3)',
-                  color: 'hsla(var(--primary-foreground) / 0.95)',
-                  boxShadow: '0 8px 32px hsla(var(--primary) / 0.4), inset 0 1px 0 hsla(var(--foreground) / 0.1)'
+                  color: isSnax ? 'hsl(var(--primary))' : '#9CA3AF'
                 }}
-              >
-                {categories[hoveredIndex].name}
-                
-                {/* Arrow pointing down */}
-                <div
-                  className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0"
-                  style={{
-                    borderLeft: '6px solid transparent',
-                    borderRight: '6px solid transparent',
-                    borderTop: '6px solid hsla(var(--primary) / 0.9)',
-                    filter: 'drop-shadow(0 2px 4px hsla(var(--primary) / 0.2))'
-                  }}
-                />
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-        
-        {/* Subtle pulse animation for the container */}
-        <motion.div
-          className="absolute inset-0 rounded-3xl"
-          style={{
-            background: 'linear-gradient(135deg, hsla(var(--primary) / 0.05), transparent)',
-            opacity: 0
-          }}
-          animate={{
-            opacity: [0, 0.3, 0]
-          }}
-          transition={{
-            duration: 3,
-            ease: "easeInOut",
-            repeat: Infinity,
-            repeatDelay: 2
-          }}
-        />
-        </motion.div>
-      </motion.div>
-    </>
+              />
+              <span className="text-sm font-medium">
+                {category.name}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+    </div>
   );
 };
