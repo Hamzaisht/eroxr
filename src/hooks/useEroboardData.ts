@@ -457,7 +457,7 @@ export function useEroboardData() {
       supabase.removeChannel(postsChannel);
       supabase.removeChannel(followersChannel);
     };
-  }, [session?.user?.id, initialDataLoaded, fetchDashboardData]);
+  }, [session?.user?.id, initialDataLoaded]);
 
   return {
     loading,
