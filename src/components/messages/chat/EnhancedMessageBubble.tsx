@@ -112,17 +112,7 @@ export const EnhancedMessageBubble = ({
   };
 
   return (
-    <motion.div
-      layout
-      initial={{ opacity: 0, y: 20, scale: 0.95 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
-      exit={{ opacity: 0, y: -20, scale: 0.9, transition: { duration: 0.2 } }}
-      transition={{ 
-        type: "spring", 
-        stiffness: 500, 
-        damping: 30,
-        mass: 0.8
-      }}
+    <div
       className={cn(
         "flex group relative",
         isOwn ? 'justify-end' : 'justify-start',
@@ -156,9 +146,7 @@ export const EnhancedMessageBubble = ({
         
         <div className="relative max-w-full">
           {/* Main message bubble with enhanced styling */}
-          <motion.div
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
+          <div
             className={cn(
               "px-3 py-2 md:px-4 md:py-3 rounded-2xl backdrop-blur-sm transition-all duration-300 relative",
               "shadow-lg border",
@@ -172,7 +160,7 @@ export const EnhancedMessageBubble = ({
                     "bg-black/60 text-white border-white/10",
                     "shadow-black/20",
                     isConsecutive ? "rounded-bl-md" : "rounded-bl-sm"
-                  )
+                   )
             )}
             style={{
               backdropFilter: 'blur(20px)',
@@ -227,7 +215,7 @@ export const EnhancedMessageBubble = ({
             >
               {formatDistanceToNow(new Date(message.created_at), { addSuffix: true })}
             </motion.div>
-          </motion.div>
+            </div>
 
           {/* Like animation overlay */}
           <AnimatePresence>
@@ -328,6 +316,6 @@ export const EnhancedMessageBubble = ({
           </AnimatePresence>
         </div>
       </div>
-    </motion.div>
+    </div>
   );
 };
