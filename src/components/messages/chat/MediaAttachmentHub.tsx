@@ -60,7 +60,7 @@ export const MediaAttachmentHub = ({ onClose, onMediaSelect }: MediaAttachmentHu
   }
 
   return (
-    <div className="absolute bottom-full left-1/2 transform -translate-x-1/3 mb-4 z-50">
+    <div className="absolute bottom-full left-1/2 transform -translate-x-1/4 mb-4 z-50">
       {/* Background overlay */}
       <div 
         className="fixed inset-0 -z-10" 
