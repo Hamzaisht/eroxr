@@ -533,14 +533,15 @@ export const SimpleOptimizedChatArea = memo(({ conversationId, onShowDetails }: 
         </div>
       </div>
 
-      {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-hide min-h-0">
+      {/* Messages - Enhanced for mobile with proper scroll handling */}
+      <div className="flex-1 overflow-y-auto p-2 md:p-4 space-y-2 md:space-y-4 scrollbar-hide min-h-0 overscroll-contain"
+           style={{ WebkitOverflowScrolling: 'touch' }}>
         {messages.length === 0 ? (
           <div className="flex items-center justify-center h-full">
-            <div className="text-center">
-              <div className="text-4xl mb-4">💬</div>
-              <h3 className="text-white text-lg font-semibold mb-2">Start Conversation</h3>
-              <p className="text-white/60 text-sm">Send your first message to begin chatting</p>
+            <div className="text-center px-4">
+              <div className="text-2xl md:text-4xl mb-2 md:mb-4">💬</div>
+              <h3 className="text-white text-base md:text-lg font-semibold mb-1 md:mb-2">Start Conversation</h3>
+              <p className="text-white/60 text-xs md:text-sm">Send your first message to begin chatting</p>
             </div>
           </div>
         ) : (

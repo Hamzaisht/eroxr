@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input';
 import { NewMessageDialog } from './NewMessageDialog';
 import { ArchivedChatsDialog } from './dialogs/ArchivedChatsDialog';
 import { SettingsDialog } from './dialogs/SettingsDialog';
+import { cn } from '@/lib/utils';
 
 interface Conversation {
   id: string;
@@ -125,43 +126,46 @@ export const ConversationSidebar = ({ selectedConversationId, onSelectConversati
 
   return (
     <div className="h-full flex flex-col">
-      {/* Header */}
-      <div className="p-4 border-b border-white/10">
-        <div className="flex items-center justify-between mb-4">
-          <h1 className="text-2xl font-bold text-white">Chats</h1>
-          <div className="flex gap-2">
+      {/* Enhanced Header with better mobile touch targets */}
+      <div className="p-3 md:p-4 border-b border-white/10">
+        <div className="flex items-center justify-between mb-3 md:mb-4">
+          <h1 className="text-xl md:text-2xl font-bold text-white">Chats</h1>
+          <div className="flex gap-1 md:gap-2">
             <Button
               variant="ghost"
-              size="icon"
-              className="text-white/70 hover:text-white hover:bg-white/10"
+              size="sm"
+              className="h-8 w-8 md:h-10 md:w-10 text-white/70 hover:text-white hover:bg-white/10 p-0"
               onClick={() => setShowNewMessage(true)}
             >
-              <Plus className="h-5 w-5" />
+              <Plus className="h-4 w-4 md:h-5 md:w-5" />
             </Button>
             <Button
               variant="ghost"
-              size="icon"
-              className="text-white/70 hover:text-white hover:bg-white/10"
+              size="sm"
+              className="h-8 w-8 md:h-10 md:w-10 text-white/70 hover:text-white hover:bg-white/10 p-0"
             >
-              <MoreVertical className="h-5 w-5" />
+              <MoreVertical className="h-4 w-4 md:h-5 md:w-5" />
             </Button>
           </div>
         </div>
 
-        {/* Search */}
+        {/* Enhanced Search with mobile-optimized input */}
         <div className="relative">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-white/50" />
           <Input
             placeholder="Search conversations..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10 bg-white/10 border-white/20 text-white placeholder:text-white/50 focus:border-primary/50"
+            className="pl-10 bg-white/10 border-white/20 text-white placeholder:text-white/50 
+                       focus:border-primary/50 focus:ring-1 focus:ring-primary/30
+                       h-9 md:h-10 text-sm md:text-base
+                       touch-manipulation"
           />
         </div>
       </div>
 
-      {/* Conversations List */}
-      <div className="flex-1 overflow-y-auto">
+      {/* Enhanced Conversations List with better mobile UX */}
+      <div className="flex-1 overflow-y-auto overscroll-contain" style={{ WebkitOverflowScrolling: 'touch' }}>
         <AnimatePresence>
           {filteredConversations.map((conversation) => (
             <motion.div
@@ -169,41 +173,49 @@ export const ConversationSidebar = ({ selectedConversationId, onSelectConversati
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
-              className={`p-4 border-b border-white/5 cursor-pointer transition-all duration-200 hover:bg-white/5 ${
-                selectedConversationId === conversation.id ? 'bg-primary/20 border-l-4 border-l-primary' : ''
-              }`}
+              transition={{ type: "spring", stiffness: 400, damping: 25 }}
+              className={cn(
+                "p-3 md:p-4 border-b border-white/5 cursor-pointer transition-all duration-200",
+                "hover:bg-white/5 active:bg-white/10", // Enhanced mobile feedback
+                "touch-manipulation", // Better touch handling
+                selectedConversationId === conversation.id 
+                  ? 'bg-primary/20 border-l-4 border-l-primary shadow-lg' 
+                  : ''
+              )}
               onClick={() => onSelectConversation(conversation.id)}
             >
-              <div className="flex items-center gap-3">
-                <div className="relative">
-                  <Avatar className="h-12 w-12 border-2 border-white/20">
+              <div className="flex items-center gap-2 md:gap-3">
+                <div className="relative shrink-0">
+                  <Avatar className="h-10 w-10 md:h-12 md:w-12 border-2 border-white/20">
                     <AvatarImage src={conversation.user.avatar_url} />
-                    <AvatarFallback className="bg-gradient-to-br from-primary/30 to-purple-500/30 text-white">
+                    <AvatarFallback className="bg-gradient-to-br from-primary/30 to-purple-500/30 text-white text-sm md:text-base">
                       {conversation.user.username[0]?.toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
                   {conversation.isOnline && (
-                    <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 bg-green-500 rounded-full border-2 border-slate-900" />
+                    <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 md:w-4 md:h-4 bg-green-500 rounded-full border-2 border-slate-900" />
                   )}
                 </div>
 
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between mb-1">
-                    <h3 className="font-semibold text-white truncate">{conversation.user.username}</h3>
-                    <span className="text-xs text-white/60">
+                    <h3 className="font-semibold text-white truncate text-sm md:text-base">
+                      {conversation.user.username}
+                    </h3>
+                    <span className="text-xs text-white/60 shrink-0 ml-2">
                       {conversation.lastMessage && formatTime(conversation.lastMessage.created_at)}
                     </span>
                   </div>
                   
-                  <div className="flex items-center justify-between">
-                    <p className="text-sm text-white/70 truncate max-w-48">
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-xs md:text-sm text-white/70 truncate flex-1">
                       {conversation.lastMessage?.sender_id === user?.id && (
                         <span className="text-primary">You: </span>
                       )}
                       {conversation.lastMessage?.content || 'No messages yet'}
                     </p>
                     {conversation.unreadCount > 0 && (
-                      <div className="min-w-5 h-5 bg-primary rounded-full flex items-center justify-center">
+                      <div className="min-w-4 h-4 md:min-w-5 md:h-5 bg-primary rounded-full flex items-center justify-center shrink-0">
                         <span className="text-xs text-white font-medium">
                           {conversation.unreadCount > 99 ? '99+' : conversation.unreadCount}
                         </span>
@@ -217,35 +229,37 @@ export const ConversationSidebar = ({ selectedConversationId, onSelectConversati
         </AnimatePresence>
 
         {filteredConversations.length === 0 && (
-          <div className="p-8 text-center">
-            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-white/10 flex items-center justify-center">
-              <Search className="h-8 w-8 text-white/50" />
+          <div className="p-6 md:p-8 text-center">
+            <div className="w-12 h-12 md:w-16 md:h-16 mx-auto mb-3 md:mb-4 rounded-full bg-white/10 flex items-center justify-center">
+              <Search className="h-6 w-6 md:h-8 md:w-8 text-white/50" />
             </div>
-            <p className="text-white/60">No conversations found</p>
+            <p className="text-white/60 text-sm md:text-base">No conversations found</p>
           </div>
         )}
       </div>
 
-      {/* Footer */}
-      <div className="p-4 border-t border-white/10">
-        <div className="flex gap-2">
+      {/* Enhanced Footer with better mobile touch targets */}
+      <div className="p-3 md:p-4 border-t border-white/10">
+        <div className="flex gap-1 md:gap-2">
           <Button
             variant="ghost"
             size="sm"
-            className="flex-1 text-white/70 hover:text-white hover:bg-white/10"
+            className="flex-1 text-white/70 hover:text-white hover:bg-white/10 h-8 md:h-10 text-xs md:text-sm"
             onClick={() => setShowArchivedChats(true)}
           >
-            <Archive className="h-4 w-4 mr-2" />
-            Archived
+            <Archive className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" />
+            <span className="hidden sm:inline">Archived</span>
+            <span className="sm:hidden">Archive</span>
           </Button>
           <Button
             variant="ghost"
             size="sm"
-            className="flex-1 text-white/70 hover:text-white hover:bg-white/10"
+            className="flex-1 text-white/70 hover:text-white hover:bg-white/10 h-8 md:h-10 text-xs md:text-sm"
             onClick={() => setShowSettings(true)}
           >
-            <Settings className="h-4 w-4 mr-2" />
-            Settings
+            <Settings className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" />
+            <span className="hidden sm:inline">Settings</span>
+            <span className="sm:hidden">Settings</span>
           </Button>
         </div>
       </div>
