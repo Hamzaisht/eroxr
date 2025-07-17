@@ -403,7 +403,7 @@ export function useEroboardData() {
     }
   }, [session?.user?.id, initialDataLoaded]);
 
-  // Set up real-time updates
+  // Set up real-time updates only after initial load
   useEffect(() => {
     if (!session?.user?.id || !initialDataLoaded) return;
 
@@ -457,7 +457,7 @@ export function useEroboardData() {
       supabase.removeChannel(postsChannel);
       supabase.removeChannel(followersChannel);
     };
-  }, [session?.user?.id, initialDataLoaded]);
+  }, [session?.user?.id, initialDataLoaded, fetchDashboardData]);
 
   return {
     loading,
