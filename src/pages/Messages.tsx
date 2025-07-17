@@ -44,36 +44,7 @@ const Messages = memo(() => {
     { id: 'calls', label: 'Calls', icon: Phone }
   ], []);
 
-  if (!user) {
-    return (
-      <>
-        <InteractiveNav />
-        <LuxuryGradientBackground />
-        <div className="min-h-screen flex items-center justify-center p-8">
-          <LuxuryGlassCard variant="accent" className="max-w-md w-full p-8">
-            <div className="text-center">
-              <motion.div
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                transition={{ type: "spring", stiffness: 300, damping: 20 }}
-                className="text-6xl mb-6"
-              >
-                💎
-              </motion.div>
-              <h2 className="text-3xl font-bold text-white mb-4 bg-gradient-to-r from-purple-400 to-cyan-400 bg-clip-text text-transparent">
-                Luxury Access Required
-              </h2>
-              <p className="text-white/70 text-lg leading-relaxed">
-                Please sign in to experience our premium messaging suite
-              </p>
-            </div>
-          </LuxuryGlassCard>
-        </div>
-      </>
-    );
-  }
-
-  // Move all hooks to the top level to ensure consistent order
+  // Move all hooks to the top level - memoize luxury welcome content to prevent re-renders
   const renderLuxuryWelcome = useMemo(() => (
     <div className="flex-1 flex items-center justify-center p-12">
       <motion.div
@@ -151,6 +122,36 @@ const Messages = memo(() => {
       </motion.div>
     </div>
   ), []);
+
+  if (!user) {
+    return (
+      <>
+        <InteractiveNav />
+        <LuxuryGradientBackground />
+        <div className="min-h-screen flex items-center justify-center p-8">
+          <LuxuryGlassCard variant="accent" className="max-w-md w-full p-8">
+            <div className="text-center">
+              <motion.div
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                className="text-6xl mb-6"
+              >
+                💎
+              </motion.div>
+              <h2 className="text-3xl font-bold text-white mb-4 bg-gradient-to-r from-purple-400 to-cyan-400 bg-clip-text text-transparent">
+                Luxury Access Required
+              </h2>
+              <p className="text-white/70 text-lg leading-relaxed">
+                Please sign in to experience our premium messaging suite
+              </p>
+            </div>
+          </LuxuryGlassCard>
+        </div>
+      </>
+    );
+  }
+
 
   const renderMessagesContent = () => {
     return (
