@@ -5,14 +5,6 @@ import { InteractiveNav } from "@/components/layout/InteractiveNav";
 import { BackButton } from "@/components/ui/back-button";
 import { useUserRole } from "@/hooks/useUserRole";
 import { useSimpleEroboardData } from "@/hooks/useSimpleEroboardData";
-import { AnalyticsSidebar } from "@/components/eroboard/analytics/AnalyticsSidebar";
-import { EarningsOverview } from "@/components/eroboard/analytics/EarningsOverview";
-import { ContentPerformance } from "@/components/eroboard/analytics/ContentPerformance";
-import { AudienceInsights } from "@/components/eroboard/analytics/AudienceInsights";
-import { StreamingAnalytics } from "@/components/eroboard/analytics/StreamingAnalytics";
-import { AIInsights } from "@/components/eroboard/analytics/AIInsights";
-import { GrowthAnalytics } from "@/components/eroboard/analytics/GrowthAnalytics";
-import { ReportsExports } from "@/components/eroboard/analytics/ReportsExports";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -519,8 +511,40 @@ const Eroboard = () => {
       </div>
 
       <div className="flex relative z-10">
-        {/* Enhanced Sidebar */}
-        <AnalyticsSidebar activeTab={activeTab} onTabChange={setActiveTab} />
+        {/* Simple Sidebar */}
+        <div className="w-64 bg-card/80 backdrop-blur-xl border-r border-border/50 h-screen overflow-y-auto">
+          <div className="p-6">
+            <h2 className="text-lg font-semibold mb-4">Analytics</h2>
+            <nav className="space-y-2">
+              {[
+                { id: 'overview', label: 'Overview', icon: BarChart3 },
+                { id: 'earnings', label: 'Earnings', icon: DollarSign },
+                { id: 'content', label: 'Content', icon: FileText },
+                { id: 'audience', label: 'Audience', icon: Users },
+                { id: 'streaming', label: 'Streaming', icon: TrendingUp },
+                { id: 'growth', label: 'Growth', icon: TrendingUp },
+                { id: 'insights', label: 'AI Insights', icon: Lightbulb },
+                { id: 'exports', label: 'Reports', icon: Download }
+              ].map((tab) => {
+                const Icon = tab.icon;
+                return (
+                  <button
+                    key={tab.id}
+                    onClick={() => setActiveTab(tab.id)}
+                    className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left transition-colors ${
+                      activeTab === tab.id
+                        ? 'bg-primary/20 text-primary'
+                        : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+                    }`}
+                  >
+                    <Icon className="w-4 h-4" />
+                    {tab.label}
+                  </button>
+                );
+              })}
+            </nav>
+          </div>
+        </div>
         
         {/* Main Content Area */}
         <div className="flex-1 overflow-hidden">
