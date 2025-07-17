@@ -73,7 +73,7 @@ const Messages = memo(() => {
     );
   }
 
-  // Memoize luxury welcome content to prevent re-renders
+  // Move all hooks to the top level to ensure consistent order
   const renderLuxuryWelcome = useMemo(() => (
     <div className="flex-1 flex items-center justify-center p-12">
       <motion.div
