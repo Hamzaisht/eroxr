@@ -35,10 +35,11 @@ import {
 const Eroboard = () => {
   console.log('🔍 Eroboard component starting render');
   
-  // STEP 1: Add useToast back
+  // STEP 2: Add useUserRole back
   const [activeTab, setActiveTab] = useState("overview");
   const session = useSession();
   const { toast } = useToast();
+  const { role, isLoading, isSuperAdmin, isAdmin, isPremiumUser } = useUserRole();
   
   console.log('✅ All minimal hooks called successfully');
 
