@@ -31,6 +31,7 @@ export function useMessageDelete(messageId: string) {
         description: error.message || "An error occurred while deleting your message",
         variant: "destructive"
       });
+    } finally {
       setIsDeleting(false);
     }
   }, [messageId, toast]);

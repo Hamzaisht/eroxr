@@ -215,7 +215,7 @@ export const SimpleOptimizedChatArea = memo(({ conversationId, onShowDetails }: 
     if (!user?.id || !conversationId) return;
 
     const channel = supabase
-      .channel('messages')
+      .channel(`messages-${conversationId}`)
       .on(
         'postgres_changes',
         {
@@ -224,8 +224,39 @@ export const SimpleOptimizedChatArea = memo(({ conversationId, onShowDetails }: 
           table: 'direct_messages',
           filter: `or(and(sender_id.eq.${user.id},recipient_id.eq.${conversationId}),and(sender_id.eq.${conversationId},recipient_id.eq.${user.id}))`
         },
-        () => {
+        (payload) => {
+          console.log('New message received:', payload);
           fetchMessages();
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'DELETE',
+          schema: 'public',
+          table: 'direct_messages',
+          filter: `or(and(sender_id.eq.${user.id},recipient_id.eq.${conversationId}),and(sender_id.eq.${conversationId},recipient_id.eq.${user.id}))`
+        },
+        (payload) => {
+          console.log('Message deleted:', payload);
+          // Immediate UI update for ultra-fast deletion
+          setMessages(prev => prev.filter(msg => msg.id !== payload.old.id));
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'direct_messages',
+          filter: `or(and(sender_id.eq.${user.id},recipient_id.eq.${conversationId}),and(sender_id.eq.${conversationId},recipient_id.eq.${user.id}))`
+        },
+        (payload) => {
+          console.log('Message updated:', payload);
+          // Immediate UI update for ultra-fast editing
+          setMessages(prev => prev.map(msg => 
+            msg.id === payload.new.id ? { ...msg, ...payload.new } : msg
+          ));
         }
       )
       .subscribe();

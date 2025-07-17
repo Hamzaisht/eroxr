@@ -35,11 +35,22 @@ export const SettingsDialog = ({
   };
 
   const handleSaveSettings = () => {
-    // Save settings to localStorage or backend
+    // Save settings to localStorage with real-time feedback
     localStorage.setItem('chatSettings', JSON.stringify(settings));
+    
+    // Apply settings immediately to DOM for instant visual feedback
+    if (settings.darkMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+    
+    // Update font size immediately
+    document.documentElement.style.setProperty('--chat-font-size', `${settings.fontSize[0]}px`);
+    
     toast({
       title: "Settings saved",
-      description: "Your chat preferences have been updated",
+      description: "Your chat preferences have been updated instantly",
     });
     onClose();
   };

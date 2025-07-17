@@ -59,8 +59,9 @@ export function useRealtimeMessages(recipientId?: string) {
         filter: recipientId 
           ? `or(and(recipient_id=eq.${session.user.id},sender_id=eq.${recipientId}),and(sender_id=eq.${session.user.id},recipient_id=eq.${recipientId}))`
           : `or(recipient_id=eq.${session.user.id},sender_id=eq.${session.user.id})`
-      }, () => {
-        // Same invalidation for deletes
+      }, (payload) => {
+        console.log('Message deleted in real-time:', payload);
+        // Immediate invalidation for lightning-fast UI update
         if (recipientId) {
           queryClient.invalidateQueries({
             queryKey: ['chat', session.user.id, recipientId]
