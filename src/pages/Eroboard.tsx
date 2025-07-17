@@ -33,10 +33,11 @@ import {
 } from "lucide-react";
 
 const Eroboard = () => {
-  // All hooks must be at the top level - before any early returns
+  // All hooks must be at the top level - before any early returns or conditionals
   const [activeTab, setActiveTab] = useState("overview");
   const session = useSession();
   const { isSuperAdmin } = useUserRole();
+  const { toast } = useToast();
   const { 
     loading, 
     error, 
@@ -69,7 +70,6 @@ const Eroboard = () => {
   const safeGrowthAnalyticsData = growthAnalyticsData || {};
   const safeStreamingAnalyticsData = streamingAnalyticsData || {};
   const safeContentAnalyticsData = contentAnalyticsData || {};
-  const { toast } = useToast();
   
   console.log('🔄 EroBoard loaded, activeTab:', activeTab, 'loading:', loading);
 
