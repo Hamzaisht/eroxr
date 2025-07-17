@@ -34,6 +34,8 @@ const Eroboard = () => {
   const { isSuperAdmin } = useUserRole();
   const { loading, error, data } = useSimpleEroboardData();
   const { toast } = useToast();
+  
+  console.log('🔄 EroBoard loaded, activeTab:', activeTab, 'loading:', loading);
 
   // Initialize real-time geographic tracking
   useEffect(() => {
