@@ -16,11 +16,12 @@ export const LiveStreamViewer = ({
   playbackUrl,
   className = "" 
 }: LiveStreamViewerProps) => {
-  const { isGhostMode } = useGhostMode();
+  const { isGhostMode, ghostCapabilities } = useGhostMode();
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [viewerCount, setViewerCount] = useState(0);
+  const [hasJoinedInvisibly, setHasJoinedInvisibly] = useState(false);
   
   const videoRef = useRef<HTMLVideoElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);

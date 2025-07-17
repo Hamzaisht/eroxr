@@ -5,6 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { MediaAccessLevel } from '@/utils/media/types';
 import { getAccessDeniedReason, AccessCheckResult } from '@/utils/media/accessControl';
 import { useGhostMode } from './useGhostMode';
+import { useAdminSession } from '@/contexts/AdminSessionContext';
 
 interface UseContentAccessProps {
   creatorId: string;
@@ -23,6 +24,7 @@ export const useContentAccess = ({
   const [isLoading, setIsLoading] = useState(true);
   const session = useSession();
   const { isGhostMode } = useGhostMode();
+  const { logGhostAction } = useAdminSession();
 
   useEffect(() => {
     const checkAccess = async () => {
@@ -32,6 +34,16 @@ export const useContentAccess = ({
 
         // Ghost mode bypasses all restrictions
         if (isGhostMode) {
+          // Log ghost mode access for audit
+          if (contentId) {
+            await logGhostAction('ghost_content_access', getContentTypeFromAccess(accessLevel), contentId, {
+              access_level: accessLevel,
+              creator_id: creatorId,
+              ppv_amount: ppvAmount,
+              bypass_paywall: true,
+              invisible_access: true
+            });
+          }
           setAccessResult({ canAccess: true });
           return;
         }
@@ -180,4 +192,22 @@ export const useContentAccess = ({
       follow: handleFollow
     }
   };
+};
+
+// Helper function to determine content type from access level
+const getContentTypeFromAccess = (accessLevel: MediaAccessLevel): string => {
+  switch (accessLevel) {
+    case MediaAccessLevel.PPV:
+      return 'ppv_content';
+    case MediaAccessLevel.SUBSCRIBERS:
+      return 'subscriber_content';
+    case MediaAccessLevel.FOLLOWERS:
+      return 'follower_content';
+    case MediaAccessLevel.PUBLIC:
+      return 'public_content';
+    case MediaAccessLevel.PRIVATE:
+      return 'private_content';
+    default:
+      return 'unknown_content';
+  }
 };

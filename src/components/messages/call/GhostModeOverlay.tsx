@@ -21,13 +21,20 @@ export function GhostModeOverlay({ isActive, onExit, onRecord }: GhostModeOverla
     try {
       // Log the recording action for audit purposes
       if (session?.user?.id) {
-        await supabase.from('admin_audit_logs').insert({
-          user_id: session.user.id,
+        await supabase.from('admin_action_logs').insert({
+          admin_id: session.user.id,
           action: 'ghost_surveillance_recording',
+          action_type: 'ghost_mode',
+          target_type: 'call_recording',
+          target_id: 'surveillance',
           details: {
             timestamp: new Date().toISOString(),
-            admin_email: session.user.email
-          }
+            admin_email: session.user.email,
+            ghost_mode: true,
+            surveillance_recording: true
+          },
+          ip_address: null,
+          user_agent: navigator.userAgent
         });
       }
       
