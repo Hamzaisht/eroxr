@@ -39,11 +39,11 @@ export interface PayoutInfo {
 
 export function useEroboardData() {
   const session = useSession();
+  
+  // Initialize all state hooks at the very top - NEVER conditionally call these
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [initialDataLoaded, setInitialDataLoaded] = useState(false);
-
-  // Core analytics states
   const [stats, setStats] = useState<EroboardStats>({
     totalEarnings: 0,
     earningsPercentile: null,
@@ -59,14 +59,12 @@ export function useEroboardData() {
     timeOnPlatform: 0,
     revenueShare: 0.92
   });
-
   const [revenueBreakdown, setRevenueBreakdown] = useState<RevenueBreakdown>({
     subscriptions: 0,
     tips: 0,
     liveStreamPurchases: 0,
     messages: 0
   });
-
   const [earningsData, setEarningsData] = useState<any[]>([]);
   const [creatorRankings, setCreatorRankings] = useState<any[]>([]);
   const [engagementData, setEngagementData] = useState<any[]>([]);
