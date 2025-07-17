@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import { useSession } from "@supabase/auth-helpers-react";
+import { useAuth } from "@/contexts/AuthContext";
 import { InteractiveNav } from "@/components/layout/InteractiveNav";
 import { BackButton } from "@/components/ui/back-button";
 import { useUserRole } from "@/hooks/useUserRole";
@@ -37,7 +37,7 @@ const Eroboard = () => {
   
   // STEP 3: Add useEroboardData back - final step
   const [activeTab, setActiveTab] = useState("overview");
-  const session = useSession();
+  const { session, user: authUser } = useAuth();
   const { toast } = useToast();
   const { role, isLoading, isSuperAdmin, isAdmin, isPremiumUser } = useUserRole();
   const {

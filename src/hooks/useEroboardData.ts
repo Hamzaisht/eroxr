@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { useSession } from "@supabase/auth-helpers-react";
+import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { format, subDays } from "date-fns";
 
@@ -38,7 +38,7 @@ export interface PayoutInfo {
 }
 
 export function useEroboardData() {
-  const session = useSession();
+  const { session } = useAuth();
   
   // Initialize all state hooks at the very top - NEVER conditionally call these
   const [loading, setLoading] = useState(true);
@@ -79,8 +79,15 @@ export function useEroboardData() {
   const [contentAnalyticsData, setContentAnalyticsData] = useState<any>({});
 
   const fetchDashboardData = useCallback(async (dateRange?: DateRange, forceRefresh = false) => {
+    console.log('🔍 fetchDashboardData called:', { 
+      hasSession: !!session, 
+      userId: session?.user?.id,
+      loading,
+      initialDataLoaded 
+    });
+    
     if (!session?.user?.id) {
-      console.log('❌ No user session found');
+      console.log('❌ No user session found, setting loading to false');
       setLoading(false);
       return;
     }
@@ -395,11 +402,22 @@ export function useEroboardData() {
 
   // Initial data fetch on component mount
   useEffect(() => {
+    console.log('🔍 useEffect triggered:', { 
+      hasSession: !!session, 
+      userId: session?.user?.id, 
+      initialDataLoaded,
+      loading 
+    });
+    
     if (session?.user?.id && !initialDataLoaded) {
       console.log('🔄 Initial data fetch triggered for user:', session.user.id);
       fetchDashboardData();
+    } else if (!session?.user?.id) {
+      console.log('⚠️ No session available, keeping loading state as is');
+      // Don't immediately set loading to false if there's no session yet
+      // The session might still be loading
     }
-  }, [session?.user?.id, initialDataLoaded]);
+  }, [session?.user?.id, initialDataLoaded, fetchDashboardData]);
 
   // Set up real-time updates only after initial load
   useEffect(() => {
