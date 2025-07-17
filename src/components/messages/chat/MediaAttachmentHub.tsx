@@ -102,8 +102,8 @@ export const MediaAttachmentHub = ({ onClose, onMediaSelect }: MediaAttachmentHu
       />
       
       <div 
-        className="bg-gray-900/95 backdrop-blur-lg rounded-lg border border-gray-700 shadow-2xl overflow-hidden"
-        style={{ width: '160px', maxHeight: '250px' }}
+        className="bg-[#0D1117] rounded-md border border-gray-700/50 shadow-2xl overflow-hidden backdrop-blur-lg"
+        style={{ width: '200px', maxHeight: '250px' }}
         onClick={(e) => e.stopPropagation()}
       >
         {categories.map((category) => {
@@ -113,16 +113,16 @@ export const MediaAttachmentHub = ({ onClose, onMediaSelect }: MediaAttachmentHu
           return (
             <button
               key={category.id}
-              className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-gray-800 transition-colors border-none bg-transparent"
+              className="w-full flex items-center gap-3 px-4 py-3 text-white text-left bg-transparent border-none rounded cursor-pointer relative transition-all duration-300 hover:bg-[#21262C] focus:bg-[#1A1F24] focus:outline-none active:bg-[#1A1F24] before:content-[''] before:absolute before:top-1 before:-left-2 before:w-1 before:h-4/5 before:bg-[#2F81F7] before:rounded before:opacity-0 focus:before:opacity-100 active:before:opacity-100 group"
               onClick={() => handleItemClick(category)}
               style={{
                 color: isSnax ? 'hsl(var(--primary))' : 'white'
               }}
             >
               <Icon 
-                className="h-4 w-4 flex-shrink-0"
+                className="h-4 w-4 flex-shrink-0 transition-all duration-300"
                 style={{
-                  color: isSnax ? 'hsl(var(--primary))' : '#9CA3AF'
+                  color: isSnax ? 'hsl(var(--primary))' : 'white'
                 }}
               />
               <span className="text-sm font-medium">
