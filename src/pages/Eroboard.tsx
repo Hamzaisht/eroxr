@@ -35,9 +35,10 @@ import {
 const Eroboard = () => {
   console.log('🔍 Eroboard component starting render');
   
-  // MINIMAL HOOKS ONLY - to test for hook ordering issues
+  // STEP 1: Add useToast back
   const [activeTab, setActiveTab] = useState("overview");
   const session = useSession();
+  const { toast } = useToast();
   
   console.log('✅ All minimal hooks called successfully');
 
