@@ -63,140 +63,237 @@ export const MediaAttachmentHub = ({ onClose, onMediaSelect }: MediaAttachmentHu
 
   return (
     <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className="fixed bottom-20 left-1/2 transform -translate-x-1/2 z-50"
-      onClick={onClose}
+      initial={{ opacity: 0, scale: 0.8, y: 20 }}
+      animate={{ opacity: 1, scale: 1, y: 0 }}
+      exit={{ opacity: 0, scale: 0.8, y: 20 }}
+      transition={{
+        type: "spring",
+        stiffness: 400,
+        damping: 25,
+        mass: 0.8
+      }}
+      className="absolute bottom-12 left-1/2 transform -translate-x-1/2 z-50"
+      onClick={(e) => e.stopPropagation()}
     >
+      {/* Main container with glass morphism */}
       <motion.div 
-        className="relative"
-        onClick={(e) => e.stopPropagation()}
+        className="relative bg-background/80 backdrop-blur-3xl rounded-3xl border border-primary/20 shadow-2xl p-6"
+        style={{
+          background: 'linear-gradient(145deg, hsla(var(--background) / 0.95), hsla(var(--background) / 0.85))',
+          boxShadow: '0 25px 60px -12px hsla(var(--primary) / 0.25), 0 0 0 1px hsla(var(--primary) / 0.1), inset 0 1px 0 hsla(var(--foreground) / 0.05)'
+        }}
+        initial={{ scale: 0.5, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        transition={{ delay: 0.1, type: "spring", stiffness: 300, damping: 20 }}
       >
-        {/* Background blur circle */}
-        <motion.div
-          initial={{ scale: 0, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ duration: 0.4, ease: [0.175, 0.885, 0.32, 1.275] }}
-          className="absolute inset-0 w-80 h-80 rounded-full"
-          style={{
-            background: 'radial-gradient(circle, hsla(var(--primary) / 0.03) 0%, hsla(var(--primary) / 0.08) 40%, transparent 70%)',
-            backdropFilter: 'blur(40px)',
-            filter: 'blur(1px)'
-          }}
-        />
-
-        {/* Central plus button */}
-        <motion.button
-          className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-16 h-16 rounded-full flex items-center justify-center z-20"
-          style={{
-            background: 'linear-gradient(135deg, hsla(var(--primary) / 0.15), hsla(var(--primary) / 0.05))',
-            backdropFilter: 'blur(20px)',
-            border: '1px solid hsla(var(--primary) / 0.2)',
-            boxShadow: '0 8px 32px hsla(var(--primary) / 0.3), inset 0 1px 0 hsla(var(--foreground) / 0.1)'
-          }}
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          onClick={onClose}
-        >
-          <Plus 
-            className="h-6 w-6 text-foreground/70 transition-transform duration-300"
-            style={{ transform: 'rotate(45deg)' }}
-          />
-        </motion.button>
-
-        {/* Category buttons arranged in circle */}
-        {categories.map((category, index) => {
-          const Icon = category.icon;
-          const angle = (index * 60) - 90; // 6 items, 60 degrees apart, starting from top
-          const radius = 110;
-          const x = Math.cos((angle * Math.PI) / 180) * radius;
-          const y = Math.sin((angle * Math.PI) / 180) * radius;
-
-          return (
-            <motion.button
-              key={category.id}
-              className="absolute w-14 h-14 rounded-full flex items-center justify-center group"
-              style={{
-                left: `calc(50% + ${x}px - 28px)`,
-                top: `calc(50% + ${y}px - 28px)`,
-                background: category.id === 'snax' 
-                  ? 'linear-gradient(135deg, hsla(var(--primary) / 0.2), hsla(var(--primary) / 0.1))'
-                  : 'linear-gradient(135deg, hsla(var(--foreground) / 0.08), hsla(var(--foreground) / 0.03))',
-                backdropFilter: 'blur(20px)',
-                border: `1px solid hsla(var(--${category.id === 'snax' ? 'primary' : 'foreground'}) / 0.15)`,
-                boxShadow: hoveredIndex === index 
-                  ? '0 12px 40px hsla(var(--primary) / 0.4), inset 0 1px 0 hsla(var(--foreground) / 0.2)'
-                  : '0 4px 20px hsla(var(--foreground) / 0.1), inset 0 1px 0 hsla(var(--foreground) / 0.1)'
-              }}
-              initial={{ scale: 0, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ 
-                delay: index * 0.05 + 0.2,
-                duration: 0.4,
-                type: "spring",
-                stiffness: 260,
-                damping: 20
-              }}
-              whileHover={{ 
-                scale: 1.15,
-                transition: { duration: 0.2 }
-              }}
-              whileTap={{ scale: 0.9 }}
-              onClick={category.action}
-              onMouseEnter={() => setHoveredIndex(index)}
-              onMouseLeave={() => setHoveredIndex(null)}
-            >
-              <Icon 
-                className={cn(
-                  "h-5 w-5 transition-all duration-300",
-                  category.id === 'snax' 
-                    ? "text-primary/80 group-hover:text-primary" 
-                    : "text-foreground/70 group-hover:text-foreground"
-                )}
-              />
-              
-              {/* Ripple effect on hover */}
-              <motion.div
-                className="absolute inset-0 rounded-full"
+        {/* Grid layout for better organization */}
+        <div className="grid grid-cols-3 gap-4 w-fit">
+          {categories.map((category, index) => {
+            const Icon = category.icon;
+            const isSnax = category.id === 'snax';
+            
+            return (
+              <motion.button
+                key={category.id}
+                className="group relative w-16 h-16 rounded-2xl flex flex-col items-center justify-center overflow-hidden"
                 style={{
-                  background: `linear-gradient(135deg, hsla(var(--primary) / 0.1), transparent)`,
+                  background: isSnax 
+                    ? 'linear-gradient(135deg, hsla(var(--primary) / 0.15), hsla(var(--primary) / 0.05))'
+                    : 'linear-gradient(135deg, hsla(var(--muted) / 0.8), hsla(var(--muted) / 0.4))',
+                  backdropFilter: 'blur(20px)',
+                  border: `1px solid hsla(var(--${isSnax ? 'primary' : 'muted-foreground'}) / 0.2)`,
+                  boxShadow: hoveredIndex === index 
+                    ? '0 8px 32px hsla(var(--primary) / 0.3), inset 0 1px 0 hsla(var(--foreground) / 0.1)'
+                    : '0 4px 16px hsla(var(--foreground) / 0.05), inset 0 1px 0 hsla(var(--foreground) / 0.05)'
                 }}
-                initial={{ scale: 0, opacity: 0 }}
-                animate={hoveredIndex === index ? { scale: 1.5, opacity: [0, 0.3, 0] } : { scale: 0, opacity: 0 }}
-                transition={{ duration: 0.6 }}
-              />
-            </motion.button>
-          );
-        })}
+                initial={{ 
+                  scale: 0, 
+                  opacity: 0,
+                  rotateY: -90 
+                }}
+                animate={{ 
+                  scale: 1, 
+                  opacity: 1,
+                  rotateY: 0 
+                }}
+                transition={{ 
+                  delay: index * 0.08 + 0.2,
+                  duration: 0.6,
+                  type: "spring",
+                  stiffness: 300,
+                  damping: 20
+                }}
+                whileHover={{ 
+                  scale: 1.1,
+                  y: -2,
+                  transition: { 
+                    type: "spring", 
+                    stiffness: 400, 
+                    damping: 15,
+                    duration: 0.15
+                  }
+                }}
+                whileTap={{ 
+                  scale: 0.95,
+                  transition: { duration: 0.1 }
+                }}
+                onClick={category.action}
+                onMouseEnter={() => setHoveredIndex(index)}
+                onMouseLeave={() => setHoveredIndex(null)}
+              >
+                {/* Background glow effect */}
+                <motion.div
+                  className="absolute inset-0 rounded-2xl"
+                  style={{
+                    background: isSnax 
+                      ? 'radial-gradient(circle at center, hsla(var(--primary) / 0.2), transparent 70%)'
+                      : 'radial-gradient(circle at center, hsla(var(--muted-foreground) / 0.1), transparent 70%)',
+                    opacity: hoveredIndex === index ? 1 : 0
+                  }}
+                  transition={{ duration: 0.3 }}
+                />
+                
+                {/* Icon */}
+                <motion.div
+                  initial={{ scale: 1 }}
+                  animate={{ 
+                    scale: hoveredIndex === index ? 1.1 : 1,
+                    rotate: hoveredIndex === index ? 5 : 0
+                  }}
+                  transition={{ 
+                    type: "spring", 
+                    stiffness: 400, 
+                    damping: 20,
+                    duration: 0.2
+                  }}
+                >
+                  <Icon 
+                    className={cn(
+                      "h-5 w-5 transition-all duration-300",
+                      isSnax 
+                        ? "text-primary group-hover:text-primary" 
+                        : "text-muted-foreground group-hover:text-foreground"
+                    )}
+                  />
+                </motion.div>
+                
+                {/* Subtle shimmer effect */}
+                <motion.div
+                  className="absolute inset-0 rounded-2xl"
+                  style={{
+                    background: 'linear-gradient(45deg, transparent 30%, hsla(var(--foreground) / 0.03) 50%, transparent 70%)',
+                    backgroundSize: '200% 200%'
+                  }}
+                  animate={{
+                    backgroundPosition: hoveredIndex === index ? ['0% 0%', '100% 100%'] : '0% 0%'
+                  }}
+                  transition={{
+                    duration: 1,
+                    ease: "easeInOut",
+                    repeat: hoveredIndex === index ? Infinity : 0,
+                    repeatType: "reverse"
+                  }}
+                />
+                
+                {/* Ripple effect on click */}
+                <motion.div
+                  className="absolute inset-0 rounded-2xl"
+                  style={{
+                    background: `radial-gradient(circle, hsla(var(--primary) / 0.2), transparent 70%)`,
+                  }}
+                  initial={{ scale: 0, opacity: 0 }}
+                  whileTap={{ scale: 2, opacity: [0, 0.3, 0] }}
+                  transition={{ duration: 0.4 }}
+                />
+              </motion.button>
+            );
+          })}
+        </div>
         
-        {/* Label that appears on hover */}
+        {/* Enhanced floating label */}
         <AnimatePresence>
           {hoveredIndex !== null && (
             <motion.div
-              className="absolute top-1/2 left-1/2 transform -translate-x-1/2 pointer-events-none"
-              style={{ marginTop: '-120px' }}
-              initial={{ opacity: 0, y: 10, scale: 0.8 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: 10, scale: 0.8 }}
-              transition={{ duration: 0.2 }}
+              className="absolute -top-16 left-1/2 transform -translate-x-1/2 pointer-events-none"
+              initial={{ 
+                opacity: 0, 
+                y: 10, 
+                scale: 0.8,
+                filter: "blur(4px)"
+              }}
+              animate={{ 
+                opacity: 1, 
+                y: 0, 
+                scale: 1,
+                filter: "blur(0px)"
+              }}
+              exit={{ 
+                opacity: 0, 
+                y: 10, 
+                scale: 0.8,
+                filter: "blur(4px)"
+              }}
+              transition={{ 
+                type: "spring",
+                stiffness: 400,
+                damping: 25,
+                duration: 0.2
+              }}
             >
               <div
-                className="px-3 py-1.5 rounded-full text-xs font-medium tracking-wide"
+                className="px-4 py-2 rounded-xl text-sm font-medium tracking-wide whitespace-nowrap"
                 style={{
-                  background: 'linear-gradient(135deg, hsla(var(--primary) / 0.15), hsla(var(--primary) / 0.05))',
+                  background: 'linear-gradient(135deg, hsla(var(--primary) / 0.9), hsla(var(--primary) / 0.7))',
                   backdropFilter: 'blur(20px)',
-                  border: '1px solid hsla(var(--primary) / 0.2)',
-                  color: 'hsla(var(--foreground) / 0.9)',
-                  boxShadow: '0 4px 20px hsla(var(--primary) / 0.2)'
+                  border: '1px solid hsla(var(--primary) / 0.3)',
+                  color: 'hsla(var(--primary-foreground) / 0.95)',
+                  boxShadow: '0 8px 32px hsla(var(--primary) / 0.4), inset 0 1px 0 hsla(var(--foreground) / 0.1)'
                 }}
               >
                 {categories[hoveredIndex].name}
+                
+                {/* Arrow pointing down */}
+                <div
+                  className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0"
+                  style={{
+                    borderLeft: '6px solid transparent',
+                    borderRight: '6px solid transparent',
+                    borderTop: '6px solid hsla(var(--primary) / 0.9)',
+                    filter: 'drop-shadow(0 2px 4px hsla(var(--primary) / 0.2))'
+                  }}
+                />
               </div>
             </motion.div>
           )}
         </AnimatePresence>
+        
+        {/* Subtle pulse animation for the container */}
+        <motion.div
+          className="absolute inset-0 rounded-3xl"
+          style={{
+            background: 'linear-gradient(135deg, hsla(var(--primary) / 0.05), transparent)',
+            opacity: 0
+          }}
+          animate={{
+            opacity: [0, 0.3, 0]
+          }}
+          transition={{
+            duration: 3,
+            ease: "easeInOut",
+            repeat: Infinity,
+            repeatDelay: 2
+          }}
+        />
       </motion.div>
+      
+      {/* Close overlay */}
+      <motion.div
+        className="fixed inset-0 -z-10"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        onClick={onClose}
+      />
     </motion.div>
   );
 };

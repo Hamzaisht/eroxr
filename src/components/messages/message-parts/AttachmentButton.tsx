@@ -34,16 +34,16 @@ export const AttachmentButton = ({ onImageSelect, onDocumentSelect, onMediaSelec
         >
           <Plus className="h-5 w-5 text-primary" />
         </Button>
-      </div>
 
-      <AnimatePresence>
-        {showHub && (
-          <MediaAttachmentHub
-            onClose={() => setShowHub(false)}
-            onMediaSelect={handleMediaSelect}
-          />
-        )}
-      </AnimatePresence>
+        <AnimatePresence>
+          {showHub && (
+            <MediaAttachmentHub
+              onClose={() => setShowHub(false)}
+              onMediaSelect={handleMediaSelect}
+            />
+          )}
+        </AnimatePresence>
+      </div>
     </>
   );
 };
