@@ -28,7 +28,6 @@ export const MediaAttachmentHub = ({ onClose, onMediaSelect }: MediaAttachmentHu
     { id: 'photos', name: 'Photos', icon: Image, action: () => handleFileUpload('image/*') },
     { id: 'videos', name: 'Videos', icon: Video, action: () => handleFileUpload('video/*') },
     { id: 'voice', name: 'Voice', icon: Mic, action: () => console.log('Voice recording') },
-    { id: 'music', name: 'Music', icon: Music, action: () => handleFileUpload('audio/*') },
     { id: 'documents', name: 'Files', icon: FileText, action: () => handleFileUpload('*/*') }
   ];
 
@@ -86,7 +85,12 @@ export const MediaAttachmentHub = ({ onClose, onMediaSelect }: MediaAttachmentHu
         onMouseLeave={() => setHoveredIndex(null)}
       >
         {/* Vertical stack layout */}
-        <div className="flex flex-col">
+        <div 
+          className="flex flex-col"
+          style={{
+            filter: hoveredIndex !== null ? 'none' : 'none'
+          }}
+        >
           {categories.map((category, index) => {
             const Icon = category.icon;
             const isSnax = category.id === 'snax';
@@ -94,29 +98,17 @@ export const MediaAttachmentHub = ({ onClose, onMediaSelect }: MediaAttachmentHu
             const hasHover = hoveredIndex !== null;
             
             return (
-              <motion.button
+              <div
                 key={category.id}
-                className="relative flex items-center gap-3 px-4 py-3 cursor-pointer border-none bg-transparent text-left outline-none"
+                className="relative flex items-center gap-3 px-4 py-3 cursor-pointer text-left transition-all duration-300"
                 style={{
                   color: isSnax ? 'hsl(var(--primary))' : 'white',
-                }}
-                animate={{
+                  backgroundColor: isHovered ? '#21262C' : 'transparent',
                   filter: hasHover && !isHovered ? 'blur(1px)' : 'blur(0px)',
-                  scale: hasHover && !isHovered ? 0.95 : 1,
+                  transform: hasHover && !isHovered ? 'scale(0.95)' : 'scale(1)',
                 }}
-                transition={{ 
-                  duration: 0.2,
-                  ease: "easeOut"
-                }}
-                whileHover={{
-                  backgroundColor: 'rgba(33, 38, 44, 0.8)',
-                  scale: 1.02
-                }}
-                whileTap={{
-                  scale: 0.98,
-                  backgroundColor: 'rgba(26, 31, 36, 0.9)'
-                }}
-                onClick={() => {
+                onClick={(e) => {
+                  e.stopPropagation();
                   console.log('Clicked:', category.name);
                   category.action();
                 }}
@@ -124,50 +116,28 @@ export const MediaAttachmentHub = ({ onClose, onMediaSelect }: MediaAttachmentHu
                 onMouseLeave={() => setHoveredIndex(null)}
               >
                 {/* Left accent line */}
-                <motion.div
-                  className="absolute left-0 top-1 w-1 rounded-full"
+                <div
+                  className="absolute left-0 top-1 w-1 rounded-full transition-opacity duration-200"
                   style={{
                     height: 'calc(100% - 8px)',
-                    backgroundColor: '#2F81F7'
-                  }}
-                  initial={{ opacity: 0 }}
-                  animate={{ 
+                    backgroundColor: '#2F81F7',
                     opacity: isHovered ? 1 : 0
                   }}
-                  transition={{ duration: 0.2 }}
                 />
                 
                 {/* Icon */}
-                <motion.div
-                  animate={{
-                    scale: isHovered ? 1.05 : 1
+                <Icon 
+                  className="h-4 w-4 flex-shrink-0"
+                  style={{
+                    color: isSnax ? 'hsl(var(--primary))' : '#8B949E'
                   }}
-                  transition={{ duration: 0.2 }}
-                >
-                  <Icon 
-                    className="h-4 w-4 flex-shrink-0"
-                    style={{
-                      color: isSnax ? 'hsl(var(--primary))' : '#8B949E'
-                    }}
-                  />
-                </motion.div>
+                />
                 
                 {/* Label */}
                 <span className="text-sm font-medium">
                   {category.name}
                 </span>
-                
-                {/* Ripple effect */}
-                <motion.div
-                  className="absolute inset-0"
-                  style={{
-                    background: `radial-gradient(circle, hsla(var(--primary) / 0.1), transparent 70%)`,
-                  }}
-                  initial={{ scale: 0, opacity: 0 }}
-                  whileTap={{ scale: 2, opacity: [0, 0.3, 0] }}
-                  transition={{ duration: 0.4 }}
-                />
-              </motion.button>
+              </div>
             );
           })}
         </div>
