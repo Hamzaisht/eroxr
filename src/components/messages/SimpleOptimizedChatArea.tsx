@@ -15,6 +15,16 @@ import { SnapCamera } from './chat/SnapCamera';
 import { MessageBubbleContent } from './message-parts/MessageBubbleContent';
 import { useVideoRecording } from './useVideoRecording';
 import { EmojiPicker } from './chat/EmojiPicker';
+import { AttachmentButton } from './message-parts/AttachmentButton';
+import { MediaPreviewInChat } from './chat/MediaPreviewInChat';
+
+interface PendingAttachment {
+  id: string;
+  blob: Blob;
+  type: 'snax' | 'media';
+  duration?: number;
+  preview?: string;
+}
 
 interface Message {
   id: string;
@@ -41,6 +51,7 @@ export const SimpleOptimizedChatArea = memo(({ conversationId, onShowDetails }: 
   const [showCameraDialog, setShowCameraDialog] = useState(false);
   const [showSnapCamera, setShowSnapCamera] = useState(false);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [pendingAttachments, setPendingAttachments] = useState<PendingAttachment[]>([]);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -91,23 +102,89 @@ export const SimpleOptimizedChatArea = memo(({ conversationId, onShowDetails }: 
 
   // Send message
   const sendMessage = useCallback(async () => {
-    if (!newMessage.trim() || !user?.id || sending) return;
+    if ((!newMessage.trim() && pendingAttachments.length === 0) || !user?.id || sending) return;
 
     setSending(true);
     try {
-      const { error } = await supabase
-        .from('direct_messages')
-        .insert({
-          content: newMessage.trim(),
-          sender_id: user.id,
-          recipient_id: conversationId,
-          message_type: 'text'
-        });
+      // Send text message if present
+      if (newMessage.trim()) {
+        const { error } = await supabase
+          .from('direct_messages')
+          .insert({
+            content: newMessage.trim(),
+            sender_id: user.id,
+            recipient_id: conversationId,
+            message_type: 'text'
+          });
 
-      if (error) throw error;
+        if (error) throw error;
+      }
+
+      // Process pending attachments
+      for (const attachment of pendingAttachments) {
+        const fileName = `${crypto.randomUUID()}.${attachment.blob.type.includes('video') ? 'webm' : attachment.blob.type.includes('image') ? 'jpg' : 'bin'}`;
+        
+        const { error: uploadError } = await supabase.storage
+          .from('messages')
+          .upload(fileName, attachment.blob);
+
+        if (uploadError) throw uploadError;
+
+        const { data: { publicUrl } } = supabase.storage
+          .from('messages')
+          .getPublicUrl(fileName);
+
+        // Handle Snax messages (disappearing)
+        if (attachment.type === 'snax') {
+          const expiresAt = new Date();
+          expiresAt.setSeconds(expiresAt.getSeconds() + (attachment.duration || 10));
+
+          const { error } = await supabase
+            .from('direct_messages')
+            .insert({
+              content: publicUrl,
+              sender_id: user.id,
+              recipient_id: conversationId,
+              message_type: attachment.blob.type.includes('video') ? 'video' : 'image',
+              message_source: 'snap',
+              duration: attachment.duration,
+              expires_at: expiresAt.toISOString()
+            });
+
+          if (error) throw error;
+        } else {
+          // Handle regular media
+          const messageType = attachment.blob.type.includes('video') ? 'video' : 
+                             attachment.blob.type.includes('image') ? 'image' : 'file';
+
+          const { error } = await supabase
+            .from('direct_messages')
+            .insert({
+              content: publicUrl,
+              sender_id: user.id,
+              recipient_id: conversationId,
+              message_type: messageType
+            });
+
+          if (error) throw error;
+        }
+      }
       
       setNewMessage('');
+      setPendingAttachments([]);
       await fetchMessages();
+      
+      if (pendingAttachments.some(a => a.type === 'snax')) {
+        toast({
+          title: "Snax sent!",
+          description: "Your disappearing media has been sent"
+        });
+      } else if (pendingAttachments.length > 0) {
+        toast({
+          title: "Media sent!",
+          description: "Your media has been sent successfully"
+        });
+      }
     } catch (error) {
       console.error('Error sending message:', error);
       toast({
@@ -118,7 +195,7 @@ export const SimpleOptimizedChatArea = memo(({ conversationId, onShowDetails }: 
     } finally {
       setSending(false);
     }
-  }, [newMessage, user?.id, conversationId, sending, fetchMessages, toast]);
+  }, [newMessage, pendingAttachments, user?.id, conversationId, sending, fetchMessages, toast]);
 
   // Scroll to bottom
   const scrollToBottom = useCallback(() => {
@@ -275,6 +352,19 @@ export const SimpleOptimizedChatArea = memo(({ conversationId, onShowDetails }: 
     setNewMessage(prev => prev + emoji);
     setShowEmojiPicker(false);
   };
+
+  // Media selection handler for sophisticated attachment workflow
+  const handleMediaSelect = useCallback((blob: Blob, type: 'snax' | 'media', duration?: number) => {
+    const preview = URL.createObjectURL(blob);
+    const attachment: PendingAttachment = {
+      id: crypto.randomUUID(),
+      blob,
+      type,
+      duration,
+      preview
+    };
+    setPendingAttachments(prev => [...prev, attachment]);
+  }, []);
 
   // Simulate typing indicator
   useEffect(() => {
@@ -449,42 +539,29 @@ export const SimpleOptimizedChatArea = memo(({ conversationId, onShowDetails }: 
 
       {/* Input */}
       <div className="p-4 border-t border-white/10">
+        {/* Media Preview Section */}
+        {pendingAttachments.length > 0 && (
+          <div className="mb-4 space-y-2">
+            {pendingAttachments.map((attachment, index) => (
+              <MediaPreviewInChat 
+                key={attachment.id}
+                mediaBlob={attachment.blob}
+                mediaType={attachment.type}
+                duration={attachment.duration}
+                onRemove={() => {
+                  setPendingAttachments(prev => prev.filter((_, i) => i !== index));
+                }}
+              />
+            ))}
+          </div>
+        )}
+
         <div className="flex items-center space-x-3">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="sm" className="text-white/70 hover:text-white">
-                <Paperclip className="h-5 w-5" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent className="bg-black/80 border-white/20">
-              <DropdownMenuItem 
-                className="text-white cursor-pointer"
-                onClick={() => fileInputRef.current?.click()}
-              >
-                📁 Upload File
-              </DropdownMenuItem>
-              <DropdownMenuItem 
-                className="text-white cursor-pointer"
-                onClick={() => setShowCameraDialog(true)}
-              >
-                <Camera className="h-4 w-4 mr-2" />
-                Take Photo/Video
-              </DropdownMenuItem>
-              <DropdownMenuItem 
-                className="text-white cursor-pointer"
-                onClick={() => setShowSnapCamera(true)}
-              >
-                <Zap className="h-4 w-4 mr-2" />
-                Send Snap
-              </DropdownMenuItem>
-              <DropdownMenuItem 
-                className="text-white cursor-pointer"
-                onClick={isRecording ? stopRecording : startRecording}
-              >
-                🎥 {isRecording ? 'Stop Recording' : 'Record Video'}
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <AttachmentButton 
+            onImageSelect={() => {/* Handled by MediaAttachmentHub */}}
+            onDocumentSelect={() => {/* Handled by MediaAttachmentHub */}}
+            onMediaSelect={handleMediaSelect}
+          />
 
           <div className="flex-1 relative">
             <Input
@@ -504,7 +581,7 @@ export const SimpleOptimizedChatArea = memo(({ conversationId, onShowDetails }: 
             variant="primary"
             size="sm"
             onClick={sendMessage}
-            disabled={!newMessage.trim() || sending}
+            disabled={(!newMessage.trim() && pendingAttachments.length === 0) || sending}
             className="min-w-[44px]"
           >
             {sending ? (
