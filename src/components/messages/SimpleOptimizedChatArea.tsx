@@ -2,13 +2,19 @@ import { useState, useEffect, useRef, memo, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { motion } from 'framer-motion';
-import { Info, Send, Phone, Video, MoreVertical, Paperclip, Smile } from 'lucide-react';
+import { Info, Send, Phone, Video, MoreVertical, Paperclip, Smile, Camera, Zap } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { Luxury3DButton } from '@/components/ui/luxury-3d-button';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { CallDialog } from './calls/CallDialog';
+import { CameraDialog } from './CameraDialog';
+import { SnapCamera } from './chat/SnapCamera';
+import { MessageBubbleContent } from './message-parts/MessageBubbleContent';
+import { useVideoRecording } from './useVideoRecording';
+import { EmojiPicker } from './chat/EmojiPicker';
 
 interface Message {
   id: string;
@@ -30,10 +36,22 @@ export const SimpleOptimizedChatArea = memo(({ conversationId, onShowDetails }: 
   const [sending, setSending] = useState(false);
   const [userProfile, setUserProfile] = useState<any>(null);
   const [isTyping, setIsTyping] = useState(false);
+  const [showCallDialog, setShowCallDialog] = useState(false);
+  const [callType, setCallType] = useState<'audio' | 'video'>('audio');
+  const [showCameraDialog, setShowCameraDialog] = useState(false);
+  const [showSnapCamera, setShowSnapCamera] = useState(false);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const { user } = useAuth();
   const { toast } = useToast();
+
+  // Video recording hook
+  const { isRecording, startRecording, stopRecording } = useVideoRecording(
+    conversationId,
+    () => fetchMessages()
+  );
 
   // Fetch messages
   const fetchMessages = useCallback(async () => {
@@ -141,6 +159,123 @@ export const SimpleOptimizedChatArea = memo(({ conversationId, onShowDetails }: 
     scrollToBottom();
   }, [messages, scrollToBottom]);
 
+  // Call handlers
+  const handleAudioCall = () => {
+    setCallType('audio');
+    setShowCallDialog(true);
+  };
+
+  const handleVideoCall = () => {
+    setCallType('video'); 
+    setShowCallDialog(true);
+  };
+
+  // File upload handler
+  const handleFileUpload = async (files: FileList) => {
+    if (!files.length || !user?.id) return;
+
+    const file = files[0];
+    const fileName = `${crypto.randomUUID()}-${file.name}`;
+    
+    try {
+      const { error: uploadError } = await supabase.storage
+        .from('messages')
+        .upload(fileName, file);
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('messages')
+        .getPublicUrl(fileName);
+
+      const messageType = file.type.startsWith('image/') ? 'image' : 
+                         file.type.startsWith('video/') ? 'video' : 'file';
+
+      const { error } = await supabase
+        .from('direct_messages')
+        .insert({
+          content: publicUrl,
+          sender_id: user.id,
+          recipient_id: conversationId,
+          message_type: messageType
+        });
+
+      if (error) throw error;
+      
+      await fetchMessages();
+      toast({
+        title: "File sent!",
+        description: "Your file has been sent successfully"
+      });
+    } catch (error) {
+      console.error('Error uploading file:', error);
+      toast({
+        title: "Error",
+        description: "Failed to send file",
+        variant: "destructive"
+      });
+    }
+  };
+
+  // Camera capture handler
+  const handleCameraCapture = (captureUrl: string, type: 'photo' | 'video') => {
+    // Handle the captured media
+    console.log('Captured:', type, captureUrl);
+    setShowCameraDialog(false);
+  };
+
+  // Snap camera handler  
+  const handleSnapCapture = async (blob: Blob) => {
+    try {
+      const fileName = `${crypto.randomUUID()}.${blob.type.includes('video') ? 'webm' : 'jpg'}`;
+      const { error: uploadError } = await supabase.storage
+        .from('messages')
+        .upload(fileName, blob);
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('messages')
+        .getPublicUrl(fileName);
+
+      // Set expiration for snaps (24 hours)
+      const expiresAt = new Date();
+      expiresAt.setHours(expiresAt.getHours() + 24);
+
+      const { error } = await supabase
+        .from('direct_messages')
+        .insert({
+          content: publicUrl,
+          sender_id: user.id,
+          recipient_id: conversationId,
+          message_type: blob.type.includes('video') ? 'video' : 'image',
+          message_source: 'snap',
+          expires_at: expiresAt.toISOString()
+        });
+
+      if (error) throw error;
+      
+      await fetchMessages();
+      toast({
+        title: "Snap sent!",
+        description: "Your snap will disappear after viewing"
+      });
+    } catch (error) {
+      console.error('Error sending snap:', error);
+      toast({
+        title: "Error", 
+        description: "Failed to send snap",
+        variant: "destructive"
+      });
+    }
+  };
+
+  // Emoji selection handler
+  const handleEmojiSelect = (emoji: string) => {
+    setNewMessage(prev => prev + emoji);
+    setShowEmojiPicker(false);
+  };
+
   // Simulate typing indicator
   useEffect(() => {
     if (messages.length > 0) {
@@ -172,10 +307,20 @@ export const SimpleOptimizedChatArea = memo(({ conversationId, onShowDetails }: 
           </div>
         </div>
         <div className="flex items-center space-x-2">
-          <Button variant="ghost" size="sm" className="text-white/70 hover:text-white">
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="text-white/70 hover:text-white"
+            onClick={handleAudioCall}
+          >
             <Phone className="h-5 w-5" />
           </Button>
-          <Button variant="ghost" size="sm" className="text-white/70 hover:text-white">
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="text-white/70 hover:text-white"
+            onClick={handleVideoCall}
+          >
             <Video className="h-5 w-5" />
           </Button>
           <Button
@@ -231,21 +376,44 @@ export const SimpleOptimizedChatArea = memo(({ conversationId, onShowDetails }: 
                       </AvatarFallback>
                     </Avatar>
                   )}
-                  <div
-                    className={`px-4 py-2 rounded-2xl ${
-                      isOwn
-                        ? 'bg-gradient-to-r from-purple-500 to-cyan-500 text-white rounded-br-md'
-                        : 'bg-white/10 text-white border border-white/20 rounded-bl-md'
-                    }`}
-                  >
-                    <p className="break-words">{message.content}</p>
-                    <p className={`text-xs mt-1 ${isOwn ? 'text-white/80' : 'text-white/60'}`}>
-                      {new Date(message.created_at).toLocaleTimeString([], {
-                        hour: '2-digit',
-                        minute: '2-digit'
-                      })}
-                    </p>
-                  </div>
+                   <div
+                     className={`px-4 py-2 rounded-2xl ${
+                       isOwn
+                         ? 'bg-gradient-to-r from-purple-500 to-cyan-500 text-white rounded-br-md'
+                         : 'bg-white/10 text-white border border-white/20 rounded-bl-md'
+                     }`}
+                   >
+                     {/* Render message content based on type */}
+                     {message.message_type === 'text' || !message.message_type ? (
+                       <p className="break-words">{message.content}</p>
+                     ) : message.message_type === 'image' ? (
+                       <div className="space-y-2">
+                         <img 
+                           src={message.content} 
+                           alt="Image"
+                           className="max-w-[200px] max-h-[200px] object-cover rounded-md"
+                         />
+                       </div>
+                     ) : message.message_type === 'video' ? (
+                       <div className="space-y-2">
+                         <video 
+                           controls 
+                           className="max-w-[200px] max-h-[200px] object-cover rounded-md"
+                         >
+                           <source src={message.content} />
+                         </video>
+                       </div>
+                     ) : (
+                       <p className="break-words">{message.content}</p>
+                     )}
+                     
+                     <p className={`text-xs mt-1 ${isOwn ? 'text-white/80' : 'text-white/60'}`}>
+                       {new Date(message.created_at).toLocaleTimeString([], {
+                         hour: '2-digit',
+                         minute: '2-digit'
+                       })}
+                     </p>
+                   </div>
                 </div>
               </motion.div>
             );
@@ -282,9 +450,42 @@ export const SimpleOptimizedChatArea = memo(({ conversationId, onShowDetails }: 
       {/* Input */}
       <div className="p-4 border-t border-white/10">
         <div className="flex items-center space-x-3">
-          <Button variant="ghost" size="sm" className="text-white/70 hover:text-white">
-            <Paperclip className="h-5 w-5" />
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="sm" className="text-white/70 hover:text-white">
+                <Paperclip className="h-5 w-5" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="bg-black/80 border-white/20">
+              <DropdownMenuItem 
+                className="text-white cursor-pointer"
+                onClick={() => fileInputRef.current?.click()}
+              >
+                📁 Upload File
+              </DropdownMenuItem>
+              <DropdownMenuItem 
+                className="text-white cursor-pointer"
+                onClick={() => setShowCameraDialog(true)}
+              >
+                <Camera className="h-4 w-4 mr-2" />
+                Take Photo/Video
+              </DropdownMenuItem>
+              <DropdownMenuItem 
+                className="text-white cursor-pointer"
+                onClick={() => setShowSnapCamera(true)}
+              >
+                <Zap className="h-4 w-4 mr-2" />
+                Send Snap
+              </DropdownMenuItem>
+              <DropdownMenuItem 
+                className="text-white cursor-pointer"
+                onClick={isRecording ? stopRecording : startRecording}
+              >
+                🎥 {isRecording ? 'Stop Recording' : 'Record Video'}
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
           <div className="flex-1 relative">
             <Input
               value={newMessage}
@@ -294,14 +495,11 @@ export const SimpleOptimizedChatArea = memo(({ conversationId, onShowDetails }: 
               className="bg-white/10 border-white/20 text-white placeholder:text-white/50 pr-12"
               disabled={sending}
             />
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              className="absolute right-2 top-1/2 transform -translate-y-1/2 text-white/70 hover:text-white"
-            >
-              <Smile className="h-4 w-4" />
-            </Button>
+            <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
+              <EmojiPicker onEmojiSelect={handleEmojiSelect} />
+            </div>
           </div>
+          
           <Luxury3DButton
             variant="primary"
             size="sm"
@@ -317,6 +515,44 @@ export const SimpleOptimizedChatArea = memo(({ conversationId, onShowDetails }: 
           </Luxury3DButton>
         </div>
       </div>
+
+      {/* Hidden file input */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        className="hidden"
+        accept="image/*,video/*,audio/*,.pdf,.doc,.docx"
+        onChange={(e) => e.target.files && handleFileUpload(e.target.files)}
+      />
+
+      {/* Call Dialog */}
+      {showCallDialog && userProfile && (
+        <CallDialog
+          isOpen={showCallDialog}
+          onClose={() => setShowCallDialog(false)}
+          callType={callType}
+          recipient={{
+            id: conversationId,
+            username: userProfile.username || 'Unknown User',
+            avatar_url: userProfile.avatar_url
+          }}
+        />
+      )}
+
+      {/* Camera Dialog */}
+      <CameraDialog
+        open={showCameraDialog}
+        onOpenChange={setShowCameraDialog}
+        onSendCapture={handleCameraCapture}
+      />
+
+      {/* Snap Camera */}
+      {showSnapCamera && (
+        <SnapCamera
+          onCapture={handleSnapCapture}
+          onClose={() => setShowSnapCamera(false)}
+        />
+      )}
     </div>
   );
 });
