@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useSession } from "@supabase/auth-helpers-react";
 import { supabase } from "@/integrations/supabase/client";
 import { format, subDays } from "date-fns";
@@ -80,7 +80,7 @@ export function useEroboardData() {
   const [streamingAnalyticsData, setStreamingAnalyticsData] = useState<any>({});
   const [contentAnalyticsData, setContentAnalyticsData] = useState<any>({});
 
-  const fetchDashboardData = async (dateRange?: DateRange, forceRefresh = false) => {
+  const fetchDashboardData = useCallback(async (dateRange?: DateRange, forceRefresh = false) => {
     if (!session?.user?.id) {
       console.log('❌ No user session found');
       setLoading(false);
@@ -393,7 +393,7 @@ export function useEroboardData() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [session?.user?.id]);
 
   // Initial data fetch on component mount
   useEffect(() => {
@@ -401,7 +401,7 @@ export function useEroboardData() {
       console.log('🔄 Initial data fetch triggered for user:', session.user.id);
       fetchDashboardData();
     }
-  }, [session?.user?.id, initialDataLoaded]);
+  }, [session?.user?.id, initialDataLoaded, fetchDashboardData]);
 
   // Set up real-time updates only after initial load
   useEffect(() => {
@@ -457,7 +457,7 @@ export function useEroboardData() {
       supabase.removeChannel(postsChannel);
       supabase.removeChannel(followersChannel);
     };
-  }, [session?.user?.id, initialDataLoaded]);
+  }, [session?.user?.id, initialDataLoaded, fetchDashboardData]);
 
   return {
     loading,
