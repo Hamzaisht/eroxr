@@ -14,7 +14,7 @@ import { CameraDialog } from './CameraDialog';
 import { SnapCamera } from './chat/SnapCamera';
 import { MessageBubbleContent } from './message-parts/MessageBubbleContent';
 import { useVideoRecording } from './useVideoRecording';
-import { EmojiPicker } from './chat/EmojiPicker';
+import { EmojiPicker, transformTextToEmoji } from './chat/EmojiPicker';
 import { AttachmentButton } from './message-parts/AttachmentButton';
 import { MediaPreviewInChat } from './chat/MediaPreviewInChat';
 
@@ -108,10 +108,13 @@ export const SimpleOptimizedChatArea = memo(({ conversationId, onShowDetails }: 
     try {
       // Send text message if present
       if (newMessage.trim()) {
+        // Transform text shortcuts to emojis before sending
+        const transformedMessage = transformTextToEmoji(newMessage.trim());
+        
         const { error } = await supabase
           .from('direct_messages')
           .insert({
-            content: newMessage.trim(),
+            content: transformedMessage,
             sender_id: user.id,
             recipient_id: conversationId,
             message_type: 'text'
@@ -566,7 +569,12 @@ export const SimpleOptimizedChatArea = memo(({ conversationId, onShowDetails }: 
           <div className="flex-1 relative">
             <Input
               value={newMessage}
-              onChange={(e) => setNewMessage(e.target.value)}
+              onChange={(e) => {
+                const value = e.target.value;
+                // Transform common text shortcuts to emojis as user types
+                const transformedValue = transformTextToEmoji(value);
+                setNewMessage(transformedValue);
+              }}
               onKeyPress={(e) => e.key === 'Enter' && !e.shiftKey && sendMessage()}
               placeholder="Type your message..."
               className="bg-white/10 border-white/20 text-white placeholder:text-white/50 pr-12"
