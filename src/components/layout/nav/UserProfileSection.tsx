@@ -44,8 +44,27 @@ export const UserProfileSection = ({ isExpanded, currentUser }: UserProfileSecti
     navigate('/settings');
   };
 
+  // Always show logout if we have a session, even if currentUser is loading
   if (!currentUser) {
-    return null;
+    return (
+      <motion.div
+        className="mt-auto p-4 border-t border-slate-700/30"
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.3 }}
+      >
+        {isExpanded && (
+          <Button
+            onClick={handleSignOut}
+            variant="ghost"
+            size="sm"
+            className="w-full justify-start text-slate-300 hover:text-red-400 hover:bg-slate-800/50"
+          >
+            <LogOut className="w-4 h-4 mr-2" />
+            Sign Out
+          </Button>
+        )}
+      </motion.div>
+    );
   }
 
   return (
