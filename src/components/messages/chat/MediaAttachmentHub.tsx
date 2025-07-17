@@ -61,29 +61,36 @@ export const MediaAttachmentHub = ({ onClose, onMediaSelect }: MediaAttachmentHu
   }
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: 10 }}
-      transition={{ duration: 0.2, ease: "easeOut" }}
-      className="absolute bottom-12 left-1/2 transform -translate-x-1/2 z-50"
-      onClick={(e) => e.stopPropagation()}
-    >
-      {/* Fluid container with dark theme */}
-      <motion.div 
-        className="relative rounded-lg overflow-hidden"
-        style={{
-          background: 'linear-gradient(145deg, #0D1117, #161B22)',
-          border: '1px solid hsla(var(--border) / 0.3)',
-          backdropFilter: 'blur(20px)',
-          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4)',
-          width: '200px'
-        }}
-        initial={{ scale: 0.9, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        transition={{ delay: 0.05, type: "spring", stiffness: 300, damping: 25 }}
-        onMouseLeave={() => setHoveredIndex(null)}
+    <>
+      {/* Close overlay */}
+      <div
+        className="fixed inset-0 z-40"
+        onClick={onClose}
+      />
+      
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: 10 }}
+        transition={{ duration: 0.2, ease: "easeOut" }}
+        className="absolute bottom-12 left-1/2 transform -translate-x-1/2 z-50"
+        onClick={(e) => e.stopPropagation()}
       >
+        {/* Fluid container with dark theme */}
+        <motion.div 
+          className="relative rounded-lg overflow-hidden"
+          style={{
+            background: 'linear-gradient(145deg, #0D1117, #161B22)',
+            border: '1px solid hsla(var(--border) / 0.3)',
+            backdropFilter: 'blur(20px)',
+            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4)',
+            width: '200px'
+          }}
+          initial={{ scale: 0.9, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ delay: 0.05, type: "spring", stiffness: 300, damping: 25 }}
+          onMouseLeave={() => setHoveredIndex(null)}
+        >
         {/* Vertical stack layout */}
         <div 
           className="flex flex-col"
@@ -216,16 +223,8 @@ export const MediaAttachmentHub = ({ onClose, onMediaSelect }: MediaAttachmentHu
             repeatDelay: 2
           }}
         />
+        </motion.div>
       </motion.div>
-      
-      {/* Close overlay */}
-      <motion.div
-        className="fixed inset-0 -z-10"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        onClick={onClose}
-      />
-    </motion.div>
+    </>
   );
 };
