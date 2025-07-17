@@ -195,7 +195,7 @@ export const SimpleOptimizedChatArea = memo(({ conversationId, onShowDetails }: 
     } finally {
       setSending(false);
     }
-  }, [newMessage, pendingAttachments, user?.id, conversationId, sending, fetchMessages, toast]);
+  }, [newMessage, user?.id, conversationId, sending, fetchMessages, toast, pendingAttachments, setPendingAttachments]);
 
   // Scroll to bottom
   const scrollToBottom = useCallback(() => {
