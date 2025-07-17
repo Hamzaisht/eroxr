@@ -36,6 +36,7 @@ import {
 } from "lucide-react";
 
 const Eroboard = () => {
+  // All hooks must be at the top level - before any early returns
   const [activeTab, setActiveTab] = useState("overview");
   const session = useSession();
   const { isSuperAdmin } = useUserRole();

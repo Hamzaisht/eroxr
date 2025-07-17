@@ -408,11 +408,8 @@ export function useEroboardData() {
       // Only set error for non-network issues
       if (!error.message?.includes('Failed to fetch')) {
         setError(error.message || "Error fetching dashboard data");
-        toast({
-          variant: "destructive",
-          title: "Error fetching dashboard data",
-          description: "Please try again later."
-        });
+        // Use console instead of toast to avoid circular dependency
+        console.error('Dashboard data fetch error:', error.message);
       } else {
         // For network issues, just log and continue with default data
         console.log('📡 Network issue detected, using default data');
@@ -420,13 +417,13 @@ export function useEroboardData() {
     } finally {
       setLoading(false);
     }
-  }, [session?.user?.id, initialDataLoaded, toast]);
+  }, [session?.user?.id, initialDataLoaded]); // Removed toast dependency
 
   useEffect(() => {
     if (session?.user?.id && !initialDataLoaded) {
       fetchDashboardData();
     }
-  }, [session?.user?.id, initialDataLoaded, fetchDashboardData]);
+  }, [session?.user?.id, initialDataLoaded]); // Removed fetchDashboardData dependency
 
   // Separate effect for real-time subscriptions to prevent infinite loops
   useEffect(() => {

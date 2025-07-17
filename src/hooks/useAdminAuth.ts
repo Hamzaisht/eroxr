@@ -65,15 +65,15 @@ export const useAdminAuth = () => {
       }
     };
 
-    // Only check once per user change, not on every render
-    if (user?.id && isLoading) {
+    // Only check once per user change, and when first loading
+    if (user?.id) {
       checkAdminStatus();
-    } else if (!user?.id) {
+    } else if (!user?.id && !isLoading) {
       setIsAdmin(false);
       setAdminUser(null);
       setIsLoading(false);
     }
-  }, [user?.id]); // Removed isLoading dependency to prevent loops
+  }, [user?.id]); // Only depend on user ID to prevent loops
 
   return { isAdmin, adminUser, isLoading };
 };
