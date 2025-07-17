@@ -160,7 +160,7 @@ const Messages = memo(() => {
         <div className="min-h-screen relative z-10">
           <DemoConversations />
           
-          <div className="flex h-[50vh]">
+          <div className="flex h-[calc(100vh-6rem)]">
             {/* Luxury Sidebar */}
             <LuxuryGlassCard 
               variant="secondary" 
