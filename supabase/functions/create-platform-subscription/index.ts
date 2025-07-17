@@ -60,28 +60,31 @@ serve(async (req) => {
     }
 
     // Create checkout session for platform subscription
+    // Using a predefined Stripe Price ID for consistency and webhook reliability
+    const PLATFORM_PREMIUM_PRICE_ID = "price_1QgqPsP8QQVhnKRqHLypcOmD"; // 49 SEK/month
+    
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
       line_items: [
         {
-          price_data: {
-            currency: "sek",
-            product_data: {
-              name: "Premium Access",
-              description: "Access to messaging, media viewing, and all platform features",
-            },
-            unit_amount: 4900, // 49 SEK = $3.99
-            recurring: { interval: "month" },
-          },
+          price: PLATFORM_PREMIUM_PRICE_ID,
           quantity: 1,
         },
       ],
       mode: "subscription",
-      success_url: `${req.headers.get("origin")}/premium-success`,
+      success_url: `${req.headers.get("origin")}/premium-success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${req.headers.get("origin")}/premium-cancelled`,
+      allow_promotion_codes: true,
+      billing_address_collection: 'auto',
       metadata: {
         user_id: user.id,
         subscription_type: "platform_premium",
+      },
+      subscription_data: {
+        metadata: {
+          user_id: user.id,
+          subscription_type: "platform_premium",
+        },
       },
     });
 
