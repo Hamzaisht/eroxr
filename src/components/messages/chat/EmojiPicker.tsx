@@ -100,11 +100,11 @@ export const EmojiPicker = ({ onEmojiSelect }: EmojiPickerProps) => {
           <Smile className="h-5 w-5" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-80 p-3 holographic-card border-white/20 bg-black/90 backdrop-blur-xl" side="top">
-        {/* Current page emojis with touch support */}
+      <PopoverContent className="w-80 p-4 holographic-card border-white/20 bg-black/90 backdrop-blur-xl" side="top">
+        {/* Current page emojis with proper grid layout */}
         <div 
           ref={containerRef}
-          className="grid grid-cols-8 gap-2 mb-4 select-none"
+          className="grid grid-cols-8 gap-1 mb-4 select-none w-full"
           onTouchStart={handleTouchStart}
           onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
@@ -113,13 +113,17 @@ export const EmojiPicker = ({ onEmojiSelect }: EmojiPickerProps) => {
             <button
               key={`${currentPage}-${index}`}
               onClick={() => handleEmojiClick(emoji)}
-              className="text-xl hover:bg-white/10 p-2 rounded-lg transition-all duration-200 hover:scale-110 flex items-center justify-center min-h-[44px] min-w-[44px] cursor-pointer"
+              className="relative text-xl hover:bg-white/10 rounded-lg transition-all duration-200 hover:scale-110 flex items-center justify-center aspect-square w-full h-10 cursor-pointer border-0 bg-transparent"
               style={{ 
                 WebkitTapHighlightColor: 'transparent',
-                userSelect: 'none'
+                userSelect: 'none',
+                WebkitUserSelect: 'none',
+                MozUserSelect: 'none',
+                msUserSelect: 'none'
               }}
+              type="button"
             >
-              {emoji}
+              <span className="pointer-events-none select-none">{emoji}</span>
             </button>
           ))}
         </div>
