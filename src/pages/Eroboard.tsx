@@ -4,7 +4,12 @@ import { useSession } from "@supabase/auth-helpers-react";
 import { InteractiveNav } from "@/components/layout/InteractiveNav";
 import { BackButton } from "@/components/ui/back-button";
 import { useUserRole } from "@/hooks/useUserRole";
-import { useSimpleEroboardData } from "@/hooks/useSimpleEroboardData";
+import { useEroboardData } from "@/hooks/useEroboardData";
+import { EarningsOverview } from "@/components/eroboard/analytics/EarningsOverview";
+import { StreamingAnalytics } from "@/components/eroboard/analytics/StreamingAnalytics";
+import { ContentAnalytics } from "@/components/eroboard/analytics/ContentAnalytics";
+import { AudienceAnalytics } from "@/components/eroboard/analytics/AudienceAnalytics";
+import { GrowthAnalytics } from "@/components/eroboard/analytics/GrowthAnalytics";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -32,7 +37,25 @@ const Eroboard = () => {
   const [activeTab, setActiveTab] = useState("overview");
   const session = useSession();
   const { isSuperAdmin } = useUserRole();
-  const { loading, error, data } = useSimpleEroboardData();
+  const { 
+    loading, 
+    error, 
+    stats, 
+    revenueBreakdown, 
+    earningsData, 
+    creatorRankings, 
+    engagementData, 
+    contentTypeData, 
+    contentPerformanceData, 
+    latestPayout, 
+    geographicData, 
+    engagedFansData, 
+    conversionFunnelData, 
+    growthAnalyticsData, 
+    streamingAnalyticsData, 
+    contentAnalyticsData,
+    fetchDashboardData 
+  } = useEroboardData();
   const { toast } = useToast();
   
   console.log('🔄 EroBoard loaded, activeTab:', activeTab, 'loading:', loading);
@@ -112,33 +135,33 @@ const Eroboard = () => {
     );
   }
 
-  // Quick stats using simple data
+  // Quick stats using real analytics data
   const quickStats = [
     {
       title: "Total Earnings",
-      value: `$${data.totalEarnings.toLocaleString()}`,
+      value: `$${stats.totalEarnings.toLocaleString()}`,
       change: "+12%",
       icon: DollarSign,
       color: "text-green-400"
     },
     {
       title: "Followers",
-      value: data.followers.toLocaleString(),
-      change: `+${data.newSubscribers}`,
+      value: stats.followers.toLocaleString(),
+      change: `+${stats.newSubscribers}`,
       icon: Users,
       color: "text-blue-400"
     },
     {
       title: "Total Views",
-      value: data.totalViews > 1000 ? `${(data.totalViews / 1000).toFixed(1)}K` : data.totalViews.toString(),
-      change: `${data.totalContent} posts`,
+      value: stats.totalViews > 1000 ? `${(stats.totalViews / 1000).toFixed(1)}K` : stats.totalViews.toString(),
+      change: `${stats.totalContent} posts`,
       icon: BarChart3,
       color: "text-purple-400"
     },
     {
       title: "Engagement Rate",
-      value: `${data.engagementRate.toFixed(1)}%`,
-      change: `${data.vipFans} VIP fans`,
+      value: `${stats.engagementRate.toFixed(1)}%`,
+      change: `${stats.vipFans} VIP fans`,
       icon: TrendingUp,
       color: "text-pink-400"
     }
@@ -148,7 +171,7 @@ const Eroboard = () => {
     {
       type: "optimization",
       title: "Best posting time",
-      insight: `Your content performs ${data.engagementRate > 5 ? '30%' : '15%'} better when posted between 8-10 PM`,
+      insight: `Your content performs ${stats.engagementRate > 5 ? '30%' : '15%'} better when posted between 8-10 PM`,
       action: "Schedule more content during peak hours"
     },
     {
@@ -160,7 +183,7 @@ const Eroboard = () => {
     {
       type: "monetization",
       title: "Revenue opportunity", 
-      insight: `Your top ${Math.min(data.vipFans, 20)}% of fans contribute 80% of revenue`,
+      insight: `Your top ${Math.min(stats.vipFans, 20)}% of fans contribute 80% of revenue`,
       action: "Create exclusive content for VIP subscribers"
     }
   ];
@@ -224,7 +247,7 @@ const Eroboard = () => {
                     <div className="bg-card/80 backdrop-blur-sm rounded-2xl p-4 border border-border/50">
                       <p className="text-primary text-xl font-bold">Elite Creator</p>
                       <Badge className="bg-primary/20 text-primary mt-2 px-3 py-1">
-                        {data.totalEarnings > 1000 ? 'Top 5% Performer' : 'Rising Star'}
+                        {stats.totalEarnings > 1000 ? 'Top 5% Performer' : 'Rising Star'}
                       </Badge>
                     </div>
                   </div>
@@ -333,7 +356,7 @@ const Eroboard = () => {
             </Card>
 
             {/* Sample Data Generation - show if no earnings */}
-            {data.totalEarnings === 0 && (
+            {stats.totalEarnings === 0 && (
               <Card className="relative overflow-hidden bg-gradient-to-br from-blue-500/10 via-purple-500/5 to-blue-500/15 border border-blue-500/30 backdrop-blur-sm">
                 <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-purple-500/10" />
                 <div className="absolute top-4 right-4 w-32 h-32 bg-blue-500/10 rounded-full blur-2xl animate-pulse" />
@@ -431,224 +454,56 @@ const Eroboard = () => {
           </div>
         );
       case "earnings":
-        return (
-          <div className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <Card className="p-6">
-                <h3 className="text-lg font-semibold mb-2">Total Revenue</h3>
-                <p className="text-3xl font-bold text-green-400">${data.totalEarnings.toLocaleString()}</p>
-                <p className="text-sm text-muted-foreground mt-2">+12% from last month</p>
-              </Card>
-              <Card className="p-6">
-                <h3 className="text-lg font-semibold mb-2">Average Per Post</h3>
-                <p className="text-3xl font-bold text-blue-400">
-                  ${data.totalContent > 0 ? (data.totalEarnings / data.totalContent).toFixed(2) : '0.00'}
-                </p>
-                <p className="text-sm text-muted-foreground mt-2">Across {data.totalContent} posts</p>
-              </Card>
-              <Card className="p-6">
-                <h3 className="text-lg font-semibold mb-2">Top Earner Revenue</h3>
-                <p className="text-3xl font-bold text-purple-400">${(data.totalEarnings * 0.3).toFixed(0)}</p>
-                <p className="text-sm text-muted-foreground mt-2">Best performing content</p>
-              </Card>
-            </div>
-            
-            <Card className="p-6">
-              <h3 className="text-xl font-bold mb-4">Revenue Breakdown</h3>
-              <div className="space-y-4">
-                <div className="flex justify-between items-center">
-                  <span>Subscriptions</span>
-                  <span className="font-semibold">${(data.totalEarnings * 0.6).toFixed(0)}</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span>PPV Content</span>
-                  <span className="font-semibold">${(data.totalEarnings * 0.3).toFixed(0)}</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span>Tips</span>
-                  <span className="font-semibold">${(data.totalEarnings * 0.1).toFixed(0)}</span>
-                </div>
-              </div>
-            </Card>
-          </div>
-        );
+        return <EarningsOverview 
+          data={{ 
+            stats, 
+            revenueBreakdown, 
+            earningsData, 
+            contentPerformanceData,
+            latestPayout
+          }} 
+          isLoading={loading} 
+        />;
       case "content":
-        return (
-          <div className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              <Card className="p-6">
-                <h3 className="text-lg font-semibold mb-2">Total Posts</h3>
-                <p className="text-3xl font-bold text-blue-400">{data.totalContent}</p>
-              </Card>
-              <Card className="p-6">
-                <h3 className="text-lg font-semibold mb-2">Total Views</h3>
-                <p className="text-3xl font-bold text-green-400">{data.totalViews.toLocaleString()}</p>
-              </Card>
-              <Card className="p-6">
-                <h3 className="text-lg font-semibold mb-2">Avg Views/Post</h3>
-                <p className="text-3xl font-bold text-purple-400">
-                  {data.totalContent > 0 ? Math.round(data.totalViews / data.totalContent) : 0}
-                </p>
-              </Card>
-              <Card className="p-6">
-                <h3 className="text-lg font-semibold mb-2">Engagement Rate</h3>
-                <p className="text-3xl font-bold text-pink-400">{data.engagementRate.toFixed(1)}%</p>
-              </Card>
-            </div>
-            
-            <Card className="p-6">
-              <h3 className="text-xl font-bold mb-4">Content Performance</h3>
-              <div className="space-y-4">
-                <div className="flex justify-between items-center p-4 bg-muted/20 rounded">
-                  <div>
-                    <p className="font-semibold">Video Content</p>
-                    <p className="text-sm text-muted-foreground">Higher engagement rate</p>
-                  </div>
-                  <span className="text-green-400">+45% engagement</span>
-                </div>
-                <div className="flex justify-between items-center p-4 bg-muted/20 rounded">
-                  <div>
-                    <p className="font-semibold">Photo Sets</p>
-                    <p className="text-sm text-muted-foreground">Consistent performance</p>
-                  </div>
-                  <span className="text-blue-400">Average performance</span>
-                </div>
-              </div>
-            </Card>
-          </div>
-        );
+        return <ContentAnalytics 
+          data={{ 
+            stats, 
+            contentAnalyticsData, 
+            contentPerformanceData, 
+            contentTypeData 
+          }} 
+          isLoading={loading} 
+        />;
       case "audience":
-        return (
-          <div className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <Card className="p-6">
-                <h3 className="text-lg font-semibold mb-2">Total Followers</h3>
-                <p className="text-3xl font-bold text-blue-400">{data.followers.toLocaleString()}</p>
-                <p className="text-sm text-muted-foreground mt-2">+{data.newSubscribers} this month</p>
-              </Card>
-              <Card className="p-6">
-                <h3 className="text-lg font-semibold mb-2">VIP Fans</h3>
-                <p className="text-3xl font-bold text-purple-400">{data.vipFans}</p>
-                <p className="text-sm text-muted-foreground mt-2">Your top supporters</p>
-              </Card>
-              <Card className="p-6">
-                <h3 className="text-lg font-semibold mb-2">Active Subscribers</h3>
-                <p className="text-3xl font-bold text-green-400">{data.totalSubscribers}</p>
-                <p className="text-sm text-muted-foreground mt-2">Currently subscribed</p>
-              </Card>
-            </div>
-            
-            <Card className="p-6">
-              <h3 className="text-xl font-bold mb-4">Audience Insights</h3>
-              <div className="space-y-4">
-                <div>
-                  <p className="font-semibold mb-2">Peak Activity Times</p>
-                  <p className="text-muted-foreground">Your audience is most active between 8-10 PM</p>
-                </div>
-                <div>
-                  <p className="font-semibold mb-2">Top Demographics</p>
-                  <p className="text-muted-foreground">Primary age group: 25-35 years</p>
-                </div>
-                <div>
-                  <p className="font-semibold mb-2">Engagement Patterns</p>
-                  <p className="text-muted-foreground">Higher engagement on weekends</p>
-                </div>
-              </div>
-            </Card>
-          </div>
-        );
+        return <AudienceAnalytics 
+          data={{ 
+            stats, 
+            geographicData, 
+            engagedFansData, 
+            conversionFunnelData, 
+            growthAnalyticsData 
+          }} 
+          isLoading={loading} 
+        />;
       case "streaming":
-        return (
-          <div className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              <Card className="p-6">
-                <h3 className="text-lg font-semibold mb-2">Total Stream Time</h3>
-                <p className="text-3xl font-bold text-blue-400">24h</p>
-                <p className="text-sm text-muted-foreground mt-2">This month</p>
-              </Card>
-              <Card className="p-6">
-                <h3 className="text-lg font-semibold mb-2">Avg Viewers</h3>
-                <p className="text-3xl font-bold text-green-400">45</p>
-                <p className="text-sm text-muted-foreground mt-2">Per stream</p>
-              </Card>
-              <Card className="p-6">
-                <h3 className="text-lg font-semibold mb-2">Peak Viewers</h3>
-                <p className="text-3xl font-bold text-purple-400">89</p>
-                <p className="text-sm text-muted-foreground mt-2">Highest concurrent</p>
-              </Card>
-              <Card className="p-6">
-                <h3 className="text-lg font-semibold mb-2">Stream Revenue</h3>
-                <p className="text-3xl font-bold text-pink-400">${(data.totalEarnings * 0.2).toFixed(0)}</p>
-                <p className="text-sm text-muted-foreground mt-2">From live streams</p>
-              </Card>
-            </div>
-            
-            <Card className="p-6">
-              <h3 className="text-xl font-bold mb-4">Recent Streams</h3>
-              <div className="space-y-4">
-                <div className="flex justify-between items-center p-4 bg-muted/20 rounded">
-                  <div>
-                    <p className="font-semibold">Evening Stream Session</p>
-                    <p className="text-sm text-muted-foreground">2 hours • 67 viewers</p>
-                  </div>
-                  <span className="text-green-400">$89</span>
-                </div>
-                <div className="flex justify-between items-center p-4 bg-muted/20 rounded">
-                  <div>
-                    <p className="font-semibold">Interactive Q&A</p>
-                    <p className="text-sm text-muted-foreground">1.5 hours • 42 viewers</p>
-                  </div>
-                  <span className="text-green-400">$56</span>
-                </div>
-              </div>
-            </Card>
-          </div>
-        );
+        return <StreamingAnalytics 
+          data={{ 
+            stats, 
+            earningsData, 
+            engagementData, 
+            streamingAnalyticsData 
+          }} 
+          isLoading={loading} 
+        />;
       case "growth":
-        return (
-          <div className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              <Card className="p-6">
-                <h3 className="text-lg font-semibold mb-2">Growth Rate</h3>
-                <p className="text-3xl font-bold text-green-400">+15%</p>
-                <p className="text-sm text-muted-foreground mt-2">Monthly follower growth</p>
-              </Card>
-              <Card className="p-6">
-                <h3 className="text-lg font-semibold mb-2">New Followers</h3>
-                <p className="text-3xl font-bold text-blue-400">{data.newSubscribers}</p>
-                <p className="text-sm text-muted-foreground mt-2">This month</p>
-              </Card>
-              <Card className="p-6">
-                <h3 className="text-lg font-semibold mb-2">Retention Rate</h3>
-                <p className="text-3xl font-bold text-purple-400">85%</p>
-                <p className="text-sm text-muted-foreground mt-2">Subscriber retention</p>
-              </Card>
-              <Card className="p-6">
-                <h3 className="text-lg font-semibold mb-2">Conversion Rate</h3>
-                <p className="text-3xl font-bold text-pink-400">12%</p>
-                <p className="text-sm text-muted-foreground mt-2">Follower to subscriber</p>
-              </Card>
-            </div>
-            
-            <Card className="p-6">
-              <h3 className="text-xl font-bold mb-4">Growth Insights</h3>
-              <div className="space-y-4">
-                <div>
-                  <p className="font-semibold mb-2">Best Growth Periods</p>
-                  <p className="text-muted-foreground">Weekends show 23% higher follower acquisition</p>
-                </div>
-                <div>
-                  <p className="font-semibold mb-2">Content Impact</p>
-                  <p className="text-muted-foreground">Video content drives 2x more followers than photos</p>
-                </div>
-                <div>
-                  <p className="font-semibold mb-2">Retention Factors</p>
-                  <p className="text-muted-foreground">Regular posting schedule improves retention by 35%</p>
-                </div>
-              </div>
-            </Card>
-          </div>
-        );
+        return <GrowthAnalytics 
+          data={{ 
+            stats, 
+            growthAnalyticsData, 
+            geographicData 
+          }} 
+          isLoading={loading} 
+        />;
       case "insights":
         return (
           <div className="space-y-6">
@@ -817,7 +672,7 @@ const Eroboard = () => {
               <div className="flex items-center gap-6">
                 <div className="flex items-center gap-3">
                   <div className="text-right">
-                    <div className="text-sm font-medium text-foreground">${data.totalEarnings.toLocaleString()}</div>
+                    <div className="text-sm font-medium text-foreground">${stats.totalEarnings.toLocaleString()}</div>
                     <div className="text-xs text-muted-foreground">Total Earnings</div>
                   </div>
                   <div className="w-12 h-12 rounded-full bg-gradient-to-tr from-primary/20 to-accent/20 border border-primary/30 flex items-center justify-center">
@@ -827,7 +682,7 @@ const Eroboard = () => {
                 
                 <div className="flex items-center gap-3">
                   <div className="text-right">
-                    <div className="text-sm font-medium text-foreground">{data.followers.toLocaleString()}</div>
+                    <div className="text-sm font-medium text-foreground">{stats.followers.toLocaleString()}</div>
                     <div className="text-xs text-muted-foreground">Followers</div>
                   </div>
                   <div className="w-12 h-12 rounded-full bg-gradient-to-tr from-blue-500/20 to-cyan-400/20 border border-blue-500/30 flex items-center justify-center">
