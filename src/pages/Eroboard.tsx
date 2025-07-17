@@ -61,6 +61,15 @@ const Eroboard = () => {
   } = useEroboardData();
   
   console.log('✅ All hooks working - now showing full EroBoard interface');
+  console.log('🔍 EroBoard Debug Info:', {
+    loading,
+    error,
+    session: !!session,
+    sessionUser: session?.user?.id,
+    stats,
+    hasStats: !!stats,
+    totalEarnings: stats?.totalEarnings
+  });
 
   if (loading) {
     return <LoadingOverlay />;
