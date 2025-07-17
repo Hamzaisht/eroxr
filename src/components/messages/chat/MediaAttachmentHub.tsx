@@ -21,7 +21,7 @@ export const MediaAttachmentHub = ({ onClose, onMediaSelect }: MediaAttachmentHu
     { id: 'snax', name: 'Snax', icon: Zap, action: () => setShowCamera(true) },
     { id: 'photos', name: 'Photos', icon: Image, action: () => handleFileUpload('image/*') },
     { id: 'videos', name: 'Videos', icon: Video, action: () => handleFileUpload('video/*') },
-    { id: 'voice', name: 'Voice', icon: Mic, action: () => console.log('Voice recording') },
+    { id: 'voice', name: 'Voice', icon: Mic, action: () => handleVoiceRecording() },
     { id: 'documents', name: 'Files', icon: FileText, action: () => handleFileUpload('*/*') }
   ];
 
@@ -50,6 +50,40 @@ export const MediaAttachmentHub = ({ onClose, onMediaSelect }: MediaAttachmentHu
     category.action();
   };
 
+  const handleVoiceRecording = () => {
+    // Start voice recording
+    navigator.mediaDevices.getUserMedia({ audio: true })
+      .then(stream => {
+        const mediaRecorder = new MediaRecorder(stream);
+        const audioChunks: Blob[] = [];
+
+        mediaRecorder.addEventListener('dataavailable', event => {
+          audioChunks.push(event.data);
+        });
+
+        mediaRecorder.addEventListener('stop', () => {
+          const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+          onMediaSelect(audioBlob, 'media');
+          stream.getTracks().forEach(track => track.stop());
+        });
+
+        mediaRecorder.start();
+        
+        // Stop recording after 10 seconds or when user stops
+        setTimeout(() => {
+          if (mediaRecorder.state === 'recording') {
+            mediaRecorder.stop();
+          }
+        }, 10000);
+      })
+      .catch(error => {
+        console.error('Error accessing microphone:', error);
+        alert('Could not access microphone. Please check permissions.');
+      });
+    
+    onClose();
+  };
+
   if (showCamera) {
     return (
       <SnapCamera
@@ -60,7 +94,7 @@ export const MediaAttachmentHub = ({ onClose, onMediaSelect }: MediaAttachmentHu
   }
 
   return (
-    <div className="absolute bottom-full left-1/2 transform -translate-x-1/4 mb-4 z-50">
+    <div className="absolute bottom-full left-1/2 transform -translate-x-2 mb-4 z-50">
       {/* Background overlay */}
       <div 
         className="fixed inset-0 -z-10" 

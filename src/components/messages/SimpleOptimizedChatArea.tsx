@@ -470,11 +470,17 @@ export const SimpleOptimizedChatArea = memo(({ conversationId, onShowDetails }: 
                     </Avatar>
                   )}
                    <div
-                     className={`px-4 py-2 rounded-2xl ${
+                     className={`px-4 py-3 rounded-2xl backdrop-blur-sm transition-all duration-300 hover:scale-[1.02] ${
                        isOwn
-                         ? 'bg-gradient-to-r from-purple-500 to-cyan-500 text-white rounded-br-md'
-                         : 'bg-white/10 text-white border border-white/20 rounded-bl-md'
+                         ? 'bg-white/95 text-gray-900 rounded-br-md shadow-lg border border-white/20'
+                         : 'bg-gray-900/80 text-white border border-gray-700/50 rounded-bl-md shadow-xl'
                      }`}
+                     style={{
+                       backdropFilter: 'blur(20px)',
+                       boxShadow: isOwn 
+                         ? '0 8px 32px rgba(255, 255, 255, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.2)'
+                         : '0 8px 32px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1)'
+                     }}
                    >
                      {/* Render message content based on type */}
                      {message.message_type === 'text' || !message.message_type ? (
@@ -500,7 +506,7 @@ export const SimpleOptimizedChatArea = memo(({ conversationId, onShowDetails }: 
                        <p className="break-words">{message.content}</p>
                      )}
                      
-                     <p className={`text-xs mt-1 ${isOwn ? 'text-white/80' : 'text-white/60'}`}>
+                     <p className={`text-xs mt-2 ${isOwn ? 'text-gray-600' : 'text-gray-400'}`}>
                        {new Date(message.created_at).toLocaleTimeString([], {
                          hour: '2-digit',
                          minute: '2-digit'
