@@ -96,29 +96,32 @@ export const MediaAttachmentHub = ({ onClose, onMediaSelect }: MediaAttachmentHu
             return (
               <motion.button
                 key={category.id}
-                className="relative flex items-center gap-3 px-4 py-3 cursor-pointer border-none bg-transparent text-left"
+                className="relative flex items-center gap-3 px-4 py-3 cursor-pointer border-none bg-transparent text-left outline-none"
                 style={{
                   color: isSnax ? 'hsl(var(--primary))' : 'white',
                 }}
                 animate={{
                   filter: hasHover && !isHovered ? 'blur(1px)' : 'blur(0px)',
                   scale: hasHover && !isHovered ? 0.95 : 1,
-                  backgroundColor: isHovered ? 'rgba(33, 38, 44, 0.8)' : 'transparent'
                 }}
                 transition={{ 
-                  duration: 0.3,
+                  duration: 0.2,
                   ease: "easeOut"
                 }}
+                whileHover={{
+                  backgroundColor: 'rgba(33, 38, 44, 0.8)',
+                  scale: 1.02
+                }}
                 whileTap={{
-                  scale: 0.95,
+                  scale: 0.98,
                   backgroundColor: 'rgba(26, 31, 36, 0.9)'
                 }}
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
+                onClick={() => {
+                  console.log('Clicked:', category.name);
                   category.action();
                 }}
                 onMouseEnter={() => setHoveredIndex(index)}
+                onMouseLeave={() => setHoveredIndex(null)}
               >
                 {/* Left accent line */}
                 <motion.div
