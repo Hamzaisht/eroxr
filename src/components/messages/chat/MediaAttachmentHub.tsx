@@ -63,143 +63,97 @@ export const MediaAttachmentHub = ({ onClose, onMediaSelect }: MediaAttachmentHu
 
   return (
     <motion.div
-      initial={{ opacity: 0, scale: 0.8, y: 20 }}
-      animate={{ opacity: 1, scale: 1, y: 0 }}
-      exit={{ opacity: 0, scale: 0.8, y: 20 }}
-      transition={{
-        type: "spring",
-        stiffness: 400,
-        damping: 25,
-        mass: 0.8
-      }}
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: 10 }}
+      transition={{ duration: 0.2, ease: "easeOut" }}
       className="absolute bottom-12 left-1/2 transform -translate-x-1/2 z-50"
       onClick={(e) => e.stopPropagation()}
     >
-      {/* Main container with glass morphism */}
+      {/* Fluid container with dark theme */}
       <motion.div 
-        className="relative bg-background/80 backdrop-blur-3xl rounded-3xl border border-primary/20 shadow-2xl p-6"
+        className="relative rounded-lg overflow-hidden"
         style={{
-          background: 'linear-gradient(145deg, hsla(var(--background) / 0.95), hsla(var(--background) / 0.85))',
-          boxShadow: '0 25px 60px -12px hsla(var(--primary) / 0.25), 0 0 0 1px hsla(var(--primary) / 0.1), inset 0 1px 0 hsla(var(--foreground) / 0.05)'
+          background: 'linear-gradient(145deg, #0D1117, #161B22)',
+          border: '1px solid hsla(var(--border) / 0.3)',
+          backdropFilter: 'blur(20px)',
+          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4)',
+          width: '200px'
         }}
-        initial={{ scale: 0.5, opacity: 0 }}
+        initial={{ scale: 0.9, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
-        transition={{ delay: 0.1, type: "spring", stiffness: 300, damping: 20 }}
+        transition={{ delay: 0.05, type: "spring", stiffness: 300, damping: 25 }}
+        onMouseLeave={() => setHoveredIndex(null)}
       >
-        {/* Grid layout for better organization */}
-        <div className="grid grid-cols-3 gap-4 w-fit">
+        {/* Vertical stack layout */}
+        <div className="flex flex-col">
           {categories.map((category, index) => {
             const Icon = category.icon;
             const isSnax = category.id === 'snax';
+            const isHovered = hoveredIndex === index;
+            const hasHover = hoveredIndex !== null;
             
             return (
               <motion.button
                 key={category.id}
-                className="group relative w-16 h-16 rounded-2xl flex flex-col items-center justify-center overflow-hidden"
+                className="relative flex items-center gap-3 px-4 py-3 cursor-pointer border-none bg-transparent text-left"
                 style={{
-                  background: isSnax 
-                    ? 'linear-gradient(135deg, hsla(var(--primary) / 0.15), hsla(var(--primary) / 0.05))'
-                    : 'linear-gradient(135deg, hsla(var(--muted) / 0.8), hsla(var(--muted) / 0.4))',
-                  backdropFilter: 'blur(20px)',
-                  border: `1px solid hsla(var(--${isSnax ? 'primary' : 'muted-foreground'}) / 0.2)`,
-                  boxShadow: hoveredIndex === index 
-                    ? '0 8px 32px hsla(var(--primary) / 0.3), inset 0 1px 0 hsla(var(--foreground) / 0.1)'
-                    : '0 4px 16px hsla(var(--foreground) / 0.05), inset 0 1px 0 hsla(var(--foreground) / 0.05)'
+                  color: isSnax ? 'hsl(var(--primary))' : 'white',
                 }}
-                initial={{ 
-                  scale: 0, 
-                  opacity: 0,
-                  rotateY: -90 
-                }}
-                animate={{ 
-                  scale: 1, 
-                  opacity: 1,
-                  rotateY: 0 
+                animate={{
+                  filter: hasHover && !isHovered ? 'blur(1px)' : 'blur(0px)',
+                  scale: hasHover && !isHovered ? 0.95 : 1,
+                  backgroundColor: isHovered ? '#21262C' : 'transparent'
                 }}
                 transition={{ 
-                  delay: index * 0.08 + 0.2,
-                  duration: 0.6,
-                  type: "spring",
-                  stiffness: 300,
-                  damping: 20
+                  duration: 0.3,
+                  ease: "easeOut"
                 }}
-                whileHover={{ 
-                  scale: 1.1,
-                  y: -2,
-                  transition: { 
-                    type: "spring", 
-                    stiffness: 400, 
-                    damping: 15,
-                    duration: 0.15
-                  }
-                }}
-                whileTap={{ 
-                  scale: 0.95,
-                  transition: { duration: 0.1 }
+                whileTap={{
+                  backgroundColor: '#1A1F24'
                 }}
                 onClick={category.action}
                 onMouseEnter={() => setHoveredIndex(index)}
-                onMouseLeave={() => setHoveredIndex(null)}
               >
-                {/* Background glow effect */}
+                {/* Left accent line */}
                 <motion.div
-                  className="absolute inset-0 rounded-2xl"
+                  className="absolute left-0 top-1 w-1 rounded-full"
                   style={{
-                    background: isSnax 
-                      ? 'radial-gradient(circle at center, hsla(var(--primary) / 0.2), transparent 70%)'
-                      : 'radial-gradient(circle at center, hsla(var(--muted-foreground) / 0.1), transparent 70%)',
-                    opacity: hoveredIndex === index ? 1 : 0
+                    height: 'calc(100% - 8px)',
+                    backgroundColor: '#2F81F7'
                   }}
-                  transition={{ duration: 0.3 }}
+                  initial={{ opacity: 0 }}
+                  animate={{ 
+                    opacity: isHovered ? 1 : 0
+                  }}
+                  transition={{ duration: 0.2 }}
                 />
                 
                 {/* Icon */}
                 <motion.div
-                  initial={{ scale: 1 }}
-                  animate={{ 
-                    scale: hoveredIndex === index ? 1.1 : 1,
-                    rotate: hoveredIndex === index ? 5 : 0
+                  animate={{
+                    scale: isHovered ? 1.05 : 1
                   }}
-                  transition={{ 
-                    type: "spring", 
-                    stiffness: 400, 
-                    damping: 20,
-                    duration: 0.2
-                  }}
+                  transition={{ duration: 0.2 }}
                 >
                   <Icon 
-                    className={cn(
-                      "h-5 w-5 transition-all duration-300",
-                      isSnax 
-                        ? "text-primary group-hover:text-primary" 
-                        : "text-muted-foreground group-hover:text-foreground"
-                    )}
+                    className="h-4 w-4 flex-shrink-0"
+                    style={{
+                      color: isSnax ? 'hsl(var(--primary))' : '#8B949E'
+                    }}
                   />
                 </motion.div>
                 
-                {/* Subtle shimmer effect */}
-                <motion.div
-                  className="absolute inset-0 rounded-2xl"
-                  style={{
-                    background: 'linear-gradient(45deg, transparent 30%, hsla(var(--foreground) / 0.03) 50%, transparent 70%)',
-                    backgroundSize: '200% 200%'
-                  }}
-                  animate={{
-                    backgroundPosition: hoveredIndex === index ? ['0% 0%', '100% 100%'] : '0% 0%'
-                  }}
-                  transition={{
-                    duration: 1,
-                    ease: "easeInOut",
-                    repeat: hoveredIndex === index ? Infinity : 0,
-                    repeatType: "reverse"
-                  }}
-                />
+                {/* Label */}
+                <span className="text-sm font-medium">
+                  {category.name}
+                </span>
                 
-                {/* Ripple effect on click */}
+                {/* Ripple effect */}
                 <motion.div
-                  className="absolute inset-0 rounded-2xl"
+                  className="absolute inset-0"
                   style={{
-                    background: `radial-gradient(circle, hsla(var(--primary) / 0.2), transparent 70%)`,
+                    background: `radial-gradient(circle, hsla(var(--primary) / 0.1), transparent 70%)`,
                   }}
                   initial={{ scale: 0, opacity: 0 }}
                   whileTap={{ scale: 2, opacity: [0, 0.3, 0] }}
