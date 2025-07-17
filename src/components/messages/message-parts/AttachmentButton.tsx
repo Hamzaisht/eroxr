@@ -21,6 +21,16 @@ export const AttachmentButton = ({ onImageSelect, onDocumentSelect, onMediaSelec
     setShowHub(false);
   };
 
+  const handleToggleHub = () => {
+    console.log('Plus button clicked, current showHub:', showHub);
+    setShowHub(!showHub);
+  };
+
+  const handleCloseHub = () => {
+    console.log('Closing hub');
+    setShowHub(false);
+  };
+
   return (
     <>
       <div className="relative">
@@ -29,7 +39,7 @@ export const AttachmentButton = ({ onImageSelect, onDocumentSelect, onMediaSelec
           size="icon" 
           type="button"
           className="h-9 w-9 rounded-full bg-gradient-to-br from-primary/10 to-accent/10 hover:from-primary/20 hover:to-accent/20 border border-primary/20 transition-all duration-300 hover:scale-110"
-          onClick={() => setShowHub(true)}
+          onClick={handleToggleHub}
           aria-label="Attach media"
         >
           <Plus className="h-5 w-5 text-primary" />
@@ -38,7 +48,7 @@ export const AttachmentButton = ({ onImageSelect, onDocumentSelect, onMediaSelec
         <AnimatePresence>
           {showHub && (
             <MediaAttachmentHub
-              onClose={() => setShowHub(false)}
+              onClose={handleCloseHub}
               onMediaSelect={handleMediaSelect}
             />
           )}
