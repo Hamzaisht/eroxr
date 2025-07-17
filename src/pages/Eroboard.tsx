@@ -1,5 +1,6 @@
 
 import { useState, useEffect } from "react";
+import { motion } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
 import { InteractiveNav } from "@/components/layout/InteractiveNav";
 import { BackButton } from "@/components/ui/back-button";
@@ -119,21 +120,43 @@ const Eroboard = () => {
       </div>
       <div className="min-h-screen bg-background md:ml-20 p-8">
         <div className="max-w-7xl mx-auto">
-          <div className="flex items-center justify-between mb-8">
-            <div>
-              <h1 className="text-4xl font-bold text-foreground mb-2">EroBoard Analytics</h1>
-              <p className="text-muted-foreground">Comprehensive insights into your content performance</p>
+          {/* Enhanced Header with Gradient and Interactive Elements */}
+          <motion.div 
+            className="flex items-center justify-between mb-8 relative"
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+          >
+            <div className="relative">
+              <div className="absolute -inset-4 bg-gradient-to-r from-primary/20 via-transparent to-primary/20 blur-xl opacity-50" />
+              <div className="relative">
+                <h1 className="text-4xl font-bold bg-gradient-to-r from-foreground via-primary to-foreground bg-clip-text text-transparent mb-2">
+                  EroBoard Analytics
+                </h1>
+                <p className="text-muted-foreground flex items-center gap-2">
+                  <span>Comprehensive insights into your content performance</span>
+                  <motion.div
+                    animate={{ scale: [1, 1.2, 1] }}
+                    transition={{ duration: 2, repeat: Infinity }}
+                    className="w-2 h-2 bg-green-500 rounded-full"
+                  />
+                </p>
+              </div>
             </div>
-            <div className="flex items-center gap-2">
-              <Badge variant="outline" className="flex items-center gap-1">
-                <Crown className="w-4 h-4" />
-                Creator Dashboard
+            <motion.div 
+              className="flex items-center gap-3"
+              whileHover={{ scale: 1.05 }}
+              transition={{ type: "spring", stiffness: 400 }}
+            >
+              <Badge variant="outline" className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-primary/10 to-primary/5 border-primary/20 hover:border-primary/40 transition-all duration-300">
+                <Crown className="w-4 h-4 text-primary animate-pulse" />
+                <span className="font-medium">Creator Dashboard</span>
               </Badge>
-            </div>
-          </div>
+            </motion.div>
+          </motion.div>
 
-          {/* Tab Navigation */}
-          <div className="flex space-x-1 mb-8 bg-muted p-1 rounded-lg w-fit">
+          {/* Enhanced Tab Navigation with Hover Effects */}
+          <div className="flex space-x-1 mb-8 bg-muted/50 backdrop-blur-sm p-1.5 rounded-xl w-fit border border-border/50 shadow-lg">
             {[
               { id: 'overview', label: 'Overview', icon: BarChart3 },
               { id: 'earnings', label: 'Earnings', icon: DollarSign },
@@ -145,39 +168,139 @@ const Eroboard = () => {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${
+                className={`group relative flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-300 ${
                   activeTab === tab.id
-                    ? 'bg-background text-foreground shadow-sm'
-                    : 'text-muted-foreground hover:text-foreground'
+                    ? 'bg-background text-foreground shadow-md ring-2 ring-primary/20 transform scale-105'
+                    : 'text-muted-foreground hover:text-foreground hover:bg-background/50 hover:shadow-sm hover:scale-102'
                 }`}
               >
-                <tab.icon className="w-4 h-4" />
-                {tab.label}
+                <tab.icon className={`w-4 h-4 transition-all duration-300 ${
+                  activeTab === tab.id 
+                    ? 'text-primary' 
+                    : 'group-hover:text-primary group-hover:scale-110'
+                }`} />
+                <span className="relative">
+                  {tab.label}
+                  {activeTab === tab.id && (
+                    <motion.div
+                      layoutId="activeTabIndicator"
+                      className="absolute -bottom-1 left-0 right-0 h-0.5 bg-primary rounded-full"
+                      transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                    />
+                  )}
+                </span>
+                {/* Subtle glow effect for active tab */}
+                {activeTab === tab.id && (
+                  <div className="absolute inset-0 bg-primary/5 rounded-lg animate-pulse" />
+                )}
               </button>
             ))}
           </div>
 
-          {/* Tab Content */}
-          {activeTab === 'overview' && (
-            <div className="space-y-6">
-              <EarningsOverview 
-                data={{
-                  stats,
-                  revenueBreakdown,
-                  earningsData
-                }}
-                isLoading={loading}
-              />
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <StreamingAnalytics 
+          {/* Enhanced Tab Content with Motion */}
+          <motion.div
+            key={activeTab}
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+            transition={{ duration: 0.4 }}
+          >
+            {activeTab === 'overview' && (
+              <div className="space-y-8">
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.1 }}
+                >
+                  <EarningsOverview 
+                    data={{
+                      stats,
+                      revenueBreakdown,
+                      earningsData
+                    }}
+                    isLoading={loading}
+                  />
+                </motion.div>
+                <motion.div 
+                  className="grid grid-cols-1 lg:grid-cols-2 gap-8"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.2 }}
+                >
+                  <motion.div
+                    whileHover={{ scale: 1.02 }}
+                    transition={{ type: "spring", stiffness: 400 }}
+                  >
+                    <StreamingAnalytics 
+                      data={{
+                        stats,
+                        earningsData,
+                        engagementData,
+                        streamingAnalyticsData
+                      }}
+                      isLoading={loading}
+                    />
+                  </motion.div>
+                  <motion.div
+                    whileHover={{ scale: 1.02 }}
+                    transition={{ type: "spring", stiffness: 400 }}
+                  >
+                    <ContentAnalytics 
+                      data={{
+                        stats,
+                        contentAnalyticsData,
+                        contentPerformanceData,
+                        contentTypeData
+                      }}
+                      isLoading={loading}
+                    />
+                  </motion.div>
+                </motion.div>
+              </div>
+            )}
+
+            {activeTab === 'earnings' && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 }}
+              >
+                <EarningsOverview 
                   data={{
                     stats,
-                    earningsData,
-                    engagementData,
-                    streamingAnalyticsData
+                    revenueBreakdown,
+                    earningsData
                   }}
                   isLoading={loading}
                 />
+              </motion.div>
+            )}
+
+            {activeTab === 'audience' && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 }}
+              >
+                <AudienceAnalytics 
+                  data={{
+                    stats,
+                    geographicData,
+                    engagedFansData,
+                    conversionFunnelData,
+                    growthAnalyticsData
+                  }}
+                  isLoading={loading}
+                />
+              </motion.div>
+            )}
+
+            {activeTab === 'content' && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 }}
+              >
                 <ContentAnalytics 
                   data={{
                     stats,
@@ -187,68 +310,44 @@ const Eroboard = () => {
                   }}
                   isLoading={loading}
                 />
-              </div>
-            </div>
-          )}
+              </motion.div>
+            )}
 
-          {activeTab === 'earnings' && (
-            <EarningsOverview 
-              data={{
-                stats,
-                revenueBreakdown,
-                earningsData
-              }}
-              isLoading={loading}
-            />
-          )}
+            {activeTab === 'growth' && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 }}
+              >
+                <GrowthAnalytics 
+                  data={{
+                    stats,
+                    growthAnalyticsData,
+                    geographicData
+                  }}
+                  isLoading={loading}
+                />
+              </motion.div>
+            )}
 
-          {activeTab === 'audience' && (
-            <AudienceAnalytics 
-              data={{
-                stats,
-                geographicData,
-                engagedFansData,
-                conversionFunnelData,
-                growthAnalyticsData
-              }}
-              isLoading={loading}
-            />
-          )}
-
-          {activeTab === 'content' && (
-            <ContentAnalytics 
-              data={{
-                stats,
-                contentAnalyticsData,
-                contentPerformanceData,
-                contentTypeData
-              }}
-              isLoading={loading}
-            />
-          )}
-
-          {activeTab === 'growth' && (
-            <GrowthAnalytics 
-              data={{
-                stats,
-                growthAnalyticsData,
-                geographicData
-              }}
-              isLoading={loading}
-            />
-          )}
-
-          {activeTab === 'streaming' && (
-            <StreamingAnalytics 
-              data={{
-                stats,
-                earningsData,
-                engagementData,
-                streamingAnalyticsData
-              }}
-              isLoading={loading}
-            />
-          )}
+            {activeTab === 'streaming' && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 }}
+              >
+                <StreamingAnalytics 
+                  data={{
+                    stats,
+                    earningsData,
+                    engagementData,
+                    streamingAnalyticsData
+                  }}
+                  isLoading={loading}
+                />
+              </motion.div>
+            )}
+          </motion.div>
         </div>
       </div>
     </>

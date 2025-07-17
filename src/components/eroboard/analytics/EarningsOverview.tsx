@@ -1,3 +1,4 @@
+import { motion } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -14,9 +15,10 @@ import {
   Crown,
   Zap,
   Download,
-  BarChart3
+  BarChart3,
+  PieChart
 } from "lucide-react";
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, BarChart, Bar } from "recharts";
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart as RechartsPieChart, Pie, Cell, BarChart, Bar } from "recharts";
 import { useState } from "react";
 
 interface EarningsOverviewProps {
@@ -110,21 +112,49 @@ export const EarningsOverview = ({ data, isLoading }: EarningsOverviewProps) => 
   ];
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-white mb-2">
-            Good morning! 💰
-          </h1>
-          <p className="text-gray-400">Here's your earnings summary</p>
+    <motion.div 
+      className="space-y-8"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.6 }}
+    >
+      {/* Enhanced Header with Gradient and Animations */}
+      <motion.div 
+        className="flex items-center justify-between"
+        initial={{ opacity: 0, x: -20 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ delay: 0.2 }}
+      >
+        <div className="relative">
+          <div className="absolute -inset-2 bg-gradient-to-r from-green-500/20 via-transparent to-green-500/20 blur-lg opacity-50" />
+          <div className="relative">
+            <motion.h1 
+              className="text-3xl font-bold bg-gradient-to-r from-white via-green-400 to-white bg-clip-text text-transparent mb-2"
+              animate={{ 
+                backgroundPosition: ["0%", "100%", "0%"]
+              }}
+              transition={{ 
+                duration: 3,
+                repeat: Infinity,
+                ease: "linear"
+              }}
+            >
+              Good morning! 💰
+            </motion.h1>
+            <p className="text-muted-foreground">Here's your earnings summary</p>
+          </div>
         </div>
-        <div className="flex items-center gap-4">
+        <motion.div 
+          className="flex items-center gap-4"
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: 0.4 }}
+        >
           <Select value={timeFilter} onValueChange={setTimeFilter}>
-            <SelectTrigger className="w-40 bg-luxury-dark border-luxury-neutral/20">
+            <SelectTrigger className="w-40 bg-background/80 backdrop-blur-sm border-border/50 hover:border-primary/50 transition-all duration-300">
               <SelectValue />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="bg-background/95 backdrop-blur-sm border-border/50">
               <SelectItem value="24h">Last 24h</SelectItem>
               <SelectItem value="7d">Last 7 days</SelectItem>
               <SelectItem value="30d">Last 30 days</SelectItem>
@@ -132,92 +162,176 @@ export const EarningsOverview = ({ data, isLoading }: EarningsOverviewProps) => 
               <SelectItem value="1y">Last year</SelectItem>
             </SelectContent>
           </Select>
-          <Button className="bg-luxury-primary hover:bg-luxury-primary/90">
-            <Download className="h-4 w-4 mr-2" />
-            Export
-          </Button>
-        </div>
-      </div>
+          <motion.div
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+          >
+            <Button className="bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 shadow-lg hover:shadow-primary/25 transition-all duration-300">
+              <Download className="h-4 w-4 mr-2" />
+              Export
+            </Button>
+          </motion.div>
+        </motion.div>
+      </motion.div>
 
-      {/* KPI Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      {/* Enhanced KPI Cards with Hover Effects */}
+      <motion.div 
+        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.6, staggerChildren: 0.1 }}
+      >
         {kpiCards.map((kpi, index) => {
           const Icon = kpi.icon;
           return (
-            <Card key={index} className="bg-gradient-to-br from-luxury-darker to-luxury-dark border-luxury-neutral/10 hover:border-luxury-primary/20 transition-all duration-300">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <Icon className={`h-8 w-8 ${kpi.color}`} />
-                  <Badge className={`${kpi.trend === 'up' ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}`}>
-                    {kpi.trend === 'up' ? <TrendingUp className="h-3 w-3 mr-1" /> : <TrendingDown className="h-3 w-3 mr-1" />}
-                    {kpi.change}
-                  </Badge>
-                </div>
-                <div>
-                  <p className="text-2xl font-bold text-white mb-1">{kpi.value}</p>
-                  <p className="text-sm text-gray-400">{kpi.title}</p>
-                </div>
-              </CardContent>
-            </Card>
+            <motion.div
+              key={index}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 * index }}
+              whileHover={{ 
+                scale: 1.05,
+                y: -5,
+                transition: { type: "spring", stiffness: 400 }
+              }}
+              className="group"
+            >
+              <Card className="relative overflow-hidden bg-gradient-to-br from-background/80 to-background/40 backdrop-blur-sm border-border/50 hover:border-primary/30 transition-all duration-500 hover:shadow-2xl hover:shadow-primary/10">
+                {/* Animated background glow */}
+                <motion.div
+                  className="absolute inset-0 bg-gradient-to-r from-primary/5 via-transparent to-primary/5"
+                  initial={{ opacity: 0 }}
+                  whileHover={{ opacity: 1 }}
+                  transition={{ duration: 0.3 }}
+                />
+                
+                <CardContent className="relative p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <motion.div
+                      whileHover={{ scale: 1.1, rotate: 5 }}
+                      transition={{ type: "spring", stiffness: 400 }}
+                    >
+                      <Icon className={`h-8 w-8 ${kpi.color} group-hover:drop-shadow-lg transition-all duration-300`} />
+                    </motion.div>
+                    <motion.div
+                      whileHover={{ scale: 1.05 }}
+                      transition={{ type: "spring", stiffness: 400 }}
+                    >
+                      <Badge className={`${kpi.trend === 'up' ? 'bg-green-500/20 text-green-400 border-green-500/30' : 'bg-red-500/20 text-red-400 border-red-500/30'} backdrop-blur-sm transition-all duration-300 hover:shadow-lg`}>
+                        {kpi.trend === 'up' ? <TrendingUp className="h-3 w-3 mr-1" /> : <TrendingDown className="h-3 w-3 mr-1" />}
+                        {kpi.change}
+                      </Badge>
+                    </motion.div>
+                  </div>
+                  <div>
+                    <motion.p 
+                      className="text-2xl font-bold text-foreground mb-1 group-hover:text-primary transition-colors duration-300"
+                      whileHover={{ scale: 1.05 }}
+                    >
+                      {kpi.value}
+                    </motion.p>
+                    <p className="text-sm text-muted-foreground group-hover:text-muted-foreground/80 transition-colors duration-300">{kpi.title}</p>
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
           );
         })}
-      </div>
+      </motion.div>
 
-      {/* Charts Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Earnings Timeline */}
-        <Card className="lg:col-span-2 bg-luxury-darker border-luxury-neutral/10">
-          <CardHeader>
-            <CardTitle className="text-white flex items-center gap-2">
-              <BarChart3 className="h-5 w-5 text-luxury-primary" />
-              Earnings Timeline
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <AreaChart data={earningsData}>
-                <defs>
+      {/* Enhanced Charts Row with Hover Effects */}
+      <motion.div 
+        className="grid grid-cols-1 lg:grid-cols-3 gap-8"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.8 }}
+      >
+        {/* Enhanced Earnings Timeline */}
+        <motion.div
+          className="lg:col-span-2"
+          whileHover={{ scale: 1.02 }}
+          transition={{ type: "spring", stiffness: 400 }}
+        >
+          <Card className="relative overflow-hidden bg-gradient-to-br from-background/80 to-background/40 backdrop-blur-sm border-border/50 hover:border-primary/30 transition-all duration-500 hover:shadow-2xl hover:shadow-primary/10">
+            <motion.div
+              className="absolute inset-0 bg-gradient-to-r from-primary/5 via-transparent to-primary/5"
+              initial={{ opacity: 0 }}
+              whileHover={{ opacity: 1 }}
+              transition={{ duration: 0.3 }}
+            />
+            <CardHeader className="relative">
+              <CardTitle className="text-foreground flex items-center gap-2">
+                <motion.div
+                  whileHover={{ scale: 1.1, rotate: 5 }}
+                  transition={{ type: "spring", stiffness: 400 }}
+                >
+                  <BarChart3 className="h-5 w-5 text-primary" />
+                </motion.div>
+                Earnings Timeline
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="relative">
+              <ResponsiveContainer width="100%" height={300}>
+                <AreaChart data={earningsData}>
+                  <defs>
                   <linearGradient id="colorTotal" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#8B5CF6" stopOpacity={0.8}/>
-                    <stop offset="95%" stopColor="#8B5CF6" stopOpacity={0.1}/>
+                    <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.8}/>
+                    <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0.1}/>
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#374151" opacity={0.3} />
-                <XAxis dataKey="date" stroke="#9CA3AF" />
-                <YAxis stroke="#9CA3AF" />
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.3} />
+                <XAxis dataKey="date" stroke="hsl(var(--muted-foreground))" />
+                <YAxis stroke="hsl(var(--muted-foreground))" />
                 <Tooltip 
                   contentStyle={{ 
-                    backgroundColor: '#1F2937', 
-                    border: '1px solid #374151',
+                    backgroundColor: 'hsl(var(--background))', 
+                    border: '1px solid hsl(var(--border))',
                     borderRadius: '8px',
-                    color: '#fff'
+                    color: 'hsl(var(--foreground))',
+                    backdropFilter: 'blur(8px)'
                   }} 
                 />
                 <Area 
                   type="monotone" 
                   dataKey="amount" 
-                  stroke="#8B5CF6" 
+                  stroke="hsl(var(--primary))" 
                   fillOpacity={1} 
                   fill="url(#colorTotal)" 
-                  strokeWidth={2}
+                  strokeWidth={3}
                 />
               </AreaChart>
             </ResponsiveContainer>
           </CardContent>
         </Card>
+        </motion.div>
 
-        {/* Revenue Sources */}
-        <Card className="bg-luxury-darker border-luxury-neutral/10">
-          <CardHeader>
-            <CardTitle className="text-white flex items-center gap-2">
-              <PieChart className="h-5 w-5 text-luxury-primary" />
-              Revenue Sources
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <PieChart>
-                <Pie
+        {/* Enhanced Revenue Sources */}
+        <motion.div
+          whileHover={{ scale: 1.02 }}
+          transition={{ type: "spring", stiffness: 400 }}
+        >
+          <Card className="relative overflow-hidden bg-gradient-to-br from-background/80 to-background/40 backdrop-blur-sm border-border/50 hover:border-primary/30 transition-all duration-500 hover:shadow-2xl hover:shadow-primary/10">
+            <motion.div
+              className="absolute inset-0 bg-gradient-to-r from-primary/5 via-transparent to-primary/5"
+              initial={{ opacity: 0 }}
+              whileHover={{ opacity: 1 }}
+              transition={{ duration: 0.3 }}
+            />
+            <CardHeader className="relative">
+              <CardTitle className="text-foreground flex items-center gap-2">
+                <motion.div
+                  whileHover={{ scale: 1.1, rotate: 5 }}
+                  transition={{ type: "spring", stiffness: 400 }}
+                >
+                  <PieChart className="h-5 w-5 text-primary" />
+                </motion.div>
+                Revenue Sources
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="relative">
+              <ResponsiveContainer width="100%" height={300}>
+                <RechartsPieChart>
+                  <Pie
                   data={revenueSourcesData}
                   cx="50%"
                   cy="50%"
@@ -230,40 +344,59 @@ export const EarningsOverview = ({ data, isLoading }: EarningsOverviewProps) => 
                     <Cell key={`cell-${index}`} fill={entry.color} />
                   ))}
                 </Pie>
-                <Tooltip 
-                  formatter={(value: any, name: any, props: any) => [
-                    `$${props.payload.amount.toLocaleString()}`,
-                    name
-                  ]}
-                  contentStyle={{
-                    backgroundColor: '#1F2937',
-                    border: '1px solid #374151',
-                    borderRadius: '8px',
-                    color: '#fff'
-                  }}
-                />
-              </PieChart>
-            </ResponsiveContainer>
-            <div className="space-y-2 mt-4">
-              {revenueSourcesData.map((source, index) => (
-                <div key={index} className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <div 
-                      className="w-3 h-3 rounded-full" 
-                      style={{ backgroundColor: source.color }}
-                    />
-                    <span className="text-sm text-gray-300">{source.name}</span>
-                  </div>
-                  <span className="text-sm text-white font-medium">
-                    ${source.amount.toLocaleString()}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+                  <Tooltip 
+                    formatter={(value: any, name: any, props: any) => [
+                      `$${props.payload.amount.toLocaleString()}`,
+                      name
+                    ]}
+                    contentStyle={{
+                      backgroundColor: 'hsl(var(--background))',
+                      border: '1px solid hsl(var(--border))',
+                      borderRadius: '8px',
+                      color: 'hsl(var(--foreground))',
+                      backdropFilter: 'blur(8px)'
+                    }}
+                  />
+                </RechartsPieChart>
+              </ResponsiveContainer>
+              <motion.div 
+                className="space-y-3 mt-6"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 1.2, staggerChildren: 0.1 }}
+              >
+                {revenueSourcesData.map((source, index) => (
+                  <motion.div 
+                    key={index} 
+                    className="flex items-center justify-between p-2 rounded-lg hover:bg-muted/50 transition-all duration-300 cursor-pointer group"
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.1 * index }}
+                    whileHover={{ scale: 1.02, x: 5 }}
+                  >
+                    <div className="flex items-center gap-3">
+                      <motion.div 
+                        className="w-4 h-4 rounded-full shadow-lg"
+                        style={{ backgroundColor: source.color }}
+                        whileHover={{ scale: 1.2 }}
+                        transition={{ type: "spring", stiffness: 400 }}
+                      />
+                      <span className="text-sm text-muted-foreground group-hover:text-foreground transition-colors duration-300">{source.name}</span>
+                    </div>
+                    <motion.span 
+                      className="text-sm text-foreground font-medium"
+                      whileHover={{ scale: 1.05 }}
+                    >
+                      ${source.amount.toLocaleString()}
+                    </motion.span>
+                  </motion.div>
+                ))}
+              </motion.div>
+            </CardContent>
+          </Card>
+        </motion.div>
+      </motion.div>
 
-    </div>
+    </motion.div>
   );
 };
