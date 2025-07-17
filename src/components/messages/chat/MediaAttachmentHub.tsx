@@ -103,16 +103,21 @@ export const MediaAttachmentHub = ({ onClose, onMediaSelect }: MediaAttachmentHu
                 animate={{
                   filter: hasHover && !isHovered ? 'blur(1px)' : 'blur(0px)',
                   scale: hasHover && !isHovered ? 0.95 : 1,
-                  backgroundColor: isHovered ? '#21262C' : 'transparent'
+                  backgroundColor: isHovered ? 'rgba(33, 38, 44, 0.8)' : 'transparent'
                 }}
                 transition={{ 
                   duration: 0.3,
                   ease: "easeOut"
                 }}
                 whileTap={{
-                  backgroundColor: '#1A1F24'
+                  scale: 0.95,
+                  backgroundColor: 'rgba(26, 31, 36, 0.9)'
                 }}
-                onClick={category.action}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  category.action();
+                }}
                 onMouseEnter={() => setHoveredIndex(index)}
               >
                 {/* Left accent line */}
