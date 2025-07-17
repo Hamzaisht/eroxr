@@ -1,25 +1,49 @@
 
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Paperclip } from "lucide-react";
+import { Paperclip, Plus } from "lucide-react";
+import { MediaAttachmentHub } from "../chat/MediaAttachmentHub";
+import { AnimatePresence } from "framer-motion";
 
 interface AttachmentButtonProps {
   onImageSelect: () => void;
   onDocumentSelect: () => void;
+  onMediaSelect?: (blob: Blob, type: 'snax' | 'media', duration?: number) => void;
 }
 
-export const AttachmentButton = ({ onImageSelect, onDocumentSelect }: AttachmentButtonProps) => {
+export const AttachmentButton = ({ onImageSelect, onDocumentSelect, onMediaSelect }: AttachmentButtonProps) => {
+  const [showHub, setShowHub] = useState(false);
+
+  const handleMediaSelect = (blob: Blob, type: 'snax' | 'media', duration?: number) => {
+    if (onMediaSelect) {
+      onMediaSelect(blob, type, duration);
+    }
+    setShowHub(false);
+  };
+
   return (
-    <div className="relative">
-      <Button 
-        variant="ghost" 
-        size="icon" 
-        type="button"
-        className="h-9 w-9 rounded-full"
-        onClick={() => alert("File attachments coming soon")}
-        aria-label="Attach file"
-      >
-        <Paperclip className="h-5 w-5 text-luxury-neutral" />
-      </Button>
-    </div>
+    <>
+      <div className="relative">
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          type="button"
+          className="h-9 w-9 rounded-full bg-gradient-to-br from-primary/10 to-accent/10 hover:from-primary/20 hover:to-accent/20 border border-primary/20 transition-all duration-300 hover:scale-110"
+          onClick={() => setShowHub(true)}
+          aria-label="Attach media"
+        >
+          <Plus className="h-5 w-5 text-primary" />
+        </Button>
+      </div>
+
+      <AnimatePresence>
+        {showHub && (
+          <MediaAttachmentHub
+            onClose={() => setShowHub(false)}
+            onMediaSelect={handleMediaSelect}
+          />
+        )}
+      </AnimatePresence>
+    </>
   );
 };
