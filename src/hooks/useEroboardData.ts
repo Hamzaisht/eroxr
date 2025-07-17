@@ -88,19 +88,16 @@ export function useEroboardData() {
       return;
     }
     
-    // Don't refetch if data already loaded unless forced
+    // Always allow first load, or force refresh
     if (initialDataLoaded && !forceRefresh) {
-      console.log('📋 Using cached dashboard data, setting loading to false');
-      setLoading(false);
+      console.log('📋 Data already loaded, skipping fetch');
       return;
     }
 
     console.log('📋 Starting dashboard data fetch...');
-
+    setLoading(true);
+    setError(null);
     try {
-      setLoading(true);
-      setError(null);
-      
       const effectiveDateRange = dateRange || {
         from: subDays(new Date(), 30),
         to: new Date()
@@ -420,10 +417,13 @@ export function useEroboardData() {
   }, [session?.user?.id, initialDataLoaded]); // Removed toast dependency
 
   useEffect(() => {
-    if (session?.user?.id && !initialDataLoaded) {
+    if (session?.user?.id) {
+      console.log('📋 useEffect triggered, initialDataLoaded:', initialDataLoaded);
       fetchDashboardData();
+    } else {
+      setLoading(false);
     }
-  }, [session?.user?.id, initialDataLoaded]); // Removed fetchDashboardData dependency
+  }, [session?.user?.id]); // Simplified dependency array
 
   // Separate effect for real-time subscriptions to prevent infinite loops
   useEffect(() => {
