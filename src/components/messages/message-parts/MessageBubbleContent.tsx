@@ -107,19 +107,44 @@ export const MessageBubbleContent = ({
     >
       <div
         className={cn(
-          "px-4 py-3 rounded-xl max-w-md break-words",
+          "relative px-6 py-4 max-w-md break-words backdrop-blur-lg transition-all duration-500",
           isOwnMessage
-            ? "bg-luxury-primary text-white rounded-br-none"
-            : "bg-gray-800 text-white rounded-bl-none"
+            ? "ml-12 rounded-[20px] rounded-br-none"
+            : "mr-12 rounded-[20px] rounded-bl-none"
         )}
+        style={{
+          background: isOwnMessage 
+            ? 'linear-gradient(135deg, rgba(139, 69, 19, 0.15) 0%, rgba(160, 82, 45, 0.1) 50%, rgba(139, 69, 19, 0.08) 100%)'
+            : 'linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.05) 50%, rgba(255, 255, 255, 0.03) 100%)',
+          backdropFilter: 'blur(20px)',
+          boxShadow: isOwnMessage
+            ? '0 8px 32px rgba(139, 69, 19, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.1)'
+            : '0 8px 32px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.05)',
+          border: 'none'
+        }}
       >
+        {/* Luxury glow effect */}
+        <div 
+          className="absolute inset-0 rounded-[20px] transition-opacity duration-500"
+          style={{
+            background: isOwnMessage
+              ? 'linear-gradient(135deg, rgba(139, 69, 19, 0.1) 0%, transparent 50%)'
+              : 'linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, transparent 50%)',
+            opacity: isHovering ? 1 : 0
+          }}
+        />
+        
         {isEditing ? (
-          <div className="space-y-2">
+          <div className="space-y-2 relative z-10">
             <Textarea
               value={editedContent}
               onChange={(e) => setEditedContent(e.target.value)}
-              className="min-h-[100px] bg-gray-900 border-gray-700"
+              className="min-h-[100px] bg-black/20 border-none backdrop-blur-sm text-white placeholder:text-white/50"
               placeholder="Edit your message..."
+              style={{
+                background: 'rgba(0, 0, 0, 0.2)',
+                backdropFilter: 'blur(10px)'
+              }}
             />
             <div className="flex justify-end space-x-2">
               <Button
@@ -127,6 +152,7 @@ export const MessageBubbleContent = ({
                 size="sm"
                 onClick={cancelEditing}
                 disabled={isUpdating}
+                className="text-white/70 hover:text-white hover:bg-white/10"
               >
                 Cancel
               </Button>
@@ -134,17 +160,38 @@ export const MessageBubbleContent = ({
                 size="sm"
                 onClick={handleEdit}
                 disabled={isUpdating || !editedContent.trim()}
+                className="bg-gradient-to-r from-amber-600/80 to-amber-500/80 hover:from-amber-500/80 hover:to-amber-400/80 text-white border-none"
               >
                 {isUpdating ? "Saving..." : "Save"}
               </Button>
             </div>
           </div>
         ) : (
-          <>
-            <div className="whitespace-pre-wrap text-sm">{message.content}</div>
+          <div className="relative z-10">
+            <div 
+              className="whitespace-pre-wrap text-sm font-light leading-relaxed tracking-wide"
+              style={{
+                color: isOwnMessage ? 'rgba(255, 255, 255, 0.95)' : 'rgba(255, 255, 255, 0.9)'
+              }}
+            >
+              {message.content}
+            </div>
             {renderMediaContent()}
-          </>
+          </div>
         )}
+        
+        {/* Message time with luxury styling */}
+        <div 
+          className={cn(
+            "text-xs font-light tracking-wider mt-2 transition-opacity duration-300",
+            isHovering ? "opacity-100" : "opacity-60"
+          )}
+          style={{
+            color: isOwnMessage ? 'rgba(255, 255, 255, 0.6)' : 'rgba(255, 255, 255, 0.5)'
+          }}
+        >
+          {formatMessageTime(message.created_at)}
+        </div>
       </div>
     </div>
   );

@@ -106,82 +106,136 @@ export const MediaAttachmentHub = ({ onClose, onMediaSelect }: MediaAttachmentHu
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: 20 }}
-      className="fixed inset-0 z-50 bg-black/90 backdrop-blur-xl flex items-center justify-center p-4"
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
+      exit={{ opacity: 0, scale: 0.95 }}
+      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      style={{
+        background: 'radial-gradient(ellipse at center, rgba(139, 69, 19, 0.1) 0%, rgba(0, 0, 0, 0.95) 70%)',
+        backdropFilter: 'blur(20px)'
+      }}
     >
-      <div className="w-full max-w-md bg-gradient-to-br from-background/95 to-background/80 backdrop-blur-xl rounded-3xl border border-border/50 overflow-hidden">
-        {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-border/50">
-          <div>
-            <h2 className="text-xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-              Choose Media Type
-            </h2>
-            <p className="text-sm text-muted-foreground mt-1">
-              Select what you want to share
-            </p>
-          </div>
-          <Button
-            variant="ghost"
-            size="icon"
+      <motion.div 
+        initial={{ y: 30, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ delay: 0.1 }}
+        className="relative w-full max-w-lg"
+        style={{
+          background: 'linear-gradient(135deg, rgba(139, 69, 19, 0.08) 0%, rgba(160, 82, 45, 0.05) 25%, rgba(139, 69, 19, 0.08) 50%, rgba(160, 82, 45, 0.05) 75%, rgba(139, 69, 19, 0.08) 100%)',
+          backdropFilter: 'blur(40px)',
+          borderRadius: '24px',
+          border: '1px solid rgba(139, 69, 19, 0.2)',
+          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.8), inset 0 1px 0 rgba(255, 255, 255, 0.1)'
+        }}
+      >
+        {/* Luxury Header */}
+        <div className="relative p-8 text-center">
+          <motion.button
             onClick={onClose}
-            className="rounded-full hover:bg-destructive/10 hover:text-destructive"
+            className="absolute top-4 right-4 w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 transition-all duration-300 flex items-center justify-center group"
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
           >
-            <X className="h-5 w-5" />
-          </Button>
+            <X className="h-4 w-4 text-white/60 group-hover:text-white transition-colors" />
+          </motion.button>
+          
+          <motion.h2 
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="text-2xl font-light tracking-wide mb-2"
+            style={{
+              background: 'linear-gradient(135deg, #D4AF37 0%, #FFD700 50%, #B8860B 100%)',
+              backgroundClip: 'text',
+              WebkitBackgroundClip: 'text',
+              color: 'transparent'
+            }}
+          >
+            Choose Media
+          </motion.h2>
+          <motion.p 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.3 }}
+            className="text-sm text-white/60 font-light"
+          >
+            Select your desired sharing method
+          </motion.p>
         </div>
 
-        {/* Categories Grid */}
-        <div className="p-6 grid grid-cols-2 gap-4">
+        {/* Luxury Grid */}
+        <div className="px-8 pb-8 grid grid-cols-2 gap-4">
           {categories.map((category, index) => {
             const Icon = category.icon;
             return (
               <motion.button
                 key={category.id}
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: index * 0.1 }}
+                initial={{ opacity: 0, scale: 0.8, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                transition={{ delay: 0.1 * index, type: "spring", stiffness: 300, damping: 20 }}
                 onClick={category.action}
-                className={cn(
-                  "group relative overflow-hidden rounded-2xl p-6 text-left transition-all duration-300",
-                  "bg-gradient-to-br", category.gradient,
-                  "hover:scale-105 hover:shadow-xl active:scale-95"
-                )}
+                className="group relative overflow-hidden rounded-lg p-6 text-left transition-all duration-500 hover:scale-[1.02] active:scale-[0.98]"
+                style={{
+                  background: category.id === 'snax' 
+                    ? 'linear-gradient(135deg, rgba(139, 69, 19, 0.15) 0%, rgba(160, 82, 45, 0.1) 100%)'
+                    : 'linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.02) 100%)',
+                  border: '1px solid rgba(139, 69, 19, 0.2)',
+                  backdropFilter: 'blur(20px)',
+                  boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1)'
+                }}
+                whileHover={{
+                  boxShadow: '0 20px 40px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.2)'
+                }}
               >
-                <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent" />
                 <div className="relative z-10">
-                  <div className="mb-3 inline-flex h-12 w-12 items-center justify-center rounded-xl bg-white/20 backdrop-blur-sm">
-                    <Icon className="h-6 w-6 text-white" />
+                  <div className="mb-4 inline-flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-sm border border-white/10">
+                    <Icon className="h-5 w-5 text-white/80" />
                   </div>
-                  <h3 className="font-semibold text-white mb-1">
+                  <h3 className="font-medium text-white/90 mb-1 tracking-wide">
                     {category.name}
                   </h3>
-                  <p className="text-xs text-white/80">
+                  <p className="text-xs text-white/50 font-light leading-relaxed">
                     {category.description}
                   </p>
                 </div>
                 
+                {/* Luxury glow effect */}
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                
                 {/* Special Snax indicator */}
                 {category.id === 'snax' && (
-                  <div className="absolute top-2 right-2">
-                    <Sparkles className="h-4 w-4 text-yellow-300 animate-pulse" />
-                  </div>
+                  <motion.div 
+                    className="absolute top-2 right-2"
+                    animate={{ 
+                      scale: [1, 1.2, 1],
+                      opacity: [0.7, 1, 0.7]
+                    }}
+                    transition={{ 
+                      duration: 2,
+                      repeat: Infinity,
+                      ease: "easeInOut"
+                    }}
+                  >
+                    <Sparkles className="h-3 w-3 text-amber-400" />
+                  </motion.div>
                 )}
               </motion.button>
             );
           })}
         </div>
 
-        {/* Footer */}
-        <div className="px-6 pb-6">
-          <div className="text-center">
-            <p className="text-xs text-muted-foreground">
-              Snax disappear after viewing • Other media is permanent
-            </p>
-          </div>
+        {/* Luxury Footer */}
+        <div className="px-8 pb-6 text-center">
+          <motion.p 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.5 }}
+            className="text-xs text-white/40 font-light tracking-wide"
+          >
+            Snax vanish after viewing • Other content remains permanent
+          </motion.p>
         </div>
-      </div>
+      </motion.div>
     </motion.div>
   );
 };
