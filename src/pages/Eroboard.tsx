@@ -60,9 +60,30 @@ const Eroboard = () => {
     fetchDashboardData
   } = useEroboardData();
   
-  console.log('✅ All minimal hooks called successfully');
+  console.log('✅ All hooks working - now showing full EroBoard interface');
 
-  // Simple test content
+  if (loading) {
+    return <LoadingOverlay />;
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-background md:ml-20 p-8">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center py-8">
+            <AlertCircle className="w-12 h-12 text-destructive mx-auto mb-4" />
+            <h2 className="text-2xl font-bold text-foreground mb-2">Error Loading Analytics</h2>
+            <p className="text-muted-foreground mb-4">{error}</p>
+            <Button onClick={() => window.location.reload()}>
+              <RefreshCw className="w-4 h-4 mr-2" />
+              Retry
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <>
       <InteractiveNav />
@@ -71,27 +92,136 @@ const Eroboard = () => {
       </div>
       <div className="min-h-screen bg-background md:ml-20 p-8">
         <div className="max-w-7xl mx-auto">
-          <h1 className="text-4xl font-bold text-foreground mb-8">EroBoard Analytics</h1>
-          <p className="text-muted-foreground mb-4">Testing minimal component render...</p>
-          <div className="mt-4 p-4 bg-card rounded border">
-            <p>Session: {session ? 'Active' : 'None'}</p>
-            <p>Active Tab: {activeTab}</p>
-            <p>Component rendered successfully with minimal hooks!</p>
+          <div className="flex items-center justify-between mb-8">
+            <div>
+              <h1 className="text-4xl font-bold text-foreground mb-2">EroBoard Analytics</h1>
+              <p className="text-muted-foreground">Comprehensive insights into your content performance</p>
+            </div>
+            <div className="flex items-center gap-2">
+              <Badge variant="outline" className="flex items-center gap-1">
+                <Crown className="w-4 h-4" />
+                Creator Dashboard
+              </Badge>
+            </div>
           </div>
-          <div className="mt-4">
-            <button 
-              onClick={() => setActiveTab("test")}
-              className="px-4 py-2 bg-primary text-primary-foreground rounded mr-2"
-            >
-              Test State Update
-            </button>
-            <button 
-              onClick={() => window.location.reload()}
-              className="px-4 py-2 bg-secondary text-secondary-foreground rounded"
-            >
-              Reload Page
-            </button>
+
+          {/* Tab Navigation */}
+          <div className="flex space-x-1 mb-8 bg-muted p-1 rounded-lg w-fit">
+            {[
+              { id: 'overview', label: 'Overview', icon: BarChart3 },
+              { id: 'earnings', label: 'Earnings', icon: DollarSign },
+              { id: 'audience', label: 'Audience', icon: Users },
+              { id: 'content', label: 'Content', icon: FileText },
+              { id: 'growth', label: 'Growth', icon: TrendingUp },
+              { id: 'streaming', label: 'Streaming', icon: Zap },
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${
+                  activeTab === tab.id
+                    ? 'bg-background text-foreground shadow-sm'
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                <tab.icon className="w-4 h-4" />
+                {tab.label}
+              </button>
+            ))}
           </div>
+
+          {/* Tab Content */}
+          {activeTab === 'overview' && (
+            <div className="space-y-6">
+              <EarningsOverview 
+                data={{
+                  stats,
+                  revenueBreakdown,
+                  earningsData
+                }}
+                isLoading={loading}
+              />
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <StreamingAnalytics 
+                  data={{
+                    stats,
+                    earningsData,
+                    engagementData,
+                    streamingAnalyticsData
+                  }}
+                  isLoading={loading}
+                />
+                <ContentAnalytics 
+                  data={{
+                    stats,
+                    contentAnalyticsData,
+                    contentPerformanceData,
+                    contentTypeData
+                  }}
+                  isLoading={loading}
+                />
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'earnings' && (
+            <EarningsOverview 
+              data={{
+                stats,
+                revenueBreakdown,
+                earningsData
+              }}
+              isLoading={loading}
+            />
+          )}
+
+          {activeTab === 'audience' && (
+            <AudienceAnalytics 
+              data={{
+                stats,
+                geographicData,
+                engagedFansData,
+                conversionFunnelData,
+                growthAnalyticsData
+              }}
+              isLoading={loading}
+            />
+          )}
+
+          {activeTab === 'content' && (
+            <ContentAnalytics 
+              data={{
+                stats,
+                contentAnalyticsData,
+                contentPerformanceData,
+                contentTypeData
+              }}
+              isLoading={loading}
+            />
+          )}
+
+          {activeTab === 'growth' && (
+            <GrowthAnalytics 
+              data={{
+                stats,
+                growthAnalyticsData,
+                geographicData
+              }}
+              isLoading={loading}
+            />
+          )}
+
+          {activeTab === 'streaming' && (
+            <StreamingAnalytics 
+              data={{
+                stats,
+                earningsData,
+                engagementData,
+                streamingAnalyticsData
+              }}
+              isLoading={loading}
+            />
+          )}
         </div>
       </div>
     </>
