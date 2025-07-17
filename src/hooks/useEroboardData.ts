@@ -401,7 +401,7 @@ export function useEroboardData() {
       console.log('🔄 Initial data fetch triggered for user:', session.user.id);
       fetchDashboardData();
     }
-  }, [session?.user?.id, initialDataLoaded, fetchDashboardData]);
+  }, [session?.user?.id, initialDataLoaded]);
 
   // Set up real-time updates only after initial load
   useEffect(() => {
@@ -457,7 +457,8 @@ export function useEroboardData() {
       supabase.removeChannel(postsChannel);
       supabase.removeChannel(followersChannel);
     };
-  }, [session?.user?.id, initialDataLoaded, fetchDashboardData]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [session?.user?.id, initialDataLoaded]);
 
   return {
     loading,
