@@ -25,12 +25,30 @@ interface EnhancedAdCardProps {
 export const EnhancedAdCard = ({ ad, onSelect, isMobile, userProfile, index = 0 }: EnhancedAdCardProps) => {
   const [isHovered, setIsHovered] = useState(false);
   const [isLiked, setIsLiked] = useState(false);
-  const [likesCount, setLikesCount] = useState(0); // Initialize with 0 for likes
+  const [likesCount, setLikesCount] = useState(ad.likes_count || 0); // Use actual likes count
   const [viewCount, setViewCount] = useState(ad.view_count || ad.views || 0); // Separate view count
   const [isViewed, setIsViewed] = useState(false);
   const session = useSession();
   const cardRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
+
+  // Check if user has already liked this ad
+  useEffect(() => {
+    if (!session?.user?.id) return;
+    
+    const checkLikeStatus = async () => {
+      const { data } = await supabase
+        .from('dating_ad_likes')
+        .select('id')
+        .eq('user_id', session.user.id)
+        .eq('dating_ad_id', ad.id)
+        .maybeSingle();
+      
+      setIsLiked(!!data);
+    };
+    
+    checkLikeStatus();
+  }, [session?.user?.id, ad.id]);
 
   // Calculate match percentage
   const matchPercentage = calculateMatchPercentage(userProfile || null, ad);
@@ -103,17 +121,54 @@ export const EnhancedAdCard = ({ ad, onSelect, isMobile, userProfile, index = 0 
   const handleLike = async (e: React.MouseEvent) => {
     e.stopPropagation();
     
+    if (!session?.user?.id) {
+      toast({
+        title: "Authentication Required",
+        description: "Please log in to like profiles",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     const newLiked = !isLiked;
     setIsLiked(newLiked);
     setLikesCount(prev => newLiked ? prev + 1 : prev - 1);
 
-    toast({
-      title: newLiked ? "💕 Divine Connection!" : "💔 Blessing Removed",
-      description: newLiked 
-        ? `You've blessed ${ad.title} with your divine favor` 
-        : `You've removed your blessing from ${ad.title}`,
-      duration: 2000,
-    });
+    try {
+      if (newLiked) {
+        // Add like
+        await supabase
+          .from('dating_ad_likes')
+          .insert({
+            user_id: session.user.id,
+            dating_ad_id: ad.id
+          });
+      } else {
+        // Remove like
+        await supabase
+          .from('dating_ad_likes')
+          .delete()
+          .eq('user_id', session.user.id)
+          .eq('dating_ad_id', ad.id);
+      }
+
+      toast({
+        title: newLiked ? "💕 Divine Connection!" : "💔 Blessing Removed",
+        description: newLiked 
+          ? `You've blessed ${ad.title} with your divine favor` 
+          : `You've removed your blessing from ${ad.title}`,
+        duration: 2000,
+      });
+    } catch (error) {
+      // Revert on error
+      setIsLiked(!newLiked);
+      setLikesCount(prev => newLiked ? prev - 1 : prev + 1);
+      toast({
+        title: "Error",
+        description: "Failed to update like status",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleMessage = (e: React.MouseEvent) => {

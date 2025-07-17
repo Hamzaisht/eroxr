@@ -26,6 +26,7 @@ export interface DatingAd {
   // Engagement metrics
   views: number;      // Required
   likes?: number;
+  likes_count?: number; // New likes count from database
   messages?: number;
   view_count?: number;
   message_count?: number;

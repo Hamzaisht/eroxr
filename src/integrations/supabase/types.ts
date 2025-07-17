@@ -799,6 +799,35 @@ export type Database = {
         }
         Relationships: []
       }
+      dating_ad_likes: {
+        Row: {
+          created_at: string
+          dating_ad_id: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          dating_ad_id: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          dating_ad_id?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dating_ad_likes_dating_ad_id_fkey"
+            columns: ["dating_ad_id"]
+            isOneToOne: false
+            referencedRelation: "dating_ads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       dating_ads: {
         Row: {
           about_me: string | null
@@ -820,6 +849,7 @@ export type Database = {
           last_active: string | null
           last_modified_by: string | null
           latitude: number | null
+          likes_count: number | null
           longitude: number | null
           looking_for: string[]
           message_count: number | null
@@ -859,6 +889,7 @@ export type Database = {
           last_active?: string | null
           last_modified_by?: string | null
           latitude?: number | null
+          likes_count?: number | null
           longitude?: number | null
           looking_for: string[]
           message_count?: number | null
@@ -898,6 +929,7 @@ export type Database = {
           last_active?: string | null
           last_modified_by?: string | null
           latitude?: number | null
+          likes_count?: number | null
           longitude?: number | null
           looking_for?: string[]
           message_count?: number | null

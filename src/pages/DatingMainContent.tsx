@@ -137,6 +137,7 @@ export default function DatingMainContent(props: any) {
         is_premium: ad.is_premium || false,
         views: ad.view_count || 0,
         view_count: ad.view_count || 0,
+        likes_count: ad.likes_count || 0, // Include likes count from database
         tags: ad.tags || [],
         location: ad.city,
         age: ad.age_range ? parseInt(ad.age_range.split(',')[0].replace('[', '')) : 25,
@@ -158,6 +159,7 @@ export default function DatingMainContent(props: any) {
 
       const deduplicatedAds = Array.from(uniqueAds.values());
       console.log(`📊 Fetched ${ads?.length || 0} ads, deduplicated to ${deduplicatedAds.length} unique ads`);
+      console.log(`🔍 Sample ad IDs:`, deduplicatedAds.slice(0, 3).map(ad => ({ id: ad.id, title: ad.title })));
       
       setDatingAds(deduplicatedAds);
     } catch (error) {

@@ -19,6 +19,7 @@ interface DatingAd {
   location: string;
   age: number;
   views: number;
+  view_count?: number; // Add view_count property
 }
 
 interface VideoProfileCardProps {
@@ -93,7 +94,7 @@ export const VideoProfileCard: React.FC<VideoProfileCardProps> = ({
           <span className="mx-1">•</span>
           <div className="flex items-center gap-1">
             <Eye className="h-3 w-3" />
-            <span>{ad.views}</span>
+            <span>{ad.view_count || ad.views || 0} views</span>
           </div>
         </div>
         <p className="mt-2 text-sm line-clamp-2">{ad.description}</p>
