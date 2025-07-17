@@ -379,7 +379,7 @@ export const SimpleOptimizedChatArea = memo(({ conversationId, onShowDetails }: 
   }, [messages]);
 
   return (
-    <div className="flex flex-col h-64 max-h-64 min-h-64">
+    <div className="flex flex-col h-full">
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b border-white/10">
         <div className="flex items-center space-x-3">
