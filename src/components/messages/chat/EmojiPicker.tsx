@@ -7,7 +7,14 @@ interface EmojiPickerProps {
   onEmojiSelect: (emoji: string) => void;
 }
 
-const COMMON_EMOJIS = ["😊", "😂", "❤️", "👍", "🔥", "😍", "🎉", "🙌", "✨", "💕", "😭", "😘", "🥺", "😅", "👀"];
+const COMMON_EMOJIS = [
+  "😀", "😃", "😄", "😁", "😆", "😅", "🤣", "😂", "🙂", "🙃", 
+  "😉", "😊", "😇", "🥰", "😍", "🤩", "😘", "😗", "😚", "😙",
+  "😋", "😛", "😜", "🤪", "😝", "🤑", "🤗", "🤭", "🤫", "🤔",
+  "🤐", "🤨", "😐", "😑", "😶", "😏", "😒", "🙄", "😬", "🤥",
+  "😔", "😪", "🤤", "😴", "😷", "🤒", "🤕", "🤢", "🤮", "🤧",
+  "🥵", "🥶", "🥴", "😵", "🤯", "🤠", "🥳", "😎", "🤓", "🧐"
+];
 
 export const EmojiPicker = ({ onEmojiSelect }: EmojiPickerProps) => {
   return (
@@ -17,13 +24,13 @@ export const EmojiPicker = ({ onEmojiSelect }: EmojiPickerProps) => {
           <Smile className="h-5 w-5" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-64 p-2 holographic-card border-white/20 bg-black/80 backdrop-blur-xl" side="top">
-        <div className="grid grid-cols-5 gap-2">
+      <PopoverContent className="w-80 p-3 holographic-card border-white/20 bg-black/80 backdrop-blur-xl" side="top">
+        <div className="grid grid-cols-8 gap-2 max-h-64 overflow-y-auto">
           {COMMON_EMOJIS.map((emoji) => (
             <button
               key={emoji}
               onClick={() => onEmojiSelect(emoji)}
-              className="text-2xl hover:bg-white/10 p-2 rounded-lg transition-colors"
+              className="text-xl hover:bg-white/10 p-2 rounded-lg transition-colors hover:scale-110"
             >
               {emoji}
             </button>

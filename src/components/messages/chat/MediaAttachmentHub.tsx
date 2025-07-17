@@ -60,16 +60,15 @@ export const MediaAttachmentHub = ({ onClose, onMediaSelect }: MediaAttachmentHu
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center pb-16 pointer-events-none">
+    <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 z-50">
       {/* Background overlay */}
       <div 
-        className="absolute inset-0 pointer-events-auto" 
+        className="fixed inset-0 -z-10" 
         onClick={onClose}
       />
       
-      {/* Menu container */}
       <div 
-        className="relative bg-gray-900 rounded-lg border border-gray-700 shadow-xl overflow-hidden pointer-events-auto"
+        className="bg-gray-900 rounded-lg border border-gray-700 shadow-xl overflow-hidden"
         style={{ width: '200px' }}
         onClick={(e) => e.stopPropagation()}
       >
