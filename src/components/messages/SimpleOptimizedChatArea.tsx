@@ -238,9 +238,13 @@ export const SimpleOptimizedChatArea = memo(({ conversationId, onShowDetails }: 
           filter: `or(and(sender_id.eq.${user.id},recipient_id.eq.${conversationId}),and(sender_id.eq.${conversationId},recipient_id.eq.${user.id}))`
         },
         (payload) => {
-          console.log('Message deleted:', payload);
-          // Immediate UI update for ultra-fast deletion
-          setMessages(prev => prev.filter(msg => msg.id !== payload.old.id));
+          console.log('🔄 Message deleted via real-time:', payload);
+          // Additional safeguard - remove from UI if not already removed
+          setMessages(prev => {
+            const filtered = prev.filter(msg => msg.id !== payload.old?.id);
+            console.log('📝 Messages after real-time delete:', filtered.length);
+            return filtered;
+          });
         }
       )
       .on(
@@ -252,10 +256,10 @@ export const SimpleOptimizedChatArea = memo(({ conversationId, onShowDetails }: 
           filter: `or(and(sender_id.eq.${user.id},recipient_id.eq.${conversationId}),and(sender_id.eq.${conversationId},recipient_id.eq.${user.id}))`
         },
         (payload) => {
-          console.log('Message updated:', payload);
+          console.log('🔄 Message updated via real-time:', payload);
           // Immediate UI update for ultra-fast editing
           setMessages(prev => prev.map(msg => 
-            msg.id === payload.new.id ? { ...msg, ...payload.new } : msg
+            msg.id === payload.new?.id ? { ...msg, ...payload.new } : msg
           ));
         }
       )
@@ -415,16 +419,34 @@ export const SimpleOptimizedChatArea = memo(({ conversationId, onShowDetails }: 
   };
 
   const handleDeleteMessage = async (messageId: string) => {
+    console.log('🗑️ Deleting message:', messageId);
+    
+    // Optimistic deletion - immediately remove from UI
+    const originalMessages = messages;
+    setMessages(prev => prev.filter(msg => msg.id !== messageId));
+    
     try {
       const { error } = await supabase
         .from('direct_messages')
         .delete()
         .eq('id', messageId);
+        
       if (error) throw error;
-      await fetchMessages();
-      toast({ title: "Message deleted", description: "Message has been deleted" });
+      
+      console.log('✅ Message deleted successfully from database');
+      toast({ 
+        title: "Message deleted", 
+        description: "Message has been deleted instantly" 
+      });
     } catch (error) {
-      toast({ title: "Error", description: "Failed to delete message", variant: "destructive" });
+      console.error('❌ Failed to delete message:', error);
+      // Revert optimistic deletion
+      setMessages(originalMessages);
+      toast({ 
+        title: "Error", 
+        description: "Failed to delete message", 
+        variant: "destructive" 
+      });
     }
   };
 
