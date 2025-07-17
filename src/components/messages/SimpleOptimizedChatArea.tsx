@@ -17,6 +17,9 @@ import { useVideoRecording } from './useVideoRecording';
 import { EmojiPicker, transformTextToEmoji } from './chat/EmojiPicker';
 import { AttachmentButton } from './message-parts/AttachmentButton';
 import { MediaPreviewInChat } from './chat/MediaPreviewInChat';
+import { MessageBubble } from './chat/MessageBubble';
+import { MessageEditDialog } from './dialogs/MessageEditDialog';
+import { AnimatePresence } from 'framer-motion';
 
 interface PendingAttachment {
   id: string;
@@ -52,6 +55,8 @@ export const SimpleOptimizedChatArea = memo(({ conversationId, onShowDetails }: 
   const [showSnapCamera, setShowSnapCamera] = useState(false);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [pendingAttachments, setPendingAttachments] = useState<PendingAttachment[]>([]);
+  const [editingMessage, setEditingMessage] = useState<Message | null>(null);
+  const [showEditDialog, setShowEditDialog] = useState(false);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -369,6 +374,42 @@ export const SimpleOptimizedChatArea = memo(({ conversationId, onShowDetails }: 
     setPendingAttachments(prev => [...prev, attachment]);
   }, []);
 
+  // Message edit/delete handlers
+  const handleEditMessage = (messageId: string) => {
+    const message = messages.find(m => m.id === messageId);
+    if (message) {
+      setEditingMessage(message);
+      setShowEditDialog(true);
+    }
+  };
+
+  const handleDeleteMessage = async (messageId: string) => {
+    try {
+      const { error } = await supabase
+        .from('direct_messages')
+        .delete()
+        .eq('id', messageId);
+      if (error) throw error;
+      await fetchMessages();
+      toast({ title: "Message deleted", description: "Message has been deleted" });
+    } catch (error) {
+      toast({ title: "Error", description: "Failed to delete message", variant: "destructive" });
+    }
+  };
+
+  const handleSaveEdit = async (messageId: string, newContent: string) => {
+    try {
+      const { error } = await supabase
+        .from('direct_messages')
+        .update({ content: newContent })
+        .eq('id', messageId);
+      if (error) throw error;
+      await fetchMessages();
+    } catch (error) {
+      throw error;
+    }
+  };
+
   // Simulate typing indicator
   useEffect(() => {
     if (messages.length > 0) {
@@ -450,73 +491,21 @@ export const SimpleOptimizedChatArea = memo(({ conversationId, onShowDetails }: 
             </div>
           </div>
         ) : (
-          messages.map((message) => {
-            const isOwn = message.sender_id === user?.id;
-            return (
-              <motion.div
-                key={message.id}
-                initial={{ opacity: 0, y: 20, scale: 0.9 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                transition={{ type: "spring", stiffness: 400, damping: 25 }}
-                className={`flex ${isOwn ? 'justify-end' : 'justify-start'}`}
-              >
-                <div className="flex items-end space-x-2 max-w-xs lg:max-w-md">
-                  {!isOwn && (
-                    <Avatar className="h-6 w-6">
-                      <AvatarImage src={userProfile?.avatar_url} />
-                      <AvatarFallback className="bg-gradient-to-r from-purple-500 to-cyan-500 text-white text-xs">
-                        {userProfile?.username?.[0]?.toUpperCase() || '?'}
-                      </AvatarFallback>
-                    </Avatar>
-                  )}
-                   <div
-                     className={`px-4 py-3 rounded-2xl backdrop-blur-sm transition-all duration-300 hover:scale-[1.02] ${
-                       isOwn
-                         ? 'bg-white/95 text-gray-900 rounded-br-md shadow-lg border border-white/20'
-                         : 'bg-gray-900/80 text-white border border-gray-700/50 rounded-bl-md shadow-xl'
-                     }`}
-                     style={{
-                       backdropFilter: 'blur(20px)',
-                       boxShadow: isOwn 
-                         ? '0 8px 32px rgba(255, 255, 255, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.2)'
-                         : '0 8px 32px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1)'
-                     }}
-                   >
-                     {/* Render message content based on type */}
-                     {message.message_type === 'text' || !message.message_type ? (
-                       <p className="break-words">{message.content}</p>
-                     ) : message.message_type === 'image' ? (
-                       <div className="space-y-2">
-                         <img 
-                           src={message.content} 
-                           alt="Image"
-                           className="max-w-[200px] max-h-[200px] object-cover rounded-md"
-                         />
-                       </div>
-                     ) : message.message_type === 'video' ? (
-                       <div className="space-y-2">
-                         <video 
-                           controls 
-                           className="max-w-[200px] max-h-[200px] object-cover rounded-md"
-                         >
-                           <source src={message.content} />
-                         </video>
-                       </div>
-                     ) : (
-                       <p className="break-words">{message.content}</p>
-                     )}
-                     
-                     <p className={`text-xs mt-2 ${isOwn ? 'text-gray-600' : 'text-gray-400'}`}>
-                       {new Date(message.created_at).toLocaleTimeString([], {
-                         hour: '2-digit',
-                         minute: '2-digit'
-                       })}
-                     </p>
-                   </div>
-                </div>
-              </motion.div>
-            );
-          })
+          <AnimatePresence>
+            {messages.map((message) => {
+              const isOwn = message.sender_id === user?.id;
+              return (
+                <MessageBubble
+                  key={message.id}
+                  message={message}
+                  isOwn={isOwn}
+                  userProfile={userProfile}
+                  onEdit={handleEditMessage}
+                  onDelete={handleDeleteMessage}
+                />
+              );
+            })}
+          </AnimatePresence>
         )}
         
         {isTyping && (
@@ -644,6 +633,17 @@ export const SimpleOptimizedChatArea = memo(({ conversationId, onShowDetails }: 
           onClose={() => setShowSnapCamera(false)}
         />
       )}
+
+      {/* Message Edit Dialog */}
+      <MessageEditDialog
+        isOpen={showEditDialog}
+        onClose={() => {
+          setShowEditDialog(false);
+          setEditingMessage(null);
+        }}
+        message={editingMessage}
+        onSave={handleSaveEdit}
+      />
     </div>
   );
 });

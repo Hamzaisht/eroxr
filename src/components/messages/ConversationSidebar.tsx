@@ -7,6 +7,8 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { NewMessageDialog } from './NewMessageDialog';
+import { ArchivedChatsDialog } from './dialogs/ArchivedChatsDialog';
+import { SettingsDialog } from './dialogs/SettingsDialog';
 
 interface Conversation {
   id: string;
@@ -33,6 +35,8 @@ export const ConversationSidebar = ({ selectedConversationId, onSelectConversati
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [showNewMessage, setShowNewMessage] = useState(false);
+  const [showArchivedChats, setShowArchivedChats] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
   const { user } = useAuth();
 
   useEffect(() => {
@@ -229,6 +233,7 @@ export const ConversationSidebar = ({ selectedConversationId, onSelectConversati
             variant="ghost"
             size="sm"
             className="flex-1 text-white/70 hover:text-white hover:bg-white/10"
+            onClick={() => setShowArchivedChats(true)}
           >
             <Archive className="h-4 w-4 mr-2" />
             Archived
@@ -237,6 +242,7 @@ export const ConversationSidebar = ({ selectedConversationId, onSelectConversati
             variant="ghost"
             size="sm"
             className="flex-1 text-white/70 hover:text-white hover:bg-white/10"
+            onClick={() => setShowSettings(true)}
           >
             <Settings className="h-4 w-4 mr-2" />
             Settings
@@ -251,6 +257,16 @@ export const ConversationSidebar = ({ selectedConversationId, onSelectConversati
           onSelectConversation(userId);
           setShowNewMessage(false);
         }}
+      />
+
+      <ArchivedChatsDialog 
+        isOpen={showArchivedChats}
+        onClose={() => setShowArchivedChats(false)}
+      />
+
+      <SettingsDialog 
+        isOpen={showSettings}
+        onClose={() => setShowSettings(false)}
       />
     </div>
   );
