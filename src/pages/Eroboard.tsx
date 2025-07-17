@@ -56,6 +56,19 @@ const Eroboard = () => {
     contentAnalyticsData,
     fetchDashboardData 
   } = useEroboardData();
+
+  // Ensure all data objects have default values to prevent undefined errors
+  const safeStats = stats || { totalEarnings: 0, followers: 0, totalViews: 0, engagementRate: 0, totalContent: 0, newSubscribers: 0, vipFans: 0 };
+  const safeRevenueBreakdown = revenueBreakdown || { subscriptions: 0, tips: 0, ppv: 0, other: 0 };
+  const safeEarningsData = earningsData || [];
+  const safeContentPerformanceData = contentPerformanceData || [];
+  const safeContentTypeData = contentTypeData || [];
+  const safeGeographicData = geographicData || [];
+  const safeEngagedFansData = engagedFansData || [];
+  const safeConversionFunnelData = conversionFunnelData || [];
+  const safeGrowthAnalyticsData = growthAnalyticsData || {};
+  const safeStreamingAnalyticsData = streamingAnalyticsData || {};
+  const safeContentAnalyticsData = contentAnalyticsData || {};
   const { toast } = useToast();
   
   console.log('🔄 EroBoard loaded, activeTab:', activeTab, 'loading:', loading);
@@ -139,29 +152,29 @@ const Eroboard = () => {
   const quickStats = [
     {
       title: "Total Earnings",
-      value: `$${stats.totalEarnings.toLocaleString()}`,
+      value: `$${safeStats.totalEarnings.toLocaleString()}`,
       change: "+12%",
       icon: DollarSign,
       color: "text-green-400"
     },
     {
       title: "Followers",
-      value: stats.followers.toLocaleString(),
-      change: `+${stats.newSubscribers}`,
+      value: safeStats.followers.toLocaleString(),
+      change: `+${safeStats.newSubscribers}`,
       icon: Users,
       color: "text-blue-400"
     },
     {
       title: "Total Views",
-      value: stats.totalViews > 1000 ? `${(stats.totalViews / 1000).toFixed(1)}K` : stats.totalViews.toString(),
-      change: `${stats.totalContent} posts`,
+      value: safeStats.totalViews > 1000 ? `${(safeStats.totalViews / 1000).toFixed(1)}K` : safeStats.totalViews.toString(),
+      change: `${safeStats.totalContent} posts`,
       icon: BarChart3,
       color: "text-purple-400"
     },
     {
       title: "Engagement Rate",
-      value: `${stats.engagementRate.toFixed(1)}%`,
-      change: `${stats.vipFans} VIP fans`,
+      value: `${safeStats.engagementRate.toFixed(1)}%`,
+      change: `${safeStats.vipFans} VIP fans`,
       icon: TrendingUp,
       color: "text-pink-400"
     }
@@ -171,7 +184,7 @@ const Eroboard = () => {
     {
       type: "optimization",
       title: "Best posting time",
-      insight: `Your content performs ${stats.engagementRate > 5 ? '30%' : '15%'} better when posted between 8-10 PM`,
+      insight: `Your content performs ${safeStats.engagementRate > 5 ? '30%' : '15%'} better when posted between 8-10 PM`,
       action: "Schedule more content during peak hours"
     },
     {
@@ -183,7 +196,7 @@ const Eroboard = () => {
     {
       type: "monetization",
       title: "Revenue opportunity", 
-      insight: `Your top ${Math.min(stats.vipFans, 20)}% of fans contribute 80% of revenue`,
+      insight: `Your top ${Math.min(safeStats.vipFans, 20)}% of fans contribute 80% of revenue`,
       action: "Create exclusive content for VIP subscribers"
     }
   ];
@@ -247,7 +260,7 @@ const Eroboard = () => {
                     <div className="bg-card/80 backdrop-blur-sm rounded-2xl p-4 border border-border/50">
                       <p className="text-primary text-xl font-bold">Elite Creator</p>
                       <Badge className="bg-primary/20 text-primary mt-2 px-3 py-1">
-                        {stats.totalEarnings > 1000 ? 'Top 5% Performer' : 'Rising Star'}
+                        {safeStats.totalEarnings > 1000 ? 'Top 5% Performer' : 'Rising Star'}
                       </Badge>
                     </div>
                   </div>
@@ -356,7 +369,7 @@ const Eroboard = () => {
             </Card>
 
             {/* Sample Data Generation - show if no earnings */}
-            {stats.totalEarnings === 0 && (
+            {safeStats.totalEarnings === 0 && (
               <Card className="relative overflow-hidden bg-gradient-to-br from-blue-500/10 via-purple-500/5 to-blue-500/15 border border-blue-500/30 backdrop-blur-sm">
                 <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-purple-500/10" />
                 <div className="absolute top-4 right-4 w-32 h-32 bg-blue-500/10 rounded-full blur-2xl animate-pulse" />
@@ -456,52 +469,52 @@ const Eroboard = () => {
       case "earnings":
         return <EarningsOverview 
           data={{ 
-            stats, 
-            revenueBreakdown, 
-            earningsData, 
-            contentPerformanceData,
+            stats: safeStats, 
+            revenueBreakdown: safeRevenueBreakdown, 
+            earningsData: safeEarningsData, 
+            contentPerformanceData: safeContentPerformanceData,
             latestPayout
-          }} 
+          }}
           isLoading={loading} 
         />;
       case "content":
         return <ContentAnalytics 
           data={{ 
-            stats, 
-            contentAnalyticsData, 
-            contentPerformanceData, 
-            contentTypeData 
-          }} 
+            stats: safeStats, 
+            contentAnalyticsData: safeContentAnalyticsData, 
+            contentPerformanceData: safeContentPerformanceData, 
+            contentTypeData: safeContentTypeData 
+          }}
           isLoading={loading} 
         />;
       case "audience":
         return <AudienceAnalytics 
           data={{ 
-            stats, 
-            geographicData, 
-            engagedFansData, 
-            conversionFunnelData, 
-            growthAnalyticsData 
-          }} 
+            stats: safeStats, 
+            geographicData: safeGeographicData, 
+            engagedFansData: safeEngagedFansData, 
+            conversionFunnelData: safeConversionFunnelData, 
+            growthAnalyticsData: safeGrowthAnalyticsData 
+          }}
           isLoading={loading} 
         />;
       case "streaming":
         return <StreamingAnalytics 
           data={{ 
-            stats, 
-            earningsData, 
+            stats: safeStats, 
+            earningsData: safeEarningsData, 
             engagementData, 
-            streamingAnalyticsData 
-          }} 
+            streamingAnalyticsData: safeStreamingAnalyticsData 
+          }}
           isLoading={loading} 
         />;
       case "growth":
         return <GrowthAnalytics 
           data={{ 
-            stats, 
-            growthAnalyticsData, 
-            geographicData 
-          }} 
+            stats: safeStats, 
+            growthAnalyticsData: safeGrowthAnalyticsData, 
+            geographicData: safeGeographicData 
+          }}
           isLoading={loading} 
         />;
       case "insights":
@@ -672,7 +685,7 @@ const Eroboard = () => {
               <div className="flex items-center gap-6">
                 <div className="flex items-center gap-3">
                   <div className="text-right">
-                    <div className="text-sm font-medium text-foreground">${stats.totalEarnings.toLocaleString()}</div>
+                    <div className="text-sm font-medium text-foreground">${safeStats.totalEarnings.toLocaleString()}</div>
                     <div className="text-xs text-muted-foreground">Total Earnings</div>
                   </div>
                   <div className="w-12 h-12 rounded-full bg-gradient-to-tr from-primary/20 to-accent/20 border border-primary/30 flex items-center justify-center">
@@ -682,7 +695,7 @@ const Eroboard = () => {
                 
                 <div className="flex items-center gap-3">
                   <div className="text-right">
-                    <div className="text-sm font-medium text-foreground">{stats.followers.toLocaleString()}</div>
+                    <div className="text-sm font-medium text-foreground">{safeStats.followers.toLocaleString()}</div>
                     <div className="text-xs text-muted-foreground">Followers</div>
                   </div>
                   <div className="w-12 h-12 rounded-full bg-gradient-to-tr from-blue-500/20 to-cyan-400/20 border border-blue-500/30 flex items-center justify-center">
