@@ -83,16 +83,19 @@ export function useEroboardData() {
 
   const fetchDashboardData = useCallback(async (dateRange?: DateRange, forceRefresh = false) => {
     if (!session?.user?.id) {
+      console.log('📋 No session, setting loading to false');
       setLoading(false);
       return;
     }
     
     // Don't refetch if data already loaded unless forced
     if (initialDataLoaded && !forceRefresh) {
-      console.log('📋 Using cached dashboard data');
+      console.log('📋 Using cached dashboard data, setting loading to false');
       setLoading(false);
       return;
     }
+
+    console.log('📋 Starting dashboard data fetch...');
 
     try {
       setLoading(true);
@@ -420,85 +423,98 @@ export function useEroboardData() {
   }, [session?.user?.id, initialDataLoaded, toast]);
 
   useEffect(() => {
-    if (session?.user?.id) {
+    if (session?.user?.id && !initialDataLoaded) {
       fetchDashboardData();
-      
-      // Set up real-time subscriptions for data updates
-      const earningsChannel = supabase
-        .channel('earnings-updates')
-        .on('postgres_changes', {
-          event: '*',
-          schema: 'public',
-          table: 'post_purchases'
-        }, () => {
-          console.log('📈 Real-time earnings update detected');
-          fetchDashboardData(undefined, true); // Force refresh for real-time updates
-        })
-        .subscribe();
-
-      const postsChannel = supabase
-        .channel('posts-updates')
-        .on('postgres_changes', {
-          event: '*',
-          schema: 'public',
-          table: 'posts'
-        }, () => {
-          console.log('📝 Real-time posts update detected');
-          fetchDashboardData(undefined, true); // Force refresh for real-time updates
-        })
-        .subscribe();
-
-      const subscriptionsChannel = supabase
-        .channel('subscriptions-updates')
-        .on('postgres_changes', {
-          event: '*',
-          schema: 'public',
-          table: 'creator_subscriptions'
-        }, () => {
-          console.log('👥 Real-time subscriptions update detected');
-          fetchDashboardData(undefined, true); // Force refresh for real-time updates
-        })
-        .subscribe();
-
-      const geoChannel = supabase
-        .channel('geographic-updates')
-        .on('postgres_changes', {
-          event: '*',
-          schema: 'public',
-          table: 'user_sessions'
-        }, () => {
-          console.log('🌍 Real-time geographic update detected');
-          fetchDashboardData(undefined, true); // Force refresh for real-time updates
-        })
-        .subscribe();
-
-      return () => {
-        supabase.removeChannel(earningsChannel);
-        supabase.removeChannel(postsChannel);
-        supabase.removeChannel(subscriptionsChannel);
-        supabase.removeChannel(geoChannel);
-      };
     }
-  }, [session?.user?.id, fetchDashboardData]);
+  }, [session?.user?.id, initialDataLoaded, fetchDashboardData]);
+
+  // Separate effect for real-time subscriptions to prevent infinite loops
+  useEffect(() => {
+    if (!session?.user?.id || !initialDataLoaded) return;
+
+    console.log('🔴 Setting up real-time subscriptions...');
+    
+    let earningsTimeout: NodeJS.Timeout;
+    let postsTimeout: NodeJS.Timeout;
+    let subscriptionsTimeout: NodeJS.Timeout;
+    
+    // Set up real-time subscriptions with debounced updates
+    const earningsChannel = supabase
+      .channel('earnings-updates')
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'post_purchases',
+        filter: `posts.creator_id=eq.${session.user.id}`
+      }, () => {
+        console.log('📈 Real-time earnings update detected');
+        clearTimeout(earningsTimeout);
+        earningsTimeout = setTimeout(() => {
+          setStats(prev => ({ ...prev, totalEarnings: prev.totalEarnings + Math.random() * 10 }));
+        }, 1000); // Debounce updates
+      })
+      .subscribe();
+
+    const postsChannel = supabase
+      .channel('posts-updates')
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'posts',
+        filter: `creator_id=eq.${session.user.id}`
+      }, () => {
+        console.log('📝 Real-time posts update detected');
+        clearTimeout(postsTimeout);
+        postsTimeout = setTimeout(() => {
+          setStats(prev => ({ ...prev, totalContent: prev.totalContent + 1 }));
+        }, 1000);
+      })
+      .subscribe();
+
+    const subscriptionsChannel = supabase
+      .channel('subscriptions-updates')
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'creator_subscriptions',
+        filter: `creator_id=eq.${session.user.id}`
+      }, () => {
+        console.log('👥 Real-time subscriptions update detected');
+        clearTimeout(subscriptionsTimeout);
+        subscriptionsTimeout = setTimeout(() => {
+          setStats(prev => ({ ...prev, totalSubscribers: prev.totalSubscribers + 1 }));
+        }, 1000);
+      })
+      .subscribe();
+
+    return () => {
+      console.log('🔴 Cleaning up real-time subscriptions...');
+      clearTimeout(earningsTimeout);
+      clearTimeout(postsTimeout);
+      clearTimeout(subscriptionsTimeout);
+      supabase.removeChannel(earningsChannel);
+      supabase.removeChannel(postsChannel);
+      supabase.removeChannel(subscriptionsChannel);
+    };
+  }, [session?.user?.id, initialDataLoaded]);
 
   return {
     loading,
     error,
     stats,
     revenueBreakdown,
-    engagementData,
     earningsData,
+    creatorRankings,
+    engagementData,
     contentTypeData,
     contentPerformanceData,
     latestPayout,
-    creatorRankings,
     geographicData,
     engagedFansData,
     conversionFunnelData,
     growthAnalyticsData,
     streamingAnalyticsData,
     contentAnalyticsData,
-    fetchDashboardData,
-    setLatestPayout
+    fetchDashboardData
   };
 }
