@@ -379,7 +379,7 @@ export const SimpleOptimizedChatArea = memo(({ conversationId, onShowDetails }: 
   }, [messages]);
 
   return (
-    <div className="flex flex-col h-96 max-h-96">
+    <div className="flex flex-col h-full relative">
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b border-white/10">
         <div className="flex items-center space-x-3">
@@ -547,7 +547,7 @@ export const SimpleOptimizedChatArea = memo(({ conversationId, onShowDetails }: 
       </div>
 
       {/* Input */}
-      <div className="mt-auto p-4 border-t border-white/10 bg-background/95 backdrop-blur-sm">
+      <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-white/10 bg-background/95 backdrop-blur-sm">
         {/* Media Preview Section */}
         {pendingAttachments.length > 0 && (
           <div className="mb-4 space-y-2">
