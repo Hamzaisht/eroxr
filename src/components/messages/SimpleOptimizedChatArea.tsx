@@ -547,7 +547,7 @@ export const SimpleOptimizedChatArea = memo(({ conversationId, onShowDetails }: 
       </div>
 
       {/* Input */}
-      <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-white/10 bg-background/95 backdrop-blur-sm">
+      <div className="absolute bottom-0 left-1/4 right-1/4 p-4 border-t border-white/10 bg-background/95 backdrop-blur-sm rounded-t-lg">
         {/* Media Preview Section */}
         {pendingAttachments.length > 0 && (
           <div className="mb-4 space-y-2">
