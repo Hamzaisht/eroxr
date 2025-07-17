@@ -25,7 +25,8 @@ interface EnhancedAdCardProps {
 export const EnhancedAdCard = ({ ad, onSelect, isMobile, userProfile, index = 0 }: EnhancedAdCardProps) => {
   const [isHovered, setIsHovered] = useState(false);
   const [isLiked, setIsLiked] = useState(false);
-  const [likesCount, setLikesCount] = useState(ad.views || 0);
+  const [likesCount, setLikesCount] = useState(0); // Initialize with 0 for likes
+  const [viewCount, setViewCount] = useState(ad.view_count || ad.views || 0); // Separate view count
   const [isViewed, setIsViewed] = useState(false);
   const session = useSession();
   const cardRef = useRef<HTMLDivElement>(null);
@@ -82,8 +83,10 @@ export const EnhancedAdCard = ({ ad, onSelect, isMobile, userProfile, index = 0 
     
     const observer = new IntersectionObserver((entries) => {
       if (entries[0].isIntersecting) {
+        const newViewCount = viewCount + 1;
+        setViewCount(newViewCount);
         supabase.from('dating_ads').update({ 
-          view_count: (ad.view_count || 0) + 1 
+          view_count: newViewCount 
         }).eq('id', ad.id);
         setIsViewed(true);
         observer.disconnect();
@@ -95,7 +98,7 @@ export const EnhancedAdCard = ({ ad, onSelect, isMobile, userProfile, index = 0 
     }
     
     return () => observer.disconnect();
-  }, [ad.id, isViewed, session, ad.view_count]);
+  }, [ad.id, isViewed, session, viewCount]);
 
   const handleLike = async (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -283,9 +286,11 @@ export const EnhancedAdCard = ({ ad, onSelect, isMobile, userProfile, index = 0 
               <h3 className="font-bold text-white text-lg truncate">
                 {ad.title}
               </h3>
-              <p className="text-cyan-300 text-sm flex items-center gap-1">
+              <p className="text-cyan-300 text-sm flex items-center gap-2">
                 <Eye className="w-3 h-3" />
-                Active now • {ad.location}
+                <span>{viewCount} views</span>
+                <span>•</span>
+                <span>Active now • {ad.location}</span>
               </p>
             </div>
           </div>

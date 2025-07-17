@@ -118,7 +118,9 @@ export default function DatingMainContent(props: any) {
         throw error;
       }
 
-      // Transform the data to match the DatingAd interface with better performance
+      // Transform and deduplicate the data
+      const uniqueAds = new Map();
+      
       const transformedAds = ads?.map(ad => ({
         id: ad.id,
         user_id: ad.user_id,
@@ -147,7 +149,17 @@ export default function DatingMainContent(props: any) {
         last_active: ad.last_active,
       })) || [];
 
-      setDatingAds(transformedAds);
+      // Deduplicate by id
+      transformedAds.forEach(ad => {
+        if (!uniqueAds.has(ad.id)) {
+          uniqueAds.set(ad.id, ad);
+        }
+      });
+
+      const deduplicatedAds = Array.from(uniqueAds.values());
+      console.log(`📊 Fetched ${ads?.length || 0} ads, deduplicated to ${deduplicatedAds.length} unique ads`);
+      
+      setDatingAds(deduplicatedAds);
     } catch (error) {
       console.error("Failed to fetch dating ads:", error);
       toast({
