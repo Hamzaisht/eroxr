@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Smile } from "lucide-react";
@@ -48,6 +48,9 @@ const TEXT_TO_EMOJI: Record<string, string> = {
 
 export const EmojiPicker = ({ onEmojiSelect }: EmojiPickerProps) => {
   const [currentPage, setCurrentPage] = useState(0);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const startX = useRef<number>(0);
+  const isDragging = useRef<boolean>(false);
 
   const handleEmojiClick = (emoji: string) => {
     onEmojiSelect(emoji);
@@ -57,6 +60,39 @@ export const EmojiPicker = ({ onEmojiSelect }: EmojiPickerProps) => {
     return TEXT_TO_EMOJI[text] || text;
   };
 
+  // Touch/swipe handlers for mobile
+  const handleTouchStart = (e: React.TouchEvent) => {
+    startX.current = e.touches[0].clientX;
+    isDragging.current = false;
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (Math.abs(e.touches[0].clientX - startX.current) > 10) {
+      isDragging.current = true;
+    }
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (!isDragging.current) return;
+    
+    const endX = e.changedTouches[0].clientX;
+    const diffX = startX.current - endX;
+    
+    if (Math.abs(diffX) > 50) { // Minimum swipe distance
+      if (diffX > 0 && currentPage < EMOJI_PAGES.length - 1) {
+        // Swipe left - next page
+        setCurrentPage(currentPage + 1);
+      } else if (diffX < 0 && currentPage > 0) {
+        // Swipe right - previous page
+        setCurrentPage(currentPage - 1);
+      }
+    }
+  };
+
+  const handleDotClick = (pageIndex: number) => {
+    setCurrentPage(pageIndex);
+  };
+
   return (
     <Popover>
       <PopoverTrigger asChild>
@@ -64,9 +100,15 @@ export const EmojiPicker = ({ onEmojiSelect }: EmojiPickerProps) => {
           <Smile className="h-5 w-5" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-80 p-3 holographic-card border-white/20 bg-black/80 backdrop-blur-xl" side="top">
-        {/* Current page emojis */}
-        <div className="grid grid-cols-8 gap-2 mb-4">
+      <PopoverContent className="w-80 p-3 holographic-card border-white/20 bg-black/90 backdrop-blur-xl" side="top">
+        {/* Current page emojis with touch support */}
+        <div 
+          ref={containerRef}
+          className="grid grid-cols-8 gap-2 mb-4 select-none"
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+        >
           {EMOJI_PAGES[currentPage].map((emoji, index) => (
             <button
               key={`${currentPage}-${index}`}
@@ -83,12 +125,13 @@ export const EmojiPicker = ({ onEmojiSelect }: EmojiPickerProps) => {
           {EMOJI_PAGES.map((_, pageIndex) => (
             <button
               key={pageIndex}
-              onClick={() => setCurrentPage(pageIndex)}
-              className={`w-2 h-2 rounded-full transition-colors ${
+              onClick={() => handleDotClick(pageIndex)}
+              className={`w-2 h-2 rounded-full transition-all duration-200 ${
                 currentPage === pageIndex 
-                  ? "bg-white" 
-                  : "bg-white/30 hover:bg-white/50"
+                  ? "bg-white scale-125" 
+                  : "bg-white/30 hover:bg-white/50 hover:scale-110"
               }`}
+              aria-label={`Go to emoji page ${pageIndex + 1}`}
             />
           ))}
         </div>
@@ -96,7 +139,7 @@ export const EmojiPicker = ({ onEmojiSelect }: EmojiPickerProps) => {
         {/* Text shortcuts info */}
         <div className="mt-3 pt-2 border-t border-white/10">
           <p className="text-xs text-white/50 text-center">
-            Type &lt;3 for ❤️, :) for 🙂, :D for 😃
+            Type &lt;3 for ❤️, :) for 🙂, :D for 😃 • Swipe to change pages
           </p>
         </div>
       </PopoverContent>

@@ -60,7 +60,7 @@ export const MediaAttachmentHub = ({ onClose, onMediaSelect }: MediaAttachmentHu
   }
 
   return (
-    <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 z-50">
+    <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-4 z-50">
       {/* Background overlay */}
       <div 
         className="fixed inset-0 -z-10" 
@@ -68,8 +68,8 @@ export const MediaAttachmentHub = ({ onClose, onMediaSelect }: MediaAttachmentHu
       />
       
       <div 
-        className="bg-gray-900 rounded-lg border border-gray-700 shadow-xl overflow-hidden"
-        style={{ width: '200px' }}
+        className="bg-gray-900/95 backdrop-blur-lg rounded-lg border border-gray-700 shadow-2xl overflow-hidden"
+        style={{ width: '200px', maxHeight: '300px' }}
         onClick={(e) => e.stopPropagation()}
       >
         {categories.map((category) => {
