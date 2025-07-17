@@ -113,7 +113,11 @@ export const EmojiPicker = ({ onEmojiSelect }: EmojiPickerProps) => {
             <button
               key={`${currentPage}-${index}`}
               onClick={() => handleEmojiClick(emoji)}
-              className="text-xl hover:bg-white/10 p-2 rounded-lg transition-colors hover:scale-110"
+              className="text-xl hover:bg-white/10 p-2 rounded-lg transition-all duration-200 hover:scale-110 flex items-center justify-center min-h-[44px] min-w-[44px] cursor-pointer"
+              style={{ 
+                WebkitTapHighlightColor: 'transparent',
+                userSelect: 'none'
+              }}
             >
               {emoji}
             </button>
