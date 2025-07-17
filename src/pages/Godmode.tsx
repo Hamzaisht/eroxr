@@ -10,15 +10,12 @@ export const Godmode: React.FC = () => {
 
   console.log('🎯 Godmode: Component rendered', { isAdmin, isLoading });
 
-  // Temporarily force admin access for debugging
-  const forceAdmin = true;
-
   if (isLoading) {
     console.log('🎯 Godmode: Showing loading screen');
     return <LoadingScreen />;
   }
 
-  if (!isAdmin && !forceAdmin) {
+  if (!isAdmin) {
     console.log('🎯 Godmode: Not admin, redirecting to home');
     return <Navigate to="/" replace />;
   }

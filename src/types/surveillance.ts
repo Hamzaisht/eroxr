@@ -97,34 +97,7 @@ export interface LiveSession {
   thumbnail_url?: string; // For streams
 }
 
-// Make the LiveAlert interface compatible with the one in alerts.ts
-export interface LiveAlert {
-  id: string;
-  type: 'violation' | 'risk' | 'information' | 'security' | 'system';
-  alert_type: 'violation' | 'risk' | 'information';
-  user_id: string;
-  userId: string; // Making this required to match alerts.ts
-  username: string;
-  avatar_url?: string;
-  timestamp: string;
-  created_at: string;
-  content_type?: string;
-  reason?: string;
-  severity: 'high' | 'medium' | 'low' | 'critical';
-  contentId: string; // Making this required to match alerts.ts
-  content_id?: string;
-  title: string; // Making this required to match alerts.ts
-  description: string; // Making this required
-  isRead: boolean; // Making this required
-  requiresAction?: boolean;
-  session?: {
-    id: string;
-    type: SessionType;
-    status: SessionStatus;
-    user_id: string;
-    started_at: string;
-  };
-}
+// Remove duplicate LiveAlert interface - use the one from alerts.ts
 
 // Define the media source interface
 export interface MediaSource {

@@ -1,6 +1,4 @@
 
-import { SessionStatus, SessionType } from './surveillance';
-
 export interface LiveAlert {
   id: string;
   type: 'violation' | 'risk' | 'information' | 'security' | 'system';
@@ -22,8 +20,8 @@ export interface LiveAlert {
   requiresAction?: boolean;
   session?: {
     id: string;
-    type: SessionType;
-    status: SessionStatus;
+    type: string;
+    status: string;
     user_id: string;
     started_at: string;
   };
