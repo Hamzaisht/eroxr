@@ -10,6 +10,7 @@ import { NewMessageDialog } from './NewMessageDialog';
 import { ArchivedChatsDialog } from './dialogs/ArchivedChatsDialog';
 import { SettingsDialog } from './dialogs/SettingsDialog';
 import { cn } from '@/lib/utils';
+import { clsx } from 'clsx';
 
 interface Conversation {
   id: string;
