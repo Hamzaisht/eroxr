@@ -2435,39 +2435,6 @@ export type Database = {
           },
         ]
       }
-      temp_demo_content: {
-        Row: {
-          content_type: string
-          created_at: string | null
-          description: string | null
-          expires_at: string
-          id: string
-          image_url: string | null
-          is_active: boolean | null
-          title: string | null
-        }
-        Insert: {
-          content_type: string
-          created_at?: string | null
-          description?: string | null
-          expires_at: string
-          id?: string
-          image_url?: string | null
-          is_active?: boolean | null
-          title?: string | null
-        }
-        Update: {
-          content_type?: string
-          created_at?: string | null
-          description?: string | null
-          expires_at?: string
-          id?: string
-          image_url?: string | null
-          is_active?: boolean | null
-          title?: string | null
-        }
-        Relationships: []
-      }
       tips: {
         Row: {
           amount: number
