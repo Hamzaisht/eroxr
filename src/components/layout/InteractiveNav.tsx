@@ -99,7 +99,7 @@ export const InteractiveNav = () => {
             )}
           </div>
 
-          {session && <UserProfileSection isExpanded={true} currentUser={currentUser} />}
+          <UserProfileSection isExpanded={true} currentUser={currentUser} />
         </div>
       </SheetContent>
     </Sheet>
@@ -165,7 +165,7 @@ export const InteractiveNav = () => {
           )}
         </div>
 
-        {session && <UserProfileSection isExpanded={isExpanded} currentUser={currentUser} />}
+        <UserProfileSection isExpanded={isExpanded} currentUser={currentUser} />
       </motion.div>
     </motion.nav>
   );
