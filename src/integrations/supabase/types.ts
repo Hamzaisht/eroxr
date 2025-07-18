@@ -3540,6 +3540,10 @@ export type Database = {
         Args: { p_table_name: string; p_column_name: string }
         Returns: boolean
       }
+      check_username_available: {
+        Args: { username_to_check: string }
+        Returns: boolean
+      }
       cleanup_expired_demo_content: {
         Args: Record<PropertyKey, never>
         Returns: undefined

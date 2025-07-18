@@ -6,9 +6,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { supabase } from "@/integrations/supabase/client";
+import { parsePhoneNumber, isValidPhoneNumber } from 'libphonenumber-js';
 import { 
   Loader2, 
   ArrowLeft, 
@@ -27,19 +29,59 @@ import {
   ChevronRight,
   Users,
   TrendingUp,
-  Award
+  Award,
+  CheckCircle,
+  X,
+  Phone,
+  User,
+  MapPin,
+  Zap
 } from "lucide-react";
+// Real countries data is defined below instead of importing
+
+// Real Nordic countries with actual cities
+const COUNTRIES = {
+  "Denmark": ["Copenhagen", "Aarhus", "Odense", "Aalborg", "Frederiksberg", "Esbjerg", "Randers"],
+  "Finland": ["Helsinki", "Espoo", "Tampere", "Vantaa", "Oulu", "Turku", "Jyväskylä"],
+  "Iceland": ["Reykjavik", "Kópavogur", "Hafnarfjörður", "Akureyri", "Reykjanesbær"],
+  "Norway": ["Oslo", "Bergen", "Trondheim", "Stavanger", "Drammen", "Fredrikstad", "Kristiansand"],
+  "Sweden": ["Stockholm", "Gothenburg", "Malmö", "Uppsala", "Västerås", "Örebro", "Linköping"]
+};
+
+const COUNTRY_CODES = {
+  "Denmark": "+45",
+  "Finland": "+358", 
+  "Iceland": "+354",
+  "Norway": "+47",
+  "Sweden": "+46"
+};
 
 const CreatorSignup = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { profile } = useCurrentUser();
   
+  // Get user from Supabase auth for email
+  const [userEmail, setUserEmail] = useState<string>('');
+  
+  useEffect(() => {
+    const getUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user?.email) {
+        setUserEmail(user.email);
+      }
+    };
+    getUser();
+  }, []);
+  
   // Form state
   const [formData, setFormData] = useState({
     fullName: "",
     dateOfBirth: "",
     accountType: "",
+    phoneNumber: "",
+    phoneCountryCode: "",
+    username: "",
     // Address fields
     street: "",
     city: "",
@@ -60,6 +102,11 @@ const CreatorSignup = () => {
     communityGuidelinesAccepted: false,
   });
   
+  // Validation states
+  const [usernameAvailable, setUsernameAvailable] = useState<boolean | null>(null);
+  const [usernameChecking, setUsernameChecking] = useState(false);
+  const [phoneValid, setPhoneValid] = useState<boolean | null>(null);
+  
   // File uploads
   const [governmentIdFile, setGovernmentIdFile] = useState<File | null>(null);
   const [selfieFile, setSelfieFile] = useState<File | null>(null);
@@ -73,13 +120,49 @@ const CreatorSignup = () => {
   const idFileRef = useRef<HTMLInputElement>(null);
   const selfieFileRef = useRef<HTMLInputElement>(null);
 
-  // Parallax effect
-  const [scrollY, setScrollY] = useState(0);
+  // Check username availability with debounce
   useEffect(() => {
-    const handleScroll = () => setScrollY(window.scrollY);
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
+    const checkUsername = async () => {
+      if (!formData.username || formData.username.length < 3) {
+        setUsernameAvailable(null);
+        return;
+      }
+      
+      setUsernameChecking(true);
+      try {
+        const { data, error } = await supabase.rpc('check_username_available', {
+          username_to_check: formData.username
+        });
+        
+        if (error) throw error;
+        setUsernameAvailable(data);
+      } catch (error) {
+        console.error('Username check error:', error);
+        setUsernameAvailable(null);
+      } finally {
+        setUsernameChecking(false);
+      }
+    };
+
+    const timeoutId = setTimeout(checkUsername, 500);
+    return () => clearTimeout(timeoutId);
+  }, [formData.username]);
+
+  // Validate phone number
+  useEffect(() => {
+    if (!formData.phoneNumber || !formData.phoneCountryCode) {
+      setPhoneValid(null);
+      return;
+    }
+    
+    try {
+      const fullNumber = formData.phoneCountryCode + formData.phoneNumber;
+      const isValid = isValidPhoneNumber(fullNumber);
+      setPhoneValid(isValid);
+    } catch {
+      setPhoneValid(false);
+    }
+  }, [formData.phoneNumber, formData.phoneCountryCode]);
 
   const handleInputChange = (field: string, value: any) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -97,9 +180,19 @@ const CreatorSignup = () => {
   const validateStep = (step: number) => {
     switch (step) {
       case 1:
-        return formData.fullName && formData.dateOfBirth && formData.accountType;
+        return formData.fullName && 
+               formData.dateOfBirth && 
+               formData.accountType && 
+               formData.username && 
+               usernameAvailable === true &&
+               formData.phoneNumber &&
+               formData.phoneCountryCode &&
+               phoneValid === true;
       case 2:
-        return formData.street && formData.city && formData.country;
+        return formData.street && 
+               formData.city && 
+               formData.country && 
+               COUNTRIES[formData.country as keyof typeof COUNTRIES]?.includes(formData.city);
       case 3:
         return formData.governmentIdType && governmentIdFile && selfieFile;
       case 4:
@@ -200,6 +293,14 @@ const CreatorSignup = () => {
 
       if (error) throw error;
 
+      // Update profile with username
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .update({ username: formData.username })
+        .eq('id', profile.id);
+
+      if (profileError) throw profileError;
+
       // Move to success step
       setCurrentStep(5);
     } catch (error: any) {
@@ -214,42 +315,51 @@ const CreatorSignup = () => {
     }
   };
 
-  // Hero Landing Screen
+  // Hero Landing Screen with Quantum UI
   const renderHero = () => (
     <div className="relative min-h-screen flex items-center justify-center overflow-hidden">
-      {/* Animated Background */}
-      <div className="absolute inset-0 bg-gradient-to-br from-purple-900/20 via-blue-900/20 to-teal-900/20">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_50%,hsl(280,100%,70%,0.3),transparent_50%)] animate-pulse-slow"></div>
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_20%,hsl(200,100%,70%,0.3),transparent_50%)] animate-pulse-slow" style={{ animationDelay: '1s' }}></div>
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_40%_80%,hsl(160,100%,70%,0.3),transparent_50%)] animate-pulse-slow" style={{ animationDelay: '2s' }}></div>
+      {/* Quantum Background */}
+      <div className="absolute inset-0">
+        <div className="absolute inset-0 bg-gradient-to-br from-black via-purple-900/20 to-cyan-900/20"></div>
+        {/* Animated RGB border effect */}
+        <div className="absolute inset-0 bg-gradient-to-r from-cyan-400/20 via-purple-500/20 via-pink-500/20 to-yellow-400/20 blur-3xl animate-[spin_10s_linear_infinite]"></div>
+        
+        {/* Neural network pattern */}
+        <div className="absolute inset-0 opacity-30" style={{
+          backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.03'%3E%3Ccircle cx='30' cy='30' r='2'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`
+        }} />
+        
+        {/* Floating quantum particles */}
+        <AnimatePresence>
+          {[...Array(12)].map((_, i) => (
+            <motion.div
+              key={i}
+              className="absolute w-2 h-2 rounded-full"
+              style={{
+                background: `linear-gradient(45deg, ${['#00f5ff', '#8b5cf6', '#f472b6', '#facc15'][i % 4]}, transparent)`,
+                left: `${10 + i * 7}%`,
+                top: `${15 + (i % 4) * 20}%`,
+              }}
+              animate={{
+                y: [0, -40, 0],
+                opacity: [0.2, 1, 0.2],
+                scale: [0.5, 1.5, 0.5],
+                rotate: [0, 180, 360],
+              }}
+              transition={{
+                duration: 6 + i * 0.5,
+                repeat: Infinity,
+                delay: i * 0.4,
+                ease: "easeInOut",
+              }}
+            />
+          ))}
+        </AnimatePresence>
       </div>
       
-      {/* Floating Elements */}
-      <motion.div 
-        className="absolute top-20 left-20 text-purple-400/30"
-        animate={{ y: [0, -20, 0], rotate: [0, 5, -5, 0] }}
-        transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
-      >
-        <Crown size={40} />
-      </motion.div>
-      <motion.div 
-        className="absolute top-40 right-32 text-blue-400/30"
-        animate={{ y: [0, 20, 0], rotate: [0, -5, 5, 0] }}
-        transition={{ duration: 8, repeat: Infinity, ease: "easeInOut", delay: 1 }}
-      >
-        <Sparkles size={32} />
-      </motion.div>
-      <motion.div 
-        className="absolute bottom-32 left-32 text-teal-400/30"
-        animate={{ y: [0, -15, 0], rotate: [0, 10, -10, 0] }}
-        transition={{ duration: 7, repeat: Infinity, ease: "easeInOut", delay: 2 }}
-      >
-        <Star size={28} />
-      </motion.div>
-
       {/* Main Content */}
       <motion.div 
-        className="relative z-10 text-center max-w-4xl mx-auto px-6"
+        className="relative z-10 text-center max-w-5xl mx-auto px-6"
         initial={{ opacity: 0, y: 50 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 1.2, ease: "easeOut" }}
@@ -261,55 +371,60 @@ const CreatorSignup = () => {
           transition={{ duration: 1, delay: 0.3 }}
         >
           <div className="relative inline-block">
-            <Crown className="w-24 h-24 text-primary mx-auto mb-6" />
+            <Crown className="w-28 h-28 text-primary mx-auto mb-8" />
             <motion.div
-              className="absolute -inset-4 bg-primary/20 rounded-full blur-xl"
-              animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.6, 0.3] }}
-              transition={{ duration: 3, repeat: Infinity }}
+              className="absolute -inset-6 bg-primary/30 rounded-full blur-2xl"
+              animate={{ scale: [1, 1.3, 1], opacity: [0.3, 0.7, 0.3] }}
+              transition={{ duration: 4, repeat: Infinity }}
             />
           </div>
         </motion.div>
 
         <motion.h1 
-          className="text-6xl md:text-8xl font-bold text-white mb-6 leading-tight"
+          className="text-7xl md:text-9xl font-bold text-white mb-8 leading-tight"
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 1, delay: 0.5 }}
         >
           Become a
-          <span className="block bg-gradient-to-r from-primary via-purple-400 to-teal-400 bg-clip-text text-transparent">
+          <span className="block bg-gradient-to-r from-cyan-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
             Creator
           </span>
         </motion.h1>
 
         <motion.p 
-          className="text-xl md:text-2xl text-gray-300 mb-12 max-w-2xl mx-auto leading-relaxed"
+          className="text-2xl md:text-3xl text-white/80 mb-16 max-w-3xl mx-auto leading-relaxed"
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 1, delay: 0.7 }}
         >
-          Join an exclusive community of verified creators and unlock unlimited earning potential
+          Join the quantum revolution of verified creators and unlock unlimited earning potential
         </motion.p>
 
-        {/* Stats */}
+        {/* Enhanced Stats */}
         <motion.div 
-          className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12"
+          className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16"
           initial={{ opacity: 0, y: 40 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 1, delay: 0.9 }}
         >
-          <div className="text-center">
-            <div className="text-3xl md:text-4xl font-bold text-primary mb-2">$2.5M+</div>
-            <div className="text-gray-400">Total Creator Earnings</div>
-          </div>
-          <div className="text-center">
-            <div className="text-3xl md:text-4xl font-bold text-primary mb-2">50K+</div>
-            <div className="text-gray-400">Active Fans</div>
-          </div>
-          <div className="text-center">
-            <div className="text-3xl md:text-4xl font-bold text-primary mb-2">95%</div>
-            <div className="text-gray-400">Creator Satisfaction</div>
-          </div>
+          {[
+            { value: "$2.5M+", label: "Total Creator Earnings", icon: TrendingUp },
+            { value: "50K+", label: "Active Fans", icon: Users },
+            { value: "95%", label: "Creator Satisfaction", icon: Award }
+          ].map((stat, i) => (
+            <motion.div 
+              key={i}
+              className="relative p-6 rounded-2xl backdrop-blur-xl bg-white/5 border border-white/10"
+              whileHover={{ scale: 1.05, y: -5 }}
+              transition={{ duration: 0.3 }}
+            >
+              <div className="absolute inset-0 bg-gradient-to-br from-cyan-400/10 via-purple-500/10 to-pink-500/10 rounded-2xl" />
+              <stat.icon className="w-8 h-8 text-primary mx-auto mb-3" />
+              <div className="text-4xl md:text-5xl font-bold text-primary mb-2">{stat.value}</div>
+              <div className="text-white/70">{stat.label}</div>
+            </motion.div>
+          ))}
         </motion.div>
 
         <motion.div
@@ -320,10 +435,17 @@ const CreatorSignup = () => {
           <Button 
             onClick={nextStep}
             size="lg"
-            className="bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90 text-white px-12 py-6 text-xl font-semibold rounded-full shadow-2xl transform transition-all duration-300 hover:scale-105 hover:shadow-primary/25"
+            className="relative overflow-hidden bg-gradient-to-r from-cyan-400 via-purple-500 to-pink-500 hover:from-cyan-500 hover:via-purple-600 hover:to-pink-600 text-white px-16 py-8 text-2xl font-bold rounded-2xl shadow-2xl group"
           >
-            Start Your Journey
-            <ChevronRight className="ml-2 h-6 w-6" />
+            <motion.div
+              className="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent"
+              animate={{ x: ["0%", "100%"] }}
+              transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+            />
+            <span className="relative flex items-center">
+              Start Quantum Journey
+              <ChevronRight className="ml-3 h-8 w-8 group-hover:translate-x-1 transition-transform" />
+            </span>
           </Button>
         </motion.div>
       </motion.div>
@@ -332,7 +454,7 @@ const CreatorSignup = () => {
       <Button 
         variant="ghost" 
         onClick={() => navigate('/settings')}
-        className="absolute top-8 left-8 text-white hover:bg-white/10"
+        className="absolute top-8 left-8 text-white hover:bg-white/10 backdrop-blur-sm"
       >
         <ArrowLeft className="h-5 w-5 mr-2" />
         Back to Settings
@@ -340,37 +462,69 @@ const CreatorSignup = () => {
     </div>
   );
 
-  // Step Progress Indicator
-  const ProgressIndicator = () => (
-    <div className="fixed top-0 left-0 right-0 z-50 bg-black/80 backdrop-blur-sm border-b border-white/10">
-      <div className="max-w-4xl mx-auto px-6 py-4">
+  // Quantum Progress Indicator
+  const QuantumProgress = () => (
+    <div className="fixed top-0 left-0 right-0 z-50 backdrop-blur-xl bg-black/60 border-b border-white/10">
+      <div className="max-w-6xl mx-auto px-6 py-6">
         <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-8">
+          <div className="flex items-center space-x-6">
             {[1, 2, 3, 4].map((step) => (
               <div key={step} className="flex items-center">
-                <div className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold transition-all duration-300 ${
-                  completedSteps.includes(step) 
-                    ? 'bg-primary text-white' 
-                    : currentStep === step 
-                      ? 'bg-primary/20 text-primary border-2 border-primary' 
-                      : 'bg-gray-800 text-gray-400'
-                }`}>
-                  {completedSteps.includes(step) ? <Check size={16} /> : step}
-                </div>
+                <motion.div 
+                  className={`relative w-12 h-12 rounded-full flex items-center justify-center font-bold transition-all duration-500 ${
+                    completedSteps.includes(step) 
+                      ? 'bg-gradient-to-r from-cyan-400 to-purple-500 text-white shadow-lg' 
+                      : currentStep === step 
+                        ? 'bg-gradient-to-r from-cyan-400/20 to-purple-500/20 text-cyan-400 border-2 border-cyan-400 shadow-cyan-400/50 shadow-lg' 
+                        : 'bg-white/5 text-white/40 border border-white/10'
+                  }`}
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  {completedSteps.includes(step) ? (
+                    <motion.div
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                    >
+                      <Check size={20} />
+                    </motion.div>
+                  ) : (
+                    step
+                  )}
+                  
+                  {/* Glowing effect for current step */}
+                  {currentStep === step && (
+                    <motion.div
+                      className="absolute inset-0 rounded-full bg-cyan-400/30 blur-md"
+                      animate={{ scale: [1, 1.5, 1], opacity: [0.5, 0.8, 0.5] }}
+                      transition={{ duration: 2, repeat: Infinity }}
+                    />
+                  )}
+                </motion.div>
+                
                 {step < 4 && (
-                  <div className={`w-16 h-1 ml-4 transition-all duration-300 ${
-                    completedSteps.includes(step) ? 'bg-primary' : 'bg-gray-800'
-                  }`} />
+                  <motion.div 
+                    className={`w-20 h-1 ml-6 rounded-full transition-all duration-500 ${
+                      completedSteps.includes(step) 
+                        ? 'bg-gradient-to-r from-cyan-400 to-purple-500' 
+                        : 'bg-white/10'
+                    }`}
+                    initial={{ scaleX: 0 }}
+                    animate={{ scaleX: completedSteps.includes(step) ? 1 : 0 }}
+                    transition={{ duration: 0.5 }}
+                  />
                 )}
               </div>
             ))}
           </div>
+          
           <Button 
             variant="ghost" 
             onClick={() => navigate('/settings')}
-            className="text-white hover:bg-white/10"
+            className="text-white hover:bg-white/10 backdrop-blur-sm"
           >
-            <ArrowLeft className="h-4 w-4 mr-2" />
+            <X className="h-5 w-5 mr-2" />
             Exit
           </Button>
         </div>
@@ -378,651 +532,655 @@ const CreatorSignup = () => {
     </div>
   );
 
-  // Step 1: Personal Information
+  // Quantum Input Component
+  const QuantumInput = ({ label, icon: Icon, error, success, children, ...props }: any) => (
+    <motion.div 
+      className="relative"
+      whileHover={{ scale: 1.02 }}
+      transition={{ duration: 0.2 }}
+    >
+      {/* Quantum container */}
+      <div className="relative overflow-hidden rounded-2xl backdrop-blur-3xl">
+        {/* Animated border */}
+        <div className={`absolute inset-0 rounded-2xl bg-gradient-to-r transition-all duration-300 ${
+          error 
+            ? 'from-red-400/60 via-red-500/60 to-red-400/60' 
+            : success 
+              ? 'from-green-400/60 via-emerald-500/60 to-green-400/60'
+              : 'from-cyan-400/30 via-purple-500/30 to-pink-500/30'
+        } blur-sm`}></div>
+        <div className="absolute inset-[1px] rounded-2xl bg-black/60 backdrop-blur-3xl"></div>
+        
+        <div className="relative z-10 p-6 space-y-4">
+          <div className="flex items-center gap-3">
+            <Icon className={`w-5 h-5 ${error ? 'text-red-400' : success ? 'text-green-400' : 'text-cyan-400'}`} />
+            <Label className="text-lg font-semibold text-white">{label}</Label>
+            {success && <CheckCircle className="w-5 h-5 text-green-400" />}
+            {error && <AlertCircle className="w-5 h-5 text-red-400" />}
+          </div>
+          {children}
+          {error && <p className="text-sm text-red-400">{error}</p>}
+          {success && <p className="text-sm text-green-400">{success}</p>}
+        </div>
+      </div>
+    </motion.div>
+  );
+
+  // Step 1: Personal Information with Real Validation
   const renderStep1 = () => (
     <motion.div 
-      className="space-y-8"
+      className="space-y-8 pt-24 pb-12"
       initial={{ opacity: 0, x: 50 }}
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: -50 }}
       transition={{ duration: 0.5 }}
     >
       <div className="text-center mb-12">
-        <div className="relative inline-block mb-6">
-          <Users className="w-16 h-16 text-primary mx-auto" />
-          <motion.div
-            className="absolute -inset-2 bg-primary/20 rounded-full blur-lg"
-            animate={{ scale: [1, 1.1, 1], opacity: [0.3, 0.5, 0.3] }}
-            transition={{ duration: 2, repeat: Infinity }}
-          />
-        </div>
-        <h2 className="text-4xl font-bold text-white mb-4">Tell Us About Yourself</h2>
-        <p className="text-xl text-gray-400">Let's start with the basics</p>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        <motion.div 
-          className="glass-effect p-6 rounded-2xl"
-          whileHover={{ scale: 1.02 }}
-          transition={{ duration: 0.2 }}
+        <motion.div
+          className="relative inline-block mb-6"
+          animate={{ rotate: [0, 5, -5, 0] }}
+          transition={{ duration: 4, repeat: Infinity }}
         >
-          <Label htmlFor="fullName" className="text-lg font-semibold text-white mb-3 block">
-            Full Legal Name *
-          </Label>
-          <Input
-            id="fullName"
-            value={formData.fullName}
-            onChange={(e) => handleInputChange('fullName', e.target.value)}
-            placeholder="Enter your full legal name"
-            className="bg-black/20 border-white/10 text-white text-lg h-14 rounded-xl focus:border-primary focus:ring-primary"
+          <User className="w-20 h-20 text-cyan-400 mx-auto" />
+          <motion.div
+            className="absolute -inset-4 bg-cyan-400/30 rounded-full blur-xl"
+            animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.6, 0.3] }}
+            transition={{ duration: 3, repeat: Infinity }}
           />
         </motion.div>
-        
-        <motion.div 
-          className="glass-effect p-6 rounded-2xl"
-          whileHover={{ scale: 1.02 }}
-          transition={{ duration: 0.2 }}
+        <h2 className="text-5xl font-bold bg-gradient-to-r from-cyan-400 via-purple-400 to-pink-400 bg-clip-text text-transparent mb-4">
+          Quantum Identity
+        </h2>
+        <p className="text-xl text-white/70">Initialize your creator matrix</p>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-6xl mx-auto">
+        <QuantumInput 
+          label="Full Legal Name *" 
+          icon={User}
         >
-          <Label htmlFor="dateOfBirth" className="text-lg font-semibold text-white mb-3 block">
-            Date of Birth *
-          </Label>
           <Input
-            id="dateOfBirth"
+            value={formData.fullName}
+            onChange={(e) => handleInputChange('fullName', e.target.value)}
+            placeholder="Enter your quantum signature"
+            className="bg-black/20 border-white/10 text-white text-lg h-14 rounded-xl focus:border-cyan-400 focus:ring-cyan-400"
+          />
+        </QuantumInput>
+        
+        <QuantumInput 
+          label="Date of Birth *" 
+          icon={Shield}
+        >
+          <Input
             type="date"
             value={formData.dateOfBirth}
             onChange={(e) => handleInputChange('dateOfBirth', e.target.value)}
-            className="bg-black/20 border-white/10 text-white text-lg h-14 rounded-xl focus:border-primary focus:ring-primary"
+            className="bg-black/20 border-white/10 text-white text-lg h-14 rounded-xl focus:border-cyan-400 focus:ring-cyan-400"
           />
-          <p className="text-sm text-gray-400 mt-2">Must be 18 or older</p>
-        </motion.div>
+          <p className="text-sm text-cyan-400/60">Must be 18+ for quantum access</p>
+        </QuantumInput>
+
+        <QuantumInput 
+          label="Username *" 
+          icon={User}
+          error={usernameAvailable === false ? "Username already exists in the quantum realm" : undefined}
+          success={usernameAvailable === true ? "Username available in quantum space" : undefined}
+        >
+          <div className="relative">
+            <Input
+              value={formData.username}
+              onChange={(e) => handleInputChange('username', e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ''))}
+              placeholder="Choose your quantum handle"
+              className="bg-black/20 border-white/10 text-white text-lg h-14 rounded-xl focus:border-cyan-400 focus:ring-cyan-400 pr-12"
+            />
+            {usernameChecking && (
+              <Loader2 className="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-cyan-400 animate-spin" />
+            )}
+          </div>
+        </QuantumInput>
+
+        <QuantumInput 
+          label="Phone Number *" 
+          icon={Phone}
+          error={phoneValid === false ? "Invalid quantum communication frequency" : undefined}
+          success={phoneValid === true ? "Quantum frequency validated" : undefined}
+        >
+          <div className="flex gap-3">
+            <Select 
+              value={formData.phoneCountryCode} 
+              onValueChange={(value) => handleInputChange('phoneCountryCode', value)}
+            >
+              <SelectTrigger className="w-32 bg-black/20 border-white/10 text-white focus:border-cyan-400">
+                <SelectValue placeholder="Code" />
+              </SelectTrigger>
+              <SelectContent className="bg-black border-white/10">
+                {Object.entries(COUNTRY_CODES).map(([country, code]) => (
+                  <SelectItem key={country} value={code} className="text-white hover:bg-white/10">
+                    {code}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Input
+              value={formData.phoneNumber}
+              onChange={(e) => handleInputChange('phoneNumber', e.target.value)}
+              placeholder="Your quantum frequency"
+              className="bg-black/20 border-white/10 text-white text-lg h-14 rounded-xl focus:border-cyan-400 focus:ring-cyan-400"
+            />
+          </div>
+        </QuantumInput>
       </div>
       
-      <motion.div 
-        className="glass-effect p-8 rounded-2xl"
-        whileHover={{ scale: 1.01 }}
-        transition={{ duration: 0.2 }}
-      >
-        <Label className="text-lg font-semibold text-white mb-6 block">Account Type *</Label>
+      <QuantumInput label="Account Type *" icon={Crown}>
         <RadioGroup 
           value={formData.accountType} 
           onValueChange={(value) => handleInputChange('accountType', value)}
-          className="grid grid-cols-1 md:grid-cols-2 gap-4"
+          className="grid grid-cols-1 md:grid-cols-2 gap-6"
         >
-          <motion.div 
-            className="flex items-center space-x-4 p-4 rounded-xl border border-white/10 hover:border-primary/50 transition-all duration-200 cursor-pointer"
-            whileHover={{ scale: 1.02 }}
-          >
-            <RadioGroupItem value="private" id="private" className="text-primary" />
-            <div>
-              <Label htmlFor="private" className="text-white font-medium cursor-pointer">Private Individual</Label>
-              <p className="text-sm text-gray-400">Content creator, influencer, artist</p>
-            </div>
-          </motion.div>
-          <motion.div 
-            className="flex items-center space-x-4 p-4 rounded-xl border border-white/10 hover:border-primary/50 transition-all duration-200 cursor-pointer"
-            whileHover={{ scale: 1.02 }}
-          >
-            <RadioGroupItem value="company" id="company" className="text-primary" />
-            <div>
-              <Label htmlFor="company" className="text-white font-medium cursor-pointer">Business/Company</Label>
-              <p className="text-sm text-gray-400">Agency, studio, brand</p>
-            </div>
-          </motion.div>
+          {[
+            { value: "private", label: "Quantum Individual", desc: "Content creator, influencer, artist" },
+            { value: "company", label: "Quantum Entity", desc: "Agency, studio, brand collective" }
+          ].map((type) => (
+            <motion.div 
+              key={type.value}
+              className="relative overflow-hidden rounded-xl backdrop-blur-xl cursor-pointer"
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+            >
+              <div className="absolute inset-0 bg-gradient-to-br from-cyan-400/20 to-purple-500/20 rounded-xl" />
+              <div className="relative p-6 flex items-center space-x-4">
+                <RadioGroupItem value={type.value} id={type.value} className="text-cyan-400" />
+                <div>
+                  <Label htmlFor={type.value} className="text-white font-bold text-lg cursor-pointer">
+                    {type.label}
+                  </Label>
+                  <p className="text-cyan-400/60">{type.desc}</p>
+                </div>
+              </div>
+            </motion.div>
+          ))}
         </RadioGroup>
-      </motion.div>
+      </QuantumInput>
+
+      {/* Navigation */}
+      <div className="flex justify-between pt-8">
+        <Button 
+          variant="ghost" 
+          onClick={prevStep}
+          className="text-white hover:bg-white/10"
+        >
+          <ArrowLeft className="h-5 w-5 mr-2" />
+          Back to Quantum Gate
+        </Button>
+        <Button 
+          onClick={nextStep}
+          disabled={!validateStep(1)}
+          className="bg-gradient-to-r from-cyan-400 to-purple-500 hover:from-cyan-500 hover:to-purple-600 text-white px-8 py-3 rounded-xl"
+        >
+          Continue Quantum Flow
+          <ChevronRight className="ml-2 h-5 w-5" />
+        </Button>
+      </div>
     </motion.div>
   );
 
-  // Step 2: Address Information
+  // Step 2: Address with Real City Validation
   const renderStep2 = () => (
     <motion.div 
-      className="space-y-8"
+      className="space-y-8 pt-24 pb-12"
       initial={{ opacity: 0, x: 50 }}
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: -50 }}
       transition={{ duration: 0.5 }}
     >
       <div className="text-center mb-12">
-        <div className="relative inline-block mb-6">
-          <Globe className="w-16 h-16 text-primary mx-auto" />
-          <motion.div
-            className="absolute -inset-2 bg-primary/20 rounded-full blur-lg"
-            animate={{ scale: [1, 1.1, 1], opacity: [0.3, 0.5, 0.3] }}
-            transition={{ duration: 2, repeat: Infinity }}
-          />
-        </div>
-        <h2 className="text-4xl font-bold text-white mb-4">Your Location</h2>
-        <p className="text-xl text-gray-400">We need your registered address for verification</p>
-      </div>
-
-      <div className="space-y-6">
-        <motion.div 
-          className="glass-effect p-6 rounded-2xl"
-          whileHover={{ scale: 1.01 }}
-          transition={{ duration: 0.2 }}
+        <motion.div
+          className="relative inline-block mb-6"
+          animate={{ y: [0, -10, 0] }}
+          transition={{ duration: 3, repeat: Infinity }}
         >
-          <Label htmlFor="street" className="text-lg font-semibold text-white mb-3 block">
-            Street Address *
-          </Label>
-          <Input
-            id="street"
-            value={formData.street}
-            onChange={(e) => handleInputChange('street', e.target.value)}
-            placeholder="Enter your street address"
-            className="bg-black/20 border-white/10 text-white text-lg h-14 rounded-xl focus:border-primary focus:ring-primary"
+          <MapPin className="w-20 h-20 text-purple-400 mx-auto" />
+          <motion.div
+            className="absolute -inset-4 bg-purple-400/30 rounded-full blur-xl"
+            animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.6, 0.3] }}
+            transition={{ duration: 3, repeat: Infinity }}
           />
         </motion.div>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <motion.div 
-            className="glass-effect p-6 rounded-2xl"
-            whileHover={{ scale: 1.02 }}
-            transition={{ duration: 0.2 }}
-          >
-            <Label htmlFor="city" className="text-lg font-semibold text-white mb-3 block">City *</Label>
+        <h2 className="text-5xl font-bold bg-gradient-to-r from-purple-400 via-pink-400 to-cyan-400 bg-clip-text text-transparent mb-4">
+          Quantum Location
+        </h2>
+        <p className="text-xl text-white/70">Map your dimensional coordinates</p>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-6xl mx-auto">
+        <div className="lg:col-span-2">
+          <QuantumInput label="Street Address *" icon={MapPin}>
             <Input
-              id="city"
-              value={formData.city}
-              onChange={(e) => handleInputChange('city', e.target.value)}
-              placeholder="City"
-              className="bg-black/20 border-white/10 text-white text-lg h-14 rounded-xl focus:border-primary focus:ring-primary"
+              value={formData.street}
+              onChange={(e) => handleInputChange('street', e.target.value)}
+              placeholder="Your quantum street coordinates"
+              className="bg-black/20 border-white/10 text-white text-lg h-14 rounded-xl focus:border-purple-400 focus:ring-purple-400"
             />
-          </motion.div>
-          <motion.div 
-            className="glass-effect p-6 rounded-2xl"
-            whileHover={{ scale: 1.02 }}
-            transition={{ duration: 0.2 }}
-          >
-            <Label htmlFor="state" className="text-lg font-semibold text-white mb-3 block">State/Province</Label>
-            <Input
-              id="state"
-              value={formData.state}
-              onChange={(e) => handleInputChange('state', e.target.value)}
-              placeholder="State/Province"
-              className="bg-black/20 border-white/10 text-white text-lg h-14 rounded-xl focus:border-primary focus:ring-primary"
-            />
-          </motion.div>
+          </QuantumInput>
         </div>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <motion.div 
-            className="glass-effect p-6 rounded-2xl"
-            whileHover={{ scale: 1.02 }}
-            transition={{ duration: 0.2 }}
+
+        <QuantumInput label="Country *" icon={Globe}>
+          <Select 
+            value={formData.country} 
+            onValueChange={(value) => {
+              handleInputChange('country', value);
+              handleInputChange('city', ''); // Reset city when country changes
+            }}
           >
-            <Label htmlFor="postalCode" className="text-lg font-semibold text-white mb-3 block">Postal Code</Label>
-            <Input
-              id="postalCode"
-              value={formData.postalCode}
-              onChange={(e) => handleInputChange('postalCode', e.target.value)}
-              placeholder="Postal Code"
-              className="bg-black/20 border-white/10 text-white text-lg h-14 rounded-xl focus:border-primary focus:ring-primary"
-            />
-          </motion.div>
-          <motion.div 
-            className="glass-effect p-6 rounded-2xl"
-            whileHover={{ scale: 1.02 }}
-            transition={{ duration: 0.2 }}
+            <SelectTrigger className="bg-black/20 border-white/10 text-white h-14 focus:border-purple-400">
+              <SelectValue placeholder="Select quantum realm" />
+            </SelectTrigger>
+            <SelectContent className="bg-black border-white/10">
+              {Object.keys(COUNTRIES).map((country) => (
+                <SelectItem key={country} value={country} className="text-white hover:bg-white/10">
+                  {country}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </QuantumInput>
+
+        <QuantumInput 
+          label="City *" 
+          icon={MapPin}
+          error={formData.city && formData.country && !COUNTRIES[formData.country as keyof typeof COUNTRIES]?.includes(formData.city) ? "City not found in selected quantum realm" : undefined}
+          success={formData.city && formData.country && COUNTRIES[formData.country as keyof typeof COUNTRIES]?.includes(formData.city) ? "Quantum coordinates validated" : undefined}
+        >
+          <Select 
+            value={formData.city} 
+            onValueChange={(value) => handleInputChange('city', value)}
+            disabled={!formData.country}
           >
-            <Label htmlFor="country" className="text-lg font-semibold text-white mb-3 block">Country *</Label>
-            <Input
-              id="country"
-              value={formData.country}
-              onChange={(e) => handleInputChange('country', e.target.value)}
-              placeholder="Country"
-              className="bg-black/20 border-white/10 text-white text-lg h-14 rounded-xl focus:border-primary focus:ring-primary"
-            />
-          </motion.div>
-        </div>
+            <SelectTrigger className="bg-black/20 border-white/10 text-white h-14 focus:border-purple-400">
+              <SelectValue placeholder="Select quantum city" />
+            </SelectTrigger>
+            <SelectContent className="bg-black border-white/10">
+              {formData.country && COUNTRIES[formData.country as keyof typeof COUNTRIES]?.map((city) => (
+                <SelectItem key={city} value={city} className="text-white hover:bg-white/10">
+                  {city}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </QuantumInput>
+
+        <QuantumInput label="State/Province" icon={MapPin}>
+          <Input
+            value={formData.state}
+            onChange={(e) => handleInputChange('state', e.target.value)}
+            placeholder="Quantum state (optional)"
+            className="bg-black/20 border-white/10 text-white text-lg h-14 rounded-xl focus:border-purple-400 focus:ring-purple-400"
+          />
+        </QuantumInput>
+
+        <QuantumInput label="Postal Code" icon={MapPin}>
+          <Input
+            value={formData.postalCode}
+            onChange={(e) => handleInputChange('postalCode', e.target.value)}
+            placeholder="Quantum postal frequency"
+            className="bg-black/20 border-white/10 text-white text-lg h-14 rounded-xl focus:border-purple-400 focus:ring-purple-400"
+          />
+        </QuantumInput>
+      </div>
+
+      {/* Navigation */}
+      <div className="flex justify-between pt-8">
+        <Button 
+          variant="ghost" 
+          onClick={prevStep}
+          className="text-white hover:bg-white/10"
+        >
+          <ArrowLeft className="h-5 w-5 mr-2" />
+          Back to Identity
+        </Button>
+        <Button 
+          onClick={nextStep}
+          disabled={!validateStep(2)}
+          className="bg-gradient-to-r from-purple-400 to-pink-500 hover:from-purple-500 hover:to-pink-600 text-white px-8 py-3 rounded-xl"
+        >
+          Continue Quantum Flow
+          <ChevronRight className="ml-2 h-5 w-5" />
+        </Button>
       </div>
     </motion.div>
   );
 
-  // Step 3: Identity Verification
+  // Step 3: Quantum File Upload
   const renderStep3 = () => (
     <motion.div 
-      className="space-y-8"
+      className="space-y-8 pt-24 pb-12"
       initial={{ opacity: 0, x: 50 }}
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: -50 }}
       transition={{ duration: 0.5 }}
     >
       <div className="text-center mb-12">
-        <div className="relative inline-block mb-6">
-          <Shield className="w-16 h-16 text-primary mx-auto" />
+        <motion.div
+          className="relative inline-block mb-6"
+          animate={{ rotate: [0, 360] }}
+          transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
+        >
+          <Shield className="w-20 h-20 text-pink-400 mx-auto" />
           <motion.div
-            className="absolute -inset-2 bg-primary/20 rounded-full blur-lg"
-            animate={{ scale: [1, 1.1, 1], opacity: [0.3, 0.5, 0.3] }}
-            transition={{ duration: 2, repeat: Infinity }}
+            className="absolute -inset-4 bg-pink-400/30 rounded-full blur-xl"
+            animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.6, 0.3] }}
+            transition={{ duration: 3, repeat: Infinity }}
           />
-        </div>
-        <h2 className="text-4xl font-bold text-white mb-4">Identity Verification</h2>
-        <p className="text-xl text-gray-400">Secure and encrypted verification process</p>
+        </motion.div>
+        <h2 className="text-5xl font-bold bg-gradient-to-r from-pink-400 via-yellow-400 to-cyan-400 bg-clip-text text-transparent mb-4">
+          Quantum Verification
+        </h2>
+        <p className="text-xl text-white/70">Upload dimensional proof protocols</p>
       </div>
 
-      <div className="space-y-8">
-        {/* ID Type Selection */}
-        <motion.div 
-          className="glass-effect p-8 rounded-2xl"
-          whileHover={{ scale: 1.01 }}
-          transition={{ duration: 0.2 }}
-        >
-          <Label className="text-lg font-semibold text-white mb-6 block">Government ID Type *</Label>
-          <RadioGroup 
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-6xl mx-auto">
+        <QuantumInput label="Government ID Type *" icon={FileText}>
+          <Select 
             value={formData.governmentIdType} 
             onValueChange={(value) => handleInputChange('governmentIdType', value)}
-            className="grid grid-cols-1 md:grid-cols-3 gap-4"
           >
-            {[
-              { value: "passport", label: "Passport", icon: "🛂" },
-              { value: "national_id", label: "National ID", icon: "🆔" },
-              { value: "drivers_license", label: "Driver's License", icon: "🚗" }
-            ].map((option) => (
-              <motion.div 
-                key={option.value}
-                className="flex flex-col items-center p-6 rounded-xl border border-white/10 hover:border-primary/50 transition-all duration-200 cursor-pointer"
-                whileHover={{ scale: 1.05 }}
-              >
-                <div className="text-4xl mb-3">{option.icon}</div>
-                <RadioGroupItem value={option.value} id={option.value} className="text-primary mb-2" />
-                <Label htmlFor={option.value} className="text-white font-medium cursor-pointer text-center">
-                  {option.label}
-                </Label>
-              </motion.div>
-            ))}
-          </RadioGroup>
-        </motion.div>
+            <SelectTrigger className="bg-black/20 border-white/10 text-white h-14 focus:border-pink-400">
+              <SelectValue placeholder="Select quantum ID protocol" />
+            </SelectTrigger>
+            <SelectContent className="bg-black border-white/10">
+              {["passport", "driver_license", "national_id"].map((type) => (
+                <SelectItem key={type} value={type} className="text-white hover:bg-white/10">
+                  {type.replace('_', ' ').toUpperCase()}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </QuantumInput>
 
-        {/* File Uploads */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          <motion.div 
-            className="glass-effect p-6 rounded-2xl"
-            whileHover={{ scale: 1.02 }}
-            transition={{ duration: 0.2 }}
+        <div></div>
+
+        {/* File Upload Areas */}
+        <QuantumInput 
+          label="Government ID Upload *" 
+          icon={Upload}
+          success={governmentIdFile ? `Quantum ID uploaded: ${governmentIdFile.name}` : undefined}
+        >
+          <div 
+            className="relative border-2 border-dashed border-white/20 rounded-xl p-8 text-center cursor-pointer hover:border-pink-400/50 transition-all duration-300"
+            onClick={() => idFileRef.current?.click()}
           >
-            <Label className="text-lg font-semibold text-white mb-4 block">Government ID Photo *</Label>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => idFileRef.current?.click()}
-              className="w-full h-32 border-dashed border-2 border-primary/30 hover:border-primary bg-primary/5 hover:bg-primary/10 text-white rounded-xl"
-            >
-              <div className="text-center">
-                <Upload className="h-8 w-8 mx-auto mb-2 text-primary" />
-                <div className="font-medium">
-                  {governmentIdFile ? governmentIdFile.name : "Upload ID Document"}
-                </div>
-                <div className="text-sm text-gray-400 mt-1">PNG, JPG or PDF</div>
-              </div>
-            </Button>
-            <input
+            <Upload className="w-12 h-12 text-pink-400 mx-auto mb-4" />
+            <p className="text-white mb-2">
+              {governmentIdFile ? governmentIdFile.name : "Click to upload quantum ID"}
+            </p>
+            <p className="text-sm text-white/50">JPG, PNG, PDF up to 10MB</p>
+            <input 
               ref={idFileRef}
-              type="file"
-              accept="image/*,.pdf"
+              type="file" 
+              accept="image/*,.pdf" 
+              className="hidden"
               onChange={(e) => setGovernmentIdFile(e.target.files?.[0] || null)}
-              className="hidden"
             />
-          </motion.div>
-          
-          <motion.div 
-            className="glass-effect p-6 rounded-2xl"
-            whileHover={{ scale: 1.02 }}
-            transition={{ duration: 0.2 }}
+          </div>
+        </QuantumInput>
+
+        <QuantumInput 
+          label="Selfie Upload *" 
+          icon={Camera}
+          success={selfieFile ? `Quantum selfie uploaded: ${selfieFile.name}` : undefined}
+        >
+          <div 
+            className="relative border-2 border-dashed border-white/20 rounded-xl p-8 text-center cursor-pointer hover:border-pink-400/50 transition-all duration-300"
+            onClick={() => selfieFileRef.current?.click()}
           >
-            <Label className="text-lg font-semibold text-white mb-4 block">Selfie with ID *</Label>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => selfieFileRef.current?.click()}
-              className="w-full h-32 border-dashed border-2 border-primary/30 hover:border-primary bg-primary/5 hover:bg-primary/10 text-white rounded-xl"
-            >
-              <div className="text-center">
-                <Camera className="h-8 w-8 mx-auto mb-2 text-primary" />
-                <div className="font-medium">
-                  {selfieFile ? selfieFile.name : "Upload Selfie with ID"}
-                </div>
-                <div className="text-sm text-gray-400 mt-1">Hold ID next to face</div>
-              </div>
-            </Button>
-            <input
+            <Camera className="w-12 h-12 text-pink-400 mx-auto mb-4" />
+            <p className="text-white mb-2">
+              {selfieFile ? selfieFile.name : "Click to upload quantum selfie"}
+            </p>
+            <p className="text-sm text-white/50">Clear face photo, JPG/PNG up to 5MB</p>
+            <input 
               ref={selfieFileRef}
-              type="file"
-              accept="image/*"
-              onChange={(e) => setSelfieFile(e.target.files?.[0] || null)}
+              type="file" 
+              accept="image/*" 
               className="hidden"
+              onChange={(e) => setSelfieFile(e.target.files?.[0] || null)}
             />
-          </motion.div>
+          </div>
+        </QuantumInput>
+      </div>
+
+      {/* Social Media Links */}
+      <QuantumInput label="Social Media Quantum Links (Optional)" icon={Globe}>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {[
+            { key: 'instagram', label: 'Instagram', placeholder: '@username' },
+            { key: 'twitter', label: 'X/Twitter', placeholder: '@username' },
+            { key: 'tiktok', label: 'TikTok', placeholder: '@username' },
+            { key: 'youtube', label: 'YouTube', placeholder: 'Channel URL' },
+            { key: 'onlyfans', label: 'OnlyFans', placeholder: 'Profile URL' }
+          ].map((social) => (
+            <Input
+              key={social.key}
+              value={formData[social.key as keyof typeof formData] as string}
+              onChange={(e) => handleInputChange(social.key, e.target.value)}
+              placeholder={`${social.label} ${social.placeholder}`}
+              className="bg-black/20 border-white/10 text-white h-12 rounded-xl focus:border-pink-400 focus:ring-pink-400"
+            />
+          ))}
         </div>
-        
-        {/* Verification Tips */}
-        <motion.div 
-          className="glass-effect p-6 rounded-2xl border border-blue-500/20"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
+      </QuantumInput>
+
+      {/* Navigation */}
+      <div className="flex justify-between pt-8">
+        <Button 
+          variant="ghost" 
+          onClick={prevStep}
+          className="text-white hover:bg-white/10"
         >
-          <div className="flex items-start gap-4">
-            <AlertCircle className="h-6 w-6 text-blue-400 mt-1" />
-            <div>
-              <h4 className="font-semibold text-blue-400 mb-3">ID Verification Tips</h4>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm text-gray-300">
-                <div className="flex items-center gap-2">
-                  <Check className="h-4 w-4 text-green-400" />
-                  <span>Clear, well-lit photos</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Check className="h-4 w-4 text-green-400" />
-                  <span>All text must be visible</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Check className="h-4 w-4 text-green-400" />
-                  <span>No glare or shadows</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Check className="h-4 w-4 text-green-400" />
-                  <span>Face clearly visible in selfie</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </motion.div>
-        
-        {/* Social Media Links */}
-        <motion.div 
-          className="glass-effect p-8 rounded-2xl"
-          whileHover={{ scale: 1.01 }}
-          transition={{ duration: 0.2 }}
+          <ArrowLeft className="h-5 w-5 mr-2" />
+          Back to Location
+        </Button>
+        <Button 
+          onClick={nextStep}
+          disabled={!validateStep(3)}
+          className="bg-gradient-to-r from-pink-400 to-yellow-500 hover:from-pink-500 hover:to-yellow-600 text-white px-8 py-3 rounded-xl"
         >
-          <h3 className="text-2xl font-semibold text-white mb-6">Social Media Links (Optional)</h3>
-          <p className="text-gray-400 mb-6">Help us verify your online presence</p>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {[
-              { key: 'instagram', label: 'Instagram', placeholder: '@username or profile URL' },
-              { key: 'twitter', label: 'Twitter/X', placeholder: '@username or profile URL' },
-              { key: 'tiktok', label: 'TikTok', placeholder: '@username or profile URL' },
-              { key: 'youtube', label: 'YouTube', placeholder: 'Channel URL' }
-            ].map((social) => (
-              <div key={social.key}>
-                <Label htmlFor={social.key} className="text-white font-medium mb-2 block">
-                  {social.label}
-                </Label>
-                <Input
-                  id={social.key}
-                  value={formData[social.key as keyof typeof formData] as string}
-                  onChange={(e) => handleInputChange(social.key, e.target.value)}
-                  placeholder={social.placeholder}
-                  className="bg-black/20 border-white/10 text-white rounded-xl focus:border-primary focus:ring-primary"
-                />
-              </div>
-            ))}
-          </div>
-        </motion.div>
+          Continue Quantum Flow
+          <ChevronRight className="ml-2 h-5 w-5" />
+        </Button>
       </div>
     </motion.div>
   );
 
-  // Step 4: Terms and Agreements
+  // Step 4: Legal Acceptance
   const renderStep4 = () => (
     <motion.div 
-      className="space-y-8"
+      className="space-y-8 pt-24 pb-12"
       initial={{ opacity: 0, x: 50 }}
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: -50 }}
       transition={{ duration: 0.5 }}
     >
       <div className="text-center mb-12">
-        <div className="relative inline-block mb-6">
-          <Lock className="w-16 h-16 text-primary mx-auto" />
+        <motion.div
+          className="relative inline-block mb-6"
+          animate={{ scale: [1, 1.1, 1] }}
+          transition={{ duration: 2, repeat: Infinity }}
+        >
+          <Lock className="w-20 h-20 text-yellow-400 mx-auto" />
           <motion.div
-            className="absolute -inset-2 bg-primary/20 rounded-full blur-lg"
-            animate={{ scale: [1, 1.1, 1], opacity: [0.3, 0.5, 0.3] }}
-            transition={{ duration: 2, repeat: Infinity }}
+            className="absolute -inset-4 bg-yellow-400/30 rounded-full blur-xl"
+            animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.6, 0.3] }}
+            transition={{ duration: 3, repeat: Infinity }}
           />
-        </div>
-        <h2 className="text-4xl font-bold text-white mb-4">Final Step</h2>
-        <p className="text-xl text-gray-400">Review and accept our terms</p>
+        </motion.div>
+        <h2 className="text-5xl font-bold bg-gradient-to-r from-yellow-400 via-orange-400 to-red-400 bg-clip-text text-transparent mb-4">
+          Quantum Agreements
+        </h2>
+        <p className="text-xl text-white/70">Accept dimensional protocols</p>
       </div>
 
-      <div className="space-y-6">
+      <div className="max-w-4xl mx-auto space-y-6">
         {[
-          {
-            key: 'termsAccepted',
-            title: 'Terms of Service',
-            description: 'I agree to the platform terms and conditions, including creator responsibilities and platform guidelines.',
-            required: true
+          { 
+            key: 'termsAccepted', 
+            label: 'Terms of Service', 
+            desc: 'I agree to the quantum platform terms and creator guidelines'
           },
-          {
-            key: 'privacyAccepted',
-            title: 'Privacy Policy',
-            description: 'I understand how my personal information will be collected, used, and protected.',
-            required: true
+          { 
+            key: 'privacyAccepted', 
+            label: 'Privacy Policy', 
+            desc: 'I understand how my dimensional data will be processed and stored'
           },
-          {
-            key: 'communityGuidelinesAccepted',
-            title: 'Community Guidelines',
-            description: 'I will follow all community guidelines and content standards.',
-            required: true
+          { 
+            key: 'communityGuidelinesAccepted', 
+            label: 'Community Guidelines', 
+            desc: 'I will maintain quantum harmony and respect all dimensional beings'
           }
-        ].map((term, index) => (
-          <motion.div 
-            key={term.key}
-            className="glass-effect p-6 rounded-2xl"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: index * 0.1 }}
-            whileHover={{ scale: 1.01 }}
-          >
-            <div className="flex items-start space-x-4">
+        ].map((agreement, i) => (
+          <QuantumInput key={agreement.key} label="" icon={Lock}>
+            <div className="flex items-start space-x-4 p-4">
               <Checkbox 
-                id={term.key}
-                checked={formData[term.key as keyof typeof formData] as boolean}
-                onCheckedChange={(checked) => handleInputChange(term.key, checked)}
-                className="mt-1"
+                id={agreement.key}
+                checked={formData[agreement.key as keyof typeof formData] as boolean}
+                onCheckedChange={(checked) => handleInputChange(agreement.key, checked)}
+                className="mt-1 data-[state=checked]:bg-yellow-400 data-[state=checked]:border-yellow-400"
               />
-              <div className="flex-1">
-                <Label htmlFor={term.key} className="text-white font-semibold text-lg cursor-pointer flex items-center">
-                  {term.title}
-                  {term.required && <span className="text-red-400 ml-1">*</span>}
+              <div>
+                <Label htmlFor={agreement.key} className="text-lg font-semibold text-white cursor-pointer">
+                  {agreement.label} *
                 </Label>
-                <p className="text-gray-400 mt-2 leading-relaxed">
-                  {term.description}
-                </p>
+                <p className="text-yellow-400/60 mt-1">{agreement.desc}</p>
               </div>
             </div>
-          </motion.div>
+          </QuantumInput>
         ))}
       </div>
 
-      <motion.div 
-        className="glass-effect p-8 rounded-2xl border border-green-500/20 text-center"
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ delay: 0.5 }}
-      >
-        <Award className="w-12 h-12 text-green-400 mx-auto mb-4" />
-        <h3 className="text-xl font-semibold text-white mb-2">Almost Done!</h3>
-        <p className="text-gray-400">
-          Once submitted, our team will review your application within 48 hours. 
-          You'll receive an email notification with the decision.
-        </p>
-      </motion.div>
+      {/* Navigation */}
+      <div className="flex justify-between pt-8">
+        <Button 
+          variant="ghost" 
+          onClick={prevStep}
+          className="text-white hover:bg-white/10"
+        >
+          <ArrowLeft className="h-5 w-5 mr-2" />
+          Back to Verification
+        </Button>
+        <Button 
+          onClick={handleSubmit}
+          disabled={!validateStep(4) || isSubmitting}
+          className="bg-gradient-to-r from-yellow-400 to-red-500 hover:from-yellow-500 hover:to-red-600 text-white px-12 py-4 rounded-xl text-lg font-bold"
+        >
+          {isSubmitting ? (
+            <>
+              <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+              Initiating Quantum Protocol...
+            </>
+          ) : (
+            <>
+              Launch Quantum Creator
+              <Zap className="ml-2 h-6 w-6" />
+            </>
+          )}
+        </Button>
+      </div>
     </motion.div>
   );
 
   // Success Screen
   const renderSuccess = () => (
     <motion.div 
-      className="text-center py-20"
+      className="min-h-screen flex items-center justify-center text-center"
       initial={{ opacity: 0, scale: 0.8 }}
       animate={{ opacity: 1, scale: 1 }}
-      transition={{ duration: 0.8, ease: "easeOut" }}
+      transition={{ duration: 1 }}
     >
-      <motion.div
-        className="relative inline-block mb-8"
-        initial={{ rotate: -180, scale: 0 }}
-        animate={{ rotate: 0, scale: 1 }}
-        transition={{ duration: 1, delay: 0.3, type: "spring" }}
-      >
-        <div className="w-32 h-32 bg-gradient-to-r from-green-400 to-emerald-500 rounded-full flex items-center justify-center mx-auto">
-          <Check className="w-16 h-16 text-white" />
-        </div>
+      <div className="max-w-4xl mx-auto space-y-8">
         <motion.div
-          className="absolute -inset-4 bg-green-400/30 rounded-full blur-xl"
-          animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.6, 0.3] }}
-          transition={{ duration: 2, repeat: Infinity }}
-        />
-      </motion.div>
-
-      <motion.h1 
-        className="text-5xl font-bold text-white mb-6"
-        initial={{ opacity: 0, y: 30 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.8, delay: 0.5 }}
-      >
-        Application Submitted!
-      </motion.h1>
-      
-      <motion.p 
-        className="text-xl text-gray-300 mb-8 max-w-2xl mx-auto"
-        initial={{ opacity: 0, y: 30 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.8, delay: 0.7 }}
-      >
-        Your creator verification request has been submitted successfully. 
-        Our team will review your application and respond within 48 hours.
-      </motion.p>
-      
-      <motion.div
-        initial={{ opacity: 0, y: 30 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.8, delay: 0.9 }}
-      >
-        <Button 
-          onClick={() => navigate('/settings')}
-          size="lg"
-          className="bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90 text-white px-8 py-4 text-lg font-semibold rounded-full"
+          animate={{ rotate: 360 }}
+          transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
         >
-          Return to Settings
-        </Button>
-      </motion.div>
-    </motion.div>
-  );
+          <CheckCircle className="w-32 h-32 text-green-400 mx-auto" />
+        </motion.div>
+        
+        <motion.h1 
+          className="text-6xl font-bold bg-gradient-to-r from-green-400 via-cyan-400 to-purple-400 bg-clip-text text-transparent"
+          initial={{ y: 20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.5 }}
+        >
+          Quantum Creator Initialized!
+        </motion.h1>
+        
+        <motion.p 
+          className="text-2xl text-white/80 max-w-2xl mx-auto"
+          initial={{ y: 20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.7 }}
+        >
+          Your application has been submitted to the quantum verification matrix. 
+          You'll receive a dimensional transmission at {userEmail || 'your registered quantum frequency'} within 24-48 hours.
+        </motion.p>
 
-  // Navigation Buttons
-  const NavigationButtons = () => (
-    <motion.div 
-      className="fixed bottom-0 left-0 right-0 z-40 bg-black/80 backdrop-blur-sm border-t border-white/10"
-      initial={{ y: 100 }}
-      animate={{ y: 0 }}
-      transition={{ duration: 0.5 }}
-    >
-      <div className="max-w-4xl mx-auto px-6 py-6">
-        <div className="flex justify-between items-center">
+        <motion.div 
+          className="pt-8"
+          initial={{ y: 20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.9 }}
+        >
           <Button 
-            variant="ghost" 
-            onClick={prevStep}
-            disabled={currentStep <= 1}
-            className="text-white hover:bg-white/10 disabled:opacity-50"
+            onClick={() => navigate('/settings')}
+            className="bg-gradient-to-r from-green-400 to-cyan-500 hover:from-green-500 hover:to-cyan-600 text-white px-12 py-4 rounded-xl text-lg font-bold"
           >
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Previous
+            Return to Quantum Base
           </Button>
-          
-          <div className="text-center text-sm text-gray-400">
-            Step {currentStep} of 4
-          </div>
-          
-          {currentStep < 4 ? (
-            <Button 
-              onClick={nextStep}
-              disabled={!validateStep(currentStep)}
-              className="bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90 text-white px-8 py-3 disabled:opacity-50"
-            >
-              Continue
-              <ChevronRight className="h-4 w-4 ml-2" />
-            </Button>
-          ) : (
-            <Button 
-              onClick={handleSubmit}
-              disabled={!validateStep(currentStep) || isSubmitting}
-              className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white px-8 py-3 disabled:opacity-50"
-            >
-              {isSubmitting ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Submitting...
-                </>
-              ) : (
-                <>
-                  Submit Application
-                  <Check className="h-4 w-4 ml-2" />
-                </>
-              )}
-            </Button>
-          )}
-        </div>
+        </motion.div>
       </div>
     </motion.div>
   );
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900">
-      {/* Animated Background */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_30%,hsl(280,100%,70%,0.1),transparent_70%)]" />
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_70%,hsl(200,100%,70%,0.1),transparent_70%)]" />
-        <motion.div 
-          className="absolute w-96 h-96 bg-primary/5 rounded-full blur-3xl"
-          animate={{ 
-            x: [0, 100, 0], 
-            y: [0, -100, 0],
-            scale: [1, 1.2, 1]
-          }}
-          transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-          style={{ top: '20%', left: '10%' }}
-        />
-        <motion.div 
-          className="absolute w-96 h-96 bg-purple-500/5 rounded-full blur-3xl"
-          animate={{ 
-            x: [0, -100, 0], 
-            y: [0, 100, 0],
-            scale: [1.2, 1, 1.2]
-          }}
-          transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
-          style={{ bottom: '20%', right: '10%' }}
-        />
+    <div className="min-h-screen bg-black text-white relative overflow-hidden">
+      {/* Quantum Background */}
+      <div className="fixed inset-0 bg-gradient-to-br from-black via-purple-900/10 to-cyan-900/10" />
+      
+      {currentStep > 0 && currentStep < 5 && <QuantumProgress />}
+      
+      <div className="relative z-10 container mx-auto px-6">
+        <AnimatePresence mode="wait">
+          {currentStep === 0 && (
+            <motion.div key="hero">
+              {renderHero()}
+            </motion.div>
+          )}
+          {currentStep === 1 && (
+            <motion.div key="step1">
+              {renderStep1()}
+            </motion.div>
+          )}
+          {currentStep === 2 && (
+            <motion.div key="step2">
+              {renderStep2()}
+            </motion.div>
+          )}
+          {currentStep === 3 && (
+            <motion.div key="step3">
+              {renderStep3()}
+            </motion.div>
+          )}
+          {currentStep === 4 && (
+            <motion.div key="step4">
+              {renderStep4()}
+            </motion.div>
+          )}
+          {currentStep === 5 && (
+            <motion.div key="success">
+              {renderSuccess()}
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
-
-      <AnimatePresence mode="wait">
-        {currentStep === 0 && (
-          <motion.div key="hero">
-            {renderHero()}
-          </motion.div>
-        )}
-        
-        {currentStep >= 1 && currentStep <= 4 && (
-          <motion.div key="form" className="relative z-10">
-            <ProgressIndicator />
-            <div className="pt-24 pb-32 px-6">
-              <div className="max-w-4xl mx-auto">
-                <AnimatePresence mode="wait">
-                  {currentStep === 1 && <motion.div key="step1">{renderStep1()}</motion.div>}
-                  {currentStep === 2 && <motion.div key="step2">{renderStep2()}</motion.div>}
-                  {currentStep === 3 && <motion.div key="step3">{renderStep3()}</motion.div>}
-                  {currentStep === 4 && <motion.div key="step4">{renderStep4()}</motion.div>}
-                </AnimatePresence>
-              </div>
-            </div>
-            <NavigationButtons />
-          </motion.div>
-        )}
-        
-        {currentStep === 5 && (
-          <motion.div key="success">
-            {renderSuccess()}
-          </motion.div>
-        )}
-      </AnimatePresence>
     </div>
   );
 };
