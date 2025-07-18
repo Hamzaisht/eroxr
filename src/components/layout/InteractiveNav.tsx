@@ -12,7 +12,7 @@ import { cn } from "@/lib/utils";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 // import { CreateBodyContactDialog } from "@/components/ads/body-contact"; // REMOVED - to be rebuilt 
-import { useUser } from "@/hooks/useUser";
+import { useCurrentUser } from "@/hooks/useCurrentUser";
 
 const menuItems = [
   { icon: Home, label: "Home", path: "/home" },
@@ -29,7 +29,7 @@ export const InteractiveNav = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const session = useSession();
-  const { currentUser } = useUser();
+  const { profile: currentUser } = useCurrentUser();
   const isMobile = useMediaQuery("(max-width: 768px)");
   const { isAdmin } = useAdminAuth();
   const isGhostMode = false; // Will be implemented with proper context
