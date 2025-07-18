@@ -10,6 +10,9 @@ export default function Profile() {
   const { userId } = useParams();
   const { user } = useAuth();
   const navigate = useNavigate();
+  
+  // Handle both /profile/:userId and /new-profile/:userId routes
+  const isNewProfileRoute = window.location.pathname.includes('/new-profile');
 
   console.log('Profile - userId:', userId);
   console.log('Profile - user:', user?.id);
@@ -60,8 +63,17 @@ export default function Profile() {
       );
     }
   } else {
-    // No identifier provided, use current user's ID
-    profileId = user?.id || null;
+    // No identifier provided, use current user's ID (only for new-profile route)
+    if (isNewProfileRoute) {
+      profileId = user?.id || null;
+    } else {
+      // For /profile route without userId, redirect to user's profile
+      if (user?.id) {
+        navigate(`/profile/${user.id}`);
+        return null;
+      }
+      profileId = null;
+    }
   }
 
   if (!profileId) {

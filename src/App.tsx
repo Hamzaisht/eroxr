@@ -48,6 +48,8 @@ function App() {
               <Route path="/eroboard" element={<Eroboard />} />
               <Route path="/shorts" element={<Shorts />} />
               <Route path="/profile/:userId" element={<Profile />} />
+              <Route path="/new-profile" element={<Profile />} />
+              <Route path="/new-profile/:userId" element={<Profile />} />
               <Route path="/settings" element={<Settings />} />
               <Route path="/search" element={<Search />} />
               <Route path="/subscription" element={<Subscription />} />
