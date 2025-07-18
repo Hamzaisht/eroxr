@@ -81,9 +81,9 @@ const CountingNumber = ({
   }, [motionValue, value, duration]);
 
   return (
-    <motion.span className="tabular-nums">
+    <span className="tabular-nums">
       <motion.span>{rounded}</motion.span>{suffix}
-    </motion.span>
+    </span>
   );
 };
 
