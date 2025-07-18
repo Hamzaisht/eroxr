@@ -1,146 +1,185 @@
+import { motion, useInView } from "framer-motion";
+import { Shield, Lock, Eye, CreditCard, UserCheck, Award, Server, Zap } from "lucide-react";
+import { useRef, useState } from "react";
 
-import { useRef } from "react";
-import { motion, useScroll, useTransform } from "framer-motion";
-import { useIntersectionObserver } from "@/hooks/use-intersection-observer";
-import { useCounterAnimation } from "@/hooks/use-counter-animation";
-import { Lock, Shield, CreditCard } from "lucide-react";
+interface TrustFeature {
+  icon: React.ReactNode;
+  title: string;
+  description: string;
+  badge?: string;
+}
+
+const trustFeatures: TrustFeature[] = [
+  {
+    icon: <Shield className="w-8 h-8" />,
+    title: "Bank-Level Security",
+    description: "256-bit SSL encryption protects all your data and transactions",
+    badge: "SOC 2 Certified"
+  },
+  {
+    icon: <Lock className="w-8 h-8" />,
+    title: "Privacy First",
+    description: "Your personal information is never shared or sold to third parties",
+    badge: "GDPR Compliant"
+  },
+  {
+    icon: <Eye className="w-8 h-8" />,
+    title: "Content Protection",
+    description: "Advanced DRM and watermarking prevent unauthorized sharing",
+    badge: "Patent Pending"
+  },
+  {
+    icon: <CreditCard className="w-8 h-8" />,
+    title: "Secure Payments",
+    description: "PCI DSS compliant payment processing with fraud protection",
+    badge: "PCI Level 1"
+  }
+];
 
 export const TrustSection = () => {
-  const [ref, isInView] = useIntersectionObserver<HTMLDivElement>({
-    threshold: 0.2,
-    triggerOnce: true,
-  });
-  
-  const sectionRef = useRef<HTMLDivElement>(null);
-  
-  const { scrollYProgress } = useScroll({
-    target: sectionRef,
-    offset: ["start end", "end start"],
-  });
-  
-  const y = useTransform(scrollYProgress, [0, 1], [50, -50]);
-  
-  const earningsCounter = useCounterAnimation(12500000, { 
-    duration: 3000,
-    formatter: (value) => `$${Math.floor(value).toLocaleString()}`
-  });
-  
-  const creatorsCounter = useCounterAnimation(15700, { 
-    duration: 2500,
-    formatter: (value) => `${Math.floor(value).toLocaleString()}+`
-  });
-  
-  const payoutsCounter = useCounterAnimation(98.7, { 
-    duration: 3000,
-    formatter: (value) => `${value.toFixed(1)}%`
-  });
-  
-  const trustItems = [
-    {
-      icon: <Lock className="w-10 h-10 text-luxury-primary" />,
-      title: "Encrypted & Private",
-      description:
-        "Military-grade encryption protects your content from unauthorized access. Your data is private and secure.",
+  const ref = useRef(null);
+  const isInView = useInView(ref, { once: true, margin: "-100px" });
+  const [hoveredCard, setHoveredCard] = useState<number | null>(null);
+
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1,
+        delayChildren: 0.2
+      }
+    }
+  };
+
+  const cardVariants = {
+    hidden: { 
+      opacity: 0, 
+      y: 40,
+      scale: 0.9
     },
-    {
-      icon: <Shield className="w-10 h-10 text-luxury-primary" />,
-      title: "Content Ownership",
-      description:
-        "You own what you create. We never claim rights to your content or share it with third parties.",
-    },
-    {
-      icon: <CreditCard className="w-10 h-10 text-luxury-primary" />,
-      title: "Fast, Reliable Payouts",
-      description:
-        "Get paid on time, every time with flexible payout options and the lowest fees in the industry.",
-    },
-  ];
+    visible: { 
+      opacity: 1, 
+      y: 0,
+      scale: 1,
+      transition: {
+        type: "spring",
+        stiffness: 100,
+        damping: 15,
+        duration: 0.6
+      }
+    }
+  };
 
   return (
-    <section
-      ref={sectionRef}
-      className="relative py-24 px-4 sm:px-6"
-    >
-      <div ref={ref} className="container mx-auto max-w-7xl">
+    <section ref={ref} className="relative min-h-screen flex items-center justify-center py-24 overflow-hidden">
+      {/* Cinematic Background */}
+      <div className="absolute inset-0 bg-gradient-to-b from-black via-green-900/5 to-black" />
+      
+      {/* Security Pattern Background */}
+      <div className="absolute inset-0 opacity-10">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(34,197,94,0.1)_0%,transparent_50%)] animate-pulse" />
+        <div className="absolute inset-0 bg-[conic-gradient(from_0deg,transparent,rgba(34,197,94,0.05),transparent_360deg)] animate-spin" style={{ animationDuration: '20s' }} />
+      </div>
+
+      <div className="relative z-10 w-full max-w-7xl mx-auto px-6">
         <motion.div
-          className="text-center mb-16"
-          initial={{ opacity: 0, y: 20 }}
-          animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 30 }}
+          animate={isInView ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.8 }}
+          className="text-center mb-16"
         >
-          <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-4">
-            <span className="text-white">Why Choose </span>
-            <span className="bg-gradient-to-r from-luxury-primary to-luxury-accent bg-clip-text text-transparent">
-              Eroxr?
-            </span>
+          <h2 className="text-6xl font-display font-bold mb-6 bg-gradient-to-r from-white via-green-200 to-emerald-200 bg-clip-text text-transparent">
+            Built on Trust
           </h2>
-          <p className="text-luxury-neutral text-lg max-w-2xl mx-auto">
-            We prioritize your security, ownership, and financial success
+          <p className="text-xl text-gray-300 max-w-3xl mx-auto mb-8">
+            Your security and privacy are our top priorities. We've implemented enterprise-grade protection at every level.
           </p>
         </motion.div>
 
-        {/* Stats Counter Row */}
-        <motion.div 
-          className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16"
-          initial={{ opacity: 0, y: 30 }}
-          animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
-          transition={{ duration: 0.8, delay: 0.2 }}
-          style={{ y }}
+        {/* Trust Features Grid */}
+        <motion.div
+          variants={containerVariants}
+          initial="hidden"
+          animate={isInView ? "visible" : "hidden"}
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"
         >
-          {/* Total Creator Earnings */}
-          <div className="flex flex-col items-center p-6 bg-gradient-to-br from-luxury-dark to-luxury-darker border border-luxury-primary/10 rounded-xl">
-            <h3 className="text-2xl font-bold text-luxury-neutral mb-2">Total Creator Earnings</h3>
-            <p className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-luxury-primary to-luxury-accent bg-clip-text text-transparent animate-pulse">
-              {earningsCounter.displayValue}
-            </p>
-          </div>
-          
-          {/* Active Creators */}
-          <div className="flex flex-col items-center p-6 bg-gradient-to-br from-luxury-dark to-luxury-darker border border-luxury-primary/10 rounded-xl">
-            <h3 className="text-2xl font-bold text-luxury-neutral mb-2">Active Creators</h3>
-            <p className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-luxury-primary to-luxury-accent bg-clip-text text-transparent animate-pulse">
-              {creatorsCounter.displayValue}
-            </p>
-          </div>
-          
-          {/* Payout Success Rate */}
-          <div className="flex flex-col items-center p-6 bg-gradient-to-br from-luxury-dark to-luxury-darker border border-luxury-primary/10 rounded-xl">
-            <h3 className="text-2xl font-bold text-luxury-neutral mb-2">Payout Success Rate</h3>
-            <p className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-luxury-primary to-luxury-accent bg-clip-text text-transparent animate-pulse">
-              {payoutsCounter.displayValue}
-            </p>
-          </div>
-        </motion.div>
-
-        {/* Trust Items */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {trustItems.map((item, i) => (
+          {trustFeatures.map((feature, index) => (
             <motion.div
-              key={i}
-              className="flex flex-col items-center text-center p-8"
-              initial={{ opacity: 0, y: 30 }}
-              animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
-              transition={{ duration: 0.8, delay: 0.3 + i * 0.1 }}
+              key={feature.title}
+              variants={cardVariants}
+              className="relative glass-card rounded-2xl p-6 border border-white/10 hover:border-green-400/30 transition-all duration-500 cursor-pointer group"
+              onMouseEnter={() => setHoveredCard(index)}
+              onMouseLeave={() => setHoveredCard(null)}
+              whileHover={{ y: -5 }}
             >
-              <motion.div 
-                className="mb-6 p-4 rounded-full bg-luxury-dark/80 border border-luxury-primary/20 shadow-[0_0_20px_rgba(155,135,245,0.15)]"
-                whileHover={{ 
-                  scale: 1.1,
-                  rotate: 5,
-                  boxShadow: "0 0 30px rgba(155,135,245,0.3)"
-                }}
+              {/* Badge */}
+              {feature.badge && (
+                <motion.div
+                  className="absolute -top-3 right-4"
+                  initial={{ scale: 0, rotate: -180 }}
+                  animate={{ scale: 1, rotate: 0 }}
+                  transition={{ delay: 0.8 + index * 0.1, type: "spring" }}
+                >
+                  <div className="bg-gradient-to-r from-green-600 to-emerald-600 text-white px-3 py-1 rounded-full text-xs font-bold">
+                    {feature.badge}
+                  </div>
+                </motion.div>
+              )}
+
+              {/* Icon */}
+              <motion.div
+                className="mb-4 text-green-400 transition-colors duration-300 group-hover:text-green-300"
+                animate={hoveredCard === index ? { rotate: 5, scale: 1.1 } : { rotate: 0, scale: 1 }}
+                transition={{ duration: 0.3 }}
               >
-                {item.icon}
+                {feature.icon}
               </motion.div>
-              <h3 className="text-2xl font-bold text-white mb-3">{item.title}</h3>
-              <p className="text-luxury-neutral">{item.description}</p>
+
+              {/* Content */}
+              <h3 className="text-xl font-bold text-white mb-3 group-hover:text-green-100 transition-colors">
+                {feature.title}
+              </h3>
+              <p className="text-gray-400 group-hover:text-gray-300 transition-colors leading-relaxed">
+                {feature.description}
+              </p>
+
+              {/* Hover Effect */}
+              <motion.div
+                className="absolute inset-0 bg-gradient-to-br from-green-600/10 to-emerald-600/10 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"
+                initial={false}
+                animate={hoveredCard === index ? { opacity: 0.1 } : { opacity: 0 }}
+              />
             </motion.div>
           ))}
-        </div>
+        </motion.div>
+
+        {/* Security Stats */}
+        <motion.div
+          className="mt-20 grid grid-cols-2 md:grid-cols-4 gap-8"
+          initial={{ opacity: 0, y: 30 }}
+          animate={isInView ? { opacity: 1, y: 0 } : {}}
+          transition={{ delay: 1.2, duration: 0.8 }}
+        >
+          {[
+            { value: "2.1M+", label: "Protected Users" },
+            { value: "99.9%", label: "Uptime Guarantee" },
+            { value: "0", label: "Data Breaches" },
+            { value: "24/7", label: "Security Monitoring" }
+          ].map((stat, index) => (
+            <motion.div
+              key={stat.label}
+              className="text-center"
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={isInView ? { opacity: 1, scale: 1 } : {}}
+              transition={{ delay: 1.4 + index * 0.1, duration: 0.5 }}
+            >
+              <div className="text-4xl font-bold text-green-400 mb-2">{stat.value}</div>
+              <div className="text-gray-400">{stat.label}</div>
+            </motion.div>
+          ))}
+        </motion.div>
       </div>
-      
-      {/* Background Elements */}
-      <div className="absolute top-1/4 left-1/4 w-1/2 h-1/2 rounded-full bg-luxury-primary/5 blur-3xl -z-10" />
     </section>
   );
 };

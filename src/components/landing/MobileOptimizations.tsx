@@ -337,48 +337,7 @@ export const MobileOptimizations = () => {
       <SwipeIndicator direction="left" isVisible={showSwipeIndicator} />
       <SwipeIndicator direction="right" isVisible={showSwipeIndicator} />
 
-      {/* CSS for scroll-snap behavior on mobile */}
-      <style jsx global>{`
-        @media (max-width: 768px) {
-          html {
-            scroll-behavior: smooth;
-          }
-          
-          .scroll-snap-container {
-            scroll-snap-type: y mandatory;
-            overflow-y: scroll;
-          }
-          
-          .scroll-snap-section {
-            scroll-snap-align: start;
-            scroll-snap-stop: always;
-          }
-          
-          /* Touch optimization */
-          * {
-            -webkit-tap-highlight-color: transparent;
-            -webkit-touch-callout: none;
-            -webkit-user-select: none;
-            -khtml-user-select: none;
-            -moz-user-select: none;
-            -ms-user-select: none;
-            user-select: none;
-          }
-          
-          /* Improve touch targets */
-          button, a, [role="button"] {
-            min-height: 44px;
-            min-width: 44px;
-          }
-          
-          /* Optimize fonts for mobile */
-          body {
-            -webkit-font-smoothing: antialiased;
-            -moz-osx-font-smoothing: grayscale;
-            text-rendering: optimizeLegibility;
-          }
-        }
-      `}</style>
+      {/* Mobile CSS will be in index.css instead of styled-jsx */}
     </>
   );
 };
