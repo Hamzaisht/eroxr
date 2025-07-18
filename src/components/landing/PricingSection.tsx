@@ -89,13 +89,7 @@ export const PricingSection = () => {
     visible: { 
       opacity: 1, 
       y: 0,
-      scale: 1,
-      transition: {
-        type: "spring",
-        stiffness: 100,
-        damping: 15,
-        duration: 0.6
-      }
+      scale: 1
     }
   };
 
@@ -191,6 +185,7 @@ export const PricingSection = () => {
             <motion.div
               key={tier.name}
               variants={cardVariants}
+              transition={{ type: "spring", stiffness: 100, damping: 20 }}
               className={`relative glass-card-heavy rounded-2xl p-8 border-2 transition-all duration-500 hover:scale-105 ${
                 tier.popular 
                   ? 'border-purple-500/50 shadow-[0_0_40px_rgba(168,85,247,0.3)]' 

@@ -61,13 +61,7 @@ export const TrustSection = () => {
     visible: { 
       opacity: 1, 
       y: 0,
-      scale: 1,
-      transition: {
-        type: "spring",
-        stiffness: 100,
-        damping: 15,
-        duration: 0.6
-      }
+      scale: 1
     }
   };
 
@@ -108,6 +102,7 @@ export const TrustSection = () => {
             <motion.div
               key={feature.title}
               variants={cardVariants}
+              transition={{ type: "spring", stiffness: 100, damping: 20 }}
               className="relative glass-card rounded-2xl p-6 border border-white/10 hover:border-green-400/30 transition-all duration-500 cursor-pointer group"
               onMouseEnter={() => setHoveredCard(index)}
               onMouseLeave={() => setHoveredCard(null)}
