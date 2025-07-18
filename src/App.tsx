@@ -21,6 +21,10 @@ import PlatformTest from './pages/PlatformTest';
 import PremiumSuccessPage from "./pages/PremiumSuccessPage";
 import PremiumCancelledPage from "./pages/PremiumCancelledPage";
 import CreatorSignup from './pages/CreatorSignup';
+import { Godmode } from './pages/Godmode';
+import { AdminSessionProvider } from './contexts/AdminSessionContext';
+import { GodmodeDashboard } from './components/godmode/dashboard/GodmodeDashboard';
+import { GodmodeVerification } from './components/godmode/verification/GodmodeVerification';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -58,6 +62,18 @@ function App() {
               <Route path="/test" element={<PlatformTest />} />
               <Route path="/premium-success" element={<PremiumSuccessPage />} />
               <Route path="/premium-cancelled" element={<PremiumCancelledPage />} />
+              
+              {/* Admin routes */}
+              <Route path="/godmode" element={
+                <AdminSessionProvider>
+                  <Godmode />
+                </AdminSessionProvider>
+              } />
+              <Route path="/godmode/verification" element={
+                <AdminSessionProvider>
+                  <GodmodeVerification />
+                </AdminSessionProvider>
+              } />
             </Routes>
             <Toaster />
           </BrowserRouter>

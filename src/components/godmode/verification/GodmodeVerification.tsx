@@ -1,382 +1,413 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAdminSession } from '@/contexts/AdminSessionContext';
-import { Shield, CheckCircle, X, Clock, Eye, FileText, User, AlertTriangle } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Textarea } from '@/components/ui/textarea';
+import { toast } from '@/hooks/use-toast';
+import { 
+  CheckCircle, 
+  XCircle, 
+  Clock, 
+  User, 
+  FileText, 
+  Image,
+  Calendar,
+  MapPin,
+  Link,
+  Eye
+} from 'lucide-react';
 
-interface VerificationData {
+interface VerificationRequest {
   id: string;
   user_id: string;
-  username?: string;
-  avatar_url?: string;
-  document_type: string;
-  document_url: string;
-  status: 'pending' | 'approved' | 'rejected';
+  full_name: string;
+  date_of_birth: string;
+  account_type: string;
+  government_id_type: string;
+  government_id_url: string;
+  selfie_url: string;
+  registered_address: any;
+  social_media_links?: any;
+  status: string;
   submitted_at: string;
-  verified_at?: string;
-  rejected_reason?: string;
-}
-
-interface VerificationStats {
-  total_requests: number;
-  pending_requests: number;
-  approved_requests: number;
-  rejected_requests: number;
-  today_submissions: number;
-  avg_processing_time: number;
+  reviewed_at?: string;
+  reviewed_by?: string;
+  rejection_reason?: string;
+  admin_notes?: string;
+  terms_accepted: boolean;
+  privacy_policy_accepted: boolean;
+  community_guidelines_accepted: boolean;
 }
 
 export const GodmodeVerification: React.FC = () => {
   const { isGhostMode, logGhostAction } = useAdminSession();
-  const [verifications, setVerifications] = useState<VerificationData[]>([]);
-  const [stats, setStats] = useState<VerificationStats>({
-    total_requests: 0,
-    pending_requests: 0,
-    approved_requests: 0,
-    rejected_requests: 0,
-    today_submissions: 0,
-    avg_processing_time: 0
-  });
-  const [selectedVerification, setSelectedVerification] = useState<VerificationData | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [requests, setRequests] = useState<VerificationRequest[]>([]);
+  const [selectedRequest, setSelectedRequest] = useState<VerificationRequest | null>(null);
+  const [adminNotes, setAdminNotes] = useState('');
+  const [rejectionReason, setRejectionReason] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [processing, setProcessing] = useState(false);
 
-  const fetchVerifications = async () => {
+  useEffect(() => {
+    fetchVerificationRequests();
+  }, []);
+
+  const fetchVerificationRequests = async () => {
     try {
-      const { data: verifications } = await supabase
-        .from('id_verifications')
-        .select(`
-          id,
-          user_id,
-          document_type,
-          document_url,
-          status,
-          submitted_at,
-          verified_at,
-          rejected_reason,
-          profiles:user_id (
-            username,
-            avatar_url
-          )
-        `)
+      const { data, error } = await supabase
+        .from('creator_verification_requests')
+        .select('*')
         .order('submitted_at', { ascending: false });
 
-      const formattedVerifications: VerificationData[] = verifications?.map(verification => ({
-        id: verification.id,
-        user_id: verification.user_id,
-        username: (verification.profiles as any)?.username || 'Unknown',
-        avatar_url: (verification.profiles as any)?.avatar_url,
-        document_type: verification.document_type,
-        document_url: verification.document_url,
-        status: verification.status,
-        submitted_at: verification.submitted_at,
-        verified_at: verification.verified_at,
-        rejected_reason: verification.rejected_reason
-      })) || [];
-
-      setVerifications(formattedVerifications);
-
-      // Calculate stats
-      const today = new Date().toISOString().split('T')[0];
-      const todaySubmissions = formattedVerifications.filter(v => 
-        v.submitted_at.startsWith(today)
-      );
-
-      const newStats: VerificationStats = {
-        total_requests: formattedVerifications.length,
-        pending_requests: formattedVerifications.filter(v => v.status === 'pending').length,
-        approved_requests: formattedVerifications.filter(v => v.status === 'approved').length,
-        rejected_requests: formattedVerifications.filter(v => v.status === 'rejected').length,
-        today_submissions: todaySubmissions.length,
-        avg_processing_time: 2.5 // Mock average hours
-      };
-
-      setStats(newStats);
+      if (error) throw error;
+      setRequests(data || []);
     } catch (error) {
-      console.error('Error fetching verifications:', error);
+      console.error('Error fetching verification requests:', error);
+      toast({
+        title: "Error",
+        description: "Failed to fetch verification requests",
+        variant: "destructive"
+      });
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   };
 
-  useEffect(() => {
-    fetchVerifications();
-
-    // Real-time updates
-    const channel = supabase
-      .channel('id_verifications_changes')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'id_verifications' }, fetchVerifications)
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, []);
-
-  const handleVerificationAction = async (verificationId: string, action: 'approve' | 'reject', reason?: string) => {
-    if (isGhostMode) {
-      await logGhostAction(`Verification ${action}`, 'verification', verificationId, { action, reason, timestamp: new Date().toISOString() });
-    }
-
+  const handleReview = async (requestId: string, status: 'approved' | 'rejected') => {
+    setProcessing(true);
     try {
       const updateData: any = {
-        status: action === 'approve' ? 'approved' : 'rejected'
+        status,
+        reviewed_at: new Date().toISOString(),
+        reviewed_by: 'admin', // In real app, this would be the actual admin ID
+        admin_notes: adminNotes || null
       };
 
-      if (action === 'approve') {
-        updateData.verified_at = new Date().toISOString();
-      } else if (reason) {
-        updateData.rejected_reason = reason;
+      if (status === 'rejected') {
+        updateData.rejection_reason = rejectionReason;
       }
 
       const { error } = await supabase
-        .from('id_verifications')
+        .from('creator_verification_requests')
         .update(updateData)
-        .eq('id', verificationId);
+        .eq('id', requestId);
 
       if (error) throw error;
 
-      // If approved, update user's verification status
-      if (action === 'approve') {
-        const verification = verifications.find(v => v.id === verificationId);
-        if (verification) {
-          await supabase
-            .from('profiles')
-            .update({ is_verified: true })
-            .eq('id', verification.user_id);
-        }
+      // Update profile verification status if approved
+      if (status === 'approved' && selectedRequest) {
+        await supabase
+          .from('profiles')
+          .update({ is_verified: true })
+          .eq('id', selectedRequest.user_id);
       }
 
-      fetchVerifications();
+      await fetchVerificationRequests();
+      setSelectedRequest(null);
+      setAdminNotes('');
+      setRejectionReason('');
+
+      if (isGhostMode) {
+        logGhostAction(`${status} creator verification for user ${selectedRequest?.user_id}`);
+      }
+
+      toast({
+        title: "Success",
+        description: `Verification request ${status}`,
+      });
     } catch (error) {
-      console.error('Error updating verification:', error);
+      console.error('Error updating verification request:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update verification request",
+        variant: "destructive"
+      });
+    } finally {
+      setProcessing(false);
     }
   };
 
-  const getStatusColor = (status: string) => {
+  const getStatusBadge = (status: string) => {
     switch (status) {
-      case 'approved': return 'bg-green-500';
-      case 'rejected': return 'bg-red-500';
-      case 'pending': return 'bg-yellow-500';
-      default: return 'bg-gray-500';
-    }
-  };
-
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'approved': return <CheckCircle className="h-4 w-4" />;
-      case 'rejected': return <X className="h-4 w-4" />;
-      case 'pending': return <Clock className="h-4 w-4" />;
-      default: return <AlertTriangle className="h-4 w-4" />;
-    }
-  };
-
-  const getDocumentTypeIcon = (type: string) => {
-    switch (type.toLowerCase()) {
-      case 'passport':
-      case 'driver_license':
-      case 'id_card':
-        return <FileText className="h-4 w-4 text-blue-400" />;
+      case 'pending':
+        return <Badge variant="secondary" className="bg-yellow-500/20 text-yellow-400 border-yellow-500/30"><Clock className="w-3 h-3 mr-1" />Pending</Badge>;
+      case 'approved':
+        return <Badge variant="secondary" className="bg-green-500/20 text-green-400 border-green-500/30"><CheckCircle className="w-3 h-3 mr-1" />Approved</Badge>;
+      case 'rejected':
+        return <Badge variant="secondary" className="bg-red-500/20 text-red-400 border-red-500/30"><XCircle className="w-3 h-3 mr-1" />Rejected</Badge>;
       default:
-        return <FileText className="h-4 w-4 text-gray-400" />;
+        return <Badge variant="secondary">Unknown</Badge>;
     }
   };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-white">Loading verification requests...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-white mb-2">ID Verification</h1>
-          <p className="text-gray-400">Review and approve user identity verifications</p>
+        <h1 className="text-2xl font-bold text-white">Creator Verification</h1>
+        <div className="text-sm text-gray-400">
+          {requests.filter(r => r.status === 'pending').length} pending requests
         </div>
-        {isGhostMode && (
-          <div className="flex items-center gap-2 px-3 py-2 bg-purple-500/20 border border-purple-500/30 rounded-lg">
-            <Eye className="h-4 w-4 text-purple-400" />
-            <span className="text-sm text-purple-300">Ghost Mode Active</span>
-          </div>
-        )}
       </div>
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
-        <Card className="bg-white/5 border-white/10 backdrop-blur-xl">
-          <CardContent className="p-4">
+      {selectedRequest ? (
+        <Card className="bg-slate-800/50 border-slate-700">
+          <CardHeader>
             <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-400">Total Requests</p>
-                <p className="text-2xl font-bold text-white">{stats.total_requests}</p>
+              <CardTitle className="text-white">Verification Details</CardTitle>
+              <div className="flex items-center gap-2">
+                {getStatusBadge(selectedRequest.status)}
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => setSelectedRequest(null)}
+                  className="text-white border-slate-600"
+                >
+                  Back to List
+                </Button>
               </div>
-              <Shield className="h-8 w-8 text-blue-400" />
             </div>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {/* Personal Information */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-300 flex items-center gap-2">
+                  <User className="w-4 h-4" />
+                  Full Name
+                </label>
+                <div className="text-white bg-slate-700/50 p-3 rounded-md">
+                  {selectedRequest.full_name}
+                </div>
+              </div>
+              
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-300 flex items-center gap-2">
+                  <Calendar className="w-4 h-4" />
+                  Date of Birth
+                </label>
+                <div className="text-white bg-slate-700/50 p-3 rounded-md">
+                  {new Date(selectedRequest.date_of_birth).toLocaleDateString()}
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-300">
+                  Account Type
+                </label>
+                <div className="text-white bg-slate-700/50 p-3 rounded-md">
+                  {selectedRequest.account_type}
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-300">
+                  ID Type
+                </label>
+                <div className="text-white bg-slate-700/50 p-3 rounded-md">
+                  {selectedRequest.government_id_type}
+                </div>
+              </div>
+            </div>
+
+            {/* Address */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-300 flex items-center gap-2">
+                <MapPin className="w-4 h-4" />
+                Registered Address
+              </label>
+              <div className="text-white bg-slate-700/50 p-3 rounded-md">
+                {selectedRequest.registered_address && (
+                  <div>
+                    {selectedRequest.registered_address.street}<br />
+                    {selectedRequest.registered_address.city}, {selectedRequest.registered_address.state} {selectedRequest.registered_address.postal_code}<br />
+                    {selectedRequest.registered_address.country}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Documents */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-300 flex items-center gap-2">
+                  <FileText className="w-4 h-4" />
+                  Government ID
+                </label>
+                <Button
+                  variant="outline"
+                  className="w-full text-white border-slate-600 hover:bg-slate-700"
+                  onClick={() => window.open(selectedRequest.government_id_url, '_blank')}
+                >
+                  <Eye className="w-4 h-4 mr-2" />
+                  View Document
+                </Button>
+              </div>
+              
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-300 flex items-center gap-2">
+                  <Image className="w-4 h-4" />
+                  Selfie Verification
+                </label>
+                <Button
+                  variant="outline"
+                  className="w-full text-white border-slate-600 hover:bg-slate-700"
+                  onClick={() => window.open(selectedRequest.selfie_url, '_blank')}
+                >
+                  <Eye className="w-4 h-4 mr-2" />
+                  View Selfie
+                </Button>
+              </div>
+            </div>
+
+            {/* Social Media Links */}
+            {selectedRequest.social_media_links && (
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-300 flex items-center gap-2">
+                  <Link className="w-4 h-4" />
+                  Social Media Links
+                </label>
+                <div className="bg-slate-700/50 p-3 rounded-md">
+                  {Object.entries(selectedRequest.social_media_links).map(([platform, url]) => (
+                    <div key={platform} className="flex justify-between items-center">
+                      <span className="text-gray-300 capitalize">{platform}:</span>
+                      <a 
+                        href={url as string} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="text-blue-400 hover:text-blue-300"
+                      >
+                        View Profile
+                      </a>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Legal Acceptance */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-300">Legal Acceptance</label>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                <div className={`p-3 rounded-md ${selectedRequest.terms_accepted ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}`}>
+                  Terms: {selectedRequest.terms_accepted ? 'Accepted' : 'Not Accepted'}
+                </div>
+                <div className={`p-3 rounded-md ${selectedRequest.privacy_policy_accepted ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}`}>
+                  Privacy: {selectedRequest.privacy_policy_accepted ? 'Accepted' : 'Not Accepted'}
+                </div>
+                <div className={`p-3 rounded-md ${selectedRequest.community_guidelines_accepted ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}`}>
+                  Guidelines: {selectedRequest.community_guidelines_accepted ? 'Accepted' : 'Not Accepted'}
+                </div>
+              </div>
+            </div>
+
+            {/* Review Section */}
+            {selectedRequest.status === 'pending' && (
+              <div className="space-y-4 pt-6 border-t border-slate-700">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-300">Admin Notes</label>
+                  <Textarea
+                    value={adminNotes}
+                    onChange={(e) => setAdminNotes(e.target.value)}
+                    placeholder="Add any notes about this verification..."
+                    className="bg-slate-700/50 border-slate-600 text-white"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-300">Rejection Reason (if rejecting)</label>
+                  <Textarea
+                    value={rejectionReason}
+                    onChange={(e) => setRejectionReason(e.target.value)}
+                    placeholder="Reason for rejection (required if rejecting)..."
+                    className="bg-slate-700/50 border-slate-600 text-white"
+                  />
+                </div>
+
+                <div className="flex gap-4">
+                  <Button
+                    onClick={() => handleReview(selectedRequest.id, 'approved')}
+                    disabled={processing}
+                    className="bg-green-600 hover:bg-green-700"
+                  >
+                    <CheckCircle className="w-4 h-4 mr-2" />
+                    Approve
+                  </Button>
+                  <Button
+                    onClick={() => handleReview(selectedRequest.id, 'rejected')}
+                    disabled={processing || !rejectionReason.trim()}
+                    variant="destructive"
+                  >
+                    <XCircle className="w-4 h-4 mr-2" />
+                    Reject
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {/* Previous Review Info */}
+            {selectedRequest.status !== 'pending' && (
+              <div className="space-y-2 pt-6 border-t border-slate-700">
+                <label className="text-sm font-medium text-gray-300">Review Information</label>
+                <div className="bg-slate-700/50 p-3 rounded-md space-y-2">
+                  <div className="text-white">Reviewed at: {selectedRequest.reviewed_at ? new Date(selectedRequest.reviewed_at).toLocaleString() : 'N/A'}</div>
+                  {selectedRequest.admin_notes && (
+                    <div className="text-gray-300">Notes: {selectedRequest.admin_notes}</div>
+                  )}
+                  {selectedRequest.rejection_reason && (
+                    <div className="text-red-400">Rejection reason: {selectedRequest.rejection_reason}</div>
+                  )}
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
+      ) : (
+        <div className="grid gap-4">
+          {requests.map((request) => (
+            <Card key={request.id} className="bg-slate-800/50 border-slate-700 hover:bg-slate-800/70 transition-colors">
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-3">
+                      <h3 className="text-white font-medium">{request.full_name}</h3>
+                      {getStatusBadge(request.status)}
+                    </div>
+                    <div className="text-sm text-gray-400">
+                      Account Type: {request.account_type} • Submitted: {new Date(request.submitted_at).toLocaleDateString()}
+                    </div>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setSelectedRequest(request)}
+                    className="text-white border-slate-600 hover:bg-slate-700"
+                  >
+                    Review
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
 
-        <Card className="bg-white/5 border-white/10 backdrop-blur-xl">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-400">Pending</p>
-                <p className="text-2xl font-bold text-yellow-400">{stats.pending_requests}</p>
-              </div>
-              <Clock className="h-8 w-8 text-yellow-400" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-white/5 border-white/10 backdrop-blur-xl">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-400">Approved</p>
-                <p className="text-2xl font-bold text-green-400">{stats.approved_requests}</p>
-              </div>
-              <CheckCircle className="h-8 w-8 text-green-400" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-white/5 border-white/10 backdrop-blur-xl">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-400">Rejected</p>
-                <p className="text-2xl font-bold text-red-400">{stats.rejected_requests}</p>
-              </div>
-              <X className="h-8 w-8 text-red-400" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-white/5 border-white/10 backdrop-blur-xl">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-400">Today</p>
-                <p className="text-2xl font-bold text-purple-400">{stats.today_submissions}</p>
-              </div>
-              <FileText className="h-8 w-8 text-purple-400" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-white/5 border-white/10 backdrop-blur-xl">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-400">Avg. Time</p>
-                <p className="text-2xl font-bold text-cyan-400">{stats.avg_processing_time}h</p>
-              </div>
-              <Clock className="h-8 w-8 text-cyan-400" />
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Verification Requests Table */}
-      <Card className="bg-white/5 border-white/10 backdrop-blur-xl">
-        <CardHeader>
-          <CardTitle className="text-white">Verification Requests</CardTitle>
-        </CardHeader>
-        <CardContent className="p-0">
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="border-b border-white/10">
-                <tr>
-                  <th className="text-left p-4 text-sm font-medium text-gray-400">User</th>
-                  <th className="text-left p-4 text-sm font-medium text-gray-400">Document</th>
-                  <th className="text-left p-4 text-sm font-medium text-gray-400">Status</th>
-                  <th className="text-left p-4 text-sm font-medium text-gray-400">Submitted</th>
-                  <th className="text-left p-4 text-sm font-medium text-gray-400">Processed</th>
-                  <th className="text-right p-4 text-sm font-medium text-gray-400">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {verifications.map((verification) => (
-                  <tr key={verification.id} className="border-b border-white/5 hover:bg-white/5">
-                    <td className="p-4">
-                      <div className="flex items-center gap-3">
-                        <Avatar className="h-10 w-10">
-                          <AvatarImage src={verification.avatar_url} />
-                          <AvatarFallback className="bg-purple-500 text-white">
-                            {verification.username?.[0]?.toUpperCase()}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div>
-                          <p className="text-white font-medium">{verification.username}</p>
-                          <p className="text-xs text-gray-400">ID: {verification.user_id.slice(0, 8)}...</p>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="p-4">
-                      <div className="flex items-center gap-2">
-                        {getDocumentTypeIcon(verification.document_type)}
-                        <span className="text-white capitalize">{verification.document_type.replace('_', ' ')}</span>
-                      </div>
-                    </td>
-                    <td className="p-4">
-                      <Badge className={`${getStatusColor(verification.status)} text-white border-none`}>
-                        <div className="flex items-center gap-1">
-                          {getStatusIcon(verification.status)}
-                          {verification.status.toUpperCase()}
-                        </div>
-                      </Badge>
-                    </td>
-                    <td className="p-4">
-                      <span className="text-gray-400 text-sm">
-                        {new Date(verification.submitted_at).toLocaleDateString()}
-                      </span>
-                    </td>
-                    <td className="p-4">
-                      <span className="text-gray-400 text-sm">
-                        {verification.verified_at 
-                          ? new Date(verification.verified_at).toLocaleDateString()
-                          : 'N/A'
-                        }
-                      </span>
-                    </td>
-                    <td className="p-4 text-right">
-                      <div className="flex items-center gap-2 justify-end">
-                        {verification.status === 'pending' && (
-                          <>
-                            <Button
-                              size="sm"
-                              onClick={() => handleVerificationAction(verification.id, 'approve')}
-                              className="bg-green-600 hover:bg-green-700 text-white"
-                            >
-                              <CheckCircle className="h-4 w-4 mr-1" />
-                              Approve
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => handleVerificationAction(verification.id, 'reject', 'Document unclear')}
-                              className="border-red-500 text-red-400 hover:bg-red-500 hover:text-white"
-                            >
-                              <X className="h-4 w-4 mr-1" />
-                              Reject
-                            </Button>
-                          </>
-                        )}
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => setSelectedVerification(verification)}
-                          className="h-8 w-8 p-0"
-                        >
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </CardContent>
-      </Card>
+          {requests.length === 0 && (
+            <Card className="bg-slate-800/50 border-slate-700">
+              <CardContent className="p-8 text-center">
+                <div className="text-gray-400">No verification requests found</div>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+      )}
     </div>
   );
 };

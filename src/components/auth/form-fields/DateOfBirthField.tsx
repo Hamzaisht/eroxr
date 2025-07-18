@@ -1,14 +1,17 @@
 import { FormField, FormItem, FormControl, FormMessage } from "@/components/ui/form";
 import { cn } from "@/lib/utils";
-import { Calendar } from "lucide-react";
+import { Calendar, Sparkles } from "lucide-react";
 import { UseFormReturn } from "react-hook-form";
 import { SignupFormValues } from "../types";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { format } from "date-fns";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { DropdownProps } from "react-day-picker";
+import { supabase } from "@/integrations/supabase/client";
+import { useCurrentUser } from "@/hooks/useCurrentUser";
+import { toast } from "@/hooks/use-toast";
 
 interface DateOfBirthFieldProps {
   form: UseFormReturn<SignupFormValues>;
@@ -18,9 +21,43 @@ interface DateOfBirthFieldProps {
 export const DateOfBirthField = ({ form, isLoading }: DateOfBirthFieldProps) => {
   const [date, setDate] = useState<Date>();
   const [open, setOpen] = useState(false);
+  const [canChange, setCanChange] = useState(true);
+  const [lastChanged, setLastChanged] = useState<string | null>(null);
+  const { user } = useCurrentUser();
 
-  const handleSelect = (selectedDate: Date | undefined) => {
-    if (selectedDate) {
+  // Check if user can change DOB (6 month restriction)
+  useEffect(() => {
+    const checkDOBChangeEligibility = async () => {
+      if (!user?.id) return;
+      
+      try {
+        const { data, error } = await supabase.rpc('can_change_dob', {
+          user_id: user.id
+        });
+
+        if (error) throw error;
+        setCanChange(data);
+
+        // Get last change date for display
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('last_dob_change')
+          .eq('id', user.id)
+          .single();
+
+        if (profile?.last_dob_change) {
+          setLastChanged(profile.last_dob_change);
+        }
+      } catch (error) {
+        console.error('Error checking DOB change eligibility:', error);
+      }
+    };
+
+    checkDOBChangeEligibility();
+  }, [user?.id]);
+
+  const handleSelect = async (selectedDate: Date | undefined) => {
+    if (selectedDate && canChange) {
       const today = new Date();
       const age = today.getFullYear() - selectedDate.getFullYear();
       const monthDiff = today.getMonth() - selectedDate.getMonth();
@@ -31,8 +68,49 @@ export const DateOfBirthField = ({ form, isLoading }: DateOfBirthFieldProps) => 
       if (adjustedAge >= 18) {
         setDate(selectedDate);
         form.setValue('dateOfBirth', format(selectedDate, 'yyyy-MM-dd'));
+        
+        // Update last DOB change timestamp in database
+        if (user?.id) {
+          try {
+            await supabase
+              .from('profiles')
+              .update({ 
+                date_of_birth: format(selectedDate, 'yyyy-MM-dd'),
+                last_dob_change: new Date().toISOString()
+              })
+              .eq('id', user.id);
+
+            setCanChange(false);
+            setLastChanged(new Date().toISOString());
+            
+            toast({
+              title: "Date of Birth Updated",
+              description: "Your date of birth has been saved. You can change it again in 6 months.",
+            });
+          } catch (error) {
+            console.error('Error updating DOB:', error);
+            toast({
+              title: "Error",
+              description: "Failed to update date of birth",
+              variant: "destructive"
+            });
+          }
+        }
+        
         setOpen(false);
+      } else {
+        toast({
+          title: "Age Requirement",
+          description: "You must be at least 18 years old to use this platform.",
+          variant: "destructive"
+        });
       }
+    } else if (!canChange) {
+      toast({
+        title: "Cannot Change",
+        description: "You can only change your date of birth once every 6 months.",
+        variant: "destructive"
+      });
     }
   };
 
@@ -47,29 +125,76 @@ export const DateOfBirthField = ({ form, isLoading }: DateOfBirthFieldProps) => 
               <PopoverTrigger asChild>
                 <Button
                   variant="outline"
-                  disabled={isLoading}
+                  disabled={isLoading || !canChange}
                   className={cn(
-                    "w-full h-12 px-4 text-left font-normal flex items-center gap-3",
-                    "bg-black/10 border-luxury-primary/20",
-                    "hover:bg-luxury-primary/10",
-                    "transition-all duration-300 ease-in-out",
-                    "focus:ring-2 focus:ring-luxury-primary/30",
+                    "group relative w-full h-14 px-4 text-left font-normal flex items-center gap-3 overflow-hidden",
+                    "bg-gradient-to-br from-luxury-primary/5 via-black/10 to-luxury-accent/5",
+                    "border border-luxury-primary/20 backdrop-blur-sm",
+                    "hover:border-luxury-primary/40 hover:from-luxury-primary/10 hover:to-luxury-accent/10",
+                    "transition-all duration-500 ease-out transform",
+                    "focus:ring-2 focus:ring-luxury-primary/30 focus:scale-[1.02]",
                     !field.value && "text-muted-foreground",
-                    "hover:border-luxury-primary"
+                    !canChange && "opacity-60 cursor-not-allowed",
+                    "shadow-lg hover:shadow-luxury-primary/20"
                   )}
                 >
-                  <Calendar className="h-5 w-5 text-luxury-primary" />
-                  {field.value ? (
-                    <span className="text-white">{format(new Date(field.value), "MMMM d, yyyy")}</span>
-                  ) : (
-                    <span className="text-white/50">Date of Birth</span>
-                  )}
+                  {/* Animated background gradient */}
+                  <div className="absolute inset-0 bg-gradient-to-r from-luxury-primary/0 via-luxury-primary/5 to-luxury-accent/0 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                  
+                  {/* Sparkle effect */}
+                  <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                    <Sparkles className="h-3 w-3 text-luxury-accent animate-pulse" />
+                  </div>
+                  
+                  <Calendar className={cn(
+                    "h-5 w-5 transition-all duration-300",
+                    field.value ? "text-luxury-accent" : "text-luxury-primary",
+                    "group-hover:scale-110 group-hover:rotate-12"
+                  )} />
+                  
+                  <div className="flex-1">
+                    {field.value ? (
+                      <div className="space-y-1">
+                        <span className="text-white font-medium text-base">
+                          {format(new Date(field.value), "MMMM d, yyyy")}
+                        </span>
+                        {!canChange && lastChanged && (
+                          <div className="text-xs text-luxury-accent/70">
+                            Next change available: {format(new Date(new Date(lastChanged).getTime() + 6 * 30 * 24 * 60 * 60 * 1000), "MMM d, yyyy")}
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="space-y-1">
+                        <span className="text-white/70 font-medium">Date of Birth</span>
+                        <div className="text-xs text-luxury-primary/70">Click to select your birth date</div>
+                      </div>
+                    )}
+                  </div>
+                  
+                  {/* Status indicator */}
+                  <div className={cn(
+                    "w-2 h-2 rounded-full transition-all duration-300",
+                    canChange ? "bg-green-400 shadow-lg shadow-green-400/50" : "bg-orange-400 shadow-lg shadow-orange-400/50"
+                  )} />
                 </Button>
               </PopoverTrigger>
               <PopoverContent 
-                className="w-auto p-4 bg-[#1e1e1e] border border-luxury-primary/20 shadow-xl backdrop-blur-sm z-[999]"
+                className="w-auto p-6 bg-gradient-to-br from-black/95 via-[#1e1e1e]/95 to-black/95 border border-luxury-primary/30 shadow-2xl backdrop-blur-xl z-[999] rounded-xl"
                 align="start"
               >
+                {/* Beautiful header */}
+                <div className="mb-4 text-center">
+                  <h3 className="text-lg font-semibold text-white mb-1">Select Your Birth Date</h3>
+                  <p className="text-sm text-luxury-primary/70">Choose the date you were born</p>
+                  {!canChange && (
+                    <div className="mt-2 p-2 bg-orange-500/10 border border-orange-500/20 rounded-lg">
+                      <p className="text-xs text-orange-400">
+                        Date of birth can only be changed once every 6 months
+                      </p>
+                    </div>
+                  )}
+                </div>
                 <CalendarComponent
                   mode="single"
                   selected={field.value ? new Date(field.value) : undefined}

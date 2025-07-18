@@ -2146,6 +2146,7 @@ export type Database = {
           is_paying_customer: boolean | null
           is_suspended: boolean | null
           is_verified: boolean | null
+          last_dob_change: string | null
           last_name: string | null
           last_username_change: string | null
           location: string | null
@@ -2186,6 +2187,7 @@ export type Database = {
           is_paying_customer?: boolean | null
           is_suspended?: boolean | null
           is_verified?: boolean | null
+          last_dob_change?: string | null
           last_name?: string | null
           last_username_change?: string | null
           location?: string | null
@@ -2226,6 +2228,7 @@ export type Database = {
           is_paying_customer?: boolean | null
           is_suspended?: boolean | null
           is_verified?: boolean | null
+          last_dob_change?: string | null
           last_name?: string | null
           last_username_change?: string | null
           location?: string | null
@@ -3523,6 +3526,10 @@ export type Database = {
     Functions: {
       assign_super_admin: {
         Args: { target_user_id: string }
+        Returns: boolean
+      }
+      can_change_dob: {
+        Args: { user_id: string }
         Returns: boolean
       }
       can_change_username: {
