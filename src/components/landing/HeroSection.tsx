@@ -5,8 +5,9 @@ import { useMouseParallax } from "@/hooks/use-mouse-parallax";
 import { Button } from "@/components/ui/button";
 import { MagneticButton } from "@/components/landing/components/MagneticButton";
 import { Link } from "react-router-dom";
-import { ArrowRight, Plus } from "lucide-react";
+import { ArrowRight, Play, Crown, Sparkles } from "lucide-react";
 import CSSParticlesBackground from "./CSSParticlesBackground";
+import { FloatingCreatorCards } from "./FloatingCreatorCards";
 
 interface HeroSectionProps {
   scrollOpacity?: MotionValue<number>;
@@ -39,13 +40,16 @@ export const HeroSection = ({ scrollOpacity }: HeroSectionProps) => {
       ref={containerRef}
       className="relative w-screen min-h-screen flex items-center justify-center overflow-hidden"
     >
-      {/* Optimized particle background */}
+      {/* Dynamic Background Layers */}
       <CSSParticlesBackground />
+      
+      {/* Floating Creator Cards */}
+      <FloatingCreatorCards />
       
       {/* Content container with parallax effect */}
       <motion.div 
         style={{ x, y }}
-        className="relative z-10 w-full flex items-center justify-center"
+        className="relative z-20 w-full flex items-center justify-center"
       >
         <div className="w-full flex justify-center">
           <motion.div 
@@ -55,40 +59,61 @@ export const HeroSection = ({ scrollOpacity }: HeroSectionProps) => {
             variants={textVariants}
             transition={{ 
               duration: 0.8,
-              staggerChildren: 0.2,
+              staggerChildren: 0.3,
               ease: [0.22, 1, 0.36, 1]
             }}
             style={{ opacity: scrollOpacity }}
           >
-            {/* Main headline */}
-            <motion.h1 
-              className="text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-bold tracking-tighter bg-gradient-to-r from-luxury-neutral via-white to-luxury-neutral bg-clip-text text-transparent"
+            {/* Trust Badge */}
+            <motion.div 
+              className="flex items-center justify-center gap-3 mb-8"
               variants={itemVariants}
             >
-              Unlock Your World of <br className="hidden sm:block" />Exclusive Content
+              <div className="flex items-center gap-2 bg-gradient-to-r from-luxury-primary/20 to-luxury-accent/20 backdrop-blur-xl border border-luxury-primary/30 rounded-full px-6 py-3">
+                <Crown className="w-5 h-5 text-luxury-primary" />
+                <span className="text-luxury-primary font-medium">Nordic's #1 Creator Platform</span>
+                <Sparkles className="w-5 h-5 text-luxury-accent" />
+              </div>
+            </motion.div>
+
+            {/* Main headline with enhanced typography */}
+            <motion.h1 
+              className="text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-bold tracking-tighter"
+              variants={itemVariants}
+            >
+              <span className="bg-gradient-to-r from-white via-luxury-primary to-luxury-accent bg-clip-text text-transparent leading-tight">
+                Where Creators
+              </span>
+              <br />
+              <span className="bg-gradient-to-r from-luxury-accent via-luxury-primary to-white bg-clip-text text-transparent">
+                Earn & Fans Connect
+              </span>
             </motion.h1>
             
-            {/* Subheadline */}
+            {/* Enhanced subheadline */}
             <motion.p 
-              className="text-xl md:text-2xl lg:text-3xl text-luxury-neutral/90"
+              className="text-xl md:text-2xl lg:text-3xl text-slate-300 max-w-4xl mx-auto leading-relaxed"
               variants={itemVariants}
             >
-              Where creators thrive and fans belong.
+              Join <span className="text-luxury-primary font-bold">47,000+</span> creators earning an average of{" "}
+              <span className="text-green-400 font-bold">$3,847/month</span> through authentic connections and premium content.
             </motion.p>
             
-            {/* CTA buttons */}
+            {/* Enhanced CTA section */}
             <motion.div 
-              className="flex flex-col sm:flex-row items-center justify-center gap-6 mt-12"
+              className="flex flex-col sm:flex-row items-center justify-center gap-6 mt-16"
               variants={itemVariants}
             >
               <MagneticButton magneticStrength={0.7}>
                 <Button 
                   asChild
                   size="lg" 
-                  className="text-lg py-7 px-10 bg-gradient-to-r from-luxury-primary to-luxury-accent hover:from-luxury-accent hover:to-luxury-primary transition-all duration-500"
+                  className="group text-lg py-8 px-12 bg-gradient-to-r from-luxury-primary to-luxury-accent hover:from-luxury-accent hover:to-luxury-primary transition-all duration-500 shadow-lg shadow-luxury-primary/30 hover:shadow-luxury-accent/50 relative overflow-hidden"
                 >
-                  <Link to="/register">
-                    Join Now <Plus className="ml-2 h-5 w-5" />
+                  <Link to="/creator-signup" className="flex items-center">
+                    <span className="relative z-10">Start Creating</span>
+                    <Crown className="ml-3 h-5 w-5 relative z-10 group-hover:rotate-12 transition-transform duration-300" />
+                    <div className="absolute inset-0 bg-white/20 transform translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700 skew-x-12" />
                   </Link>
                 </Button>
               </MagneticButton>
@@ -97,14 +122,34 @@ export const HeroSection = ({ scrollOpacity }: HeroSectionProps) => {
                 <Button 
                   asChild
                   size="lg"
-                  variant="ghost" 
-                  className="text-lg py-7 px-10 text-white border border-luxury-primary/30 hover:bg-luxury-primary/10"
+                  variant="outline" 
+                  className="group text-lg py-8 px-12 text-white border-2 border-luxury-primary/50 hover:bg-luxury-primary/10 hover:border-luxury-primary transition-all duration-500 backdrop-blur-xl"
                 >
-                  <Link to="/auth">
-                    Sign In <ArrowRight className="ml-2 h-5 w-5" />
+                  <Link to="/home" className="flex items-center">
+                    <Play className="mr-3 h-5 w-5 group-hover:scale-110 transition-transform duration-300" />
+                    <span>Explore Content</span>
                   </Link>
                 </Button>
               </MagneticButton>
+            </motion.div>
+
+            {/* Social Proof Pills */}
+            <motion.div 
+              className="flex flex-wrap items-center justify-center gap-4 mt-12 opacity-80"
+              variants={itemVariants}
+            >
+              <div className="bg-slate-800/50 backdrop-blur-xl rounded-full px-4 py-2 border border-slate-700/50">
+                <span className="text-green-400 font-bold">$12.8M+</span>
+                <span className="text-slate-400 ml-2">paid to creators</span>
+              </div>
+              <div className="bg-slate-800/50 backdrop-blur-xl rounded-full px-4 py-2 border border-slate-700/50">
+                <span className="text-blue-400 font-bold">890K+</span>
+                <span className="text-slate-400 ml-2">content pieces</span>
+              </div>
+              <div className="bg-slate-800/50 backdrop-blur-xl rounded-full px-4 py-2 border border-slate-700/50">
+                <span className="text-purple-400 font-bold">234%</span>
+                <span className="text-slate-400 ml-2">avg. growth</span>
+              </div>
             </motion.div>
           </motion.div>
         </div>

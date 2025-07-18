@@ -4,6 +4,9 @@ import { useNavigate } from "react-router-dom";
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Navbar } from "@/components/landing/Navbar";
 import { HeroSection } from "@/components/landing/HeroSection";
+import { InteractiveDemo } from "@/components/landing/InteractiveDemo";
+import { LiveStatsSection } from "@/components/landing/LiveStatsSection";
+import { FeaturesSection } from "@/components/landing/FeaturesSection";
 import Footer from "@/components/landing/Footer";
 
 const Landing = () => {
@@ -27,49 +30,14 @@ const Landing = () => {
       {/* Hero Section */}
       <HeroSection />
 
-      {/* Features Section */}
-      <section className="py-20 px-4 relative z-10">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold text-slate-100 mb-4">
-              Why Choose Our Divine Platform?
-            </h2>
-            <p className="text-xl text-slate-400 max-w-2xl mx-auto">
-              Connect, create, and share with a community that celebrates authenticity and creativity.
-            </p>
-          </div>
+      {/* Live Stats Section */}
+      <LiveStatsSection />
 
-          {/* Feature Cards */}
-          <div className="grid md:grid-cols-3 gap-8">
-            <Card className="bg-slate-800/30 backdrop-blur-xl border-slate-700/30 hover:border-slate-600/40 transition-all duration-300">
-              <CardHeader>
-                <CardTitle className="text-slate-100">Create Divine Content</CardTitle>
-                <CardDescription className="text-slate-400">
-                  Share your stories, photos, and videos with the celestial community
-                </CardDescription>
-              </CardHeader>
-            </Card>
-            
-            <Card className="bg-slate-800/30 backdrop-blur-xl border-slate-700/30 hover:border-slate-600/40 transition-all duration-300">
-              <CardHeader>
-                <CardTitle className="text-slate-100">Connect with Creators</CardTitle>
-                <CardDescription className="text-slate-400">
-                  Build meaningful relationships with like-minded divine souls
-                </CardDescription>
-              </CardHeader>
-            </Card>
-            
-            <Card className="bg-slate-800/30 backdrop-blur-xl border-slate-700/30 hover:border-slate-600/40 transition-all duration-300">
-              <CardHeader>
-                <CardTitle className="text-slate-100">Monetize Your Art</CardTitle>
-                <CardDescription className="text-slate-400">
-                  Turn your divine creations into celestial rewards
-                </CardDescription>
-              </CardHeader>
-            </Card>
-          </div>
-        </div>
-      </section>
+      {/* Interactive Demo Section */}
+      <InteractiveDemo />
+
+      {/* Enhanced Features Section */}
+      <FeaturesSection />
 
       {/* Footer */}
       <Footer />
