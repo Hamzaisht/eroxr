@@ -8,8 +8,12 @@ export const BackButton = () => {
   const location = useLocation();
 
   const handleBack = () => {
+    // If we're on settings page, always go to home to avoid navigation loops
+    if (location.pathname === '/settings') {
+      navigate('/home');
+    }
     // If we're on a profile page and came from a problematic route, go to home instead
-    if (location.pathname.includes('new-profile') && window.history.length <= 1) {
+    else if (location.pathname.includes('new-profile') && window.history.length <= 1) {
       navigate('/home');
     } else {
       navigate(-1);
