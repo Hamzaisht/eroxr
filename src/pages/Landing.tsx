@@ -4,10 +4,16 @@ import { useNavigate } from "react-router-dom";
 import { Navbar } from "@/components/landing/Navbar";
 import { CinematicHero } from "@/components/landing/CinematicHero";
 import { CreatorMosaic } from "@/components/landing/CreatorMosaic";
+import { PricingSection } from "@/components/landing/PricingSection";
+import { LiveFeedSection } from "@/components/landing/LiveFeedSection";
+import { TrustSection } from "@/components/landing/TrustSection";
+import { TestimonialsSection } from "@/components/landing/TestimonialsSection";
+import { JoinFunnelSection } from "@/components/landing/JoinFunnelSection";
 import { WhyJoinSection } from "@/components/landing/WhyJoinSection";
 import { SocialProofSection } from "@/components/landing/SocialProofSection";
 import { FAQSection } from "@/components/landing/FAQSection";
 import { ScrollProgress } from "@/components/landing/components/ScrollProgress";
+import { MobileOptimizations } from "@/components/landing/MobileOptimizations";
 import { MetaTags } from "@/head/MetaTags";
 import { useRef } from "react";
 
@@ -45,14 +51,28 @@ const Landing = () => {
         {/* Scene 2: Creator Mosaic Grid */}
         <CreatorMosaic scrollYProgress={scrollYProgress} />
 
-        {/* Scene 3: Why Join Section */}
+        {/* Scene 3: Pricing Tiers */}
+        <PricingSection />
+
+        {/* Scene 4: Live Feed Reel */}
+        <LiveFeedSection />
+
+        {/* Scene 5: Trust & Security Layer */}
+        <TrustSection />
+
+        {/* Scene 6: Testimonials */}
+        <TestimonialsSection />
+
+        {/* Scene 7: Join Now Funnel */}
+        <JoinFunnelSection />
+
+        {/* Additional Sections */}
         <WhyJoinSection />
-
-        {/* Scene 4: Social Proof & Stats */}
         <SocialProofSection />
-
-        {/* Scene 5: FAQ Section */}
         <FAQSection />
+
+        {/* Mobile Optimizations */}
+        <MobileOptimizations />
       </div>
     </>
   );
