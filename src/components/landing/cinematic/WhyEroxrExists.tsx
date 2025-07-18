@@ -43,8 +43,68 @@ export const WhyEroxrExists = ({ scrollYProgress }: WhyEroxrExistsProps) => {
 
   return (
     <section id="why-eroxr" ref={ref} className="relative min-h-screen flex items-center py-20 overflow-hidden">
-      {/* Background */}
-      <div className="absolute inset-0 bg-gradient-to-b from-black via-gray-950 to-black" />
+      {/* Enhanced Background */}
+      <div className="absolute inset-0 bg-gradient-to-b from-black via-gray-950 to-black">
+        <div className="absolute inset-0 bg-gradient-to-r from-purple-900/30 to-pink-900/30" />
+        
+        {/* Enhanced floating particles with connections */}
+        <div className="absolute inset-0 opacity-40">
+          {[...Array(40)].map((_, i) => (
+            <motion.div
+              key={i}
+              className="absolute rounded-full"
+              style={{
+                left: `${Math.random() * 100}%`,
+                top: `${Math.random() * 100}%`,
+                width: Math.random() * 4 + 2,
+                height: Math.random() * 4 + 2,
+                background: `hsl(${280 + Math.random() * 30}, 100%, ${65 + Math.random() * 15}%)`,
+                filter: 'blur(1px)',
+                boxShadow: `0 0 ${Math.random() * 10 + 5}px hsl(${280 + Math.random() * 30}, 100%, 70%)`,
+              }}
+              animate={{
+                y: [0, -40 - Math.random() * 20, 0],
+                x: [0, Math.random() * 20 - 10, 0],
+                opacity: [0.3, 0.8, 0.3],
+                scale: [0.7, 1.3, 0.7],
+              }}
+              transition={{
+                duration: 5 + Math.random() * 3,
+                repeat: Infinity,
+                delay: Math.random() * 2,
+                ease: "easeInOut",
+              }}
+            />
+          ))}
+        </div>
+        
+        {/* Neural connection lines */}
+        <div className="absolute inset-0">
+          {[...Array(8)].map((_, i) => (
+            <motion.div
+              key={`line-${i}`}
+              className="absolute opacity-20"
+              style={{
+                left: `${10 + i * 10}%`,
+                top: `${20 + Math.random() * 60}%`,
+                width: '1px',
+                height: '60px',
+                background: 'linear-gradient(to bottom, transparent, hsl(var(--primary)), transparent)',
+                transform: `rotate(${Math.random() * 360}deg)`,
+              }}
+              animate={{
+                opacity: [0.1, 0.4, 0.1],
+                scaleY: [0.8, 1.2, 0.8],
+              }}
+              transition={{
+                duration: 3 + Math.random() * 2,
+                repeat: Infinity,
+                delay: Math.random() * 2,
+              }}
+            />
+          ))}
+        </div>
+      </div>
       
       {/* Pinned Film Strip Container */}
       <div className="relative w-full max-w-7xl mx-auto px-6">
@@ -71,8 +131,11 @@ export const WhyEroxrExists = ({ scrollYProgress }: WhyEroxrExistsProps) => {
             <motion.div
               key={index}
               className={`flex-shrink-0 w-full md:w-96 h-96 relative rounded-2xl overflow-hidden ${
-                currentScene === index ? 'ring-2 ring-pink-400' : ''
+                currentScene === index ? 'ring-2 ring-primary' : ''
               }`}
+              style={{
+                boxShadow: currentScene === index ? 'var(--glow-primary)' : 'none'
+              }}
               animate={{
                 scale: currentScene === index ? 1.05 : 1,
                 opacity: currentScene === index ? 1 : 0.7
@@ -111,7 +174,7 @@ export const WhyEroxrExists = ({ scrollYProgress }: WhyEroxrExistsProps) => {
                     <motion.div
                       key={i}
                       className={`w-2 h-2 rounded-full ${
-                        i === index ? 'bg-pink-400' : 'bg-white/30'
+                        i === index ? 'bg-primary' : 'bg-white/30'
                       }`}
                       animate={{ scale: i === currentScene ? 1.2 : 1 }}
                     />
@@ -130,9 +193,12 @@ export const WhyEroxrExists = ({ scrollYProgress }: WhyEroxrExistsProps) => {
               onClick={() => setCurrentScene(index)}
               className={`w-12 h-1 rounded-full transition-all duration-300 ${
                 currentScene === index 
-                  ? 'bg-pink-400 scale-110' 
+                  ? 'bg-primary scale-110' 
                   : 'bg-white/30 hover:bg-white/50'
               }`}
+              style={{
+                boxShadow: currentScene === index ? 'var(--glow-primary)' : 'none'
+              }}
             />
           ))}
         </div>

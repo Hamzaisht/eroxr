@@ -75,6 +75,51 @@ export const CreatorShowcase = ({ scrollYProgress }: CreatorShowcaseProps) => {
 
   return (
     <section ref={ref} className="relative min-h-screen py-20 bg-gradient-to-b from-black via-purple-950/10 to-black">
+      {/* Enhanced Background Effects */}
+      <div className="absolute inset-0">
+        <div className="absolute inset-0 bg-gradient-to-l from-pink-900/20 to-purple-900/20" />
+        
+        {/* Enhanced grid pattern with glow */}
+        <div 
+          className="absolute inset-0 opacity-20"
+          style={{
+            backgroundImage: `
+              linear-gradient(rgba(155, 135, 245, 0.5) 1px, transparent 1px),
+              linear-gradient(90deg, rgba(155, 135, 245, 0.5) 1px, transparent 1px)
+            `,
+            backgroundSize: '40px 40px',
+            filter: 'drop-shadow(0 0 1px hsl(var(--primary)))',
+          }}
+        />
+        
+        {/* Spotlight effects */}
+        <div className="absolute inset-0">
+          {[...Array(3)].map((_, i) => (
+            <motion.div
+              key={`spotlight-${i}`}
+              className="absolute rounded-full opacity-10"
+              style={{
+                left: `${25 + i * 25}%`,
+                top: `${20 + Math.random() * 40}%`,
+                width: 200 + Math.random() * 100,
+                height: 200 + Math.random() * 100,
+                background: `radial-gradient(circle, hsl(var(--primary)) 0%, transparent 60%)`,
+                filter: 'blur(40px)',
+              }}
+              animate={{
+                scale: [1, 1.4, 1],
+                opacity: [0.05, 0.15, 0.05],
+              }}
+              transition={{
+                duration: 6 + i * 2,
+                repeat: Infinity,
+                delay: i * 2,
+                ease: "easeInOut",
+              }}
+            />
+          ))}
+        </div>
+      </div>
       <motion.div 
         style={{ y }}
         className="max-w-7xl mx-auto px-6"
@@ -209,11 +254,15 @@ export const CreatorShowcase = ({ scrollYProgress }: CreatorShowcaseProps) => {
           className="text-center mt-16"
         >
           <motion.button
-            className="px-8 py-4 bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-500 hover:to-purple-500 text-white font-semibold rounded-full shadow-[0_0_30px_rgba(236,72,153,0.3)]"
-            whileHover={{ scale: 1.05, boxShadow: "0 0 50px rgba(236, 72, 153, 0.5)" }}
+            className="group relative px-8 py-4 bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-500 text-white font-semibold rounded-full overflow-hidden"
+            style={{
+              boxShadow: 'var(--glow-primary), 0 0 30px rgba(139, 92, 246, 0.3)',
+            }}
+            whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
           >
-            Meet our Founding Creators
+            <span className="relative z-10">Meet our Founding Creators</span>
+            <div className="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
           </motion.button>
         </motion.div>
       </motion.div>

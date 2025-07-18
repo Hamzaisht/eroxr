@@ -43,36 +43,82 @@ export const CinematicHero = ({ scrollYProgress }: CinematicHeroProps) => {
       style={{ y, opacity }}
       className="relative h-screen flex items-center justify-center overflow-hidden"
     >
-      {/* Animated Background */}
+      {/* Cinematic Background with Neural Network */}
       <motion.div 
         style={{ scale }}
-        className="absolute inset-0 bg-gradient-to-br from-black via-purple-950/20 to-pink-950/10"
+        className="absolute inset-0"
       >
-        {/* Particle Field */}
-        <div className="absolute inset-0 opacity-30">
-          {[...Array(50)].map((_, i) => (
+        {/* Neural Network Base */}
+        <div className="absolute inset-0 bg-gradient-to-br from-black via-purple-950/30 to-pink-950/20" />
+        
+        {/* Animated Particle Field */}
+        <div className="absolute inset-0 opacity-40">
+          {[...Array(80)].map((_, i) => (
             <motion.div
               key={i}
-              className="absolute w-1 h-1 bg-pink-400/50 rounded-full"
+              className="absolute rounded-full"
               style={{
                 left: `${Math.random() * 100}%`,
                 top: `${Math.random() * 100}%`,
+                width: Math.random() * 3 + 1,
+                height: Math.random() * 3 + 1,
+                background: `hsl(${271 + Math.random() * 40}, 100%, ${60 + Math.random() * 20}%)`,
+                filter: 'blur(0.5px)',
               }}
               animate={{
-                y: [0, -20, 0],
-                opacity: [0.3, 0.8, 0.3],
+                y: [0, -30 - Math.random() * 20, 0],
+                x: [0, Math.random() * 10 - 5, 0],
+                opacity: [0.2, 0.8, 0.2],
+                scale: [0.8, 1.2, 0.8],
               }}
               transition={{
-                duration: 3 + Math.random() * 2,
+                duration: 4 + Math.random() * 3,
                 repeat: Infinity,
                 delay: Math.random() * 2,
+                ease: "easeInOut",
               }}
             />
           ))}
         </div>
         
-        {/* Lava Texture Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/60" />
+        {/* Floating Light Orbs */}
+        <div className="absolute inset-0">
+          {[...Array(5)].map((_, i) => (
+            <motion.div
+              key={`orb-${i}`}
+              className="absolute rounded-full opacity-20"
+              style={{
+                left: `${20 + i * 15}%`,
+                top: `${30 + Math.random() * 40}%`,
+                width: 100 + Math.random() * 50,
+                height: 100 + Math.random() * 50,
+                background: `radial-gradient(circle, hsl(${271 + i * 10}, 100%, 70%) 0%, transparent 70%)`,
+                filter: 'blur(20px)',
+              }}
+              animate={{
+                y: [0, -40, 0],
+                x: [0, 20, 0],
+                scale: [1, 1.3, 1],
+                opacity: [0.1, 0.3, 0.1],
+              }}
+              transition={{
+                duration: 8 + i * 2,
+                repeat: Infinity,
+                delay: i * 1.5,
+                ease: "easeInOut",
+              }}
+            />
+          ))}
+        </div>
+        
+        {/* Cinematic Vignette */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-black/70" />
+        <div 
+          className="absolute inset-0" 
+          style={{
+            background: 'radial-gradient(ellipse at center, transparent 30%, black 90%)'
+          }}
+        />
       </motion.div>
 
       {/* Main Content */}
@@ -136,9 +182,13 @@ export const CinematicHero = ({ scrollYProgress }: CinematicHeroProps) => {
         >
           <Button
             onClick={() => scrollToSection('why-eroxr')}
-            className="px-12 py-6 text-lg font-semibold bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-500 hover:to-purple-500 border border-pink-400/30 rounded-full shadow-[0_0_30px_rgba(236,72,153,0.3)] hover:shadow-[0_0_50px_rgba(236,72,153,0.5)] transition-all duration-300"
+            className="group relative px-12 py-6 text-lg font-semibold bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-500 border border-primary/30 rounded-full overflow-hidden transition-all duration-500 hover:scale-105"
+            style={{
+              boxShadow: 'var(--glow-primary), 0 0 30px rgba(139, 92, 246, 0.3)',
+            }}
           >
-            Enter EROXR
+            <span className="relative z-10 tracking-wide">Enter EROXR</span>
+            <div className="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
           </Button>
         </motion.div>
 

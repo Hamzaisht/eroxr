@@ -8,7 +8,7 @@ interface ScrollProgressProps {
 }
 
 export const ScrollProgress = ({
-  color = "linear-gradient(to right, #9b87f5, #D946EF)",
+  color = "linear-gradient(to right, hsl(var(--primary)), #D946EF)",
   height = 3,
   zIndex = 50
 }: ScrollProgressProps) => {
@@ -22,6 +22,7 @@ export const ScrollProgress = ({
         height: height,
         zIndex: zIndex,
         scaleX: scrollYProgress,
+        filter: 'drop-shadow(0 0 8px hsl(var(--primary) / 0.6))',
       }}
     />
   );

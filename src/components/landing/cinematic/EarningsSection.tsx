@@ -51,6 +51,65 @@ export const EarningsSection = ({ scrollYProgress }: EarningsSectionProps) => {
 
   return (
     <section ref={ref} className="relative min-h-screen py-20 bg-gradient-to-b from-black via-gray-950 to-black">
+      {/* Enhanced background with premium money effects */}
+      <div className="absolute inset-0 bg-gradient-to-br from-green-950/20 to-purple-950/20">
+        {/* Floating currency symbols */}
+        {[...Array(25)].map((_, i) => (
+          <motion.div
+            key={i}
+            className="absolute font-bold opacity-20"
+            style={{
+              left: `${Math.random() * 100}%`,
+              top: `${Math.random() * 100}%`,
+              fontSize: Math.random() * 20 + 16,
+              color: i % 3 === 0 ? '#10b981' : i % 3 === 1 ? '#8b5cf6' : '#ec4899',
+              filter: `blur(${Math.random() * 2}px)`,
+            }}
+            animate={{
+              y: [0, -30 - Math.random() * 20, 0],
+              x: [0, Math.random() * 20 - 10, 0],
+              opacity: [0.1, 0.4, 0.1],
+              rotate: [0, 360],
+              scale: [0.8, 1.2, 0.8],
+            }}
+            transition={{
+              duration: 8 + Math.random() * 4,
+              repeat: Infinity,
+              delay: Math.random() * 2,
+              ease: "easeInOut",
+            }}
+          >
+            {['$', '€', '£', '¥', '₿'][Math.floor(Math.random() * 5)]}
+          </motion.div>
+        ))}
+        
+        {/* Glowing orbs for prosperity */}
+        {[...Array(6)].map((_, i) => (
+          <motion.div
+            key={`orb-${i}`}
+            className="absolute rounded-full opacity-15"
+            style={{
+              left: `${15 + i * 12}%`,
+              top: `${30 + Math.random() * 40}%`,
+              width: 80 + Math.random() * 40,
+              height: 80 + Math.random() * 40,
+              background: `radial-gradient(circle, ${i % 2 === 0 ? '#10b981' : '#8b5cf6'} 0%, transparent 70%)`,
+              filter: 'blur(25px)',
+            }}
+            animate={{
+              y: [0, -25, 0],
+              scale: [1, 1.3, 1],
+              opacity: [0.1, 0.2, 0.1],
+            }}
+            transition={{
+              duration: 7 + i * 1.5,
+              repeat: Infinity,
+              delay: i * 1,
+              ease: "easeInOut",
+            }}
+          />
+        ))}
+      </div>
       <motion.div 
         style={{ y }}
         className="max-w-7xl mx-auto px-6"
