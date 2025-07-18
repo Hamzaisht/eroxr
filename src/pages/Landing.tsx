@@ -1,46 +1,36 @@
 
-import { Button } from "@/components/ui/button";
+import { motion, useScroll, useTransform } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Navbar } from "@/components/landing/Navbar";
-import { HeroSection } from "@/components/landing/HeroSection";
-import { InteractiveDemo } from "@/components/landing/InteractiveDemo";
-import { LiveStatsSection } from "@/components/landing/LiveStatsSection";
-import { FeaturesSection } from "@/components/landing/FeaturesSection";
-import Footer from "@/components/landing/Footer";
+import { CinematicHero } from "@/components/landing/CinematicHero";
+import { CreatorMosaic } from "@/components/landing/CreatorMosaic";
+import { ScrollProgress } from "@/components/landing/components/ScrollProgress";
+import { useRef } from "react";
 
 const Landing = () => {
   const navigate = useNavigate();
+  const containerRef = useRef<HTMLDivElement>(null);
+  
+  const { scrollYProgress } = useScroll({
+    target: containerRef,
+    offset: ["start start", "end end"]
+  });
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-gray-900 to-slate-800 flex flex-col relative overflow-hidden">
-      {/* Greek Pattern Background */}
-      <div className="absolute inset-0 opacity-5">
-        <div 
-          className="absolute inset-0 bg-repeat bg-[length:100px_100px]" 
-          style={{
-            backgroundImage: `url("data:image/svg+xml,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><path d="M50 0L65 35L100 35L72.5 57.5L80 92.5L50 75L20 92.5L27.5 57.5L0 35L35 35Z" fill="#E5E7EB" opacity="0.3"/></svg>')}")`
-          }}
-        />
+    <div ref={containerRef} className="relative">
+      {/* Scroll Progress Indicator */}
+      <ScrollProgress />
+      
+      {/* Navigation - Fixed */}
+      <div className="fixed top-0 left-0 right-0 z-50">
+        <Navbar />
       </div>
 
-      {/* Navigation */}
-      <Navbar />
+      {/* Scene 1: Cinematic Hero with Video Background */}
+      <CinematicHero scrollYProgress={scrollYProgress} />
 
-      {/* Hero Section */}
-      <HeroSection />
-
-      {/* Live Stats Section */}
-      <LiveStatsSection />
-
-      {/* Interactive Demo Section */}
-      <InteractiveDemo />
-
-      {/* Enhanced Features Section */}
-      <FeaturesSection />
-
-      {/* Footer */}
-      <Footer />
+      {/* Scene 2: Creator Mosaic Grid */}
+      <CreatorMosaic scrollYProgress={scrollYProgress} />
     </div>
   );
 };
