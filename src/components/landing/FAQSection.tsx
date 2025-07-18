@@ -37,8 +37,19 @@ const faqs = [
 
 export const FAQSection = () => {
   return (
-    <section className="min-h-screen bg-gradient-to-b from-black via-gray-950 to-black py-20 px-4">
-      <div className="max-w-4xl mx-auto">
+    <section className="min-h-screen relative overflow-hidden py-20 px-4">
+      {/* Premium Cinematic Background */}
+      <div className="absolute inset-0">
+        <div className="absolute inset-0 bg-gradient-to-b from-black via-gray-950/50 to-black" />
+        <div className="absolute inset-0 bg-gradient-radial from-purple-600/3 via-transparent to-black" />
+        <div className="neural-mesh opacity-10" />
+        
+        {/* Elegant floating elements */}
+        <div className="absolute top-1/4 right-1/4 w-72 h-72 bg-gradient-to-r from-purple-600/6 to-pink-600/6 rounded-full liquid-bg" />
+        <div className="absolute bottom-1/4 left-1/4 w-56 h-56 bg-gradient-to-r from-blue-600/4 to-purple-600/4 rounded-full liquid-bg" style={{ animationDelay: '6s' }} />
+      </div>
+      
+      <div className="max-w-4xl mx-auto relative z-10">
         {/* Section Header */}
         <motion.div 
           className="text-center mb-16"
@@ -87,7 +98,7 @@ export const FAQSection = () => {
               >
                 <AccordionItem 
                   value={`item-${index}`}
-                  className="bg-gradient-to-r from-gray-900/50 to-black/50 backdrop-blur-xl border border-gray-800 hover:border-purple-500/50 rounded-2xl px-6 transition-all duration-500 overflow-hidden"
+                  className="glass-card-heavy morphing-card border border-gray-800/50 hover:border-purple-500/50 px-8 transition-all duration-700 overflow-hidden magnetic-hover glow-cinematic"
                 >
                   <AccordionTrigger className="text-white hover:text-purple-300 py-6 text-left [&[data-state=open]]:text-purple-300 transition-colors duration-300">
                     <div className="flex items-center gap-4">

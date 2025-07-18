@@ -48,8 +48,16 @@ const benefits = [
 
 export const WhyJoinSection = () => {
   return (
-    <section className="min-h-screen bg-gradient-to-b from-black via-gray-950 to-black py-20 px-4">
-      <div className="max-w-7xl mx-auto">
+    <section className="min-h-screen relative overflow-hidden py-20 px-4">
+      {/* Cinematic Background */}
+      <div className="absolute inset-0">
+        <div className="absolute inset-0 bg-gradient-to-b from-black via-purple-950/5 to-black" />
+        <div className="neural-mesh opacity-20" />
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-gradient-to-r from-purple-600/10 to-pink-600/10 rounded-full liquid-bg" />
+        <div className="absolute bottom-1/4 right-1/4 w-64 h-64 bg-gradient-to-r from-blue-600/8 to-purple-600/8 rounded-full liquid-bg" style={{ animationDelay: '3s' }} />
+      </div>
+      
+      <div className="max-w-7xl mx-auto relative z-10">
         {/* Section Header */}
         <motion.div 
           className="text-center mb-16"
@@ -85,38 +93,90 @@ export const WhyJoinSection = () => {
           {benefits.map((benefit, index) => (
             <motion.div
               key={benefit.title}
-              className="group relative bg-gradient-to-b from-gray-900/50 to-black/50 backdrop-blur-xl border border-gray-800 hover:border-purple-500/50 rounded-2xl p-8 transition-all duration-500 hover:transform hover:-translate-y-2"
-              initial={{ opacity: 0, y: 50 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: index * 0.1 }}
+              className="group relative glass-card-heavy morphing-card border border-gray-800/50 hover:border-purple-500/50 p-8 transition-all duration-700 magnetic-hover glow-cinematic"
+              initial={{ opacity: 0, y: 50, rotateX: 45 }}
+              whileInView={{ opacity: 1, y: 0, rotateX: 0 }}
+              transition={{ duration: 0.8, delay: index * 0.1, ease: [0.23, 1, 0.32, 1] }}
               viewport={{ once: true }}
-              whileHover={{ scale: 1.02 }}
+              whileHover={{ 
+                scale: 1.03,
+                y: -8,
+                rotateY: 5,
+                transition: { duration: 0.3 }
+              }}
             >
-              {/* Icon */}
+              {/* Premium Icon */}
               <motion.div 
-                className={`inline-flex items-center justify-center w-16 h-16 ${benefit.color} bg-current/10 rounded-2xl mb-6 group-hover:scale-110 transition-transform duration-300`}
-                whileHover={{ rotate: 360 }}
-                transition={{ duration: 0.6 }}
+                className={`inline-flex items-center justify-center w-20 h-20 ${benefit.color} bg-current/10 rounded-3xl mb-6 group-hover:scale-110 transition-all duration-500 relative overflow-hidden`}
+                whileHover={{ 
+                  rotate: 360,
+                  boxShadow: `0 20px 40px ${benefit.color.includes('green') ? 'rgba(34, 197, 94, 0.3)' : 
+                                         benefit.color.includes('blue') ? 'rgba(59, 130, 246, 0.3)' :
+                                         benefit.color.includes('purple') ? 'rgba(147, 51, 234, 0.3)' :
+                                         benefit.color.includes('yellow') ? 'rgba(245, 158, 11, 0.3)' :
+                                         benefit.color.includes('pink') ? 'rgba(236, 72, 153, 0.3)' :
+                                         'rgba(239, 68, 68, 0.3)'}`
+                }}
+                transition={{ duration: 0.8, ease: [0.23, 1, 0.32, 1] }}
               >
-                <benefit.icon className="w-8 h-8" />
+                <benefit.icon className="w-10 h-10 relative z-10" />
+                <motion.div
+                  className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"
+                  initial={{ x: '-100%' }}
+                  whileHover={{ x: '100%' }}
+                  transition={{ duration: 0.6 }}
+                />
               </motion.div>
 
-              {/* Highlight Number */}
-              <div className={`text-3xl font-bold ${benefit.color} mb-3`}>
+              {/* Premium Highlight Number */}
+              <motion.div 
+                className={`text-4xl font-bold ${benefit.color} mb-4 relative`}
+                whileHover={{ scale: 1.1 }}
+                transition={{ duration: 0.3 }}
+              >
                 {benefit.highlight}
-              </div>
+                <motion.div
+                  className="absolute -inset-2 bg-gradient-to-r from-current/20 to-transparent rounded-lg blur-sm"
+                  animate={{ opacity: [0.5, 1, 0.5] }}
+                  transition={{ duration: 2, repeat: Infinity }}
+                />
+              </motion.div>
 
-              {/* Content */}
-              <h3 className="text-xl font-bold text-white mb-3 group-hover:text-purple-300 transition-colors duration-300">
+              {/* Enhanced Content */}
+              <h3 className="text-2xl font-bold text-white mb-4 group-hover:text-shimmer transition-all duration-500">
                 {benefit.title}
               </h3>
-              <p className="text-gray-400 leading-relaxed">
+              <p className="text-gray-300 leading-relaxed text-lg group-hover:text-gray-200 transition-colors duration-300">
                 {benefit.description}
               </p>
 
-              {/* Hover Glow */}
-              <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none">
-                <div className={`absolute inset-0 bg-gradient-to-r from-purple-500/5 via-transparent to-pink-500/5 rounded-2xl`} />
+              {/* Premium Hover Effects */}
+              <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-all duration-700 pointer-events-none">
+                <div className="absolute inset-0 bg-gradient-to-r from-purple-500/10 via-pink-500/5 to-purple-500/10 rounded-3xl" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent rounded-3xl" />
+              </div>
+              
+              {/* Floating particles on hover */}
+              <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none overflow-hidden rounded-3xl">
+                {[...Array(5)].map((_, i) => (
+                  <motion.div
+                    key={i}
+                    className="absolute w-1 h-1 bg-purple-400/60 rounded-full"
+                    style={{
+                      left: `${Math.random() * 100}%`,
+                      top: `${Math.random() * 100}%`,
+                    }}
+                    animate={{
+                      y: [0, -20, 0],
+                      opacity: [0, 1, 0],
+                    }}
+                    transition={{
+                      duration: 2 + Math.random(),
+                      repeat: Infinity,
+                      delay: Math.random() * 2,
+                    }}
+                  />
+                ))}
               </div>
             </motion.div>
           ))}

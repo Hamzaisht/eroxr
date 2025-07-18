@@ -3,45 +3,52 @@
 @import "./styles/story-animations.css";
 @import "./styles/scrollbar.css";
 @import "./styles/glassmorphism.css";
+@import "./styles/cinematic-effects.css";
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
   :root {
-    --background: 0 0% 3%;
+    --background: 0 0% 2%;
     --foreground: 0 0% 98%;
-    --card: 0 0% 5%;
+    --card: 0 0% 4%;
     --card-foreground: 0 0% 98%;
-    --popover: 0 0% 3%;
+    --popover: 0 0% 2%;
     --popover-foreground: 0 0% 98%;
     --primary: 271 100% 71%;
     --primary-foreground: 0 0% 98%;
-    --secondary: 0 0% 8%;
+    --secondary: 0 0% 6%;
     --secondary-foreground: 0 0% 98%;
-    --muted: 0 0% 8%;
+    --muted: 0 0% 6%;
     --muted-foreground: 0 0% 65%;
-    --accent: 0 0% 8%;
+    --accent: 0 0% 6%;
     --accent-foreground: 0 0% 98%;
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 98%;
-    --border: 0 0% 12%;
-    --input: 0 0% 8%;
+    --border: 0 0% 10%;
+    --input: 0 0% 6%;
     --ring: 271 100% 71%;
     
-    /* Futuristic Neon properties */
-    --gradient-quantum: linear-gradient(135deg, hsl(271, 100%, 71%) 0%, hsl(0, 0%, 8%) 50%, hsl(0, 0%, 3%) 100%);
-    --gradient-neural: linear-gradient(45deg, hsl(0, 0%, 0%) 0%, hsl(0, 0%, 3%) 100%);
-    --gradient-glass: linear-gradient(135deg, rgba(220, 38, 238, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%);
-    --gradient-aurora: linear-gradient(90deg, hsl(271, 100%, 71%), hsl(280, 100%, 70%), hsl(0, 0%, 8%));
-    --glow-primary: 0 0 40px hsl(271, 100%, 71%, 0.4);
-    --glow-secondary: 0 0 25px hsl(280, 100%, 70%, 0.3);
-    --glow-accent: 0 0 30px hsl(0, 0%, 20%, 0.5);
-    --blur-glass: blur(20px);
-    --blur-heavy: blur(40px);
+    /* Premium Cinematic properties */
+    --gradient-quantum: linear-gradient(135deg, hsl(271, 100%, 71%) 0%, hsl(280, 100%, 65%) 25%, hsl(290, 100%, 60%) 50%, hsl(0, 0%, 6%) 75%, hsl(0, 0%, 2%) 100%);
+    --gradient-neural: linear-gradient(45deg, hsl(0, 0%, 0%) 0%, hsl(271, 100%, 8%) 50%, hsl(0, 0%, 2%) 100%);
+    --gradient-glass: linear-gradient(135deg, rgba(220, 38, 238, 0.12) 0%, rgba(139, 92, 246, 0.08) 50%, rgba(255, 255, 255, 0.03) 100%);
+    --gradient-aurora: linear-gradient(90deg, hsl(271, 100%, 71%), hsl(280, 100%, 70%), hsl(310, 100%, 75%), hsl(0, 0%, 6%));
+    --gradient-cinematic: linear-gradient(160deg, hsl(271, 100%, 71%) 0%, hsl(280, 100%, 65%) 20%, hsl(290, 100%, 60%) 40%, hsl(310, 100%, 55%) 60%, hsl(320, 100%, 50%) 80%, hsl(0, 0%, 2%) 100%);
+    --gradient-premium: radial-gradient(ellipse at top, rgba(139, 92, 246, 0.15) 0%, rgba(220, 38, 238, 0.1) 25%, rgba(168, 85, 247, 0.08) 50%, transparent 70%);
+    --glow-primary: 0 0 60px hsl(271, 100%, 71%, 0.6);
+    --glow-secondary: 0 0 40px hsl(280, 100%, 70%, 0.4);
+    --glow-accent: 0 0 50px hsl(310, 100%, 65%, 0.5);
+    --glow-cinematic: 0 20px 80px hsl(271, 100%, 71%, 0.3), 0 0 120px hsl(280, 100%, 70%, 0.2);
+    --blur-glass: blur(25px);
+    --blur-heavy: blur(50px);
+    --blur-cinematic: blur(35px);
     
-    /* OnlyFans-style animations */
-    --shimmer-duration: 2s;
+    /* Advanced animations */
+    --shimmer-duration: 2.5s;
+    --pulse-duration: 3s;
+    --float-duration: 6s;
   }
 
   * {
@@ -49,7 +56,12 @@
   }
   body {
     @apply bg-background text-foreground;
-    background: radial-gradient(ellipse at center, hsl(0, 0%, 0%) 0%, hsl(0, 0%, 3%) 100%);
+    background: 
+      radial-gradient(ellipse 120% 100% at 50% 0%, hsl(271, 100%, 8%) 0%, transparent 50%),
+      radial-gradient(ellipse 120% 100% at 80% 30%, hsl(280, 100%, 6%) 0%, transparent 60%),
+      radial-gradient(ellipse 120% 100% at 20% 70%, hsl(290, 100%, 4%) 0%, transparent 50%),
+      linear-gradient(180deg, hsl(0, 0%, 0%) 0%, hsl(0, 0%, 1%) 50%, hsl(0, 0%, 2%) 100%);
+    min-height: 100vh;
   }
 }
 
@@ -245,17 +257,24 @@ body.story-viewer-open {
 
 /* Premium Glassmorphism enhancements */
 .glass-card {
-  background: rgba(255, 255, 255, 0.12);
-  backdrop-filter: blur(25px);
-  border: 1px solid rgba(255, 255, 255, 0.25);
-  box-shadow: 0 30px 60px -12px rgba(0, 0, 0, 0.3);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(139, 92, 246, 0.05) 50%, rgba(255, 255, 255, 0.02) 100%);
+  backdrop-filter: blur(30px) saturate(150%);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow: 
+    0 20px 60px -12px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    0 0 0 1px rgba(139, 92, 246, 0.1);
 }
 
 .glass-card-heavy {
-  background: rgba(255, 255, 255, 0.15);
-  backdrop-filter: blur(35px);
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  box-shadow: 0 35px 70px -12px rgba(0, 0, 0, 0.4);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.12) 0%, rgba(139, 92, 246, 0.08) 50%, rgba(220, 38, 238, 0.03) 100%);
+  backdrop-filter: blur(40px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 
+    0 30px 80px -12px rgba(0, 0, 0, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15),
+    0 0 0 1px rgba(139, 92, 246, 0.15),
+    0 0 60px rgba(139, 92, 246, 0.1);
 }
 
 /* Premium animations */

@@ -61,8 +61,33 @@ const platformStats = [
 
 export const SocialProofSection = () => {
   return (
-    <section className="min-h-screen bg-gradient-to-b from-black via-purple-950/10 to-black py-20 px-4">
-      <div className="max-w-7xl mx-auto">
+    <section className="min-h-screen relative overflow-hidden py-20 px-4">
+      {/* Premium Cinematic Background */}
+      <div className="absolute inset-0">
+        <div className="absolute inset-0 bg-gradient-to-b from-black via-purple-950/8 to-black" />
+        <div className="absolute inset-0 bg-gradient-radial from-purple-600/5 via-transparent to-pink-600/5" />
+        <div className="neural-mesh opacity-15" />
+        
+        {/* Floating premium elements */}
+        <div className="absolute top-1/3 left-1/5 w-80 h-80 bg-gradient-to-r from-purple-600/8 to-blue-600/8 rounded-full liquid-bg" />
+        <div className="absolute bottom-1/3 right-1/5 w-60 h-60 bg-gradient-to-r from-pink-600/6 to-purple-600/6 rounded-full liquid-bg" style={{ animationDelay: '4s' }} />
+        
+        {/* Premium particle system */}
+        <div className="particle-system">
+          {[...Array(30)].map((_, i) => (
+            <div
+              key={i}
+              className="particle absolute"
+              style={{
+                left: `${Math.random() * 100}%`,
+                animationDelay: `${Math.random() * 15}s`,
+              }}
+            />
+          ))}
+        </div>
+      </div>
+      
+      <div className="max-w-7xl mx-auto relative z-10">
         {/* Section Header */}
         <motion.div 
           className="text-center mb-16"
