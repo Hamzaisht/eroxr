@@ -1,24 +1,17 @@
-
 import { motion, useScroll, useTransform } from "framer-motion";
-import { useNavigate } from "react-router-dom";
-import { Navbar } from "@/components/landing/Navbar";
-import { CinematicHero } from "@/components/landing/CinematicHero";
-import { CreatorMosaic } from "@/components/landing/CreatorMosaic";
-import { PricingSection } from "@/components/landing/PricingSection";
-import { LiveFeedSection } from "@/components/landing/LiveFeedSection";
-import { TrustSection } from "@/components/landing/TrustSection";
-import { TestimonialsSection } from "@/components/landing/TestimonialsSection";
-import { JoinFunnelSection } from "@/components/landing/JoinFunnelSection";
-import { WhyJoinSection } from "@/components/landing/WhyJoinSection";
-import { SocialProofSection } from "@/components/landing/SocialProofSection";
-import { FAQSection } from "@/components/landing/FAQSection";
-import { ScrollProgress } from "@/components/landing/components/ScrollProgress";
-import { MobileOptimizations } from "@/components/landing/MobileOptimizations";
-import { MetaTags } from "@/head/MetaTags";
 import { useRef } from "react";
+import { MetaTags } from "@/head/MetaTags";
+import { CinematicHero } from "@/components/landing/cinematic/CinematicHero";
+import { WhyEroxrExists } from "@/components/landing/cinematic/WhyEroxrExists";
+import { CreatorShowcase } from "@/components/landing/cinematic/CreatorShowcase";
+import { EarningsSection } from "@/components/landing/cinematic/EarningsSection";
+import { HowItWorks } from "@/components/landing/cinematic/HowItWorks";
+import { LiveContentMagic } from "@/components/landing/cinematic/LiveContentMagic";
+import { StartYourPage } from "@/components/landing/cinematic/StartYourPage";
+import { CinematicFooter } from "@/components/landing/cinematic/CinematicFooter";
+import { ScrollProgress } from "@/components/landing/components/ScrollProgress";
 
 const Landing = () => {
-  const navigate = useNavigate();
   const containerRef = useRef<HTMLDivElement>(null);
   
   const { scrollYProgress } = useScroll({
@@ -28,51 +21,39 @@ const Landing = () => {
 
   return (
     <>
-      {/* SEO Meta Tags */}
       <MetaTags 
-        title="EROXR - Premier Creator Platform | Join 50K+ Creators Earning $4.2M+ Monthly"
-        description="Join Nordic's premier creator platform. 85% revenue share, instant payouts, global audience of 2.1M+ fans. Start earning in minutes with advanced creator tools and 24/7 support."
+        title="EROXR - Premium Creator Platform | Cinematic Adult Content Revolution"
+        description="Enter the future of adult content creation. Premium creators, cinematic quality, revolutionary earnings. Own your content. Keep your earnings. Go premium."
         canonicalUrl="https://eroxr.se"
         ogImage="https://eroxr.se/og-image.png"
       />
       
-      <div ref={containerRef} className="relative">
-        {/* Scroll Progress Indicator */}
+      <div ref={containerRef} className="relative bg-black overflow-hidden">
         <ScrollProgress />
         
-        {/* Navigation - Fixed */}
-        <div className="fixed top-0 left-0 right-0 z-50">
-          <Navbar />
-        </div>
-
-        {/* Scene 1: Cinematic Hero with Video Background */}
+        {/* Section 1: Hero Cinematic Intro */}
         <CinematicHero scrollYProgress={scrollYProgress} />
-
-        {/* Scene 2: Creator Mosaic Grid */}
-        <CreatorMosaic scrollYProgress={scrollYProgress} />
-
-        {/* Scene 3: Pricing Tiers */}
-        <PricingSection />
-
-        {/* Scene 4: Live Feed Reel */}
-        <LiveFeedSection />
-
-        {/* Scene 5: Trust & Security Layer */}
-        <TrustSection />
-
-        {/* Scene 6: Testimonials */}
-        <TestimonialsSection />
-
-        {/* Scene 7: Join Now Funnel */}
-        <JoinFunnelSection />
-
-        {/* Additional Sections */}
-        <WhyJoinSection />
-        <SocialProofSection />
-        <FAQSection />
-
-        {/* Mobile Optimizations */}
-        <MobileOptimizations />
+        
+        {/* Section 2: Why EROXR Exists */}
+        <WhyEroxrExists scrollYProgress={scrollYProgress} />
+        
+        {/* Section 3: Creator Showcase Carousel */}
+        <CreatorShowcase scrollYProgress={scrollYProgress} />
+        
+        {/* Section 4: Earnings Section */}
+        <EarningsSection scrollYProgress={scrollYProgress} />
+        
+        {/* Section 5: How It Works */}
+        <HowItWorks scrollYProgress={scrollYProgress} />
+        
+        {/* Section 6: Live Content & AI Magic */}
+        <LiveContentMagic scrollYProgress={scrollYProgress} />
+        
+        {/* Section 7: Start Your Page */}
+        <StartYourPage scrollYProgress={scrollYProgress} />
+        
+        {/* Section 8: Footer */}
+        <CinematicFooter />
       </div>
     </>
   );
