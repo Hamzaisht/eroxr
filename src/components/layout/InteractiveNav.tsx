@@ -113,10 +113,11 @@ export const InteractiveNav = () => {
         transition: { duration: 0.3, ease: "easeInOut" }
       }}
       className={cn(
-        "fixed left-0 top-0 h-screen z-50 hidden md:block",
-        "bg-gradient-to-b from-[#0D1117]/95 via-[#161B22]/95 to-[#0D1117]/95",
-        "backdrop-blur-xl border-r border-luxury-primary/10",
-        "overflow-hidden transition-all duration-300"
+        "fixed left-0 top-0 h-screen z-[60]",
+        "bg-gradient-to-b from-[#0D1117] via-[#161B22] to-[#0D1117]",
+        "backdrop-blur-xl border-r-2 border-luxury-primary/20",
+        "overflow-hidden transition-all duration-300",
+        "hidden md:block shadow-2xl"
       )}
       onMouseEnter={() => setIsExpanded(true)}
       onMouseLeave={() => setIsExpanded(false)}
