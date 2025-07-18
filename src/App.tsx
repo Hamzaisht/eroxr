@@ -20,6 +20,7 @@ import Subscription from './pages/Subscription';
 import PlatformTest from './pages/PlatformTest';
 import PremiumSuccessPage from "./pages/PremiumSuccessPage";
 import PremiumCancelledPage from "./pages/PremiumCancelledPage";
+import CreatorSignup from './pages/CreatorSignup';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -51,6 +52,7 @@ function App() {
               <Route path="/new-profile" element={<Profile />} />
               <Route path="/new-profile/:userId" element={<Profile />} />
               <Route path="/settings" element={<Settings />} />
+              <Route path="/creator-signup" element={<CreatorSignup />} />
               <Route path="/search" element={<Search />} />
               <Route path="/subscription" element={<Subscription />} />
               <Route path="/test" element={<PlatformTest />} />

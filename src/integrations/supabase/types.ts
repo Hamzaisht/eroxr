@@ -799,6 +799,178 @@ export type Database = {
         }
         Relationships: []
       }
+      creator_subscriptions: {
+        Row: {
+          cancel_at_period_end: boolean | null
+          created_at: string | null
+          creator_id: string
+          current_period_end: string | null
+          current_period_start: string | null
+          id: string
+          status: string
+          stripe_subscription_id: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          cancel_at_period_end?: boolean | null
+          created_at?: string | null
+          creator_id: string
+          current_period_end?: string | null
+          current_period_start?: string | null
+          id?: string
+          status?: string
+          stripe_subscription_id?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          cancel_at_period_end?: boolean | null
+          created_at?: string | null
+          creator_id?: string
+          current_period_end?: string | null
+          current_period_start?: string | null
+          id?: string
+          status?: string
+          stripe_subscription_id?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "creator_subscriptions_creator_id_fkey"
+            columns: ["creator_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "creator_subscriptions_creator_id_fkey"
+            columns: ["creator_id"]
+            isOneToOne: false
+            referencedRelation: "top_creators_by_earnings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "creator_subscriptions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "creator_subscriptions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "top_creators_by_earnings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      creator_verification_requests: {
+        Row: {
+          account_type: string
+          admin_notes: string | null
+          community_guidelines_accepted: boolean
+          created_at: string | null
+          date_of_birth: string
+          full_name: string
+          government_id_type: string
+          government_id_url: string
+          id: string
+          privacy_policy_accepted: boolean
+          registered_address: Json
+          rejection_reason: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          selfie_url: string
+          social_media_links: Json | null
+          status: string
+          submitted_at: string | null
+          terms_accepted: boolean
+          terms_accepted_at: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          account_type: string
+          admin_notes?: string | null
+          community_guidelines_accepted?: boolean
+          created_at?: string | null
+          date_of_birth: string
+          full_name: string
+          government_id_type: string
+          government_id_url: string
+          id?: string
+          privacy_policy_accepted?: boolean
+          registered_address: Json
+          rejection_reason?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          selfie_url: string
+          social_media_links?: Json | null
+          status?: string
+          submitted_at?: string | null
+          terms_accepted?: boolean
+          terms_accepted_at?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          account_type?: string
+          admin_notes?: string | null
+          community_guidelines_accepted?: boolean
+          created_at?: string | null
+          date_of_birth?: string
+          full_name?: string
+          government_id_type?: string
+          government_id_url?: string
+          id?: string
+          privacy_policy_accepted?: boolean
+          registered_address?: Json
+          rejection_reason?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          selfie_url?: string
+          social_media_links?: Json | null
+          status?: string
+          submitted_at?: string | null
+          terms_accepted?: boolean
+          terms_accepted_at?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "creator_verification_requests_reviewed_by_fkey"
+            columns: ["reviewed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "creator_verification_requests_reviewed_by_fkey"
+            columns: ["reviewed_by"]
+            isOneToOne: false
+            referencedRelation: "top_creators_by_earnings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "creator_verification_requests_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "creator_verification_requests_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "top_creators_by_earnings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       dating_ad_likes: {
         Row: {
           created_at: string
@@ -1096,6 +1268,51 @@ export type Database = {
           {
             foreignKeyName: "dmca_requests_reporter_id_fkey"
             columns: ["reporter_id"]
+            isOneToOne: false
+            referencedRelation: "top_creators_by_earnings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      email_verification_tokens: {
+        Row: {
+          created_at: string | null
+          expires_at: string
+          id: string
+          new_email: string
+          token: string
+          used_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          expires_at?: string
+          id?: string
+          new_email: string
+          token: string
+          used_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          expires_at?: string
+          id?: string
+          new_email?: string
+          token?: string
+          used_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_verification_tokens_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "email_verification_tokens_user_id_fkey"
+            columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "top_creators_by_earnings"
             referencedColumns: ["id"]
@@ -3308,6 +3525,10 @@ export type Database = {
         Args: { target_user_id: string }
         Returns: boolean
       }
+      can_change_username: {
+        Args: { user_id: string }
+        Returns: boolean
+      }
       check_column_exists: {
         Args: { p_table_name: string; p_column_name: string }
         Returns: boolean
@@ -3484,8 +3705,16 @@ export type Database = {
         Args: { user_id: string; min_role?: string }
         Returns: boolean
       }
+      is_age_valid: {
+        Args: { birth_date: string }
+        Returns: boolean
+      }
       is_super_admin: {
         Args: { user_id?: string }
+        Returns: boolean
+      }
+      is_verified_creator: {
+        Args: { user_id: string }
         Returns: boolean
       }
       rls_bypass_profile_update: {
