@@ -38,34 +38,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           hasUser: !!newSession?.user
         });
         
-        // Handle profile creation for new signups (optimized)
-        if (event === 'SIGNED_IN' && newSession) {
-          // Use a more efficient approach - create profile if it doesn't exist
-          setTimeout(async () => {
-            try {
-              // Try to insert profile, ignore if already exists
-              const { error: insertError } = await supabase
-                .from('profiles')
-                .insert({
-                  id: newSession.user.id,
-                  username: newSession.user.email?.split('@')[0] || 'user',
-                  created_at: new Date().toISOString(),
-                  updated_at: new Date().toISOString()
-                })
-                .select()
-                .maybeSingle();
-              
-              // Ignore duplicate key errors (profile already exists)
-              if (insertError && !insertError.message.includes('duplicate key')) {
-                console.error('❌ AuthProvider: Profile creation error:', insertError);
-              } else {
-                console.log('✅ AuthProvider: Profile ensured for user');
-              }
-            } catch (err: any) {
-              console.error('❌ AuthProvider: Profile creation failed:', err);
-            }
-          }, 100);
-        }
+        // Profile creation is now handled by the database trigger
         
         // Update auth state
         setSession(newSession);

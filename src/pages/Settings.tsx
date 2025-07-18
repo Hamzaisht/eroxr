@@ -207,7 +207,9 @@ const Settings = () => {
                 disabled
                 className="bg-luxury-dark border-luxury-neutral/20 text-gray-400"
               />
-              <p className="text-xs text-gray-400 mt-1">Contact support to change your email address</p>
+              <p className="text-xs text-gray-400 mt-1">
+                Contact <a href="mailto:support@eroxr.se" className="text-luxury-primary hover:text-luxury-primary/80">support@eroxr.se</a> to change your email address
+              </p>
             </div>
             
             <div className="grid grid-cols-2 gap-4">
