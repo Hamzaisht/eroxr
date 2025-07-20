@@ -1,7 +1,8 @@
 import { motion, useTransform, MotionValue } from "framer-motion";
 import { useInView } from "react-intersection-observer";
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Heart, Users, Star } from "lucide-react";
+import { EnhancedCreatorCard } from "./EnhancedCreatorCard";
 
 interface CreatorShowcaseProps {
   scrollYProgress: MotionValue<number>;
@@ -153,96 +154,16 @@ export const CreatorShowcase = ({ scrollYProgress }: CreatorShowcaseProps) => {
         </motion.div>
 
         {/* Creator Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           {creators.map((creator, index) => (
-            <motion.div
+            <EnhancedCreatorCard
               key={creator.id}
-              initial={{ opacity: 0, y: 50 }}
-              animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 50 }}
-              transition={{ duration: 0.6, delay: index * 0.1 }}
-              onMouseEnter={() => setHoveredCreator(creator.id)}
-              onMouseLeave={() => setHoveredCreator(null)}
-              className="group cursor-pointer"
-            >
-              {/* Creator Card */}
-              <motion.div
-                className="relative bg-gray-900/50 backdrop-blur-sm border border-white/10 rounded-2xl overflow-hidden"
-                whileHover={{ 
-                  scale: 1.05,
-                  boxShadow: "0 20px 40px rgba(236, 72, 153, 0.2)"
-                }}
-                transition={{ duration: 0.3 }}
-              >
-                {/* Preview Image */}
-                <div className="relative aspect-[3/4] overflow-hidden">
-                  <motion.img
-                    src={creator.preview}
-                    alt={`${creator.name} preview`}
-                    className={`w-full h-full object-cover transition-all duration-500 ${
-                      blurToggle && creator.isBlurred ? 'blur-lg scale-110' : ''
-                    }`}
-                    animate={{
-                      scale: hoveredCreator === creator.id ? 1.1 : 1
-                    }}
-                  />
-                  
-                  {/* Blur Overlay */}
-                  {blurToggle && creator.isBlurred && (
-                    <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
-                      <motion.button
-                        className="px-4 py-2 bg-pink-600 hover:bg-pink-500 text-white rounded-full text-sm font-semibold"
-                        whileHover={{ scale: 1.1 }}
-                        whileTap={{ scale: 0.9 }}
-                      >
-                        Tap to Reveal
-                      </motion.button>
-                    </div>
-                  )}
-
-                  {/* Gradient Overlay */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
-                </div>
-
-                {/* Creator Info */}
-                <div className="absolute bottom-0 left-0 right-0 p-4">
-                  <div className="flex items-center mb-3">
-                    <img
-                      src={creator.avatar}
-                      alt={creator.name}
-                      className="w-10 h-10 rounded-full border-2 border-white/30 mr-3"
-                    />
-                    <div>
-                      <h3 className="text-white font-semibold">{creator.name}</h3>
-                      <p className="text-white/70 text-sm">{creator.username}</p>
-                    </div>
-                  </div>
-
-                  {/* Stats */}
-                  <div className="flex justify-between items-center text-sm">
-                    <div className="flex items-center text-white/80">
-                      <Users className="w-4 h-4 mr-1" />
-                      {creator.followers}
-                    </div>
-                    <div className="flex items-center text-white/80">
-                      <Heart className="w-4 h-4 mr-1" />
-                      {creator.likes}
-                    </div>
-                    <div className="flex items-center text-yellow-400">
-                      <Star className="w-4 h-4 mr-1 fill-current" />
-                      {creator.rating}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Hover Effect */}
-                <motion.div
-                  className="absolute inset-0 border-2 border-pink-400/0 rounded-2xl"
-                  animate={{
-                    borderColor: hoveredCreator === creator.id ? "rgba(236, 72, 153, 0.5)" : "rgba(236, 72, 153, 0)"
-                  }}
-                />
-              </motion.div>
-            </motion.div>
+              creator={creator}
+              index={index}
+              hoveredCreator={hoveredCreator}
+              blurToggle={blurToggle}
+              onHover={setHoveredCreator}
+            />
           ))}
         </div>
 
