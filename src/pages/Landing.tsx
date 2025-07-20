@@ -14,6 +14,7 @@ import { LiveMarquee } from "@/components/landing/interactive/LiveMarquee";
 import { RealTimeActivityFeed } from "@/components/landing/interactive/RealTimeActivityFeed";
 import { FloatingActions } from "@/components/landing/interactive/FloatingActions";
 import { PlatformMilestones } from "@/components/landing/interactive/PlatformMilestones";
+import { NavButtons } from "@/components/landing/NavButtons";
 
 const Landing = () => {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -33,6 +34,11 @@ const Landing = () => {
       />
       
       <div ref={containerRef} className="relative bg-black overflow-hidden">
+        {/* Navigation Header */}
+        <div className="fixed top-16 right-4 z-50 flex gap-3">
+          <NavButtons />
+        </div>
+        
         {/* Live Marquee */}
         <LiveMarquee />
         

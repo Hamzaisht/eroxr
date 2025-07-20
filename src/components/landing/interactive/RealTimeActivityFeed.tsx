@@ -96,16 +96,20 @@ export const RealTimeActivityFeed = () => {
   };
 
   return (
-    <div className="fixed right-4 top-20 w-80 z-40">
-      <div className="bg-background/95 backdrop-blur-xl border border-primary/20 rounded-xl p-4 shadow-2xl">
-        <div className="flex items-center gap-2 mb-4">
-          <div className="w-2 h-2 bg-accent rounded-full animate-pulse" />
-          <h3 className="font-semibold text-foreground">Live Activity</h3>
+    <div className="fixed right-4 top-20 w-64 z-40">
+      <div className="bg-background/90 backdrop-blur-xl border border-primary/10 rounded-lg p-3 shadow-xl">
+        <div className="flex items-center gap-2 mb-3">
+          <motion.div 
+            className="w-1.5 h-1.5 bg-accent rounded-full"
+            animate={{ scale: [1, 1.3, 1], opacity: [1, 0.5, 1] }}
+            transition={{ duration: 2, repeat: Infinity }}
+          />
+          <h3 className="font-medium text-foreground text-sm">Live Activity</h3>
         </div>
         
-        <div className="space-y-3 max-h-96 overflow-hidden">
+        <div className="space-y-2 max-h-64 overflow-hidden">
           <AnimatePresence mode="popLayout">
-            {activities.map((activity) => {
+            {activities.slice(0, 4).map((activity) => {
               const ActivityIcon = activityTypes[activity.type].icon;
               
               return (
@@ -115,32 +119,29 @@ export const RealTimeActivityFeed = () => {
                   animate={{ opacity: 1, x: 0, height: "auto" }}
                   exit={{ opacity: 0, x: -20, height: 0 }}
                   transition={{ duration: 0.3 }}
-                  className="flex items-start gap-3 p-2 rounded-lg hover:bg-muted/50 transition-colors"
+                  className="flex items-center gap-2 p-2 rounded-md bg-gradient-to-r from-primary/5 to-accent/5 border border-primary/10 hover:border-primary/20 transition-all duration-300"
                 >
-                  <div className="relative">
+                  <div className="relative flex-shrink-0">
                     <img
                       src={activity.avatar}
                       alt={activity.user}
-                      className="w-8 h-8 rounded-full"
+                      className="w-6 h-6 rounded-full border border-primary/20"
                     />
-                    <div className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full flex items-center justify-center ${activityTypes[activity.type].bg}`}>
-                      <ActivityIcon className={`w-2.5 h-2.5 ${activityTypes[activity.type].color}`} />
+                    <div className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full flex items-center justify-center ${activityTypes[activity.type].bg} border border-background`}>
+                      <ActivityIcon className={`w-1.5 h-1.5 ${activityTypes[activity.type].color}`} />
                     </div>
                   </div>
                   
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm text-foreground">
+                  <div className="flex-1 min-w-0 overflow-hidden">
+                    <p className="text-xs text-foreground truncate">
                       <span className="font-medium">{activity.user}</span>
                       {" "}
                       <span className="text-muted-foreground">{activity.message}</span>
                     </p>
-                    <p className="text-xs text-muted-foreground mt-0.5">
-                      {formatTimeAgo(activity.timestamp)}
-                    </p>
                   </div>
 
                   {activity.amount && (
-                    <div className="text-accent font-bold text-sm">
+                    <div className="text-accent font-bold text-xs bg-accent/10 px-1.5 py-0.5 rounded">
                       ${activity.amount}
                     </div>
                   )}

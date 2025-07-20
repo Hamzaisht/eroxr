@@ -55,34 +55,63 @@ export const LiveMarquee = () => {
   };
 
   return (
-    <div className="fixed top-0 left-0 right-0 z-50 bg-gradient-to-r from-primary/10 via-accent/10 to-primary/10 backdrop-blur-md border-b border-primary/20">
-      <div className="overflow-hidden py-2">
+    <div className="fixed top-0 left-0 right-0 z-50 h-16 overflow-hidden">
+      {/* Cinematic background with multiple layers */}
+      <div className="absolute inset-0 bg-gradient-to-r from-black via-primary/5 to-black" />
+      <div className="absolute inset-0 bg-gradient-to-b from-background/95 to-background/80 backdrop-blur-xl" />
+      
+      {/* Animated scan line effect */}
+      <motion.div
+        className="absolute inset-0 bg-gradient-to-r from-transparent via-accent/20 to-transparent"
+        animate={{ x: ["-100%", "200%"] }}
+        transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
+      />
+      
+      {/* Main marquee content */}
+      <div className="relative h-full flex items-center overflow-hidden">
         <motion.div
-          className="flex gap-8 whitespace-nowrap"
+          className="flex gap-12 whitespace-nowrap"
           animate={{ x: "-100%" }}
           transition={{
-            duration: 60,
+            duration: 120,
             repeat: Infinity,
             ease: "linear",
           }}
         >
-          {[...currentItems, ...currentItems].map((item, index) => (
-            <div
+          {[...currentItems, ...currentItems, ...currentItems].map((item, index) => (
+            <motion.div
               key={`${item.id}-${index}`}
-              className="flex items-center gap-2 text-sm font-medium"
+              className="flex items-center gap-3 px-6 py-2 rounded-full bg-gradient-to-r from-primary/10 to-accent/10 border border-primary/20 backdrop-blur-sm"
+              whileHover={{ scale: 1.05, y: -2 }}
+              transition={{ type: "spring", stiffness: 300, damping: 20 }}
             >
-              <div className={`w-2 h-2 rounded-full ${
-                item.type === "earning" ? "bg-accent" : 
-                item.type === "join" ? "bg-primary" : "bg-secondary"
-              }`} />
-              <span className="text-foreground/90">{item.text}</span>
+              <motion.div 
+                className={`w-2 h-2 rounded-full ${
+                  item.type === "earning" ? "bg-accent" : 
+                  item.type === "join" ? "bg-primary" : "bg-secondary"
+                }`}
+                animate={{ scale: [1, 1.3, 1] }}
+                transition={{ duration: 2, repeat: Infinity }}
+              />
+              <span className="text-foreground/90 font-medium tracking-wide">
+                {item.text}
+              </span>
               {item.amount && (
-                <span className="text-accent font-bold">{item.amount}</span>
+                <motion.span 
+                  className="text-accent font-bold bg-accent/10 px-2 py-1 rounded-full text-xs"
+                  animate={{ boxShadow: ["0 0 0px hsl(var(--accent))", "0 0 10px hsl(var(--accent)/0.3)", "0 0 0px hsl(var(--accent))"] }}
+                  transition={{ duration: 2, repeat: Infinity }}
+                >
+                  {item.amount}
+                </motion.span>
               )}
-            </div>
+            </motion.div>
           ))}
         </motion.div>
       </div>
+      
+      {/* Bottom border with glow */}
+      <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
     </div>
   );
 };
