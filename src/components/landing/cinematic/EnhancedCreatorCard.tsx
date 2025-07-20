@@ -31,6 +31,8 @@ export const EnhancedCreatorCard = ({
 }: EnhancedCreatorCardProps) => {
   const cardRef = useRef<HTMLDivElement>(null);
   const [isHovered, setIsHovered] = useState(false);
+  
+  // Force refresh - clean component without RGB cursor tracking
 
   const handleMouseEnter = () => {
     setIsHovered(true);
