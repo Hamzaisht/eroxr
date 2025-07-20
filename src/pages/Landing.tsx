@@ -10,6 +10,10 @@ import { LiveContentMagic } from "@/components/landing/cinematic/LiveContentMagi
 import { StartYourPage } from "@/components/landing/cinematic/StartYourPage";
 import { CinematicFooter } from "@/components/landing/cinematic/CinematicFooter";
 import { ScrollProgress } from "@/components/landing/components/ScrollProgress";
+import { LiveMarquee } from "@/components/landing/interactive/LiveMarquee";
+import { RealTimeActivityFeed } from "@/components/landing/interactive/RealTimeActivityFeed";
+import { FloatingActions } from "@/components/landing/interactive/FloatingActions";
+import { PlatformMilestones } from "@/components/landing/interactive/PlatformMilestones";
 
 const Landing = () => {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -29,6 +33,15 @@ const Landing = () => {
       />
       
       <div ref={containerRef} className="relative bg-black overflow-hidden">
+        {/* Live Marquee */}
+        <LiveMarquee />
+        
+        {/* Real-time Activity Feed */}
+        <RealTimeActivityFeed />
+        
+        {/* Floating Actions */}
+        <FloatingActions />
+        
         <ScrollProgress />
         
         {/* Section 1: Hero Cinematic Intro */}
@@ -49,10 +62,13 @@ const Landing = () => {
         {/* Section 6: Live Content & AI Magic */}
         <LiveContentMagic scrollYProgress={scrollYProgress} />
         
-        {/* Section 7: Start Your Page */}
+        {/* Section 7: Platform Milestones */}
+        <PlatformMilestones />
+        
+        {/* Section 8: Start Your Page */}
         <StartYourPage scrollYProgress={scrollYProgress} />
         
-        {/* Section 8: Footer */}
+        {/* Section 9: Footer */}
         <CinematicFooter />
       </div>
     </>
