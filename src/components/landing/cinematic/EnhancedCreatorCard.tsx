@@ -71,7 +71,7 @@ export const EnhancedCreatorCard = ({
           style={{
             background: `conic-gradient(from 0deg at ${mousePosition.x}px ${mousePosition.y}px, 
               #ff0080, #ff8000, #ffff00, #80ff00, #00ff80, #0080ff, #8000ff, #ff0080)`,
-            animation: 'spin 2s linear infinite',
+            animation: 'rgb-spin 2s linear infinite',
           }}
         />
       )}
