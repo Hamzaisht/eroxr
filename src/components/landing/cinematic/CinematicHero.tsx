@@ -1,6 +1,8 @@
 import { motion, useTransform, MotionValue } from "framer-motion";
 import { useRef, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { TypewriterText } from "../effects/TypewriterText";
+import { MagneticButton } from "../interactive/MagneticButton";
 
 interface CinematicHeroProps {
   scrollYProgress: MotionValue<number>;
@@ -148,30 +150,24 @@ export const CinematicHero = ({ scrollYProgress }: CinematicHeroProps) => {
           transition={{ duration: 1, delay: 1 }}
           className="mb-12"
         >
-          <motion.p 
+          <motion.div 
             className="text-2xl md:text-4xl text-white/90 font-light leading-relaxed"
             initial={{ y: 20 }}
             animate={{ y: 0 }}
             transition={{ duration: 0.8, delay: 1.2 }}
           >
-            Cinematic.{" "}
-            <motion.span 
-              className="text-pink-400"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 1.8 }}
-            >
-              Provocative.
-            </motion.span>{" "}
-            <motion.span 
-              className="text-purple-400"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 2.2 }}
-            >
-              Yours.
-            </motion.span>
-          </motion.p>
+            <TypewriterText
+              texts={[
+                "Cinematic. Provocative. Yours.",
+                "Premium Content Creation.",
+                "Revolutionary Earnings Model.",
+                "The Future of Adult Content."
+              ]}
+              speed={80}
+              delay={2000}
+              className="text-2xl md:text-4xl font-light"
+            />
+          </motion.div>
         </motion.div>
 
         {/* CTA Button */}
@@ -180,16 +176,16 @@ export const CinematicHero = ({ scrollYProgress }: CinematicHeroProps) => {
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.6, delay: 2.5 }}
         >
-          <Button
+          <MagneticButton
+            strength={0.4}
             onClick={() => scrollToSection('why-eroxr')}
-            className="group relative px-12 py-6 text-lg font-semibold bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-500 border border-primary/30 rounded-full overflow-hidden transition-all duration-500 hover:scale-105"
+            className="px-12 py-6 text-lg font-semibold bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-500 border border-primary/30 rounded-full text-white"
             style={{
               boxShadow: 'var(--glow-primary), 0 0 30px rgba(139, 92, 246, 0.3)',
             }}
           >
             <span className="relative z-10 tracking-wide">Enter EROXR</span>
-            <div className="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-          </Button>
+          </MagneticButton>
         </motion.div>
 
         {/* Scroll Indicator */}
