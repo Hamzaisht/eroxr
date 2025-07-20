@@ -29,19 +29,8 @@ export const EnhancedCreatorCard = ({
   blurToggle,
   onHover 
 }: EnhancedCreatorCardProps) => {
-  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const cardRef = useRef<HTMLDivElement>(null);
   const [isHovered, setIsHovered] = useState(false);
-
-  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!cardRef.current) return;
-    
-    const rect = cardRef.current.getBoundingClientRect();
-    setMousePosition({
-      x: e.clientX - rect.left,
-      y: e.clientY - rect.top,
-    });
-  };
 
   const handleMouseEnter = () => {
     setIsHovered(true);
@@ -59,31 +48,19 @@ export const EnhancedCreatorCard = ({
       initial={{ opacity: 0, y: 50 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6, delay: index * 0.1 }}
-      onMouseMove={handleMouseMove}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
       className="group cursor-pointer relative"
     >
-      {/* RGB Glow Effect */}
-      {isHovered && (
-        <div
-          className="absolute inset-0 rounded-2xl opacity-75 blur-sm"
-          style={{
-            background: `conic-gradient(from 0deg at ${mousePosition.x}px ${mousePosition.y}px, 
-              #ff0080, #ff8000, #ffff00, #80ff00, #00ff80, #0080ff, #8000ff, #ff0080)`,
-            animation: 'rgb-spin 2s linear infinite',
-          }}
-        />
-      )}
-
-      {/* Main Card */}
+      {/* Main Card with Neon Glow */}
       <motion.div
-        className="relative bg-gray-900/80 backdrop-blur-xl border border-white/20 rounded-2xl overflow-hidden z-10"
+        className={`relative bg-gray-900/80 backdrop-blur-xl border rounded-2xl overflow-hidden transition-all duration-300 ${
+          isHovered 
+            ? 'border-cyan-400 shadow-[0_0_20px_rgba(34,211,238,0.4)]' 
+            : 'border-white/20'
+        }`}
         whileHover={{ 
           scale: 1.02,
-          boxShadow: isHovered 
-            ? "0 25px 50px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.1)"
-            : "0 20px 40px rgba(236, 72, 153, 0.2)"
         }}
         transition={{ duration: 0.3 }}
       >
@@ -218,30 +195,7 @@ export const EnhancedCreatorCard = ({
             </motion.button>
           </div>
         </div>
-
-        {/* RGB Border Effect */}
-        {isHovered && (
-          <motion.div
-            className="absolute inset-0 rounded-2xl"
-            style={{
-              background: `conic-gradient(from 0deg at ${mousePosition.x}px ${mousePosition.y}px, 
-                transparent 340deg, #ff0080 360deg)`,
-              padding: '2px',
-              mask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
-              maskComposite: 'xor',
-            }}
-            animate={{
-              rotate: [0, 360],
-            }}
-            transition={{
-              duration: 3,
-              repeat: Infinity,
-              ease: "linear"
-            }}
-          />
-        )}
       </motion.div>
-
     </motion.div>
   );
 };
