@@ -45,9 +45,9 @@ export const MagneticButton = ({
       }}
       transition={{
         type: "spring",
-        stiffness: 200,
-        damping: 20,
-        mass: 0.8,
+        stiffness: 400,
+        damping: 25,
+        mass: 0.5,
       }}
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}

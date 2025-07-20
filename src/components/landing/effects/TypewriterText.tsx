@@ -37,7 +37,7 @@ export const TypewriterText = ({
         setIsDeleting(false);
         setCurrentTextIndex((prev) => (prev + 1) % texts.length);
       }
-    }, isDeleting ? speed / 2 : speed);
+    }, isDeleting ? speed / 3 : speed / 2); // Faster typing
 
     return () => clearTimeout(timer);
   }, [currentText, isDeleting, currentTextIndex, texts, speed, delay]);

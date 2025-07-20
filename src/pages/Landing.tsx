@@ -15,9 +15,7 @@ import { RealTimeActivityFeed } from "@/components/landing/interactive/RealTimeA
 import { FloatingActions } from "@/components/landing/interactive/FloatingActions";
 import { PlatformMilestones } from "@/components/landing/interactive/PlatformMilestones";
 import { NavButtons } from "@/components/landing/NavButtons";
-import { CursorTrail } from "@/components/landing/effects/CursorTrail";
 import { AnimatedBackground } from "@/components/landing/effects/AnimatedBackground";
-import { SmoothScroll } from "@/components/landing/interactive/SmoothScroll";
 
 const Landing = () => {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -37,10 +35,8 @@ const Landing = () => {
       />
       
       <div ref={containerRef} className="relative bg-black overflow-hidden">
-        {/* Premium Effects */}
-        <CursorTrail />
+        {/* Optimized Effects */}
         <AnimatedBackground />
-        <SmoothScroll />
         
         {/* Navigation Header */}
         <div className="fixed top-16 right-4 z-50 flex gap-3">

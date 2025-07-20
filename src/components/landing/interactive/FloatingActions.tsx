@@ -1,19 +1,36 @@
 import { motion, AnimatePresence } from "framer-motion";
-import { useState, useEffect } from "react";
-import { MessageCircle, Plus, Search, ArrowUp, Sparkles } from "lucide-react";
+import { useState, useCallback, useEffect } from "react";
+import { MessageCircle, Plus, Search, ArrowUp, Sparkles, X } from "lucide-react";
 
 export const FloatingActions = () => {
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
 
+  // Optimized scroll handler with throttling
+  const handleScroll = useCallback(() => {
+    const shouldShow = window.scrollY > 500;
+    if (showScrollTop !== shouldShow) {
+      setShowScrollTop(shouldShow);
+    }
+  }, [showScrollTop]);
+
+  // Use throttled scroll listener
   useEffect(() => {
-    const handleScroll = () => {
-      setShowScrollTop(window.scrollY > 500);
+    let ticking = false;
+    
+    const throttledScroll = () => {
+      if (!ticking) {
+        requestAnimationFrame(() => {
+          handleScroll();
+          ticking = false;
+        });
+        ticking = true;
+      }
     };
 
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
+    window.addEventListener("scroll", throttledScroll, { passive: true });
+    return () => window.removeEventListener("scroll", throttledScroll);
+  }, [handleScroll]);
 
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -55,9 +72,14 @@ export const FloatingActions = () => {
                     initial={{ opacity: 0, scale: 0, y: 20 }}
                     animate={{ opacity: 1, scale: 1, y: 0 }}
                     exit={{ opacity: 0, scale: 0, y: 20 }}
-                    transition={{ delay: index * 0.1 }}
+                    transition={{ 
+                      delay: index * 0.05,
+                      type: "spring",
+                      stiffness: 400,
+                      damping: 25
+                    }}
                     onClick={action.onClick}
-                    className={`${action.color} text-white w-12 h-12 rounded-full shadow-lg flex items-center justify-center group relative transition-all duration-300`}
+                    className={`${action.color} text-white w-12 h-12 rounded-full shadow-lg flex items-center justify-center group relative transition-all duration-200`}
                   >
                     <action.icon className="w-5 h-5" />
                     
@@ -73,16 +95,16 @@ export const FloatingActions = () => {
 
           {/* Main Toggle Button */}
           <motion.button
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.9 }}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
             onClick={() => setIsExpanded(!isExpanded)}
-            className="w-14 h-14 bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 text-white rounded-full shadow-xl flex items-center justify-center transition-all duration-300"
+            className="w-14 h-14 bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 text-white rounded-full shadow-xl flex items-center justify-center transition-all duration-200"
           >
             <motion.div
               animate={{ rotate: isExpanded ? 45 : 0 }}
-              transition={{ duration: 0.3 }}
+              transition={{ duration: 0.2, type: "spring", stiffness: 400 }}
             >
-              <Plus className="w-6 h-6" />
+              {isExpanded ? <X className="w-6 h-6" /> : <Plus className="w-6 h-6" />}
             </motion.div>
           </motion.button>
         </div>
@@ -95,65 +117,12 @@ export const FloatingActions = () => {
             initial={{ opacity: 0, scale: 0 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0 }}
+            transition={{ type: "spring", stiffness: 400, damping: 25 }}
             onClick={scrollToTop}
-            className="fixed bottom-6 left-6 w-12 h-12 bg-background/80 backdrop-blur-sm border border-primary/30 hover:border-primary/50 text-foreground rounded-full shadow-lg flex items-center justify-center transition-all duration-300 z-50"
+            className="fixed bottom-6 left-6 w-12 h-12 bg-background/80 backdrop-blur-sm border border-primary/30 hover:border-primary/50 text-foreground rounded-full shadow-lg flex items-center justify-center transition-all duration-200 z-50"
           >
             <ArrowUp className="w-5 h-5" />
           </motion.button>
-        )}
-      </AnimatePresence>
-
-      {/* Creator Application Quick Form */}
-      <AnimatePresence>
-        {isExpanded && (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9, y: 20 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.9, y: 20 }}
-            className="fixed bottom-24 right-24 w-80 bg-background/95 backdrop-blur-xl border border-primary/30 rounded-xl p-6 shadow-2xl z-40"
-          >
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-8 h-8 bg-gradient-to-r from-primary to-accent rounded-lg flex items-center justify-center">
-                <Sparkles className="w-4 h-4 text-white" />
-              </div>
-              <div>
-                <h3 className="font-semibold text-foreground">Quick Creator Application</h3>
-                <p className="text-xs text-muted-foreground">Join in under 60 seconds</p>
-              </div>
-            </div>
-
-            <div className="space-y-3">
-              <input
-                type="text"
-                placeholder="Your creator name"
-                className="w-full bg-muted/50 border border-primary/20 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary/40 transition-colors"
-              />
-              <input
-                type="email"
-                placeholder="Email address"
-                className="w-full bg-muted/50 border border-primary/20 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary/40 transition-colors"
-              />
-              <select className="w-full bg-muted/50 border border-primary/20 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary/40 transition-colors">
-                <option>Content type</option>
-                <option>Photography</option>
-                <option>Videos</option>
-                <option>Live Streaming</option>
-                <option>Art & Creative</option>
-              </select>
-              
-              <motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                className="w-full bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 text-white py-2 px-4 rounded-lg text-sm font-medium transition-all duration-300"
-              >
-                Apply Now
-              </motion.button>
-            </div>
-
-            <p className="text-xs text-muted-foreground text-center mt-3">
-              No upfront costs • Start earning immediately
-            </p>
-          </motion.div>
         )}
       </AnimatePresence>
     </>

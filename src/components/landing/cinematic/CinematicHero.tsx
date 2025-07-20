@@ -53,28 +53,27 @@ export const CinematicHero = ({ scrollYProgress }: CinematicHeroProps) => {
         {/* Neural Network Base */}
         <div className="absolute inset-0 bg-gradient-to-br from-black via-purple-950/30 to-pink-950/20" />
         
-        {/* Animated Particle Field */}
-        <div className="absolute inset-0 opacity-40">
-          {[...Array(80)].map((_, i) => (
+        {/* Optimized Particle Field */}
+        <div className="absolute inset-0 opacity-50">
+          {[...Array(40)].map((_, i) => (
             <motion.div
               key={i}
               className="absolute rounded-full"
               style={{
                 left: `${Math.random() * 100}%`,
                 top: `${Math.random() * 100}%`,
-                width: Math.random() * 3 + 1,
-                height: Math.random() * 3 + 1,
-                background: `hsl(${271 + Math.random() * 40}, 100%, ${60 + Math.random() * 20}%)`,
+                width: Math.random() * 2 + 1,
+                height: Math.random() * 2 + 1,
+                background: `hsl(${271 + Math.random() * 30}, 90%, ${65 + Math.random() * 15}%)`,
                 filter: 'blur(0.5px)',
               }}
               animate={{
-                y: [0, -30 - Math.random() * 20, 0],
-                x: [0, Math.random() * 10 - 5, 0],
-                opacity: [0.2, 0.8, 0.2],
-                scale: [0.8, 1.2, 0.8],
+                y: [0, -20 - Math.random() * 15, 0],
+                opacity: [0.3, 0.7, 0.3],
+                scale: [0.8, 1.1, 0.8],
               }}
               transition={{
-                duration: 4 + Math.random() * 3,
+                duration: 3 + Math.random() * 2,
                 repeat: Infinity,
                 delay: Math.random() * 2,
                 ease: "easeInOut",
@@ -83,30 +82,29 @@ export const CinematicHero = ({ scrollYProgress }: CinematicHeroProps) => {
           ))}
         </div>
         
-        {/* Floating Light Orbs */}
+        {/* Simplified Light Orbs */}
         <div className="absolute inset-0">
-          {[...Array(5)].map((_, i) => (
+          {[...Array(3)].map((_, i) => (
             <motion.div
               key={`orb-${i}`}
               className="absolute rounded-full opacity-20"
               style={{
-                left: `${20 + i * 15}%`,
-                top: `${30 + Math.random() * 40}%`,
-                width: 100 + Math.random() * 50,
-                height: 100 + Math.random() * 50,
-                background: `radial-gradient(circle, hsl(${271 + i * 10}, 100%, 70%) 0%, transparent 70%)`,
+                left: `${25 + i * 25}%`,
+                top: `${35 + Math.random() * 30}%`,
+                width: 80 + Math.random() * 40,
+                height: 80 + Math.random() * 40,
+                background: `radial-gradient(circle, hsl(${271 + i * 15}, 90%, 70%) 0%, transparent 60%)`,
                 filter: 'blur(20px)',
               }}
               animate={{
-                y: [0, -40, 0],
-                x: [0, 20, 0],
-                scale: [1, 1.3, 1],
-                opacity: [0.1, 0.3, 0.1],
+                y: [0, -30, 0],
+                scale: [1, 1.2, 1],
+                opacity: [0.15, 0.3, 0.15],
               }}
               transition={{
-                duration: 8 + i * 2,
+                duration: 6 + i,
                 repeat: Infinity,
-                delay: i * 1.5,
+                delay: i * 1.2,
                 ease: "easeInOut",
               }}
             />
@@ -163,8 +161,8 @@ export const CinematicHero = ({ scrollYProgress }: CinematicHeroProps) => {
                 "Revolutionary Earnings Model.",
                 "The Future of Adult Content."
               ]}
-              speed={80}
-              delay={2000}
+              speed={60}
+              delay={1500}
               className="text-2xl md:text-4xl font-light"
             />
           </motion.div>

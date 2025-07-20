@@ -1,105 +1,76 @@
 import { motion } from "framer-motion";
-import { useEffect, useState } from "react";
+import { useMemo } from "react";
 
 export const AnimatedBackground = () => {
-  const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
+  // Pre-calculate positions for better performance
+  const nodePositions = useMemo(() => 
+    [...Array(8)].map((_, i) => ({
+      left: `${15 + (i * 10)}%`,
+      top: `${25 + Math.sin(i) * 25}%`,
+      hue: 271 + i * 20,
+      delay: i * 0.4,
+    })), []
+  );
 
-  useEffect(() => {
-    const updateDimensions = () => {
-      setDimensions({
-        width: window.innerWidth,
-        height: window.innerHeight
-      });
-    };
-
-    updateDimensions();
-    window.addEventListener('resize', updateDimensions);
-    return () => window.removeEventListener('resize', updateDimensions);
-  }, []);
+  const orbPositions = useMemo(() => 
+    [...Array(4)].map((_, i) => ({
+      left: `${20 + i * 20}%`,
+      top: `${30 + Math.sin(i * 0.5) * 40}%`,
+      size: 120 + Math.sin(i) * 30,
+      hue: 271 + i * 30,
+      delay: i * 2,
+    })), []
+  );
 
   return (
-    <div className="fixed inset-0 pointer-events-none overflow-hidden">
-      {/* Floating Neural Nodes */}
-      {[...Array(12)].map((_, i) => (
+    <div className="fixed inset-0 pointer-events-none overflow-hidden opacity-60">
+      {/* Optimized Neural Nodes */}
+      {nodePositions.map((node, i) => (
         <motion.div
           key={`node-${i}`}
-          className="absolute w-2 h-2 rounded-full"
+          className="absolute w-1.5 h-1.5 rounded-full"
           style={{
-            left: `${10 + (i * 8)}%`,
-            top: `${20 + Math.sin(i) * 30}%`,
-            background: `hsl(${271 + i * 15}, 100%, ${60 + Math.sin(i) * 20}%)`,
-            filter: 'blur(1px)',
-            boxShadow: `0 0 ${20 + i * 2}px hsl(${271 + i * 15}, 100%, ${60 + Math.sin(i) * 20}%)`,
+            left: node.left,
+            top: node.top,
+            background: `hsl(${node.hue}, 80%, 65%)`,
+            filter: 'blur(0.5px)',
+            boxShadow: `0 0 15px hsl(${node.hue}, 80%, 65%)`,
           }}
           animate={{
-            y: [0, -50, 0],
-            x: [0, Math.sin(i) * 20, 0],
-            scale: [0.8, 1.4, 0.8],
-            opacity: [0.3, 0.8, 0.3],
+            y: [0, -30, 0],
+            opacity: [0.4, 0.8, 0.4],
+            scale: [0.8, 1.2, 0.8],
           }}
           transition={{
-            duration: 8 + i * 0.5,
+            duration: 6,
             repeat: Infinity,
-            delay: i * 0.3,
+            delay: node.delay,
             ease: "easeInOut",
           }}
         />
       ))}
 
-      {/* Connecting Lines */}
-      <svg 
-        width={dimensions.width} 
-        height={dimensions.height}
-        className="absolute inset-0 opacity-30"
-      >
-        {[...Array(8)].map((_, i) => (
-          <motion.line
-            key={`line-${i}`}
-            x1={`${10 + i * 12}%`}
-            y1={`${30 + Math.sin(i) * 20}%`}
-            x2={`${20 + i * 12}%`}
-            y2={`${50 + Math.cos(i) * 30}%`}
-            stroke={`hsl(${271 + i * 20}, 100%, ${50 + i * 5}%)`}
-            strokeWidth="1"
-            strokeDasharray="4 8"
-            initial={{ pathLength: 0, opacity: 0 }}
-            animate={{ 
-              pathLength: [0, 1, 0],
-              opacity: [0, 0.6, 0]
-            }}
-            transition={{
-              duration: 6 + i * 0.5,
-              repeat: Infinity,
-              delay: i * 0.8,
-              ease: "easeInOut",
-            }}
-          />
-        ))}
-      </svg>
-
-      {/* Ambient Light Orbs */}
-      {[...Array(6)].map((_, i) => (
+      {/* Simplified Ambient Orbs */}
+      {orbPositions.map((orb, i) => (
         <motion.div
           key={`orb-${i}`}
-          className="absolute rounded-full opacity-20"
+          className="absolute rounded-full opacity-15"
           style={{
-            left: `${15 + i * 15}%`,
-            top: `${25 + Math.sin(i * 0.5) * 50}%`,
-            width: 150 + Math.sin(i) * 50,
-            height: 150 + Math.sin(i) * 50,
-            background: `radial-gradient(circle, hsl(${271 + i * 25}, 100%, ${60 + i * 5}%) 0%, transparent 60%)`,
-            filter: 'blur(30px)',
+            left: orb.left,
+            top: orb.top,
+            width: orb.size,
+            height: orb.size,
+            background: `radial-gradient(circle, hsl(${orb.hue}, 90%, 65%) 0%, transparent 50%)`,
+            filter: 'blur(25px)',
           }}
           animate={{
-            scale: [1, 1.3, 1],
-            opacity: [0.1, 0.3, 0.1],
-            x: [0, Math.sin(i) * 50, 0],
-            y: [0, Math.cos(i) * 30, 0],
+            scale: [1, 1.2, 1],
+            opacity: [0.1, 0.25, 0.1],
           }}
           transition={{
-            duration: 12 + i * 2,
+            duration: 8,
             repeat: Infinity,
-            delay: i * 1.5,
+            delay: orb.delay,
             ease: "easeInOut",
           }}
         />
