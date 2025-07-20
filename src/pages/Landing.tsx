@@ -14,6 +14,7 @@ import { LiveMarquee } from "@/components/landing/interactive/LiveMarquee";
 import { RealTimeActivityFeed } from "@/components/landing/interactive/RealTimeActivityFeed";
 import { FloatingActions } from "@/components/landing/interactive/FloatingActions";
 import { PlatformMilestones } from "@/components/landing/interactive/PlatformMilestones";
+import { TrustSafetySection } from "@/components/landing/cinematic/TrustSafetySection";
 import { NavButtons } from "@/components/landing/NavButtons";
 import { AnimatedBackground } from "@/components/landing/effects/AnimatedBackground";
 
@@ -72,13 +73,16 @@ const Landing = () => {
         {/* Section 6: Live Content & AI Magic */}
         <LiveContentMagic scrollYProgress={scrollYProgress} />
         
-        {/* Section 7: Platform Milestones */}
+        {/* Section 7: Trust & Safety */}
+        <TrustSafetySection scrollYProgress={scrollYProgress} />
+        
+        {/* Section 8: Platform Milestones */}
         <PlatformMilestones />
         
-        {/* Section 8: Start Your Page */}
+        {/* Section 9: Start Your Page */}
         <StartYourPage scrollYProgress={scrollYProgress} />
         
-        {/* Section 9: Footer */}
+        {/* Section 10: Footer */}
         <CinematicFooter />
       </div>
     </>

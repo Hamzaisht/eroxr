@@ -77,10 +77,10 @@ export const StartYourPage = ({ scrollYProgress }: StartYourPageProps) => {
                 </motion.div>
 
                 <h3 className="text-2xl font-bold text-white mb-4">
-                  Become a Creator
+                  Launch Your Creator Business
                 </h3>
                 <p className="text-white/70 mb-6 leading-relaxed">
-                  Start earning from your content immediately. Complete creative freedom and 85% revenue share.
+                  Turn your passion into profit. Join creators earning $1K-$50K+ monthly with our proven monetization tools and dedicated fan base.
                 </p>
 
                 <Button
@@ -131,10 +131,10 @@ export const StartYourPage = ({ scrollYProgress }: StartYourPageProps) => {
                 </motion.div>
 
                 <h3 className="text-2xl font-bold text-white mb-4">
-                  Browse Creators
+                  Discover Premium Content
                 </h3>
                 <p className="text-white/70 mb-6 leading-relaxed">
-                  Discover amazing creators and exclusive content. Join millions of fans worldwide.
+                  Access exclusive content from top creators. Connect directly with your favorite artists, podcasters, and influencers.
                 </p>
 
                 <Button

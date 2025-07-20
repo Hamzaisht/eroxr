@@ -12,18 +12,18 @@ export const WhyEroxrExists = ({ scrollYProgress }: WhyEroxrExistsProps) => {
 
   const scenes = [
     {
-      title: "Own your content",
-      description: "Complete creative control. No algorithm suppression. Your art, your way.",
+      title: "Break Free From Platform Control",
+      description: "Stop losing income to shadow bans and algorithm changes. Your content reaches your audience directly, without platform interference limiting your growth.",
       gradient: "from-purple-600 to-pink-600"
     },
     {
-      title: "Keep your earnings", 
-      description: "85% revenue share. Instant payouts. No hidden fees or surprise deductions.",
+      title: "Maximize Your Creator Income", 
+      description: "Earn 85% vs industry standard 45-55%. That's $850 vs $500 per $1000 earned. Direct fan payments, instant withdrawals, zero hidden fees.",
       gradient: "from-green-600 to-emerald-600"
     },
     {
-      title: "Go premium",
-      description: "Premium audience. Premium creators. Premium experience for everyone.",
+      title: "Join the Premium Revolution",
+      description: "High-value audience willing to pay premium prices for quality content. Connect with fans who truly appreciate and support your work.",
       gradient: "from-pink-600 to-red-600"
     }
   ];
@@ -115,10 +115,13 @@ export const WhyEroxrExists = ({ scrollYProgress }: WhyEroxrExistsProps) => {
           className="text-center mb-16"
         >
           <h2 className="text-5xl md:text-7xl font-bold text-white mb-6">
-            Why EROXR Exists
+            The Platform That Puts{" "}
+            <span className="bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
+              Creators First
+            </span>
           </h2>
           <p className="text-xl text-white/70 max-w-3xl mx-auto">
-            The creator economy is broken. We're here to fix it.
+            While other platforms cut your earnings and suppress your reach, we maximize both. Here's how we're different.
           </p>
         </motion.div>
 
