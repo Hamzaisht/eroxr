@@ -1,12 +1,12 @@
 import { motion, useScroll, useTransform } from "framer-motion";
 import { useRef } from "react";
 import { MetaTags } from "@/head/MetaTags";
-import { CinematicHero } from "@/components/landing/cinematic/CinematicHero";
+import { ThreeDHero } from "@/components/landing/cinematic/ThreeDHero";
 import { WhyEroxrExists } from "@/components/landing/cinematic/WhyEroxrExists";
 import { CreatorShowcase } from "@/components/landing/cinematic/CreatorShowcase";
 import { EarningsSection } from "@/components/landing/cinematic/EarningsSection";
 import { HowItWorks } from "@/components/landing/cinematic/HowItWorks";
-import { LiveContentMagic } from "@/components/landing/cinematic/LiveContentMagic";
+import { InteractivePlatformDemo } from "@/components/landing/cinematic/InteractivePlatformDemo";
 import { StartYourPage } from "@/components/landing/cinematic/StartYourPage";
 import { CinematicFooter } from "@/components/landing/cinematic/CinematicFooter";
 import { ScrollProgress } from "@/components/landing/components/ScrollProgress";
@@ -55,8 +55,8 @@ const Landing = () => {
         
         <ScrollProgress />
         
-        {/* Section 1: Hero Cinematic Intro */}
-        <CinematicHero scrollYProgress={scrollYProgress} />
+        {/* Section 1: 3D Hero */}
+        <ThreeDHero scrollYProgress={scrollYProgress} />
         
         {/* Section 2: Why EROXR Exists */}
         <WhyEroxrExists scrollYProgress={scrollYProgress} />
@@ -70,8 +70,8 @@ const Landing = () => {
         {/* Section 5: How It Works */}
         <HowItWorks scrollYProgress={scrollYProgress} />
         
-        {/* Section 6: Live Content & AI Magic */}
-        <LiveContentMagic scrollYProgress={scrollYProgress} />
+        {/* Section 6: Interactive Platform Demo */}
+        <InteractivePlatformDemo scrollYProgress={scrollYProgress} />
         
         {/* Section 7: Trust & Safety */}
         <TrustSafetySection scrollYProgress={scrollYProgress} />

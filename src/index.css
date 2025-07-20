@@ -177,9 +177,15 @@
   
   /* Display Typography */
   .display-text {
-    font-family: 'Playfair Display', serif;
+    font-family: 'Clash Display', sans-serif;
     font-weight: 700;
     letter-spacing: var(--letter-spacing-tighter);
+    line-height: var(--line-height-tight);
+  }
+  
+  .grotesk-text {
+    font-family: 'Space Grotesk', sans-serif;
+    letter-spacing: var(--letter-spacing-wide);
   }
   
   /* Body Text Optimization */

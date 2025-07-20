@@ -30,8 +30,9 @@ export default {
     extend: {
       fontFamily: {
         sans: ['Inter', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
-        display: ['Playfair Display', 'Georgia', 'serif'],
-        mono: ['SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', 'monospace']
+        display: ['Clash Display', 'Inter', 'system-ui', 'sans-serif'],
+        grotesk: ['Space Grotesk', 'Inter', 'system-ui', 'sans-serif'],
+        mono: ['JetBrains Mono', 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', 'monospace']
       },
       fontSize: {
         xs: ['var(--font-size-xs)', { lineHeight: 'var(--line-height-normal)' }],
