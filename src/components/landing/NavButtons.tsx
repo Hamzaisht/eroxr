@@ -9,23 +9,23 @@ interface NavButtonsProps {
 export const NavButtons = ({ orientation = "horizontal" }: NavButtonsProps) => {
   return (
     <div className={`flex ${orientation === "vertical" ? "flex-col space-y-4" : "flex-row space-x-4"} items-center`}>
-      <Button variant="ghost" asChild className="nav-item-liquid">
-        <Link to="/about" className="text-luxury-neutral hover:text-white">
+      <Button variant="ghost" asChild className="text-muted-foreground hover:text-foreground transition-colors">
+        <Link to="/about">
           About
         </Link>
       </Button>
-      <Button variant="ghost" asChild className="nav-item-liquid">
-        <Link to="/creators" className="text-luxury-neutral hover:text-white">
+      <Button variant="ghost" asChild className="text-muted-foreground hover:text-foreground transition-colors">
+        <Link to="/creators">
           Creators
         </Link>
       </Button>
-      <Button variant="ghost" asChild className="nav-item-liquid">
-        <Link to="/auth" className="text-luxury-neutral hover:text-white">
+      <Button variant="ghost" asChild className="text-muted-foreground hover:text-foreground transition-colors">
+        <Link to="/auth">
           Log In
         </Link>
       </Button>
-      <Button asChild className="bg-gradient-to-r from-luxury-primary to-luxury-accent hover:from-luxury-accent hover:to-luxury-primary transition-all duration-500">
-        <Link to="/register" className="text-white">
+      <Button asChild className="bg-gradient-to-r from-primary to-accent hover:from-accent hover:to-primary transition-all duration-500 text-primary-foreground">
+        <Link to="/register">
           Get Started
         </Link>
       </Button>
