@@ -1,6 +1,6 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useCallback, useEffect } from "react";
-import { MessageCircle, Plus, Search, ArrowUp, Sparkles, X } from "lucide-react";
+import { MessageCircle, Plus, Search, ArrowUp, X } from "lucide-react";
 
 export const FloatingActions = () => {
   const [showScrollTop, setShowScrollTop] = useState(false);
@@ -45,7 +45,7 @@ export const FloatingActions = () => {
     },
     {
       icon: Search,
-      label: "Browse Creators",
+      label: "Browse Creators", 
       onClick: () => console.log("Browse Creators"),
       color: "bg-accent hover:bg-accent/90",
     },
