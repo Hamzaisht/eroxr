@@ -1,7 +1,7 @@
 import { motion, useScroll, useTransform } from "framer-motion";
 import { useRef } from "react";
 import { MetaTags } from "@/head/MetaTags";
-import { ThreeDHeroNative } from "@/components/landing/cinematic/ThreeDHeroNative";
+import { Interactive3DHero } from "@/components/landing/3d/Interactive3DHero";
 import { WhyEroxrExists } from "@/components/landing/cinematic/WhyEroxrExists";
 import { CreatorShowcase } from "@/components/landing/cinematic/CreatorShowcase";
 import { EarningsSection } from "@/components/landing/cinematic/EarningsSection";
@@ -55,8 +55,8 @@ const Landing = () => {
         
         <ScrollProgress />
         
-        {/* Section 1: 3D Hero Native */}
-        <ThreeDHeroNative scrollYProgress={scrollYProgress} />
+        {/* Section 1: Interactive 3D Hero */}
+        <Interactive3DHero scrollYProgress={scrollYProgress} />
         
         {/* Section 2: Why EROXR Exists */}
         <WhyEroxrExists scrollYProgress={scrollYProgress} />
