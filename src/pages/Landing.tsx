@@ -15,6 +15,7 @@ import { RealTimeActivityFeed } from "@/components/landing/interactive/RealTimeA
 import { FloatingActions } from "@/components/landing/interactive/FloatingActions";
 import { PlatformMilestones } from "@/components/landing/interactive/PlatformMilestones";
 import { TrustSafetySection } from "@/components/landing/cinematic/TrustSafetySection";
+import { TopCreatorsShowcase } from "@/components/landing/cinematic/TopCreatorsShowcase";
 import { NavButtons } from "@/components/landing/NavButtons";
 import { AnimatedBackground } from "@/components/landing/effects/AnimatedBackground";
 
@@ -64,25 +65,28 @@ const Landing = () => {
         {/* Section 3: Creator Showcase Carousel */}
         <CreatorShowcase scrollYProgress={scrollYProgress} />
         
-        {/* Section 4: Earnings Section */}
+        {/* Section 4: Top Creators Showcase - Bonus Traffic Driver */}
+        <TopCreatorsShowcase scrollYProgress={scrollYProgress} />
+        
+        {/* Section 5: Earnings Section */}
         <EarningsSection scrollYProgress={scrollYProgress} />
         
-        {/* Section 5: How It Works */}
+        {/* Section 6: How It Works */}
         <HowItWorks scrollYProgress={scrollYProgress} />
         
-        {/* Section 6: Interactive Platform Demo */}
+        {/* Section 7: Interactive Platform Demo */}
         <InteractivePlatformDemo scrollYProgress={scrollYProgress} />
         
-        {/* Section 7: Trust & Safety */}
+        {/* Section 8: Trust & Safety */}
         <TrustSafetySection scrollYProgress={scrollYProgress} />
         
-        {/* Section 8: Platform Milestones */}
+        {/* Section 9: Platform Milestones */}
         <PlatformMilestones />
         
-        {/* Section 9: Start Your Page */}
+        {/* Section 10: Start Your Page */}
         <StartYourPage scrollYProgress={scrollYProgress} />
         
-        {/* Section 10: Footer */}
+        {/* Section 11: Footer */}
         <CinematicFooter />
       </div>
     </>
