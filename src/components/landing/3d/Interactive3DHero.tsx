@@ -175,24 +175,24 @@ export const Interactive3DHero = ({ scrollYProgress }: Interactive3DHeroProps) =
           </motion.span>
         </motion.div>
 
-        {/* Main Title with InFaces-style Typography */}
+        {/* Main Title with Advanced Typography */}
         <motion.h1 
-          className="text-7xl md:text-8xl lg:text-9xl font-display font-bold mb-8 leading-[0.8] tracking-tight"
+          className="text-6xl md:text-8xl lg:text-9xl font-bold mb-8 leading-[0.85] tracking-tight"
           initial={{ opacity: 0, y: 50 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 1.2, delay: 0.4 }}
         >
           <motion.span 
-            className="block text-white font-light italic"
+            className="block text-white font-light"
             whileHover={{ 
               scale: 1.02,
               textShadow: '0 0 20px rgba(255, 255, 255, 0.5)'
             }}
           >
-            in
+            Create.
           </motion.span>
           <motion.span 
-            className="block bg-gradient-to-r from-purple-300 via-pink-300 to-purple-200 bg-clip-text text-transparent font-black tracking-tighter relative"
+            className="block bg-gradient-to-r from-purple-400 via-pink-400 to-purple-300 bg-clip-text text-transparent font-bold relative"
             whileHover={{ scale: 1.02 }}
             animate={{
               backgroundPosition: ['0% 50%', '100% 50%', '0% 50%']
@@ -202,9 +202,9 @@ export const Interactive3DHero = ({ scrollYProgress }: Interactive3DHeroProps) =
               backgroundSize: '200% 200%'
             }}
           >
-            eroxr
+            Connect.
             <motion.div
-              className="absolute -inset-4 bg-gradient-to-r from-purple-600/20 to-pink-600/20 blur-xl -z-10"
+              className="absolute -inset-2 bg-gradient-to-r from-purple-600/20 to-pink-600/20 blur-xl -z-10"
               animate={{
                 opacity: [0.5, 1, 0.5],
                 scale: [1, 1.1, 1]
@@ -212,11 +212,20 @@ export const Interactive3DHero = ({ scrollYProgress }: Interactive3DHeroProps) =
               transition={{ duration: 3, repeat: Infinity }}
             />
           </motion.span>
+          <motion.span 
+            className="block text-white font-light"
+            whileHover={{ 
+              scale: 1.02,
+              textShadow: '0 0 20px rgba(255, 255, 255, 0.5)'
+            }}
+          >
+            Earn.
+          </motion.span>
         </motion.h1>
         
-        {/* Subtitle with Editorial Style */}
+        {/* Subtitle with Parallax */}
         <motion.p 
-          className="text-xl md:text-2xl text-gray-300 mb-12 max-w-4xl mx-auto leading-relaxed font-serif italic tracking-wide"
+          className="text-xl md:text-2xl text-gray-400 mb-12 max-w-3xl mx-auto leading-relaxed font-light"
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 1, delay: 0.8 }}
@@ -224,7 +233,7 @@ export const Interactive3DHero = ({ scrollYProgress }: Interactive3DHeroProps) =
             y: useTransform(scrollYProgress, [0, 0.2], [0, -20])
           }}
         >
-          "These old and new stories are evidence of creativity, culture, passion and personal experience. They help us track where we came from, who we are and who we can become."
+          Join the most exclusive creator platform. Premium content, premium audience, premium earnings.
         </motion.p>
         
         {/* Interactive Buttons */}
