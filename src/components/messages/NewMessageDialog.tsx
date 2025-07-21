@@ -71,7 +71,7 @@ export const NewMessageDialog = ({ open, onOpenChange, onSelectUser }: NewMessag
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 max-w-lg w-[90vw] sm:w-full holographic-card border-white/20 p-0 overflow-hidden">
+      <DialogContent className="w-[90vw] sm:w-full max-w-lg holographic-card border-white/20 p-0 overflow-hidden">
         {/* Neural background effects */}
         <div className="absolute inset-0 opacity-30">
           <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-purple-500/10" />
