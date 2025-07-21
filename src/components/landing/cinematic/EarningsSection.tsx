@@ -50,65 +50,38 @@ export const EarningsSection = ({ scrollYProgress }: EarningsSectionProps) => {
   const y = useTransform(scrollYProgress, [0.3, 0.7], [100, -100]);
 
   return (
-    <section ref={ref} className="relative min-h-screen py-20 bg-gradient-to-b from-black via-gray-950 to-black">
-      {/* Enhanced background with premium money effects */}
-      <div className="absolute inset-0 bg-gradient-to-br from-green-950/20 to-purple-950/20">
-        {/* Floating currency symbols */}
-        {[...Array(25)].map((_, i) => (
-          <motion.div
-            key={i}
-            className="absolute font-bold opacity-20"
-            style={{
-              left: `${Math.random() * 100}%`,
-              top: `${Math.random() * 100}%`,
-              fontSize: Math.random() * 20 + 16,
-              color: i % 3 === 0 ? '#10b981' : i % 3 === 1 ? '#8b5cf6' : '#ec4899',
-              filter: `blur(${Math.random() * 2}px)`,
-            }}
-            animate={{
-              y: [0, -30 - Math.random() * 20, 0],
-              x: [0, Math.random() * 20 - 10, 0],
-              opacity: [0.1, 0.4, 0.1],
-              rotate: [0, 360],
-              scale: [0.8, 1.2, 0.8],
-            }}
-            transition={{
-              duration: 8 + Math.random() * 4,
-              repeat: Infinity,
-              delay: Math.random() * 2,
-              ease: "easeInOut",
-            }}
-          >
-            {['$', '€', '£', '¥', '₿'][Math.floor(Math.random() * 5)]}
-          </motion.div>
-        ))}
-        
-        {/* Glowing orbs for prosperity */}
-        {[...Array(6)].map((_, i) => (
-          <motion.div
-            key={`orb-${i}`}
-            className="absolute rounded-full opacity-15"
-            style={{
-              left: `${15 + i * 12}%`,
-              top: `${30 + Math.random() * 40}%`,
-              width: 80 + Math.random() * 40,
-              height: 80 + Math.random() * 40,
-              background: `radial-gradient(circle, ${i % 2 === 0 ? '#10b981' : '#8b5cf6'} 0%, transparent 70%)`,
-              filter: 'blur(25px)',
-            }}
-            animate={{
-              y: [0, -25, 0],
-              scale: [1, 1.3, 1],
-              opacity: [0.1, 0.2, 0.1],
-            }}
-            transition={{
-              duration: 7 + i * 1.5,
-              repeat: Infinity,
-              delay: i * 1,
-              ease: "easeInOut",
-            }}
-          />
-        ))}
+    <section ref={ref} className="relative min-h-screen py-20 bg-black">
+      {/* Modern gradient background */}
+      <div className="absolute inset-0 bg-gradient-to-b from-black via-gray-900 to-black" />
+      
+      {/* Subtle animated elements */}
+      <div className="absolute inset-0 overflow-hidden">
+        {/* Floating orbs */}
+        <motion.div 
+          className="absolute top-32 right-32 w-24 h-24 bg-gradient-to-br from-green-500/10 to-emerald-500/10 rounded-full blur-xl"
+          animate={{ 
+            y: [0, -15, 0],
+            scale: [1, 1.1, 1]
+          }}
+          transition={{ 
+            duration: 6, 
+            repeat: Infinity, 
+            ease: "easeInOut" 
+          }}
+        />
+        <motion.div 
+          className="absolute bottom-40 left-32 w-32 h-32 bg-gradient-to-br from-purple-500/10 to-pink-500/10 rounded-full blur-2xl"
+          animate={{ 
+            y: [0, 20, 0],
+            x: [0, -10, 0]
+          }}
+          transition={{ 
+            duration: 8, 
+            repeat: Infinity, 
+            ease: "easeInOut",
+            delay: 1
+          }}
+        />
       </div>
       <motion.div 
         style={{ y }}
@@ -121,13 +94,13 @@ export const EarningsSection = ({ scrollYProgress }: EarningsSectionProps) => {
           transition={{ duration: 0.8 }}
           className="text-center mb-16"
         >
-          <h2 className="text-5xl md:text-7xl font-bold text-white mb-6">
-            Your{" "}
+          <h2 className="text-4xl md:text-6xl lg:text-7xl font-bold text-white mb-6 leading-tight">
+            Maximize Your{" "}
             <span className="bg-gradient-to-r from-green-400 to-emerald-400 bg-clip-text text-transparent">
               Earnings
             </span>
           </h2>
-          <p className="text-xl text-white/70 max-w-3xl mx-auto">
+          <p className="text-lg md:text-xl text-gray-400 max-w-3xl mx-auto font-light">
             Built for creators who want to maximize their income and maintain full control over their content.
           </p>
         </motion.div>

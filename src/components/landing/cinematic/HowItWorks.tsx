@@ -40,28 +40,35 @@ export const HowItWorks = ({ scrollYProgress }: HowItWorksProps) => {
   const parallaxTransforms = [y1, y2, y3];
 
   return (
-    <section ref={ref} className="relative min-h-screen py-20 bg-gradient-to-b from-black via-purple-950/20 to-black overflow-hidden">
-      {/* Background Elements */}
-      <div className="absolute inset-0">
-        {[...Array(20)].map((_, i) => (
-          <motion.div
-            key={i}
-            className="absolute w-2 h-2 bg-purple-400/20 rounded-full"
-            style={{
-              left: `${Math.random() * 100}%`,
-              top: `${Math.random() * 100}%`,
-            }}
-            animate={{
-              y: [0, -30, 0],
-              opacity: [0.2, 0.6, 0.2],
-            }}
-            transition={{
-              duration: 4 + Math.random() * 2,
-              repeat: Infinity,
-              delay: Math.random() * 2,
-            }}
-          />
-        ))}
+    <section ref={ref} className="relative min-h-screen py-20 bg-black overflow-hidden">
+      {/* Modern background */}
+      <div className="absolute inset-0 bg-gradient-to-b from-black via-gray-900 to-black">
+        {/* Floating orbs */}
+        <motion.div 
+          className="absolute top-32 left-32 w-32 h-32 bg-gradient-to-br from-purple-500/10 to-pink-500/10 rounded-full blur-2xl"
+          animate={{ 
+            y: [0, -20, 0],
+            scale: [1, 1.1, 1]
+          }}
+          transition={{ 
+            duration: 8, 
+            repeat: Infinity, 
+            ease: "easeInOut" 
+          }}
+        />
+        <motion.div 
+          className="absolute bottom-32 right-32 w-24 h-24 bg-gradient-to-br from-blue-500/10 to-purple-500/10 rounded-full blur-xl"
+          animate={{ 
+            y: [0, 15, 0],
+            x: [0, -10, 0]
+          }}
+          transition={{ 
+            duration: 6, 
+            repeat: Infinity, 
+            ease: "easeInOut",
+            delay: 1
+          }}
+        />
       </div>
 
       <div className="relative max-w-7xl mx-auto px-6">
@@ -72,114 +79,63 @@ export const HowItWorks = ({ scrollYProgress }: HowItWorksProps) => {
           transition={{ duration: 0.8 }}
           className="text-center mb-20"
         >
-          <h2 className="text-5xl md:text-7xl font-bold text-white mb-6">
+          <h2 className="text-4xl md:text-6xl lg:text-7xl font-bold text-white mb-6 leading-tight">
             How It{" "}
             <span className="bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
               Works
             </span>
           </h2>
-          <p className="text-xl text-white/70 max-w-3xl mx-auto">
+          <p className="text-lg md:text-xl text-gray-400 max-w-3xl mx-auto font-light">
             Three simple steps to start earning from your content and building your creator empire.
           </p>
         </motion.div>
 
-        {/* Steps */}
-        <div className="space-y-32">
+        {/* Modern Steps Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-20">
           {steps.map((step, index) => (
             <motion.div
               key={index}
-              style={{ y: parallaxTransforms[index] }}
-              className={`flex flex-col ${
-                index % 2 === 0 ? 'lg:flex-row' : 'lg:flex-row-reverse'
-              } items-center gap-12 lg:gap-20`}
+              initial={{ opacity: 0, y: 50 }}
+              animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 50 }}
+              transition={{ duration: 0.6, delay: step.delay }}
+              className="group text-center"
             >
-              {/* Step Content */}
+              {/* Step Card */}
               <motion.div
-                initial={{ opacity: 0, x: index % 2 === 0 ? -50 : 50 }}
-                animate={inView ? { opacity: 1, x: 0 } : { opacity: 0, x: index % 2 === 0 ? -50 : 50 }}
-                transition={{ duration: 0.8, delay: step.delay }}
-                className="flex-1 text-center lg:text-left"
+                className="relative bg-gray-900/50 backdrop-blur-sm border border-white/10 rounded-2xl p-8 hover:border-white/20 transition-all duration-300"
+                whileHover={{ scale: 1.02, y: -5 }}
               >
-                <div className="flex items-center justify-center lg:justify-start mb-6">
-                  <motion.div
-                    className={`inline-flex items-center justify-center w-20 h-20 rounded-full bg-gradient-to-r ${step.color} mr-4`}
-                    whileHover={{ scale: 1.1, rotate: 360 }}
-                    transition={{ duration: 0.5 }}
-                  >
-                    <step.icon className="w-10 h-10 text-white" />
-                  </motion.div>
-                  <div className={`text-6xl font-bold bg-gradient-to-r ${step.color} bg-clip-text text-transparent`}>
-                    0{index + 1}
+                {/* Step number */}
+                <div className="absolute -top-4 left-8">
+                  <div className={`w-8 h-8 rounded-full bg-gradient-to-r ${step.color} flex items-center justify-center text-white font-bold text-sm`}>
+                    {index + 1}
                   </div>
                 </div>
 
-                <h3 className="text-4xl md:text-5xl font-bold text-white mb-6">
+                {/* Icon */}
+                <motion.div
+                  className={`inline-flex items-center justify-center w-20 h-20 rounded-full bg-gradient-to-r ${step.color} mb-6`}
+                  whileHover={{ scale: 1.1, rotate: 360 }}
+                  transition={{ duration: 0.5 }}
+                >
+                  <step.icon className="w-10 h-10 text-white" />
+                </motion.div>
+
+                {/* Content */}
+                <h3 className="text-2xl md:text-3xl font-bold text-white mb-4">
                   {step.title}
                 </h3>
 
-                <p className="text-xl text-white/70 leading-relaxed max-w-lg">
+                <p className="text-gray-400 leading-relaxed font-light">
                   {step.description}
                 </p>
-              </motion.div>
 
-              {/* Step Visual */}
-              <motion.div
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={inView ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.8 }}
-                transition={{ duration: 0.8, delay: step.delay + 0.2 }}
-                className="flex-1"
-              >
-                <div className="relative">
-                  {/* Main Visual Container */}
-                  <motion.div
-                    className={`w-80 h-80 rounded-2xl bg-gradient-to-br ${step.color} p-1`}
-                    whileHover={{ scale: 1.05 }}
-                    transition={{ duration: 0.3 }}
-                  >
-                    <div className="w-full h-full bg-black rounded-xl flex items-center justify-center overflow-hidden">
-                      {/* Step Icon Large */}
-                      <motion.div
-                        animate={{
-                          rotate: [0, 10, -10, 0],
-                          scale: [1, 1.1, 1],
-                        }}
-                        transition={{
-                          duration: 3,
-                          repeat: Infinity,
-                          ease: "easeInOut"
-                        }}
-                      >
-                        <step.icon className="w-32 h-32 text-white/20" />
-                      </motion.div>
-                    </div>
-                  </motion.div>
-
-                  {/* Floating Elements */}
-                  <motion.div
-                    className="absolute -top-4 -right-4 w-8 h-8 bg-pink-400 rounded-full"
-                    animate={{
-                      y: [0, -10, 0],
-                      opacity: [0.5, 1, 0.5]
-                    }}
-                    transition={{
-                      duration: 2,
-                      repeat: Infinity,
-                      delay: 0.5
-                    }}
-                  />
-                  <motion.div
-                    className="absolute -bottom-4 -left-4 w-6 h-6 bg-purple-400 rounded-full"
-                    animate={{
-                      y: [0, 10, 0],
-                      opacity: [0.3, 0.8, 0.3]
-                    }}
-                    transition={{
-                      duration: 2.5,
-                      repeat: Infinity,
-                      delay: 1
-                    }}
-                  />
-                </div>
+                {/* Hover glow */}
+                <motion.div
+                  className={`absolute inset-0 rounded-2xl bg-gradient-to-r ${step.color} opacity-0 -z-10 blur-xl`}
+                  whileHover={{ opacity: 0.1 }}
+                  transition={{ duration: 0.3 }}
+                />
               </motion.div>
             </motion.div>
           ))}

@@ -29,8 +29,8 @@ const Landing = () => {
   return (
     <>
       <MetaTags 
-        title="EROXR - Premium Creator Platform | Cinematic Adult Content Revolution"
-        description="Enter the future of adult content creation. Premium creators, cinematic quality, revolutionary earnings. Own your content. Keep your earnings. Go premium."
+        title="EROXR - Premium Creator Platform | Content Revolution 2025"
+        description="Enter the future of content creation. Premium creators, cinematic quality, revolutionary earnings. Own your content. Keep your earnings. Go premium."
         canonicalUrl="https://eroxr.se"
         ogImage="https://eroxr.se/og-image.png"
       />

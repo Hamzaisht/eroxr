@@ -73,37 +73,37 @@ export const TrustSafetySection = ({ scrollYProgress }: TrustSafetySectionProps)
   const y = useTransform(scrollYProgress, [0.5, 0.8], [100, -100]);
 
   return (
-    <section ref={ref} className="relative min-h-screen py-20 bg-gradient-to-b from-black via-gray-950 to-black">
-      {/* Security-themed background */}
+    <section ref={ref} className="relative min-h-screen py-20 bg-black">
+      {/* Modern background */}
+      <div className="absolute inset-0 bg-gradient-to-b from-black via-gray-900 to-black" />
+      
+      {/* Subtle security-themed elements */}
       <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-blue-950/10 via-transparent to-green-950/10" />
-        
-        {/* Floating shield particles */}
-        {[...Array(20)].map((_, i) => (
-          <motion.div
-            key={i}
-            className="absolute opacity-20"
-            style={{
-              left: `${Math.random() * 100}%`,
-              top: `${Math.random() * 100}%`,
-              fontSize: Math.random() * 16 + 12,
-              color: i % 2 === 0 ? '#3b82f6' : '#10b981',
-            }}
-            animate={{
-              y: [0, -20 - Math.random() * 10, 0],
-              opacity: [0.1, 0.3, 0.1],
-              rotate: [0, 360],
-            }}
-            transition={{
-              duration: 6 + Math.random() * 4,
-              repeat: Infinity,
-              delay: Math.random() * 2,
-              ease: "easeInOut",
-            }}
-          >
-            🛡️
-          </motion.div>
-        ))}
+        <motion.div 
+          className="absolute top-40 right-40 w-32 h-32 bg-gradient-to-br from-blue-500/10 to-green-500/10 rounded-full blur-2xl"
+          animate={{ 
+            y: [0, -20, 0],
+            scale: [1, 1.1, 1]
+          }}
+          transition={{ 
+            duration: 8, 
+            repeat: Infinity, 
+            ease: "easeInOut" 
+          }}
+        />
+        <motion.div 
+          className="absolute bottom-40 left-40 w-24 h-24 bg-gradient-to-br from-green-500/10 to-blue-500/10 rounded-full blur-xl"
+          animate={{ 
+            y: [0, 15, 0],
+            x: [0, 10, 0]
+          }}
+          transition={{ 
+            duration: 6, 
+            repeat: Infinity, 
+            ease: "easeInOut",
+            delay: 1
+          }}
+        />
       </div>
 
       <motion.div 
@@ -117,13 +117,13 @@ export const TrustSafetySection = ({ scrollYProgress }: TrustSafetySectionProps)
           transition={{ duration: 0.8 }}
           className="text-center mb-16"
         >
-          <h2 className="text-5xl md:text-7xl font-bold text-white mb-6">
+          <h2 className="text-4xl md:text-6xl lg:text-7xl font-bold text-white mb-6 leading-tight">
             Trust &{" "}
             <span className="bg-gradient-to-r from-blue-400 via-green-400 to-blue-400 bg-clip-text text-transparent">
               Safety
             </span>
           </h2>
-          <p className="text-xl text-white/70 max-w-4xl mx-auto leading-relaxed">
+          <p className="text-lg md:text-xl text-gray-400 max-w-4xl mx-auto leading-relaxed font-light">
             Your safety, privacy, and creative freedom are our top priorities. We've built the most secure creator platform in the industry.
           </p>
         </motion.div>
