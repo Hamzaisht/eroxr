@@ -54,13 +54,36 @@ export const CinematicFooter = () => {
   } : {
     opacity: 0,
     y: 100
-  }} transition={{
+   }} transition={{
     duration: 0.8
-  }} className="relative py-20 bg-gradient-to-t from-black via-gray-950 to-black border-t border-white/10">
+  }} className="relative py-20 bg-black border-t border-white/10">
       {/* Background Effects */}
       <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute bottom-0 left-1/4 w-96 h-96 bg-purple-500/5 rounded-full blur-3xl" />
-        <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-pink-500/5 rounded-full blur-3xl" />
+        <motion.div 
+          className="absolute bottom-0 left-1/4 w-96 h-96 bg-purple-500/5 rounded-full blur-3xl"
+          animate={{ 
+            scale: [1, 1.1, 1],
+            opacity: [0.3, 0.5, 0.3]
+          }}
+          transition={{ 
+            duration: 8, 
+            repeat: Infinity, 
+            ease: "easeInOut" 
+          }}
+        />
+        <motion.div 
+          className="absolute bottom-0 right-1/4 w-96 h-96 bg-pink-500/5 rounded-full blur-3xl"
+          animate={{ 
+            scale: [1, 1.2, 1],
+            opacity: [0.2, 0.4, 0.2]
+          }}
+          transition={{ 
+            duration: 10, 
+            repeat: Infinity, 
+            ease: "easeInOut",
+            delay: 2
+          }}
+        />
       </div>
 
       <div className="relative max-w-7xl mx-auto px-6">
@@ -110,7 +133,7 @@ export const CinematicFooter = () => {
         }} transition={{
           duration: 0.8,
           delay: 0.4
-        }} className="text-xl text-white/70 mb-12 max-w-2xl mx-auto">C. Cinematic. Provocative. Yours.</motion.p>
+        }} className="text-xl text-white/70 mb-12 max-w-2xl mx-auto">Creative. Cinematic. Provocative. Yours.</motion.p>
 
           {/* Social Links */}
           <motion.div initial={{
@@ -223,7 +246,7 @@ export const CinematicFooter = () => {
           delay: 1.4
         }} className="border-t border-white/10 pt-8 space-y-4">
             <p className="text-white/40 text-sm">
-              © 2024 EROXR. All rights reserved.
+              © 2025 EROXR. All rights reserved.
             </p>
             <p className="text-red-400 text-sm font-semibold">The new Social Media Platform for adults. You must be 18+ to access.</p>
             <p className="text-white/40 text-xs max-w-4xl mx-auto leading-relaxed">EROXR is committed to providing a safe, secure, and empowering platform for all content creators and consumers. All content is consensual and created by verified adults. We maintain zero tolerance for illegal content.</p>

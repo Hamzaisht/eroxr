@@ -13,15 +13,38 @@ export const StartYourPage = ({ scrollYProgress }: StartYourPageProps) => {
   const y = useTransform(scrollYProgress, [0.7, 1], [100, -100]);
 
   return (
-    <section ref={ref} className="relative min-h-screen py-20 bg-gradient-to-b from-black via-purple-950/30 to-black">
+    <section ref={ref} className="relative min-h-screen py-20 bg-black">
       <motion.div 
         style={{ y }}
         className="max-w-7xl mx-auto px-6"
       >
-        {/* Background Effects */}
+        {/* Modern Background */}
         <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl" />
-          <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-pink-500/10 rounded-full blur-3xl" />
+          <motion.div 
+            className="absolute top-1/4 left-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl"
+            animate={{ 
+              scale: [1, 1.1, 1],
+              opacity: [0.3, 0.5, 0.3]
+            }}
+            transition={{ 
+              duration: 8, 
+              repeat: Infinity, 
+              ease: "easeInOut" 
+            }}
+          />
+          <motion.div 
+            className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-pink-500/10 rounded-full blur-3xl"
+            animate={{ 
+              scale: [1, 1.2, 1],
+              opacity: [0.2, 0.4, 0.2]
+            }}
+            transition={{ 
+              duration: 10, 
+              repeat: Infinity, 
+              ease: "easeInOut",
+              delay: 2
+            }}
+          />
         </div>
 
         {/* Main CTA Block */}
@@ -38,13 +61,13 @@ export const StartYourPage = ({ scrollYProgress }: StartYourPageProps) => {
             transition={{ duration: 0.8, delay: 0.2 }}
             className="mb-16"
           >
-            <h2 className="text-5xl md:text-7xl font-bold text-white mb-6">
+            <h2 className="text-4xl md:text-6xl lg:text-7xl font-bold text-white mb-6 leading-tight">
               Start Your{" "}
               <span className="bg-gradient-to-r from-pink-400 via-purple-400 to-cyan-400 bg-clip-text text-transparent">
                 Page
               </span>
             </h2>
-            <p className="text-2xl text-white/80 max-w-4xl mx-auto leading-relaxed">
+            <p className="text-lg md:text-xl text-gray-400 max-w-4xl mx-auto leading-relaxed font-light">
               Launch your page in 30 seconds. Already have content? Import in 1 click.
             </p>
           </motion.div>

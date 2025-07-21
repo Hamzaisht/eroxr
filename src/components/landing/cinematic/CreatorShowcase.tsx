@@ -75,77 +75,58 @@ export const CreatorShowcase = ({ scrollYProgress }: CreatorShowcaseProps) => {
   const y = useTransform(scrollYProgress, [0.2, 0.6], [50, -50]);
 
   return (
-    <section ref={ref} className="relative min-h-screen py-20 bg-gradient-to-b from-black via-purple-950/10 to-black">
-      {/* Enhanced Background Effects */}
-      <div className="absolute inset-0">
-        <div className="absolute inset-0 bg-gradient-to-l from-pink-900/20 to-purple-900/20" />
-        
-        {/* Enhanced grid pattern with glow */}
-        <div 
-          className="absolute inset-0 opacity-20"
-          style={{
-            backgroundImage: `
-              linear-gradient(rgba(155, 135, 245, 0.5) 1px, transparent 1px),
-              linear-gradient(90deg, rgba(155, 135, 245, 0.5) 1px, transparent 1px)
-            `,
-            backgroundSize: '40px 40px',
-            filter: 'drop-shadow(0 0 1px hsl(var(--primary)))',
+    <section ref={ref} className="relative min-h-screen py-20 bg-black">
+      {/* Modern Background */}
+      <div className="absolute inset-0 bg-gradient-to-b from-black via-gray-900 to-black">
+        {/* Floating orbs */}
+        <motion.div 
+          className="absolute top-32 right-32 w-32 h-32 bg-gradient-to-br from-purple-500/10 to-pink-500/10 rounded-full blur-2xl"
+          animate={{ 
+            y: [0, -20, 0],
+            scale: [1, 1.1, 1]
+          }}
+          transition={{ 
+            duration: 8, 
+            repeat: Infinity, 
+            ease: "easeInOut" 
           }}
         />
-        
-        {/* Spotlight effects */}
-        <div className="absolute inset-0">
-          {[...Array(3)].map((_, i) => (
-            <motion.div
-              key={`spotlight-${i}`}
-              className="absolute rounded-full opacity-10"
-              style={{
-                left: `${25 + i * 25}%`,
-                top: `${20 + Math.random() * 40}%`,
-                width: 200 + Math.random() * 100,
-                height: 200 + Math.random() * 100,
-                background: `radial-gradient(circle, hsl(var(--primary)) 0%, transparent 60%)`,
-                filter: 'blur(40px)',
-              }}
-              animate={{
-                scale: [1, 1.4, 1],
-                opacity: [0.05, 0.15, 0.05],
-              }}
-              transition={{
-                duration: 6 + i * 2,
-                repeat: Infinity,
-                delay: i * 2,
-                ease: "easeInOut",
-              }}
-            />
-          ))}
-        </div>
+        <motion.div 
+          className="absolute bottom-32 left-32 w-24 h-24 bg-gradient-to-br from-blue-500/10 to-purple-500/10 rounded-full blur-xl"
+          animate={{ 
+            y: [0, 15, 0],
+            x: [0, 10, 0]
+          }}
+          transition={{ 
+            duration: 6, 
+            repeat: Infinity, 
+            ease: "easeInOut",
+            delay: 1
+          }}
+        />
       </div>
-      <motion.div 
-        style={{ y }}
-        className="max-w-7xl mx-auto px-6"
-      >
-        {/* Section Header */}
+      
+      <div className="relative w-full max-w-7xl mx-auto px-6">
         <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
+          initial={{ opacity: 0, y: 50 }}
+          animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 50 }}
           transition={{ duration: 0.8 }}
           className="text-center mb-16"
         >
-          <h2 className="text-5xl md:text-7xl font-bold text-white mb-6">
+          <h2 className="text-4xl md:text-6xl lg:text-7xl font-bold text-white mb-6 leading-tight">
             Meet Our{" "}
             <span className="bg-gradient-to-r from-pink-400 to-purple-400 bg-clip-text text-transparent">
               Creators
             </span>
           </h2>
-          <p className="text-xl text-white/70 max-w-3xl mx-auto mb-8">
+          <p className="text-lg md:text-xl text-gray-400 max-w-3xl mx-auto mb-8 font-light">
             Discover talented creators earning thousands through premium content and direct fan connections.
           </p>
           
-          {/* Blur Toggle */}
+          {/* Modern toggle button */}
           <motion.button
             onClick={() => setBlurToggle(!blurToggle)}
-            className="px-6 py-3 bg-white/10 hover:bg-white/20 border border-white/20 rounded-full text-white transition-all duration-300"
+            className="px-6 py-3 bg-gray-900/50 hover:bg-gray-800/50 border border-white/20 hover:border-white/30 rounded-full text-white transition-all duration-300 backdrop-blur-sm"
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
           >
@@ -175,18 +156,14 @@ export const CreatorShowcase = ({ scrollYProgress }: CreatorShowcaseProps) => {
           className="text-center mt-16"
         >
           <motion.button
-            className="group relative px-8 py-4 bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-500 text-white font-semibold rounded-full overflow-hidden"
-            style={{
-              boxShadow: 'var(--glow-primary), 0 0 30px rgba(139, 92, 246, 0.3)',
-            }}
+            className="px-8 py-4 bg-white text-black text-base font-medium rounded-full hover:shadow-2xl hover:shadow-white/20 transition-all duration-300"
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
           >
-            <span className="relative z-10">Meet our Founding Creators</span>
-            <div className="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+            Meet our Founding Creators
           </motion.button>
         </motion.div>
-      </motion.div>
+      </div>
     </section>
   );
 };

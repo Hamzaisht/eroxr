@@ -82,11 +82,34 @@ export const InteractivePlatformDemo = ({ scrollYProgress }: InteractivePlatform
   ];
 
   return (
-    <section ref={ref} className="relative min-h-screen py-20 bg-gradient-to-b from-black via-gray-950 to-black">
-      {/* Background Effects */}
-      <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-purple-500/5 rounded-full blur-3xl" />
-        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-pink-500/5 rounded-full blur-3xl" />
+    <section ref={ref} className="relative min-h-screen py-20 bg-black">
+      {/* Modern background */}
+      <div className="absolute inset-0 bg-gradient-to-b from-black via-gray-900 to-black">
+        <motion.div 
+          className="absolute top-1/4 left-1/4 w-96 h-96 bg-purple-500/5 rounded-full blur-3xl"
+          animate={{ 
+            scale: [1, 1.1, 1],
+            opacity: [0.3, 0.5, 0.3]
+          }}
+          transition={{ 
+            duration: 8, 
+            repeat: Infinity, 
+            ease: "easeInOut" 
+          }}
+        />
+        <motion.div 
+          className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-pink-500/5 rounded-full blur-3xl"
+          animate={{ 
+            scale: [1, 1.2, 1],
+            opacity: [0.2, 0.4, 0.2]
+          }}
+          transition={{ 
+            duration: 10, 
+            repeat: Infinity, 
+            ease: "easeInOut",
+            delay: 2
+          }}
+        />
       </div>
 
       <div className="max-w-7xl mx-auto px-6">
@@ -97,13 +120,13 @@ export const InteractivePlatformDemo = ({ scrollYProgress }: InteractivePlatform
           transition={{ duration: 0.8 }}
           className="text-center mb-16"
         >
-          <h2 className="font-display text-5xl md:text-7xl font-bold text-white mb-6">
+          <h2 className="text-4xl md:text-6xl lg:text-7xl font-bold text-white mb-6 leading-tight">
             Experience{" "}
             <span className="bg-gradient-to-r from-purple-400 via-pink-400 to-cyan-400 bg-clip-text text-transparent">
               EROXR
             </span>
           </h2>
-          <p className="text-xl text-white/70 font-grotesk max-w-3xl mx-auto">
+          <p className="text-lg md:text-xl text-gray-400 max-w-3xl mx-auto font-light">
             See how creators and fans interact on our platform. Real features, real experiences.
           </p>
         </motion.div>
