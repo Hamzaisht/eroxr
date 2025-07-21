@@ -204,24 +204,9 @@ const CreatorCard = ({ creator, index }: { creator: Creator; index: number }) =>
             transition={{ duration: 0.6 }}
           />
 
-          {/* 3D Floating Elements */}
-          <motion.div
-            className="absolute top-8 right-8 w-6 h-6 bg-purple-400/30 rounded-full"
-            animate={{ 
-              y: [0, -10, 0],
-              rotate: [0, 180, 360]
-            }}
-            transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-          />
-          
-          <motion.div
-            className="absolute bottom-20 left-6 w-4 h-4 bg-pink-400/30 rounded-full"
-            animate={{ 
-              x: [0, 10, 0],
-              scale: [1, 1.2, 1]
-            }}
-            transition={{ duration: 3, repeat: Infinity, ease: "easeInOut", delay: 1 }}
-          />
+          {/* Static Decorative Elements */}
+          <div className="absolute top-8 right-8 w-6 h-6 bg-purple-400/30 rounded-full" />
+          <div className="absolute bottom-20 left-6 w-4 h-4 bg-pink-400/30 rounded-full" />
 
           {/* Content */}
           <div className="relative z-10 h-full flex flex-col justify-end p-6">
@@ -308,8 +293,8 @@ const CreatorCard = ({ creator, index }: { creator: Creator; index: number }) =>
                 rgba(236, 72, 153, 0.5), 
                 transparent)`
             }}
-            animate={{ rotate: isHovered ? 360 : 0 }}
-            transition={{ duration: 2, ease: "linear" }}
+            animate={{ rotate: isHovered ? 180 : 0 }}
+            transition={{ duration: 0.6, ease: "easeInOut" }}
           />
         </LuxuryGlassCard>
       </motion.div>
@@ -343,26 +328,9 @@ export const TopCreatorsShowcase = ({ scrollYProgress }: TopCreatorsShowcaseProp
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-purple-500/10 via-transparent to-transparent" />
       </motion.div>
 
-      {/* Floating Orbs */}
-      <motion.div
-        className="absolute top-20 left-20 w-32 h-32 bg-gradient-to-br from-purple-500/20 to-pink-500/20 rounded-full blur-xl"
-        animate={{ 
-          y: [0, -30, 0],
-          x: [0, 20, 0],
-          scale: [1, 1.2, 1]
-        }}
-        transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
-      />
-      
-      <motion.div
-        className="absolute bottom-32 right-20 w-24 h-24 bg-gradient-to-br from-cyan-500/20 to-blue-500/20 rounded-full blur-lg"
-        animate={{ 
-          y: [0, 20, 0],
-          x: [0, -15, 0],
-          scale: [1, 0.8, 1]
-        }}
-        transition={{ duration: 6, repeat: Infinity, ease: "easeInOut", delay: 2 }}
-      />
+      {/* Static Background Orbs */}
+      <div className="absolute top-20 left-20 w-32 h-32 bg-gradient-to-br from-purple-500/20 to-pink-500/20 rounded-full blur-xl" />
+      <div className="absolute bottom-32 right-20 w-24 h-24 bg-gradient-to-br from-cyan-500/20 to-blue-500/20 rounded-full blur-lg" />
 
       <div className="container mx-auto px-6 relative z-10">
         {/* Header Section */}

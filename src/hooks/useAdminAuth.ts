@@ -15,19 +15,14 @@ export const useAdminAuth = () => {
   const [adminUser, setAdminUser] = useState<AdminUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  console.log('🔍 useAdminAuth: Hook called with user:', user ? 'exists' : 'null');
-
   useEffect(() => {
     const checkAdminStatus = async () => {
       if (!user?.id) {
-        console.log('🔍 Admin check: No user ID');
         setIsAdmin(false);
         setAdminUser(null);
         setIsLoading(false);
         return;
       }
-
-      console.log('🔍 Admin check: Checking for user', user.id);
 
       try {
         const { data, error } = await supabase
@@ -36,10 +31,7 @@ export const useAdminAuth = () => {
           .eq('user_id', user.id)
           .in('role', ['admin', 'super_admin']);
 
-        console.log('🔍 Admin check: Query result', { data, error });
-
         if (error || !data || data.length === 0) {
-          console.log('🔍 Admin check: No admin role found');
           setIsAdmin(false);
           setAdminUser(null);
         } else {
@@ -47,7 +39,6 @@ export const useAdminAuth = () => {
           const roles = data.map(r => r.role);
           const highestRole = roles.includes('super_admin') ? 'super_admin' : 'admin';
           
-          console.log('🔍 Admin check: Admin role found!', { roles, highestRole });
           setIsAdmin(true);
           setAdminUser({
             id: user.id,
@@ -57,7 +48,6 @@ export const useAdminAuth = () => {
           });
         }
       } catch (err) {
-        console.error('🔍 Admin auth check failed:', err);
         setIsAdmin(false);
         setAdminUser(null);
       } finally {
@@ -65,15 +55,15 @@ export const useAdminAuth = () => {
       }
     };
 
-    // Only check once per user change, and when first loading
+    // Only check once per user change
     if (user?.id) {
       checkAdminStatus();
-    } else if (!user?.id && !isLoading) {
+    } else {
       setIsAdmin(false);
       setAdminUser(null);
       setIsLoading(false);
     }
-  }, [user?.id]); // Only depend on user ID to prevent loops
+  }, [user?.id]);
 
   return { isAdmin, adminUser, isLoading };
 };
