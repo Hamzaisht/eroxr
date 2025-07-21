@@ -1,57 +1,9 @@
 import { motion, useTransform, MotionValue, useMotionValue, useSpring } from 'framer-motion';
-import { Canvas, useFrame } from '@react-three/fiber';
-import { OrbitControls, Sphere, MeshDistortMaterial, Float, Environment } from '@react-three/drei';
-import { useRef, useState, Suspense } from 'react';
-import * as THREE from 'three';
+import { useRef, useState } from 'react';
 
 interface Interactive3DHeroProps {
   scrollYProgress: MotionValue<number>;
 }
-
-// 3D Animated Orb Component
-const AnimatedOrb = ({ position, color, speed }: { position: [number, number, number], color: string, speed: number }) => {
-  const meshRef = useRef<THREE.Mesh>(null);
-  
-  useFrame((state) => {
-    if (meshRef.current) {
-      meshRef.current.rotation.x = state.clock.elapsedTime * speed;
-      meshRef.current.rotation.y = state.clock.elapsedTime * speed * 0.5;
-    }
-  });
-
-  return (
-    <Float speed={2} rotationIntensity={1} floatIntensity={2}>
-      <Sphere ref={meshRef} args={[1, 64, 64]} position={position} scale={0.8}>
-        <MeshDistortMaterial
-          color={color}
-          attach="material"
-          distort={0.6}
-          speed={4}
-          roughness={0.2}
-          metalness={0.8}
-        />
-      </Sphere>
-    </Float>
-  );
-};
-
-// 3D Scene Component
-const Scene3D = () => {
-  return (
-    <>
-      <ambientLight intensity={0.3} />
-      <pointLight position={[10, 10, 10]} intensity={1} />
-      <pointLight position={[-10, -10, -10]} intensity={0.5} color="#ff6b9d" />
-      
-      <AnimatedOrb position={[-3, 2, 0]} color="#8b5cf6" speed={0.5} />
-      <AnimatedOrb position={[3, -1, -2]} color="#ec4899" speed={0.3} />
-      <AnimatedOrb position={[0, 1, -4]} color="#06b6d4" speed={0.7} />
-      
-      <Environment preset="city" />
-      <OrbitControls enableZoom={false} enablePan={false} autoRotate autoRotateSpeed={0.5} />
-    </>
-  );
-};
 
 // Mouse-following spotlight effect
 const InteractiveSpotlight = () => {
@@ -131,13 +83,36 @@ export const Interactive3DHero = ({ scrollYProgress }: Interactive3DHeroProps) =
       {/* Interactive Mouse Spotlight */}
       <InteractiveSpotlight />
       
-      {/* 3D Canvas Background */}
-      <div className="absolute inset-0 opacity-40">
-        <Canvas camera={{ position: [0, 0, 8], fov: 45 }}>
-          <Suspense fallback={null}>
-            <Scene3D />
-          </Suspense>
-        </Canvas>
+      {/* CSS-based 3D Effect Background */}
+      <div className="absolute inset-0 opacity-60">
+        {/* Floating 3D-style orbs */}
+        {[...Array(5)].map((_, i) => (
+          <motion.div
+            key={i}
+            className={`absolute rounded-full blur-lg ${
+              i % 3 === 0 ? 'bg-purple-500/30' : 
+              i % 3 === 1 ? 'bg-pink-500/30' : 'bg-cyan-500/30'
+            }`}
+            style={{
+              width: `${60 + i * 20}px`,
+              height: `${60 + i * 20}px`,
+              left: `${20 + i * 15}%`,
+              top: `${20 + i * 10}%`,
+            }}
+            animate={{
+              y: [0, -30, 0],
+              x: [0, 20, 0],
+              scale: [1, 1.2, 1],
+              rotate: [0, 180, 360]
+            }}
+            transition={{
+              duration: 4 + i,
+              repeat: Infinity,
+              ease: "easeInOut",
+              delay: i * 0.5
+            }}
+          />
+        ))}
       </div>
 
       {/* Floating Parallax Elements */}
