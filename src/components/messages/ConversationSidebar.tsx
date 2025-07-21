@@ -135,17 +135,19 @@ export const ConversationSidebar = ({ selectedConversationId, onSelectConversati
             <Button
               variant="ghost"
               size="sm"
-              className="h-8 w-8 md:h-10 md:w-10 text-white/70 hover:text-white hover:bg-white/10 p-0"
+              className="h-9 w-9 sm:h-10 sm:w-10 lg:h-11 lg:w-11 text-white bg-primary/20 hover:bg-primary/30 hover:text-white border border-primary/30 hover:border-primary/50 p-0 touch-manipulation"
               onClick={() => setShowNewMessage(true)}
+              aria-label="Start new conversation"
             >
-              <Plus className="h-4 w-4 md:h-5 md:w-5" />
+              <Plus className="h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6" />
             </Button>
             <Button
               variant="ghost"
               size="sm"
-              className="h-8 w-8 md:h-10 md:w-10 text-white/70 hover:text-white hover:bg-white/10 p-0"
+              className="h-9 w-9 sm:h-10 sm:w-10 lg:h-11 lg:w-11 text-white/70 hover:text-white hover:bg-white/10 p-0 touch-manipulation"
+              aria-label="More options"
             >
-              <MoreVertical className="h-4 w-4 md:h-5 md:w-5" />
+              <MoreVertical className="h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6" />
             </Button>
           </div>
         </div>
