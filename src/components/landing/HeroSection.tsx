@@ -125,9 +125,9 @@ export const HeroSection = ({ scrollOpacity }: HeroSectionProps) => {
                   variant="outline" 
                   className="group text-lg py-8 px-12 text-white border-2 border-luxury-primary/50 hover:bg-luxury-primary/10 hover:border-luxury-primary transition-all duration-500 backdrop-blur-xl"
                 >
-                  <Link to="/home" className="flex items-center">
+                  <Link to="/features" className="flex items-center">
                     <Play className="mr-3 h-5 w-5 group-hover:scale-110 transition-transform duration-300" />
-                    <span>Explore Content</span>
+                    <span>Explore Platform</span>
                   </Link>
                 </Button>
               </MagneticButton>

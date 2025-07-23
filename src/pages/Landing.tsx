@@ -1,3 +1,4 @@
+
 import { motion, useScroll, useTransform } from "framer-motion";
 import { useRef } from "react";
 import { MetaTags } from "@/head/MetaTags";
@@ -48,8 +49,10 @@ const Landing = () => {
         {/* Live Marquee */}
         <LiveMarquee />
         
-        {/* Real-time Activity Feed */}
-        <RealTimeActivityFeed />
+        {/* Real-time Activity Feed - Repositioned to be less intrusive */}
+        <div className="fixed bottom-8 left-4 z-30 opacity-70 hover:opacity-100 transition-opacity">
+          <RealTimeActivityFeed />
+        </div>
         
         {/* Floating Actions */}
         <FloatingActions />
