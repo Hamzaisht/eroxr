@@ -37,7 +37,7 @@ export const UserProfileSection = ({ isExpanded, currentUser }: UserProfileSecti
   };
 
   const handleProfileClick = () => {
-    navigate('/new-profile');
+    navigate('/profile');
   };
 
   const handleSettingsClick = () => {
@@ -73,8 +73,8 @@ export const UserProfileSection = ({ isExpanded, currentUser }: UserProfileSecti
       animate={{ opacity: 1 }}
       transition={{ duration: 0.3 }}
     >
-      <div className="flex items-center gap-3 mb-4">
-        <Avatar className="w-8 h-8 border border-slate-600/30">
+      <div className="flex items-center gap-3 mb-4 cursor-pointer" onClick={handleProfileClick}>
+        <Avatar className="w-8 h-8 border border-slate-600/30 hover:border-luxury-primary/50 transition-all">
           <AvatarImage 
             src={currentUser?.avatar_url} 
             alt={currentUser?.username || 'User'} 
@@ -86,7 +86,7 @@ export const UserProfileSection = ({ isExpanded, currentUser }: UserProfileSecti
         
         {isExpanded && (
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-slate-200 truncate">
+            <p className="text-sm font-medium text-slate-200 truncate hover:text-luxury-primary transition-colors">
               {currentUser?.username || 'User'}
             </p>
             <p className="text-xs text-slate-400 truncate">

@@ -26,7 +26,7 @@ export const UserAvatar = ({
 
   const handleAvatarClick = () => {
     if (session?.user?.id) {
-      navigate('/new-profile');
+      navigate('/profile');
     }
   };
 
