@@ -87,11 +87,11 @@ export const InteractiveNav = () => {
               <NavMenuItem
                 icon={Shield}
                 label="Platform Control"
-                path="/admin/features"
-                isActive={location.pathname === '/admin/features'}
+                path="/godmode/features"
+                isActive={location.pathname === '/godmode/features'}
                 isExpanded={true}
                 onClick={() => {
-                  navigate('/admin/features');
+                  navigate('/godmode/features');
                   const closeButton = document.querySelector('[data-radix-collection-item]') as HTMLElement;
                   if (closeButton) closeButton.click();
                 }}
@@ -158,10 +158,10 @@ export const InteractiveNav = () => {
             <NavMenuItem
               icon={Shield}
               label="Platform Control"
-              path="/admin/features"
-              isActive={location.pathname === '/admin/features'}
+              path="/godmode/features"
+              isActive={location.pathname === '/godmode/features'}
               isExpanded={isExpanded}
-              onClick={() => navigate('/admin/features')}
+              onClick={() => navigate('/godmode/features')}
             />
           )}
         </div>
@@ -181,7 +181,7 @@ export const InteractiveNav = () => {
             variant="destructive"
             size="sm"
             className="fixed bottom-4 right-4 z-50 flex items-center gap-2"
-            onClick={() => navigate('/admin')}
+            onClick={() => navigate('/godmode')}
           >
             <Shield className="w-4 h-4" />
             {!isMobile && "Admin Panel"}
