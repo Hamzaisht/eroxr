@@ -67,13 +67,28 @@ export const CreatePostDialog = ({
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (files) {
-      setSelectedFiles(files);
-      if (onFileSelect) {
-        onFileSelect(files);
+    const newFiles = e.target.files;
+    if (newFiles) {
+      // Combine existing files with new files instead of replacing
+      if (selectedFiles && selectedFiles.length > 0) {
+        const existingArray = Array.from(selectedFiles);
+        const newArray = Array.from(newFiles);
+        const combinedArray = [...existingArray, ...newArray];
+        
+        // Create new FileList-like object
+        const dt = new DataTransfer();
+        combinedArray.forEach(file => dt.items.add(file));
+        setSelectedFiles(dt.files);
+        
+        if (onFileSelect) {
+          onFileSelect(dt.files);
+        }
+      } else {
+        setSelectedFiles(newFiles);
+        if (onFileSelect) {
+          onFileSelect(newFiles);
+        }
       }
-      // No upload start trigger - instant processing only
     }
   };
 
@@ -340,23 +355,31 @@ export const CreatePostDialog = ({
                                               />
                                               <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                                             </div>
-                                          ) : file.type.startsWith('video/') ? (
-                                            <div className="w-full h-full relative">
-                                              <video
-                                                src={URL.createObjectURL(file)}
-                                                className="w-full h-full object-cover"
-                                                muted
-                                                loop
-                                                autoPlay
-                                                playsInline
-                                              />
-                                              <div className="absolute top-4 right-4 bg-purple-500/90 backdrop-blur-sm rounded-full p-2">
-                                                <Video className="h-5 w-5 text-white" />
-                                              </div>
-                                              <div className="absolute bottom-4 left-4 bg-black/70 backdrop-blur-sm rounded-lg px-3 py-2">
-                                                <span className="text-white/90 text-sm font-medium">∞ Auto Loop</span>
-                                              </div>
-                                            </div>
+                                           ) : file.type.startsWith('video/') ? (
+                                             <div className="w-full h-full relative">
+                                               <video
+                                                 src={URL.createObjectURL(file)}
+                                                 className="w-full h-full object-cover"
+                                                 muted
+                                                 loop
+                                                 autoPlay
+                                                 playsInline
+                                               />
+                                               {/* Small processing circle */}
+                                               <motion.div 
+                                                 className="absolute top-4 left-4 w-6 h-6 rounded-full bg-cyan-400/90 backdrop-blur-sm flex items-center justify-center"
+                                                 animate={{ rotate: 360 }}
+                                                 transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+                                               >
+                                                 <div className="w-2 h-2 rounded-full bg-white" />
+                                               </motion.div>
+                                               <div className="absolute top-4 right-4 bg-purple-500/90 backdrop-blur-sm rounded-full p-2">
+                                                 <Video className="h-5 w-5 text-white" />
+                                               </div>
+                                               <div className="absolute bottom-4 left-4 bg-black/70 backdrop-blur-sm rounded-lg px-3 py-2">
+                                                 <span className="text-white/90 text-sm font-medium">∞ Auto Loop</span>
+                                               </div>
+                                             </div>
                                           ) : (
                                             <div className="w-full h-full bg-gradient-to-br from-pink-500/20 to-purple-500/20 flex items-center justify-center">
                                               <Image className="h-20 w-20 text-pink-400 opacity-60" />
