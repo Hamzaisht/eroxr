@@ -78,23 +78,20 @@ export const CreatePostDialog = ({
     }
   };
 
-  // Auto-upload files when selected
+  // Auto-upload files when selected - INSTANT
   useEffect(() => {
     if (selectedFiles && selectedFiles.length > 0) {
       const handleUpload = async () => {
         try {
           handleMediaUploadStart();
           
-          // Simulate instant processing
-          setTimeout(() => {
-            const fileArray = Array.from(selectedFiles);
-            
-            // Simulate successful upload
-            const mockUrls = fileArray.map((file, index) => URL.createObjectURL(file));
-            const mockAssetIds = fileArray.map((_, index) => `asset_${Date.now()}_${index}`);
-            
-            handleMediaUploadComplete(mockUrls, mockAssetIds);
-          }, 800); // Very fast processing
+          // INSTANT processing - no delay
+          const fileArray = Array.from(selectedFiles);
+          const mockUrls = fileArray.map((file, index) => URL.createObjectURL(file));
+          const mockAssetIds = fileArray.map((_, index) => `asset_${Date.now()}_${index}`);
+          
+          // Complete immediately 
+          handleMediaUploadComplete(mockUrls, mockAssetIds);
           
         } catch (error) {
           console.error('Upload failed:', error);
@@ -324,58 +321,10 @@ export const CreatePostDialog = ({
                         </div>
                       </div>
 
-                      {/* Adaptive Neural Interface - Borderless when media is uploaded */}
-                      {selectedFiles && selectedFiles.length > 0 ? (
-                        <div className="rounded-2xl bg-gradient-to-br from-cyan-400/5 to-purple-400/5 min-h-[400px] flex flex-col bg-black/10 backdrop-blur-sm transition-all duration-500">
-                          {/* Upload Animation - Minimal overlay */}
+                       {selectedFiles && selectedFiles.length > 0 ? (
+                        <div className="rounded-2xl bg-gradient-to-br from-cyan-400/5 to-purple-400/5 min-h-[400px] flex flex-col bg-black/10 backdrop-blur-sm transition-all duration-500">{/* Instant media preview with dimmed overlay during processing */}
                           {uploadInProgress && (
-                            <div className="absolute inset-4 bg-black/40 backdrop-blur-sm rounded-lg flex items-center justify-center z-10">
-                              <motion.div
-                                initial={{ scale: 0.8, opacity: 0 }}
-                                animate={{ scale: 1, opacity: 1 }}
-                                transition={{ duration: 0.3 }}
-                                className="text-center"
-                              >
-                                {/* Quantum Upload Animation */}
-                                <div className="relative mx-auto w-16 h-16 mb-3">
-                                  <motion.div
-                                    className="absolute inset-0 rounded-full border-4 border-cyan-400/30"
-                                    animate={{
-                                      rotate: 360,
-                                      scale: [1, 1.2, 1],
-                                    }}
-                                    transition={{
-                                      rotate: { duration: 2, repeat: Infinity, ease: "linear" },
-                                      scale: { duration: 1, repeat: Infinity, ease: "easeInOut" }
-                                    }}
-                                  />
-                                  <motion.div
-                                    className="absolute inset-2 rounded-full border-2 border-purple-400/50"
-                                    animate={{
-                                      rotate: -360,
-                                      scale: [0.9, 1.3, 0.9],
-                                    }}
-                                    transition={{
-                                      rotate: { duration: 1.5, repeat: Infinity, ease: "linear" },
-                                      scale: { duration: 0.8, repeat: Infinity, ease: "easeInOut" }
-                                    }}
-                                  />
-                                  <motion.div
-                                    className="absolute inset-4 rounded-full bg-gradient-to-br from-cyan-400 to-purple-400"
-                                    animate={{
-                                      scale: [0.8, 1.4, 0.8],
-                                      opacity: [0.6, 1, 0.6],
-                                    }}
-                                    transition={{
-                                      duration: 1,
-                                      repeat: Infinity,
-                                      ease: "easeInOut"
-                                    }}
-                                  />
-                                </div>
-                                <p className="text-cyan-400 font-medium">Quantum Processing...</p>
-                              </motion.div>
-                            </div>
+                            <div className="absolute inset-0 bg-black/50 backdrop-blur-[1px] rounded-2xl z-10 transition-all duration-200" />
                           )}
                           
                           {/* Dynamic Fullscreen Media Layout */}
