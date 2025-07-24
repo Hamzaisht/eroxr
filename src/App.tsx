@@ -7,6 +7,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ToastProvider } from "@/hooks/use-toast";
+import { AuthProvider } from "@/contexts/AuthContext";
 import Landing from "@/pages/Landing";
 import Home from "@/pages/Home";
 import Login from "@/pages/Login";
@@ -28,8 +29,9 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <SessionContextProvider supabaseClient={supabase}>
-        <ToastProvider>
-          <TooltipProvider>
+        <AuthProvider>
+          <ToastProvider>
+            <TooltipProvider>
             <Router>
               <Routes>
                 <Route path="/" element={<Landing />} />
@@ -50,8 +52,9 @@ function App() {
               <Toaster />
             </Router>
             <Sonner />
-          </TooltipProvider>
-        </ToastProvider>
+            </TooltipProvider>
+          </ToastProvider>
+        </AuthProvider>
       </SessionContextProvider>
     </QueryClientProvider>
   );
