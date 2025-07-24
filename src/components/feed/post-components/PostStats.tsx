@@ -1,30 +1,35 @@
 
+import { useState } from "react";
 import { Heart, MessageCircle, Share2, Bookmark } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { CommentDialog } from "@/components/comments/CommentDialog";
 
 interface PostStatsProps {
+  postId: string;
+  postContent?: string;
   likesCount: number;
   commentsCount: number;
   sharesCount?: number;
   isLiked: boolean;
   isSaved: boolean;
   onLike: () => void;
-  onComment: () => void;
   onShare: () => void;
   onSave: () => void;
 }
 
 export const PostStats = ({
+  postId,
+  postContent,
   likesCount,
   commentsCount,
   sharesCount = 0,
   isLiked,
   isSaved,
   onLike,
-  onComment,
   onShare,
   onSave
 }: PostStatsProps) => {
+  const [showComments, setShowComments] = useState(false);
   return (
     <div className="flex items-center justify-between p-4 border-t border-gray-100">
       <div className="flex items-center gap-4">
@@ -40,7 +45,7 @@ export const PostStats = ({
         <Button
           variant="ghost"
           size="sm"
-          onClick={onComment}
+          onClick={() => setShowComments(true)}
           className="flex items-center gap-2 text-gray-600"
         >
           <MessageCircle className="h-5 w-5" />
@@ -66,6 +71,13 @@ export const PostStats = ({
       >
         <Bookmark className={`h-5 w-5 ${isSaved ? 'fill-current' : ''}`} />
       </Button>
+
+      <CommentDialog
+        open={showComments}
+        onOpenChange={setShowComments}
+        postId={postId}
+        postContent={postContent}
+      />
     </div>
   );
 };

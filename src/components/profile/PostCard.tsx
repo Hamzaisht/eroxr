@@ -6,6 +6,7 @@ import { UniversalMedia } from "@/components/media/UniversalMedia";
 import { MediaWatermark } from "@/components/media/MediaWatermark";
 import { format, formatDistanceToNow } from "date-fns";
 import { Button } from "@/components/ui/button";
+import { CommentDialog } from "@/components/comments/CommentDialog";
 
 interface Creator {
   id: string;
@@ -42,6 +43,7 @@ interface PostCardProps {
 export const PostCard = ({ post, isOwnProfile }: PostCardProps) => {
   const [isLiked, setIsLiked] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
+  const [showComments, setShowComments] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(true);
   const [showFullContent, setShowFullContent] = useState(false);
@@ -234,6 +236,7 @@ export const PostCard = ({ post, isOwnProfile }: PostCardProps) => {
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.9 }}
               className="flex items-center gap-2 text-gray-400 hover:text-cyan-400 transition-colors"
+              onClick={() => setShowComments(true)}
             >
               <MessageCircle className="w-6 h-6" />
               <span className="text-sm font-bold">{post.comments_count.toLocaleString()}</span>
@@ -289,6 +292,13 @@ export const PostCard = ({ post, isOwnProfile }: PostCardProps) => {
           </div>
         </div>
       )}
+      
+      <CommentDialog
+        open={showComments}
+        onOpenChange={setShowComments}
+        postId={post.id}
+        postContent={post.content}
+      />
     </motion.div>
   );
 };

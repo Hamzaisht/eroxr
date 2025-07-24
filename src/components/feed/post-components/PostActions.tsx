@@ -9,26 +9,30 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { CommentDialog } from "@/components/comments/CommentDialog";
 
 interface PostActionsProps {
+  postId: string;
+  postContent?: string;
   hasLiked: boolean;
   likesCount: number;
   commentsCount: number;
   onLike: () => void;
-  onComment: () => void;
   onShare: () => void;
 }
 
 export const PostActions = ({
+  postId,
+  postContent,
   hasLiked,
   likesCount,
   commentsCount,
   onLike,
-  onComment,
   onShare,
 }: PostActionsProps) => {
   const [isLiking, setIsLiking] = useState(false);
   const [isSharing, setIsSharing] = useState(false);
+  const [showComments, setShowComments] = useState(false);
 
   const handleLike = async () => {
     try {
@@ -81,7 +85,7 @@ export const PostActions = ({
               variant="ghost"
               size="sm"
               className="flex items-center gap-2 hover:bg-luxury-primary/10"
-              onClick={onComment}
+              onClick={() => setShowComments(true)}
             >
               <MessageCircle className="h-5 w-5" />
               <span className="text-luxury-neutral/80">{commentsCount || 0}</span>
@@ -120,6 +124,13 @@ export const PostActions = ({
           </TooltipContent>
         </Tooltip>
       </div>
+
+      <CommentDialog
+        open={showComments}
+        onOpenChange={setShowComments}
+        postId={postId}
+        postContent={postContent}
+      />
     </TooltipProvider>
   );
 };

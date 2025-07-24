@@ -29,6 +29,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { CommentDialog } from "@/components/comments/CommentDialog";
 
 interface Creator {
   id: string;
@@ -84,6 +85,7 @@ export const EnhancedPostCard = ({
   const [likesCount, setLikesCount] = useState(post.likes_count || 0);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [showComments, setShowComments] = useState(false);
   const navigate = useNavigate();
 
   // Removed console logging to prevent re-render issues
@@ -257,6 +259,7 @@ export const EnhancedPostCard = ({
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.9 }}
                 className="flex items-center space-x-2 text-luxury-muted hover:text-luxury-primary transition-colors duration-300"
+                onClick={() => setShowComments(true)}
               >
                 <MessageCircle className="h-5 w-5" />
                 <span className="text-sm font-medium">{post.comments_count || 0}</span>
@@ -313,6 +316,14 @@ export const EnhancedPostCard = ({
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
+
+        {/* Comment Dialog */}
+        <CommentDialog
+          open={showComments}
+          onOpenChange={setShowComments}
+          postId={post.id}
+          postContent={post.content}
+        />
       </motion.div>
     </AnimatePresence>
   );

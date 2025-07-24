@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { motion } from 'framer-motion';
 import { Crown, Heart, Eye, MessageCircle, Share2 } from 'lucide-react';
+import { CommentDialog } from '@/components/comments/CommentDialog';
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
@@ -18,6 +19,8 @@ export const ProfilePosts = ({ profileId }: ProfilePostsProps) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [likedPosts, setLikedPosts] = useState<Set<string>>(new Set());
+  const [showComments, setShowComments] = useState<string | null>(null);
+  const [selectedPost, setSelectedPost] = useState<any>(null);
 
   const { data: posts, isLoading } = useQuery({
     queryKey: ['profile-posts', profileId],
@@ -239,10 +242,16 @@ export const ProfilePosts = ({ profileId }: ProfilePostsProps) => {
                   <Heart className={`w-4 h-4 mr-1 ${likedPosts.has(post.id) ? 'fill-current' : ''}`} />
                 </Button>
                 
-                <div className="flex items-center gap-1 text-slate-400">
+                <button 
+                  className="flex items-center gap-1 text-slate-400 hover:text-cyan-400 transition-colors cursor-pointer"
+                  onClick={() => {
+                    setSelectedPost(post);
+                    setShowComments(post.id);
+                  }}
+                >
                   <MessageCircle className="w-4 h-4" />
                   <span>{post.comments_count || 0}</span>
-                </div>
+                </button>
                 
               </div>
               
@@ -272,6 +281,21 @@ export const ProfilePosts = ({ profileId }: ProfilePostsProps) => {
           </div>
         </motion.div>
       ))}
+
+      {/* Comment Dialog */}
+      {selectedPost && (
+        <CommentDialog
+          open={!!showComments}
+          onOpenChange={(open) => {
+            if (!open) {
+              setShowComments(null);
+              setSelectedPost(null);
+            }
+          }}
+          postId={showComments || ""}
+          postContent={selectedPost.content}
+        />
+      )}
     </div>
   );
 };
