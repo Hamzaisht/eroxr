@@ -1,8 +1,19 @@
 import React from 'react';
-import { Navigate } from 'react-router-dom';
+import { Navigate, Routes, Route } from 'react-router-dom';
 import { useAdminSession } from '@/contexts/AdminSessionContext';
 import { GodmodeLayout } from '@/components/godmode/GodmodeLayout';
 import { LoadingScreen } from '@/components/layout/LoadingScreen';
+import { GodmodeDashboard } from '@/components/godmode/dashboard/GodmodeDashboard';
+import { GodmodeUsers } from '@/components/godmode/users/GodmodeUsers';
+import { GodmodeContent } from '@/components/godmode/content/GodmodeContent';
+import { GodmodeMessages } from '@/components/godmode/messages/GodmodeMessages';
+import { GodmodeStreams } from '@/components/godmode/streams/GodmodeStreams';
+import { GodmodeVerification } from '@/components/godmode/verification/GodmodeVerification';
+import { GodmodePayouts } from '@/components/godmode/payouts/GodmodePayouts';
+import { GodmodeFlagged } from '@/components/godmode/flagged/GodmodeFlagged';
+import { GodmodeSearch } from '@/components/godmode/search/GodmodeSearch';
+import { GodmodeSettings } from '@/components/godmode/settings/GodmodeSettings';
+import { GodmodeLogs } from '@/components/godmode/logs/GodmodeLogs';
 
 export const Godmode: React.FC = () => {
   console.log('🚀 GODMODE COMPONENT LOADED');
@@ -21,5 +32,21 @@ export const Godmode: React.FC = () => {
   }
 
   console.log('🎯 Godmode: Admin confirmed (or forced), showing layout');
-  return <GodmodeLayout />;
+  return (
+    <Routes>
+      <Route path="/" element={<GodmodeLayout />}>
+        <Route index element={<GodmodeDashboard />} />
+        <Route path="users" element={<GodmodeUsers />} />
+        <Route path="content" element={<GodmodeContent />} />
+        <Route path="messages" element={<GodmodeMessages />} />
+        <Route path="streams" element={<GodmodeStreams />} />
+        <Route path="verification" element={<GodmodeVerification />} />
+        <Route path="payouts" element={<GodmodePayouts />} />
+        <Route path="flagged" element={<GodmodeFlagged />} />
+        <Route path="search" element={<GodmodeSearch />} />
+        <Route path="logs" element={<GodmodeLogs />} />
+        <Route path="settings" element={<GodmodeSettings />} />
+      </Route>
+    </Routes>
+  );
 };
