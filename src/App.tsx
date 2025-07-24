@@ -75,7 +75,7 @@ function App() {
                 <Route path="/shorts" element={<Shorts />} />
                 <Route path="/shorts/upload" element={<ShortsUpload />} />
                 <Route path="/shorts/:id/edit" element={<ShortsEdit />} />
-                <Route path="/godmode" element={<Godmode />} />
+                <Route path="/godmode/*" element={<Godmode />} />
               </Routes>
               <Toaster />
             </Router>
