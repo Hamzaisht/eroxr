@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { ToastProvider } from "@/hooks/use-toast";
 import Landing from "@/pages/Landing";
 import Home from "@/pages/Home";
 import Login from "@/pages/Login";
@@ -27,28 +28,30 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <SessionContextProvider supabaseClient={supabase}>
-        <TooltipProvider>
-          <Router>
-            <Routes>
-              <Route path="/" element={<Landing />} />
-              <Route path="/home" element={<Home />} />
-              <Route path="/login" element={<Login />} />
-              <Route path="/register" element={<Register />} />
-              <Route path="/profile" element={<Profile />} />
-              <Route path="/messages" element={<Messages />} />
-              <Route path="/discover" element={<Discover />} />
-              <Route path="/creator-signup" element={<CreatorSignup />} />
-              <Route path="/features" element={<Features />} />
-              <Route path="/about" element={<About />} />
-              <Route path="/terms" element={<Terms />} />
-              <Route path="/privacy" element={<Privacy />} />
-              <Route path="/contact" element={<Contact />} />
-              <Route path="/support" element={<Support />} />
-            </Routes>
-          </Router>
-          <Toaster />
-          <Sonner />
-        </TooltipProvider>
+        <ToastProvider>
+          <TooltipProvider>
+            <Router>
+              <Routes>
+                <Route path="/" element={<Landing />} />
+                <Route path="/home" element={<Home />} />
+                <Route path="/login" element={<Login />} />
+                <Route path="/register" element={<Register />} />
+                <Route path="/profile" element={<Profile />} />
+                <Route path="/messages" element={<Messages />} />
+                <Route path="/discover" element={<Discover />} />
+                <Route path="/creator-signup" element={<CreatorSignup />} />
+                <Route path="/features" element={<Features />} />
+                <Route path="/about" element={<About />} />
+                <Route path="/terms" element={<Terms />} />
+                <Route path="/privacy" element={<Privacy />} />
+                <Route path="/contact" element={<Contact />} />
+                <Route path="/support" element={<Support />} />
+              </Routes>
+            </Router>
+            <Toaster />
+            <Sonner />
+          </TooltipProvider>
+        </ToastProvider>
       </SessionContextProvider>
     </QueryClientProvider>
   );
