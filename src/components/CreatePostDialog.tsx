@@ -22,11 +22,12 @@ interface CreatePostDialogProps {
 export const CreatePostDialog = ({ 
   open, 
   onOpenChange,
-  selectedFiles,
+  selectedFiles: externalSelectedFiles,
   onFileSelect 
 }: CreatePostDialogProps) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { uploadMultiple } = useMediaUpload();
+  const [selectedFiles, setSelectedFiles] = useState<FileList | null>(externalSelectedFiles || null);
   const {
     content,
     setContent,
@@ -67,8 +68,11 @@ export const CreatePostDialog = ({
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
-    if (files && onFileSelect) {
-      onFileSelect(files);
+    if (files) {
+      setSelectedFiles(files);
+      if (onFileSelect) {
+        onFileSelect(files);
+      }
       // Trigger upload start when files are selected
       handleMediaUploadStart();
     }
