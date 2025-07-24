@@ -8,6 +8,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ToastProvider } from "@/hooks/use-toast";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { AdminSessionProvider } from "@/contexts/AdminSessionContext";
 import Landing from "@/pages/Landing";
 import Home from "@/pages/Home";
 import Login from "@/pages/Login";
@@ -42,7 +43,8 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <SessionContextProvider supabaseClient={supabase}>
         <AuthProvider>
-          <ToastProvider>
+          <AdminSessionProvider>
+            <ToastProvider>
             <TooltipProvider>
             <Router>
               <Routes>
@@ -80,6 +82,7 @@ function App() {
             <Sonner />
             </TooltipProvider>
           </ToastProvider>
+          </AdminSessionProvider>
         </AuthProvider>
       </SessionContextProvider>
     </QueryClientProvider>
