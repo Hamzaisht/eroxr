@@ -73,6 +73,7 @@ export default function DatingMainContent(props: any) {
   const [distanceRange, setDistanceRange] = useState<[number, number]>([0, 100]);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [showCreateAdDialog, setShowCreateAdDialog] = useState(false);
+  const [isRefetching, setIsRefetching] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -91,8 +92,14 @@ export default function DatingMainContent(props: any) {
         },
         (payload) => {
           console.log('Real-time update:', payload);
-          // Refetch data immediately when any change occurs
-          fetchDatingAds();
+          // Prevent duplicate refetches
+          if (!isRefetching) {
+            setIsRefetching(true);
+            setTimeout(() => {
+              fetchDatingAds();
+              setIsRefetching(false);
+            }, 500);
+          }
         }
       )
       .subscribe();
@@ -100,7 +107,7 @@ export default function DatingMainContent(props: any) {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [selectedTab, isFilterApplied]);
+  }, [selectedTab, isFilterApplied, isRefetching]);
 
   useEffect(() => {
     fetchUserProfile();
@@ -123,34 +130,48 @@ export default function DatingMainContent(props: any) {
       // Transform and deduplicate the data
       const uniqueAds = new Map();
       
-      const transformedAds = ads?.map(ad => ({
-        id: ad.id,
-        user_id: ad.user_id,
-        title: ad.title,
-        description: ad.description,
-        username: ad.title || `User${ad.user_id?.slice(-4)}`,
-        avatarUrl: ad.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(ad.title || 'User')}&backgroundColor=6366f1`,
-        videoUrl: ad.video_url,
-        video_url: ad.video_url,
-        avatar_url: ad.avatar_url,
-        isVerified: ad.is_verified || false,
-        isPremium: ad.is_premium || false,
-        is_verified: ad.is_verified || false,
-        is_premium: ad.is_premium || false,
-        views: ad.view_count || 0,
-        view_count: ad.view_count || 0,
-        likes_count: ad.likes_count || 0, // Include likes count from database
-        tags: ad.tags || [],
-        location: ad.city,
-        age: ad.age_range ? parseInt(ad.age_range.split(',')[0].replace('[', '')) : 25,
-        gender: ad.user_type,
-        seeking: ad.looking_for || [],
-        looking_for: ad.looking_for || [],
-        country: ad.country,
-        city: ad.city,
-        created_at: ad.created_at,
-        last_active: ad.last_active,
-      })) || [];
+      // Get unique usernames for each ad  
+      const userProfiles = new Map();
+      ads?.forEach(ad => {
+        if (!userProfiles.has(ad.user_id)) {
+          userProfiles.set(ad.user_id, {
+            username: `${ad.title?.split(' ')[0] || 'User'}${ad.user_id?.slice(-3)}`,
+            avatar: ad.avatar_url
+          });
+        }
+      });
+
+      const transformedAds = ads?.map(ad => {
+        const userProfile = userProfiles.get(ad.user_id);
+        return {
+          id: ad.id,
+          user_id: ad.user_id,
+          title: ad.title,
+          description: ad.description,
+          username: userProfile?.username || `User${ad.user_id?.slice(-4)}`,
+          avatarUrl: ad.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(userProfile?.username || 'User')}&backgroundColor=6366f1`,
+          videoUrl: ad.video_url,
+          video_url: ad.video_url,
+          avatar_url: ad.avatar_url,
+          isVerified: ad.is_verified || false,
+          isPremium: ad.is_premium || false,
+          is_verified: ad.is_verified || false,
+          is_premium: ad.is_premium || false,
+          views: ad.view_count || 0,
+          view_count: ad.view_count || 0,
+          likes_count: ad.likes_count || 0,
+          tags: ad.tags || [],
+          location: ad.city,
+          age: ad.age_range ? parseInt(ad.age_range.split(',')[0].replace('[', '')) : 25,
+          gender: ad.user_type,
+          seeking: ad.looking_for || [],
+          looking_for: ad.looking_for || [],
+          country: ad.country,
+          city: ad.city,
+          created_at: ad.created_at,
+          last_active: ad.last_active,
+        };
+      }) || [];
 
       // Deduplicate by id
       transformedAds.forEach(ad => {
@@ -389,14 +410,27 @@ export default function DatingMainContent(props: any) {
       {/* Floating Action Button */}
       <FloatingActionButton 
         onCreateAd={handleCreateAd}
-        onQuickMatch={() => setSelectedTab("quick-match")}
-        onMessages={() => navigate("/messages")}
+        onQuickMatch={() => {
+          setSelectedTab("quick-match");
+          toast({
+            title: "Quick Match",
+            description: "Finding compatible profiles for you!",
+          });
+        }}
+        onMessages={() => {
+          navigate("/messages");
+          toast({
+            title: "Messages",
+            description: "Opening your conversations",
+          });
+        }}
         onSearch={() => {
           toast({
             title: "Search Active",
             description: "Use the filters to search for profiles",
           });
           setShowFilters(true);
+          setIsFilterCollapsed(false);
         }}
       />
     </div>

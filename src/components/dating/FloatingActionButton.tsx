@@ -71,7 +71,15 @@ export const FloatingActionButton = ({
         whileTap={{ scale: 0.9 }}
       >
         <Button
-          onClick={() => setIsExpanded(!isExpanded)}
+          onClick={() => {
+            if (isExpanded) {
+              // If expanded, clicking main button creates ad
+              onCreateAd();
+            } else {
+              // If not expanded, toggle the menu
+              setIsExpanded(true);
+            }
+          }}
           className={`
             h-16 w-16 rounded-full futuristic-container
             bg-gradient-to-r from-cyan-500 to-purple-600
