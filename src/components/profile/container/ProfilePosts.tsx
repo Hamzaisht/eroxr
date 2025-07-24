@@ -244,10 +244,6 @@ export const ProfilePosts = ({ profileId }: ProfilePostsProps) => {
                   <span>{post.comments_count || 0}</span>
                 </div>
                 
-                <div className="flex items-center gap-1 text-slate-400">
-                  <Eye className="w-4 h-4" />
-                  <span>{post.view_count || 0}</span>
-                </div>
               </div>
               
               <span className="text-xs">

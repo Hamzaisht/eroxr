@@ -239,10 +239,6 @@ export const PostCard = ({ post, isOwnProfile }: PostCardProps) => {
               <span className="text-sm font-bold">{post.comments_count.toLocaleString()}</span>
             </motion.button>
 
-            <div className="flex items-center gap-2 text-gray-400">
-              <Eye className="w-6 h-6" />
-              <span className="text-sm font-bold">{post.view_count.toLocaleString()}</span>
-            </div>
           </div>
 
           <div className="flex items-center gap-2">

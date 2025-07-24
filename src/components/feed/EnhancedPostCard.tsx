@@ -262,12 +262,6 @@ export const EnhancedPostCard = ({
                 <span className="text-sm font-medium">{post.comments_count || 0}</span>
               </motion.button>
 
-              {post.view_count && (
-                <div className="flex items-center space-x-2 text-luxury-muted">
-                  <Eye className="h-4 w-4" />
-                  <span className="text-sm">{post.view_count}</span>
-                </div>
-              )}
             </div>
 
             <motion.button
