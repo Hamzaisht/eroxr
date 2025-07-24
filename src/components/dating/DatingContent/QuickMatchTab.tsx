@@ -24,7 +24,7 @@ export function QuickMatchTab({
   const hasAds = ads && ads.length > 0;
   return hasAds || isLoading ? (
     <>
-      {session && userProfile && <ProfileCompletionPrompt userProfile={userProfile} />}
+      {session && userProfile && <ProfileCompletionPrompt />}
       <QuickMatch ads={ads || []} userProfile={userProfile} />
     </>
   ) : (

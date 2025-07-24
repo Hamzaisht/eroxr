@@ -1,5 +1,6 @@
 
 import { useState, useEffect, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import { EnhancedFiltersPanel } from "../components/dating/EnhancedFiltersPanel";
 import { DatingContent } from "../components/dating/DatingContent";
 import { EnhancedDatingHeader } from "../components/dating/EnhancedDatingHeader";
@@ -73,6 +74,7 @@ export default function DatingMainContent(props: any) {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [showCreateAdDialog, setShowCreateAdDialog] = useState(false);
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchDatingAds();
@@ -388,8 +390,14 @@ export default function DatingMainContent(props: any) {
       <FloatingActionButton 
         onCreateAd={handleCreateAd}
         onQuickMatch={() => setSelectedTab("quick-match")}
-        onMessages={() => console.log("Messages")}
-        onSearch={() => console.log("Search")}
+        onMessages={() => navigate("/messages")}
+        onSearch={() => {
+          toast({
+            title: "Search Active",
+            description: "Use the filters to search for profiles",
+          });
+          setShowFilters(true);
+        }}
       />
     </div>
   );

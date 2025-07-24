@@ -1,44 +1,48 @@
-
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Progress } from "@/components/ui/progress";
-import { Button } from "@/components/ui/button";
-import { Info, Check, ChevronRight } from "lucide-react";
 import { useSession } from "@supabase/auth-helpers-react";
-import { useToast } from "@/hooks/use-toast";
+import { useCurrentUser } from "@/hooks/useCurrentUser";
+import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
+import { Info, Check, ChevronRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { DatingAd } from "../ads/types/dating";
+import { useToast } from "@/hooks/use-toast";
 
-interface ProfileCompletionPromptProps {
-  userProfile: DatingAd | null;
-}
-
-export const ProfileCompletionPrompt = ({ userProfile }: ProfileCompletionPromptProps) => {
+export const ProfileCompletionPrompt = () => {
   const [isDismissed, setIsDismissed] = useState(false);
   const session = useSession();
-  const { toast } = useToast();
+  const { profile: userProfile } = useCurrentUser();
   const navigate = useNavigate();
+  const { toast } = useToast();
   
-  if (!session || !userProfile || isDismissed || (userProfile.profile_completion_score || 0) >= 90) {
+  if (!session || !userProfile || isDismissed) {
     return null;
   }
   
-  const score = userProfile.profile_completion_score || 0;
-  
-  // Enhanced profile completion items with more granular checks
+  // Calculate profile completion based on actual user data
   const completionItems: {label: string; completed: boolean; points: number}[] = [
     { label: "Profile photo", completed: !!userProfile.avatar_url, points: 15 },
-    { label: "Video introduction", completed: !!userProfile.video_url, points: 20 },
-    { label: "About me", completed: !!userProfile.about_me && (userProfile.about_me?.length || 0) > 50, points: 15 },
-    { label: "Interests", completed: !!(userProfile.interests && userProfile.interests.length >= 3), points: 10 },
-    { label: "Location details", completed: !!userProfile.city && !!userProfile.country, points: 10 },
-    { label: "What I'm seeking", completed: !!userProfile.seeking_description && (userProfile.seeking_description?.length || 0) > 30, points: 15 },
-    { label: "Height information", completed: !!userProfile.height, points: 5 },
-    { label: "Body type", completed: !!userProfile.body_type, points: 5 },
-    { label: "Lifestyle info", completed: !!userProfile.smoking_status && !!userProfile.drinking_status, points: 5 }
+    { label: "Banner image/video", completed: !!userProfile.banner_url, points: 10 },
+    { label: "Bio description", completed: !!userProfile.bio && userProfile.bio.length > 20, points: 15 },
+    { label: "Interests", completed: !!(userProfile.interests && userProfile.interests.length >= 2), points: 10 },
+    { label: "Location details", completed: !!userProfile.location, points: 10 },
+    { label: "Username", completed: !!userProfile.username, points: 10 },
+    { label: "Profile verified", completed: !!userProfile.is_verified, points: 15 },
+    { label: "Profile visibility", completed: userProfile.profile_visibility === true, points: 5 },
+    { label: "Profile settings configured", completed: userProfile.profile_visibility === true, points: 10 }
   ];
   
+  const completedItems = completionItems.filter(item => item.completed);
   const incompleteItems = completionItems.filter(item => !item.completed);
+  const totalPoints = completionItems.reduce((total, item) => total + item.points, 0);
+  const completedPoints = completedItems.reduce((total, item) => total + item.points, 0);
+  const score = Math.round((completedPoints / totalPoints) * 100);
+  
+  // Only show if profile is less than 80% complete
+  if (score >= 80) {
+    return null;
+  }
+  
   const totalMissingPoints = incompleteItems.reduce((total, item) => total + item.points, 0);
   
   const handleEditProfile = () => {

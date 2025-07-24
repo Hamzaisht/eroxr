@@ -51,6 +51,7 @@ function App() {
                 <Route path="/auth" element={<Login />} />
                 <Route path="/register" element={<Register />} />
                 <Route path="/profile" element={<Profile />} />
+                <Route path="/profile/edit" element={<Settings />} />
                 <Route path="/messages" element={<Messages />} />
                 <Route path="/discover" element={<Discover />} />
                 <Route path="/creator-signup" element={<CreatorSignup />} />

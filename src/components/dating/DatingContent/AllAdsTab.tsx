@@ -37,7 +37,7 @@ export function AllAdsTab({
   return (
     <>
       {session && userProfile && (
-        <ProfileCompletionPrompt userProfile={userProfile} />
+        <ProfileCompletionPrompt />
       )}
       {!isLoading && allAds && allAds.length > 0 && (
         <RecentlyActive 
