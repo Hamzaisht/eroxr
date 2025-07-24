@@ -33,6 +33,7 @@ import Eros from "@/pages/Eros";
 import Shorts from "@/pages/Shorts";
 import ShortsUpload from "@/pages/ShortsUpload";
 import ShortsEdit from "@/pages/ShortsEdit";
+import Admin from "@/pages/Admin";
 
 const queryClient = new QueryClient();
 
@@ -72,6 +73,7 @@ function App() {
                 <Route path="/shorts" element={<Shorts />} />
                 <Route path="/shorts/upload" element={<ShortsUpload />} />
                 <Route path="/shorts/:id/edit" element={<ShortsEdit />} />
+                <Route path="/admin" element={<Admin />} />
               </Routes>
               <Toaster />
             </Router>
