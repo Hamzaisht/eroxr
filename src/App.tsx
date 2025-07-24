@@ -28,8 +28,11 @@ import Subscription from "@/pages/Subscription";
 import Trending from "@/pages/Trending";
 import Notifications from "@/pages/Notifications";
 import Dating from "@/pages/Dating";
+import DatingFavorites from "@/pages/DatingFavorites";
 import Eros from "@/pages/Eros";
 import Shorts from "@/pages/Shorts";
+import ShortsUpload from "@/pages/ShortsUpload";
+import ShortsEdit from "@/pages/ShortsEdit";
 
 const queryClient = new QueryClient();
 
@@ -63,8 +66,11 @@ function App() {
                 <Route path="/trending" element={<Trending />} />
                 <Route path="/notifications" element={<Notifications />} />
                 <Route path="/dating" element={<Dating />} />
+                <Route path="/dating/favorites" element={<DatingFavorites />} />
                 <Route path="/eros" element={<Eros />} />
                 <Route path="/shorts" element={<Shorts />} />
+                <Route path="/shorts/upload" element={<ShortsUpload />} />
+                <Route path="/shorts/:id/edit" element={<ShortsEdit />} />
               </Routes>
               <Toaster />
             </Router>
