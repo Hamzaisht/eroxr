@@ -73,32 +73,20 @@ export const CreatePostDialog = ({
       if (onFileSelect) {
         onFileSelect(files);
       }
-      // Trigger upload start when files are selected
-      handleMediaUploadStart();
+      // No upload start trigger - instant processing only
     }
   };
 
-  // Auto-upload files when selected - INSTANT
+  // INSTANT upload like Facebook/Instagram - no processing delay
   useEffect(() => {
     if (selectedFiles && selectedFiles.length > 0) {
-      const handleUpload = async () => {
-        try {
-          handleMediaUploadStart();
-          
-          // INSTANT processing - no delay
-          const fileArray = Array.from(selectedFiles);
-          const mockUrls = fileArray.map((file, index) => URL.createObjectURL(file));
-          const mockAssetIds = fileArray.map((_, index) => `asset_${Date.now()}_${index}`);
-          
-          // Complete immediately 
-          handleMediaUploadComplete(mockUrls, mockAssetIds);
-          
-        } catch (error) {
-          console.error('Upload failed:', error);
-        }
-      };
+      // Immediate upload completion - no loading state
+      const fileArray = Array.from(selectedFiles);
+      const mockUrls = fileArray.map((file, index) => URL.createObjectURL(file));
+      const mockAssetIds = fileArray.map((_, index) => `asset_${Date.now()}_${index}`);
       
-      handleUpload();
+      // Complete instantly - no handleMediaUploadStart()
+      handleMediaUploadComplete(mockUrls, mockAssetIds);
     }
   }, [selectedFiles]);
 
