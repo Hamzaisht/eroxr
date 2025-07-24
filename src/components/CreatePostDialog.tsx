@@ -378,97 +378,240 @@ export const CreatePostDialog = ({
                             </div>
                           )}
                           
-                          {/* Adaptive Fullscreen Media Preview */}
+                          {/* Dynamic Fullscreen Media Layout */}
                           {!uploadInProgress && (
-                            <div className="flex-1 p-0">
-                              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-0 h-full">
-                                {Array.from(selectedFiles).map((file, index) => (
-                                  <motion.div
-                                    key={`${file.name}-${index}`}
-                                    initial={{ opacity: 0, scale: 0.95 }}
-                                    animate={{ opacity: 1, scale: 1 }}
-                                    transition={{ duration: 0.4, delay: index * 0.1 }}
-                                    className="relative overflow-hidden bg-black/10 group hover:bg-black/20 transition-all duration-300 min-h-[300px] first:rounded-tl-2xl last:rounded-tr-2xl"
-                                  >
-                                    {file.type.startsWith('image/') ? (
-                                      <div className="w-full h-full relative">
-                                        <img
-                                          src={URL.createObjectURL(file)}
-                                          alt={`Preview ${index + 1}`}
-                                          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                                        />
-                                        {/* Refined overlay for images */}
-                                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                                      </div>
-                                    ) : file.type.startsWith('video/') ? (
-                                      <div className="w-full h-full relative">
-                                        <video
-                                          src={URL.createObjectURL(file)}
-                                          className="w-full h-full object-cover"
-                                          muted
-                                          loop
-                                          autoPlay
-                                          playsInline
-                                        />
-                                        {/* Elegant video indicator */}
-                                        <div className="absolute top-4 right-4 bg-purple-500/90 backdrop-blur-sm rounded-full p-2">
-                                          <Video className="h-4 w-4 text-white" />
-                                        </div>
-                                        {/* Refined loop indicator */}
-                                        <div className="absolute bottom-4 left-4 bg-black/70 backdrop-blur-sm rounded-lg px-3 py-1.5">
-                                          <span className="text-white/90 text-sm font-medium">∞ Auto Loop</span>
-                                        </div>
-                                      </div>
-                                    ) : (
-                                      <div className="w-full h-full bg-gradient-to-br from-pink-500/20 to-purple-500/20 flex items-center justify-center">
-                                        <Image className="h-16 w-16 text-pink-400 opacity-60" />
-                                      </div>
+                            <div className="flex-1 h-full">
+                              {selectedFiles.length === 1 ? (
+                                /* Single media: Large preview + small add more button */
+                                <div className="grid grid-cols-4 gap-2 h-full">
+                                  <div className="col-span-3">
+                                    {(() => {
+                                      const file = selectedFiles[0];
+                                      return (
+                                        <motion.div
+                                          initial={{ opacity: 0, scale: 0.95 }}
+                                          animate={{ opacity: 1, scale: 1 }}
+                                          transition={{ duration: 0.4 }}
+                                          className="relative w-full h-full overflow-hidden bg-black/10 group hover:bg-black/20 transition-all duration-300 rounded-l-2xl"
+                                        >
+                                          {file.type.startsWith('image/') ? (
+                                            <div className="w-full h-full relative">
+                                              <img
+                                                src={URL.createObjectURL(file)}
+                                                alt="Main preview"
+                                                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                                              />
+                                              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                                            </div>
+                                          ) : file.type.startsWith('video/') ? (
+                                            <div className="w-full h-full relative">
+                                              <video
+                                                src={URL.createObjectURL(file)}
+                                                className="w-full h-full object-cover"
+                                                muted
+                                                loop
+                                                autoPlay
+                                                playsInline
+                                              />
+                                              <div className="absolute top-4 right-4 bg-purple-500/90 backdrop-blur-sm rounded-full p-2">
+                                                <Video className="h-5 w-5 text-white" />
+                                              </div>
+                                              <div className="absolute bottom-4 left-4 bg-black/70 backdrop-blur-sm rounded-lg px-3 py-2">
+                                                <span className="text-white/90 text-sm font-medium">∞ Auto Loop</span>
+                                              </div>
+                                            </div>
+                                          ) : (
+                                            <div className="w-full h-full bg-gradient-to-br from-pink-500/20 to-purple-500/20 flex items-center justify-center">
+                                              <Image className="h-20 w-20 text-pink-400 opacity-60" />
+                                            </div>
+                                          )}
+                                          
+                                          {/* File info overlay */}
+                                          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent p-4 transform translate-y-full group-hover:translate-y-0 transition-transform duration-300">
+                                            <p className="text-white font-semibold truncate">{file.name}</p>
+                                            <div className="flex items-center justify-between mt-1">
+                                              <p className="text-white/70 text-sm">{(file.size / 1024 / 1024).toFixed(1)} MB</p>
+                                              <span className="text-cyan-400 text-xs px-2 py-1 bg-cyan-400/20 rounded-full">
+                                                {file.type.startsWith('video/') ? 'Video' : 'Image'}
+                                              </span>
+                                            </div>
+                                          </div>
+                                        </motion.div>
+                                      );
+                                    })()}
+                                  </div>
+                                  
+                                  {/* Small add more button */}
+                                  <div className="col-span-1">
+                                    <motion.div 
+                                      initial={{ opacity: 0, x: 20 }}
+                                      animate={{ opacity: 1, x: 0 }}
+                                      transition={{ duration: 0.4, delay: 0.2 }}
+                                      className="w-full h-full bg-gradient-to-br from-white/5 to-white/10 backdrop-blur-sm text-center cursor-pointer hover:from-cyan-400/10 hover:to-purple-400/10 transition-all duration-300 group flex flex-col items-center justify-center border border-white/10 hover:border-cyan-400/30 rounded-r-2xl"
+                                      onClick={handleMediaSelect}
+                                      whileHover={{ scale: 1.02 }}
+                                      whileTap={{ scale: 0.98 }}
+                                    >
+                                      <motion.div
+                                        animate={{ rotate: [0, 180, 360] }}
+                                        transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
+                                        className="group-hover:text-cyan-400 transition-colors duration-300 mb-3"
+                                      >
+                                        <Upload className="h-8 w-8" />
+                                      </motion.div>
+                                      <p className="text-white/70 text-sm font-medium group-hover:text-white/90 transition-colors duration-300 text-center px-2">
+                                        Add More
+                                      </p>
+                                    </motion.div>
+                                  </div>
+                                </div>
+                              ) : selectedFiles.length >= 2 ? (
+                                /* Multiple media: First large, others smaller */
+                                <div className="grid grid-cols-2 gap-2 h-full">
+                                  {/* First media - large */}
+                                  <div className="row-span-2">
+                                    {(() => {
+                                      const file = selectedFiles[0];
+                                      return (
+                                        <motion.div
+                                          initial={{ opacity: 0, scale: 0.95 }}
+                                          animate={{ opacity: 1, scale: 1 }}
+                                          transition={{ duration: 0.4 }}
+                                          className="relative w-full h-full overflow-hidden bg-black/10 group hover:bg-black/20 transition-all duration-300 rounded-l-2xl"
+                                        >
+                                          {file.type.startsWith('image/') ? (
+                                            <div className="w-full h-full relative">
+                                              <img
+                                                src={URL.createObjectURL(file)}
+                                                alt="Main preview"
+                                                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                                              />
+                                              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                                            </div>
+                                          ) : file.type.startsWith('video/') ? (
+                                            <div className="w-full h-full relative">
+                                              <video
+                                                src={URL.createObjectURL(file)}
+                                                className="w-full h-full object-cover"
+                                                muted
+                                                loop
+                                                autoPlay
+                                                playsInline
+                                              />
+                                              <div className="absolute top-4 right-4 bg-purple-500/90 backdrop-blur-sm rounded-full p-2">
+                                                <Video className="h-5 w-5 text-white" />
+                                              </div>
+                                              <div className="absolute bottom-4 left-4 bg-black/70 backdrop-blur-sm rounded-lg px-3 py-2">
+                                                <span className="text-white/90 text-sm font-medium">∞ Auto Loop</span>
+                                              </div>
+                                            </div>
+                                          ) : (
+                                            <div className="w-full h-full bg-gradient-to-br from-pink-500/20 to-purple-500/20 flex items-center justify-center">
+                                              <Image className="h-16 w-16 text-pink-400 opacity-60" />
+                                            </div>
+                                          )}
+                                          
+                                          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent p-3 transform translate-y-full group-hover:translate-y-0 transition-transform duration-300">
+                                            <p className="text-white font-semibold truncate text-sm">{file.name}</p>
+                                            <p className="text-white/70 text-xs">{(file.size / 1024 / 1024).toFixed(1)} MB</p>
+                                          </div>
+                                        </motion.div>
+                                      );
+                                    })()}
+                                  </div>
+                                  
+                                  {/* Right column - smaller media items */}
+                                  <div className="grid grid-rows-2 gap-2 h-full">
+                                    {/* Second media */}
+                                    {selectedFiles[1] && (
+                                      <motion.div
+                                        initial={{ opacity: 0, x: 20 }}
+                                        animate={{ opacity: 1, x: 0 }}
+                                        transition={{ duration: 0.4, delay: 0.1 }}
+                                        className="relative overflow-hidden bg-black/10 group hover:bg-black/20 transition-all duration-300 rounded-tr-2xl"
+                                      >
+                                        {selectedFiles[1].type.startsWith('image/') ? (
+                                          <img
+                                            src={URL.createObjectURL(selectedFiles[1])}
+                                            alt="Preview 2"
+                                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                                          />
+                                        ) : selectedFiles[1].type.startsWith('video/') ? (
+                                          <div className="w-full h-full relative">
+                                            <video
+                                              src={URL.createObjectURL(selectedFiles[1])}
+                                              className="w-full h-full object-cover"
+                                              muted
+                                              loop
+                                              autoPlay
+                                              playsInline
+                                            />
+                                            <div className="absolute top-2 right-2 bg-purple-500/90 rounded-full p-1">
+                                              <Video className="h-3 w-3 text-white" />
+                                            </div>
+                                          </div>
+                                        ) : (
+                                          <div className="w-full h-full bg-gradient-to-br from-pink-500/20 to-purple-500/20 flex items-center justify-center">
+                                            <Image className="h-8 w-8 text-pink-400" />
+                                          </div>
+                                        )}
+                                      </motion.div>
                                     )}
                                     
-                                    {/* Refined file info overlay */}
-                                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent p-4 transform translate-y-full group-hover:translate-y-0 transition-transform duration-300">
-                                      <p className="text-white font-semibold truncate">{file.name}</p>
-                                      <div className="flex items-center justify-between mt-1">
-                                        <p className="text-white/70 text-sm">{(file.size / 1024 / 1024).toFixed(1)} MB</p>
-                                        <span className="text-cyan-400 text-xs px-2 py-1 bg-cyan-400/20 rounded-full">
-                                          {file.type.startsWith('video/') ? 'Video' : 'Image'}
-                                        </span>
-                                      </div>
-                                    </div>
-                                  </motion.div>
-                                ))}
-                                
-                                {/* Elegant Add More Media Card */}
-                                <motion.div 
-                                  initial={{ opacity: 0, scale: 0.95 }}
-                                  animate={{ opacity: 1, scale: 1 }}
-                                  transition={{ duration: 0.4, delay: selectedFiles.length * 0.1 }}
-                                  className="bg-gradient-to-br from-white/5 to-white/10 backdrop-blur-sm rounded-xl p-8 text-center cursor-pointer hover:from-cyan-400/10 hover:to-purple-400/10 transition-all duration-300 group min-h-[300px] flex flex-col items-center justify-center border border-white/10 hover:border-cyan-400/30"
-                                  onClick={handleMediaSelect}
-                                  whileHover={{ scale: 1.02 }}
-                                  whileTap={{ scale: 0.98 }}
-                                >
-                                  <motion.div
-                                    animate={{ 
-                                      y: [0, -5, 0],
-                                      rotate: [0, 10, -10, 0] 
-                                    }}
-                                    transition={{ 
-                                      y: { duration: 2, repeat: Infinity, ease: "easeInOut" },
-                                      rotate: { duration: 4, repeat: Infinity, ease: "easeInOut" }
-                                    }}
-                                    className="group-hover:text-cyan-400 transition-colors duration-300 mb-4"
-                                  >
-                                    <Upload className="h-12 w-12" />
-                                  </motion.div>
-                                  <p className="text-white/80 text-xl font-semibold group-hover:text-white transition-colors duration-300 mb-2">
-                                    Add More Media
-                                  </p>
-                                  <p className="text-white/50 text-sm">
-                                    Expand your cosmic creation
-                                  </p>
-                                </motion.div>
-                              </div>
+                                    {/* Third media or Add More button */}
+                                    {selectedFiles[2] ? (
+                                      <motion.div
+                                        initial={{ opacity: 0, x: 20 }}
+                                        animate={{ opacity: 1, x: 0 }}
+                                        transition={{ duration: 0.4, delay: 0.2 }}
+                                        className="relative overflow-hidden bg-black/10 group hover:bg-black/20 transition-all duration-300 rounded-br-2xl"
+                                      >
+                                        {selectedFiles[2].type.startsWith('image/') ? (
+                                          <img
+                                            src={URL.createObjectURL(selectedFiles[2])}
+                                            alt="Preview 3"
+                                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                                          />
+                                        ) : selectedFiles[2].type.startsWith('video/') ? (
+                                          <div className="w-full h-full relative">
+                                            <video
+                                              src={URL.createObjectURL(selectedFiles[2])}
+                                              className="w-full h-full object-cover"
+                                              muted
+                                              loop
+                                              autoPlay
+                                              playsInline
+                                            />
+                                            <div className="absolute top-2 right-2 bg-purple-500/90 rounded-full p-1">
+                                              <Video className="h-3 w-3 text-white" />
+                                            </div>
+                                          </div>
+                                        ) : (
+                                          <div className="w-full h-full bg-gradient-to-br from-pink-500/20 to-purple-500/20 flex items-center justify-center">
+                                            <Image className="h-8 w-8 text-pink-400" />
+                                          </div>
+                                        )}
+                                      </motion.div>
+                                    ) : (
+                                      /* Add More button when only 2 media */
+                                      <motion.div 
+                                        initial={{ opacity: 0, x: 20 }}
+                                        animate={{ opacity: 1, x: 0 }}
+                                        transition={{ duration: 0.4, delay: 0.2 }}
+                                        className="bg-gradient-to-br from-white/5 to-white/10 backdrop-blur-sm text-center cursor-pointer hover:from-cyan-400/10 hover:to-purple-400/10 transition-all duration-300 group flex flex-col items-center justify-center border border-white/10 hover:border-cyan-400/30 rounded-br-2xl"
+                                        onClick={handleMediaSelect}
+                                        whileHover={{ scale: 1.02 }}
+                                        whileTap={{ scale: 0.98 }}
+                                      >
+                                        <Upload className="h-6 w-6 group-hover:text-cyan-400 transition-colors duration-300 mb-2" />
+                                        <p className="text-white/70 text-xs font-medium group-hover:text-white/90 transition-colors duration-300">
+                                          Add More
+                                        </p>
+                                      </motion.div>
+                                    )}
+                                  </div>
+                                </div>
+                              ) : null}
                             </div>
                           )}
                         </div>
