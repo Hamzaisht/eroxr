@@ -324,9 +324,9 @@ export const CreatePostDialog = ({
                         </div>
                       </div>
 
-                      {/* Upload Drop Zone or Media Preview */}
+                      {/* Adaptive Neural Interface - Borderless when media is uploaded */}
                       {selectedFiles && selectedFiles.length > 0 ? (
-                        <div className="border-2 border-dashed border-cyan-400/40 rounded-xl bg-gradient-to-br from-cyan-400/5 to-purple-400/5 min-h-[400px] flex flex-col">
+                        <div className="rounded-2xl bg-gradient-to-br from-cyan-400/5 to-purple-400/5 min-h-[400px] flex flex-col bg-black/10 backdrop-blur-sm transition-all duration-500">
                           {/* Upload Animation - Minimal overlay */}
                           {uploadInProgress && (
                             <div className="absolute inset-4 bg-black/40 backdrop-blur-sm rounded-lg flex items-center justify-center z-10">
@@ -378,25 +378,27 @@ export const CreatePostDialog = ({
                             </div>
                           )}
                           
-                          {/* Fullscreen Media Preview Grid */}
+                          {/* Adaptive Fullscreen Media Preview */}
                           {!uploadInProgress && (
-                            <div className="flex-1 p-4">
-                              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 h-full">
+                            <div className="flex-1 p-0">
+                              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-0 h-full">
                                 {Array.from(selectedFiles).map((file, index) => (
                                   <motion.div
                                     key={`${file.name}-${index}`}
-                                    initial={{ opacity: 0, scale: 0.8, y: 20 }}
-                                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                                    initial={{ opacity: 0, scale: 0.95 }}
+                                    animate={{ opacity: 1, scale: 1 }}
                                     transition={{ duration: 0.4, delay: index * 0.1 }}
-                                    className="relative rounded-xl overflow-hidden bg-black/20 border border-white/10 group hover:border-cyan-400/40 transition-all duration-300 min-h-[200px]"
+                                    className="relative overflow-hidden bg-black/10 group hover:bg-black/20 transition-all duration-300 min-h-[300px] first:rounded-tl-2xl last:rounded-tr-2xl"
                                   >
                                     {file.type.startsWith('image/') ? (
-                                      <div className="w-full h-full">
+                                      <div className="w-full h-full relative">
                                         <img
                                           src={URL.createObjectURL(file)}
                                           alt={`Preview ${index + 1}`}
-                                          className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+                                          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                                         />
+                                        {/* Refined overlay for images */}
+                                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                                       </div>
                                     ) : file.type.startsWith('video/') ? (
                                       <div className="w-full h-full relative">
@@ -408,53 +410,61 @@ export const CreatePostDialog = ({
                                           autoPlay
                                           playsInline
                                         />
-                                        {/* Video overlay indicator */}
-                                        <div className="absolute top-3 right-3 bg-purple-500/80 rounded-full p-2">
+                                        {/* Elegant video indicator */}
+                                        <div className="absolute top-4 right-4 bg-purple-500/90 backdrop-blur-sm rounded-full p-2">
                                           <Video className="h-4 w-4 text-white" />
                                         </div>
-                                        {/* Duration indicator */}
-                                        <div className="absolute bottom-3 left-3 bg-black/60 backdrop-blur-sm rounded-lg px-3 py-1.5">
-                                          <span className="text-white/90 text-sm font-mono">5s loop</span>
+                                        {/* Refined loop indicator */}
+                                        <div className="absolute bottom-4 left-4 bg-black/70 backdrop-blur-sm rounded-lg px-3 py-1.5">
+                                          <span className="text-white/90 text-sm font-medium">∞ Auto Loop</span>
                                         </div>
                                       </div>
                                     ) : (
                                       <div className="w-full h-full bg-gradient-to-br from-pink-500/20 to-purple-500/20 flex items-center justify-center">
-                                        <Image className="h-12 w-12 text-pink-400" />
+                                        <Image className="h-16 w-16 text-pink-400 opacity-60" />
                                       </div>
                                     )}
                                     
-                                    {/* File name overlay */}
-                                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 via-black/60 to-transparent p-4">
-                                      <p className="text-white/90 text-sm font-semibold truncate">{file.name}</p>
-                                      <p className="text-white/60 text-xs">{(file.size / 1024 / 1024).toFixed(1)} MB</p>
+                                    {/* Refined file info overlay */}
+                                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent p-4 transform translate-y-full group-hover:translate-y-0 transition-transform duration-300">
+                                      <p className="text-white font-semibold truncate">{file.name}</p>
+                                      <div className="flex items-center justify-between mt-1">
+                                        <p className="text-white/70 text-sm">{(file.size / 1024 / 1024).toFixed(1)} MB</p>
+                                        <span className="text-cyan-400 text-xs px-2 py-1 bg-cyan-400/20 rounded-full">
+                                          {file.type.startsWith('video/') ? 'Video' : 'Image'}
+                                        </span>
+                                      </div>
                                     </div>
-                                    
-                                    {/* Hover effects */}
-                                    <div className="absolute inset-0 bg-gradient-to-t from-cyan-400/0 via-transparent to-purple-400/0 opacity-0 group-hover:opacity-20 transition-opacity duration-300" />
                                   </motion.div>
                                 ))}
                                 
-                                {/* Add more media card */}
+                                {/* Elegant Add More Media Card */}
                                 <motion.div 
-                                  initial={{ opacity: 0, scale: 0.8 }}
+                                  initial={{ opacity: 0, scale: 0.95 }}
                                   animate={{ opacity: 1, scale: 1 }}
                                   transition={{ duration: 0.4, delay: selectedFiles.length * 0.1 }}
-                                  className="border-2 border-dashed border-white/20 rounded-xl p-6 text-center cursor-pointer hover:border-cyan-400/40 transition-all duration-300 group min-h-[200px] flex flex-col items-center justify-center"
+                                  className="bg-gradient-to-br from-white/5 to-white/10 backdrop-blur-sm rounded-xl p-8 text-center cursor-pointer hover:from-cyan-400/10 hover:to-purple-400/10 transition-all duration-300 group min-h-[300px] flex flex-col items-center justify-center border border-white/10 hover:border-cyan-400/30"
                                   onClick={handleMediaSelect}
                                   whileHover={{ scale: 1.02 }}
                                   whileTap={{ scale: 0.98 }}
                                 >
                                   <motion.div
-                                    animate={{ rotate: [0, 180, 360] }}
-                                    transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
-                                    className="group-hover:text-cyan-400 transition-colors duration-300 mb-3"
+                                    animate={{ 
+                                      y: [0, -5, 0],
+                                      rotate: [0, 10, -10, 0] 
+                                    }}
+                                    transition={{ 
+                                      y: { duration: 2, repeat: Infinity, ease: "easeInOut" },
+                                      rotate: { duration: 4, repeat: Infinity, ease: "easeInOut" }
+                                    }}
+                                    className="group-hover:text-cyan-400 transition-colors duration-300 mb-4"
                                   >
-                                    <Upload className="h-8 w-8" />
+                                    <Upload className="h-12 w-12" />
                                   </motion.div>
-                                  <p className="text-white/60 text-lg font-medium group-hover:text-white/80 transition-colors duration-300 mb-2">
+                                  <p className="text-white/80 text-xl font-semibold group-hover:text-white transition-colors duration-300 mb-2">
                                     Add More Media
                                   </p>
-                                  <p className="text-white/40 text-sm">
+                                  <p className="text-white/50 text-sm">
                                     Expand your cosmic creation
                                   </p>
                                 </motion.div>
@@ -464,7 +474,7 @@ export const CreatePostDialog = ({
                         </div>
                       ) : (
                         <div 
-                          className="border-2 border-dashed border-white/20 rounded-xl p-8 text-center cursor-pointer hover:border-cyan-400/40 transition-all duration-500 bg-gradient-to-br from-white/5 to-transparent"
+                          className="border-2 border-dashed border-cyan-400/40 rounded-xl p-8 text-center cursor-pointer hover:border-cyan-400/60 transition-all duration-500 bg-gradient-to-br from-white/5 to-transparent min-h-[400px] flex items-center justify-center"
                           onClick={handleMediaSelect}
                         >
                           <motion.div
@@ -472,9 +482,9 @@ export const CreatePostDialog = ({
                             transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
                           >
                             <Upload className="mx-auto h-12 w-12 text-white/40 mb-4" />
+                            <p className="text-white/60 mb-2 text-lg">Drag & drop your cosmic creations</p>
+                            <p className="text-white/40 text-sm">or click to browse the quantum realm</p>
                           </motion.div>
-                          <p className="text-white/60 mb-2 text-lg">Drag & drop your cosmic creations</p>
-                          <p className="text-white/40 text-sm">or click to browse the quantum realm</p>
                         </div>
                       )}
 
