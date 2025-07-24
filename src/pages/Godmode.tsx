@@ -13,7 +13,6 @@ import { GodmodePayouts } from '@/components/godmode/payouts/GodmodePayouts';
 import { GodmodeFlagged } from '@/components/godmode/flagged/GodmodeFlagged';
 import { GodmodeSearch } from '@/components/godmode/search/GodmodeSearch';
 import { GodmodeSettings } from '@/components/godmode/settings/GodmodeSettings';
-import { GodmodeLogs } from '@/components/godmode/logs/GodmodeLogs';
 
 export const Godmode: React.FC = () => {
   console.log('🚀 GODMODE COMPONENT LOADED');
@@ -44,7 +43,6 @@ export const Godmode: React.FC = () => {
         <Route path="payouts" element={<GodmodePayouts />} />
         <Route path="flagged" element={<GodmodeFlagged />} />
         <Route path="search" element={<GodmodeSearch />} />
-        <Route path="logs" element={<GodmodeLogs />} />
         <Route path="settings" element={<GodmodeSettings />} />
       </Route>
     </Routes>

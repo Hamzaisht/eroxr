@@ -34,7 +34,6 @@ const sidebarItems = [
   { icon: DollarSign, label: 'Payouts', path: '/godmode/payouts' },
   { icon: Flag, label: 'Flagged', path: '/godmode/flagged' },
   { icon: Search, label: 'Search', path: '/godmode/search' },
-  { icon: Activity, label: 'Logs', path: '/godmode/logs' },
   { icon: Settings, label: 'Settings', path: '/godmode/settings' },
 ];
 
