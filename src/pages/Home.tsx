@@ -40,8 +40,8 @@ const Home = () => {
           sessionStorage.setItem('super_admin_assigned', 'true');
           const success = await assignCurrentUserAsSuperAdmin();
           if (success) {
-            // Force refetch instead of page reload
-            window.location.href = '/home';
+            // Force page reload to refresh auth state
+            window.location.reload();
           }
         } catch (error) {
           console.error('Failed to assign super admin:', error);

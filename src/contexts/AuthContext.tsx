@@ -161,13 +161,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     clearError
   };
 
-  console.log('🔄 AuthProvider: Current state:', {
-    hasUser: !!user,
-    hasSession: !!session,
-    loading,
-    error: error || 'none'
-  });
-
   return (
     <AuthContext.Provider value={value}>
       {children}
