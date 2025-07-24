@@ -20,9 +20,9 @@ export const FloatingActionButton = ({
 
   const actions = [
     { icon: Plus, label: "Create Ad", action: onCreateAd, color: "from-cyan-500 to-purple-600" },
-    { icon: Zap, label: "Quick Match", action: onQuickMatch, color: "from-yellow-500 to-orange-600" },
-    { icon: MessageCircle, label: "Messages", action: onMessages, color: "from-pink-500 to-red-600" },
-    { icon: Search, label: "Search", action: onSearch, color: "from-green-500 to-teal-600" },
+    { icon: Zap, label: "Quick Match", action: onQuickMatch || (() => console.log("Quick Match clicked")), color: "from-yellow-500 to-orange-600" },
+    { icon: MessageCircle, label: "Messages", action: onMessages || (() => console.log("Messages clicked")), color: "from-pink-500 to-red-600" },
+    { icon: Search, label: "Search", action: onSearch || (() => console.log("Search clicked")), color: "from-green-500 to-teal-600" },
   ];
 
   return (
@@ -34,8 +34,8 @@ export const FloatingActionButton = ({
     >
       {/* Action Buttons */}
       <motion.div
-        className="flex flex-col-reverse gap-3 mb-3"
-        animate={{ opacity: isExpanded ? 1 : 0 }}
+        className="flex flex-col-reverse gap-3 mb-3 pointer-events-auto"
+        animate={{ opacity: isExpanded ? 1 : 0, pointerEvents: isExpanded ? 'auto' : 'none' }}
         transition={{ duration: 0.3 }}
       >
         {actions.slice(1).map((action, index) => (
@@ -49,12 +49,21 @@ export const FloatingActionButton = ({
             transition={{ delay: index * 0.1 }}
           >
             <Button
-              onClick={action.action}
+              onClick={(e) => {
+                e.stopPropagation();
+                console.log(`Clicked ${action.label}`, action.action);
+                if (action.action) {
+                  action.action();
+                } else {
+                  console.warn(`No action defined for ${action.label}`);
+                }
+              }}
               className={`
                 h-12 w-12 rounded-full glass-panel border-white/20
                 bg-gradient-to-r ${action.color} 
                 hover:scale-110 transition-all duration-300
                 shadow-lg hover:shadow-xl
+                pointer-events-auto
               `}
               title={action.label}
             >
