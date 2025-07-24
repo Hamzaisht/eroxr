@@ -7,8 +7,10 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { motion, AnimatePresence } from "framer-motion";
-import { Sparkles, X, Globe, Upload, Image, Video, Camera, Zap } from "lucide-react";
-import { useRef, useState } from "react";
+import { Sparkles, X, Globe, Upload, Image, Video, Camera, Zap, CheckCircle, AlertCircle } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
+import { useRef, useState, useEffect } from "react";
+import { useMediaUpload } from "@/hooks/useMediaUpload";
 
 interface CreatePostDialogProps {
   open: boolean;
@@ -24,6 +26,7 @@ export const CreatePostDialog = ({
   onFileSelect 
 }: CreatePostDialogProps) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { uploadMultiple } = useMediaUpload();
   const {
     content,
     setContent,
@@ -66,8 +69,35 @@ export const CreatePostDialog = ({
     const files = e.target.files;
     if (files && onFileSelect) {
       onFileSelect(files);
+      // Trigger upload start when files are selected
+      handleMediaUploadStart();
     }
   };
+
+  // Auto-upload files when selected
+  useEffect(() => {
+    if (selectedFiles && selectedFiles.length > 0) {
+      const handleUpload = async () => {
+        try {
+          handleMediaUploadStart();
+          const fileArray = Array.from(selectedFiles);
+          const results = await uploadMultiple(fileArray);
+          
+          // Check if all uploads were successful
+          const successfulUploads = results.filter(result => result.success);
+          if (successfulUploads.length > 0) {
+            const assetIds = successfulUploads.map(result => result.assetId).filter(Boolean) as string[];
+            const urls = successfulUploads.map(result => result.url).filter(Boolean) as string[];
+            handleMediaUploadComplete(urls, assetIds);
+          }
+        } catch (error) {
+          console.error('Upload failed:', error);
+        }
+      };
+      
+      handleUpload();
+    }
+  }, [selectedFiles]);
 
   const handleVisibilityChange = (value: string) => {
     setVisibility(value as "public" | "subscribers_only" | "private" | "hidden");
@@ -288,20 +318,104 @@ export const CreatePostDialog = ({
                         </div>
                       </div>
 
-                      {/* Upload Drop Zone */}
-                      <div 
-                        className="border-2 border-dashed border-white/20 rounded-xl p-8 text-center cursor-pointer hover:border-cyan-400/40 transition-all duration-500 bg-gradient-to-br from-white/5 to-transparent"
-                        onClick={handleMediaSelect}
-                      >
-                        <motion.div
-                          animate={{ y: [0, -10, 0] }}
-                          transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+                      {/* Upload Drop Zone or Media Preview */}
+                      {selectedFiles && selectedFiles.length > 0 ? (
+                        <div className="border-2 border-dashed border-cyan-400/40 rounded-xl p-4 bg-gradient-to-br from-cyan-400/5 to-purple-400/5">
+                          <div className="text-center mb-4">
+                            <motion.div
+                              initial={{ scale: 0.8, opacity: 0 }}
+                              animate={{ scale: 1, opacity: 1 }}
+                              transition={{ duration: 0.5 }}
+                            >
+                              <Zap className="mx-auto h-8 w-8 text-cyan-400 mb-2" />
+                              <p className="text-cyan-400 font-medium">
+                                {uploadInProgress ? "Processing Upload..." : 
+                                 uploadSuccess ? "Upload Complete!" : 
+                                 uploadError ? "Upload Failed" : 
+                                 "Media Preview Active"}
+                              </p>
+                              <p className="text-white/60 text-sm">
+                                {uploadInProgress ? "Uploading your cosmic creation" :
+                                 uploadSuccess ? "Ready to launch creation" :
+                                 uploadError ? "Please try again" :
+                                 "Your cosmic creation is ready"}
+                              </p>
+                              
+                              {/* Upload Progress */}
+                              {uploadInProgress && (
+                                <div className="mt-3 w-full">
+                                  <Progress 
+                                    value={75} 
+                                    className="h-2 bg-black/20"
+                                  />
+                                </div>
+                              )}
+                              
+                              {/* Status Icons */}
+                              {uploadSuccess && (
+                                <CheckCircle className="mx-auto h-6 w-6 text-green-400 mt-2" />
+                              )}
+                              {uploadError && (
+                                <AlertCircle className="mx-auto h-6 w-6 text-red-400 mt-2" />
+                              )}
+                            </motion.div>
+                          </div>
+                          
+                          {/* Media Preview Grid */}
+                          <div className="grid grid-cols-2 md:grid-cols-3 gap-3 max-h-64 overflow-y-auto">
+                            {Array.from(selectedFiles).map((file, index) => (
+                              <motion.div
+                                key={`${file.name}-${index}`}
+                                initial={{ opacity: 0, scale: 0.8 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                transition={{ duration: 0.4, delay: index * 0.1 }}
+                                className="relative rounded-lg overflow-hidden bg-black/20 border border-white/10"
+                              >
+                                {file.type.startsWith('image/') ? (
+                                  <img
+                                    src={URL.createObjectURL(file)}
+                                    alt={`Preview ${index + 1}`}
+                                    className="w-full h-20 object-cover"
+                                  />
+                                ) : file.type.startsWith('video/') ? (
+                                  <div className="w-full h-20 bg-purple-500/20 flex items-center justify-center">
+                                    <Video className="h-8 w-8 text-purple-400" />
+                                  </div>
+                                ) : (
+                                  <div className="w-full h-20 bg-pink-500/20 flex items-center justify-center">
+                                    <Image className="h-8 w-8 text-pink-400" />
+                                  </div>
+                                )}
+                                <div className="absolute bottom-0 left-0 right-0 bg-black/60 backdrop-blur-sm p-1">
+                                  <p className="text-white/80 text-xs truncate">{file.name}</p>
+                                </div>
+                              </motion.div>
+                            ))}
+                          </div>
+                          
+                          {/* Click to add more */}
+                          <div 
+                            className="mt-4 border border-dashed border-white/20 rounded-lg p-3 text-center cursor-pointer hover:border-cyan-400/40 transition-all duration-300"
+                            onClick={handleMediaSelect}
+                          >
+                            <p className="text-white/60 text-sm">Click to add more media</p>
+                          </div>
+                        </div>
+                      ) : (
+                        <div 
+                          className="border-2 border-dashed border-white/20 rounded-xl p-8 text-center cursor-pointer hover:border-cyan-400/40 transition-all duration-500 bg-gradient-to-br from-white/5 to-transparent"
+                          onClick={handleMediaSelect}
                         >
-                          <Upload className="mx-auto h-12 w-12 text-white/40 mb-4" />
-                        </motion.div>
-                        <p className="text-white/60 mb-2 text-lg">Drag & drop your cosmic creations</p>
-                        <p className="text-white/40 text-sm">or click to browse the quantum realm</p>
-                      </div>
+                          <motion.div
+                            animate={{ y: [0, -10, 0] }}
+                            transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+                          >
+                            <Upload className="mx-auto h-12 w-12 text-white/40 mb-4" />
+                          </motion.div>
+                          <p className="text-white/60 mb-2 text-lg">Drag & drop your cosmic creations</p>
+                          <p className="text-white/40 text-sm">or click to browse the quantum realm</p>
+                        </div>
+                      )}
 
                       {/* Hidden file input */}
                       <input
@@ -315,24 +429,6 @@ export const CreatePostDialog = ({
                     </div>
                   </div>
                 </motion.div>
-                
-                {selectedFiles && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 30 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.6, delay: 0.2 }}
-                  >
-                    <MediaUploadDisplay
-                      selectedFiles={selectedFiles}
-                      onUploadComplete={handleMediaUploadComplete}
-                      onUploadStart={handleMediaUploadStart}
-                      uploadInProgress={uploadInProgress}
-                      uploadError={uploadError}
-                      uploadSuccess={uploadSuccess}
-                      uploadedAssetIds={uploadedAssetIds}
-                    />
-                  </motion.div>
-                )}
               </motion.div>
 
               {/* Footer */}
