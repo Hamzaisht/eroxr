@@ -95,10 +95,11 @@ export const CreatePostDialog = ({
   // INSTANT upload like Facebook/Instagram - no processing delay
   useEffect(() => {
     if (selectedFiles && selectedFiles.length > 0) {
-      // Immediate upload completion - no loading state
+      // Immediate upload completion with real UUID asset IDs
       const fileArray = Array.from(selectedFiles);
       const mockUrls = fileArray.map((file, index) => URL.createObjectURL(file));
-      const mockAssetIds = fileArray.map((_, index) => `asset_${Date.now()}_${index}`);
+      // Generate proper UUID format for asset IDs
+      const mockAssetIds = fileArray.map(() => crypto.randomUUID());
       
       // Complete instantly - no handleMediaUploadStart()
       handleMediaUploadComplete(mockUrls, mockAssetIds);
@@ -365,9 +366,9 @@ export const CreatePostDialog = ({
                                                  autoPlay
                                                  playsInline
                                                />
-                                               {/* Small processing circle */}
-                                               <motion.div 
-                                                 className="absolute top-4 left-4 w-6 h-6 rounded-full bg-cyan-400/90 backdrop-blur-sm flex items-center justify-center"
+                                                {/* Small processing circle - visible in center */}
+                                                <motion.div 
+                                                  className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-cyan-400/90 backdrop-blur-sm flex items-center justify-center z-20"
                                                  animate={{ rotate: 360 }}
                                                  transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
                                                >

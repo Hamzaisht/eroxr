@@ -95,8 +95,8 @@ const Home = () => {
       <InteractiveNav />
       <HomeLayout>
         <div className="md:ml-20 space-y-6">
-        {/* Welcome Banner */}
-        {showWelcome && (
+        {/* Welcome Banner - Only show for non-premium users as marketing */}
+        {showWelcome && !hasPremium && !isSuperAdmin && (
           <WelcomeBanner 
             username={getUserDisplayName()}
             onDismiss={() => setShowWelcome(false)}
