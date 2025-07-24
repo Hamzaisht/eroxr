@@ -23,6 +23,13 @@ import Privacy from "@/pages/Privacy";
 import Contact from "@/pages/Contact";
 import Support from "@/pages/Support";
 import Eroboard from "@/pages/Eroboard";
+import Settings from "@/pages/Settings";
+import Subscription from "@/pages/Subscription";
+import Trending from "@/pages/Trending";
+import Notifications from "@/pages/Notifications";
+import Dating from "@/pages/Dating";
+import Eros from "@/pages/Eros";
+import Shorts from "@/pages/Shorts";
 
 const queryClient = new QueryClient();
 
@@ -51,6 +58,13 @@ function App() {
                 <Route path="/contact" element={<Contact />} />
                 <Route path="/support" element={<Support />} />
                 <Route path="/eroboard" element={<Eroboard />} />
+                <Route path="/settings" element={<Settings />} />
+                <Route path="/subscription" element={<Subscription />} />
+                <Route path="/trending" element={<Trending />} />
+                <Route path="/notifications" element={<Notifications />} />
+                <Route path="/dating" element={<Dating />} />
+                <Route path="/eros" element={<Eros />} />
+                <Route path="/shorts" element={<Shorts />} />
               </Routes>
               <Toaster />
             </Router>
