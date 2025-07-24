@@ -82,26 +82,6 @@ export const PostActions = ({
               variant="ghost"
               size="sm"
               className="flex items-center gap-2 hover:bg-luxury-primary/10"
-              onClick={onComment}
-            >
-              <MessageCircle className="h-5 w-5" />
-              <span className="text-luxury-neutral/80">{commentsCount || 0}</span>
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent 
-            side="bottom"
-            className="bg-luxury-darker border-luxury-primary/20 text-luxury-neutral"
-          >
-            <p>Comment on this post</p>
-          </TooltipContent>
-        </Tooltip>
-        
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="flex items-center gap-2 hover:bg-luxury-primary/10"
               onClick={handleShare}
               disabled={isSharing}
             >

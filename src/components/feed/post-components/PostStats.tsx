@@ -41,16 +41,6 @@ export const PostStats = ({
         <Button
           variant="ghost"
           size="sm"
-          onClick={onComment}
-          className="flex items-center gap-2 text-gray-600"
-        >
-          <MessageCircle className="h-5 w-5" />
-          <span>{commentsCount}</span>
-        </Button>
-        
-        <Button
-          variant="ghost"
-          size="sm"
           onClick={onShare}
           className="flex items-center gap-2 text-gray-600"
         >
