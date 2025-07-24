@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 import { DatingAd } from '../../../types/dating';
 import { AdActions } from './AdActions';
 import { UserInfo } from './UserInfo';
@@ -31,6 +32,7 @@ export const EnhancedAdCard = ({ ad, onSelect, isMobile, userProfile, index = 0 
   const session = useSession();
   const cardRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   // Check if user has already liked this ad
   useEffect(() => {
@@ -171,13 +173,81 @@ export const EnhancedAdCard = ({ ad, onSelect, isMobile, userProfile, index = 0 
     }
   };
 
-  const handleMessage = (e: React.MouseEvent) => {
+  const handleMessage = async (e: React.MouseEvent) => {
     e.stopPropagation();
-    toast({
-      title: "🏛️ Message Sent to Olympus",
-      description: `Your divine message has been sent to ${ad.title}`,
-      duration: 2000,
-    });
+    
+    if (!session?.user?.id) {
+      toast({
+        title: "Sign In Required",
+        description: "Please sign in to send messages",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (session.user.id === ad.user_id) {
+      toast({
+        title: "Cannot Message Yourself",
+        description: "You cannot send a message to your own ad",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      // Create or find existing message thread
+      const { data: existingThreads, error: threadError } = await supabase
+        .from('message_threads')
+        .select('id')
+        .contains('participants', [session.user.id, ad.user_id])
+        .eq('thread_type', 'direct')
+        .limit(1);
+
+      if (threadError) {
+        console.error('Error checking threads:', threadError);
+        throw threadError;
+      }
+
+      let threadId: string;
+
+      if (existingThreads && existingThreads.length > 0) {
+        // Use existing thread
+        threadId = existingThreads[0].id;
+      } else {
+        // Create new thread
+        const { data: newThread, error: createError } = await supabase
+          .from('message_threads')
+          .insert({
+            participants: [session.user.id, ad.user_id],
+            created_by: session.user.id,
+            thread_type: 'direct'
+          })
+          .select('id')
+          .single();
+
+        if (createError) {
+          console.error('Error creating thread:', createError);
+          throw createError;
+        }
+
+        threadId = newThread.id;
+      }
+
+      // Navigate to messages with the thread
+      navigate(`/messages?thread=${threadId}&user=${ad.user_id}`);
+      
+      toast({
+        title: "Message Thread Opened",
+        description: `You can now chat with ${ad.title}`,
+      });
+    } catch (error) {
+      console.error('Error opening message thread:', error);
+      toast({
+        title: "Error",
+        description: "Failed to open message thread. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   return (

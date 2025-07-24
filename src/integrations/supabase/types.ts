@@ -3540,6 +3540,10 @@ export type Database = {
         Args: { p_table_name: string; p_column_name: string }
         Returns: boolean
       }
+      check_user_has_role: {
+        Args: { check_user_id: string; required_role: string }
+        Returns: boolean
+      }
       check_username_available: {
         Args: { username_to_check: string }
         Returns: boolean
