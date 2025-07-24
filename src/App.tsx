@@ -22,6 +22,7 @@ import Terms from "@/pages/Terms";
 import Privacy from "@/pages/Privacy";
 import Contact from "@/pages/Contact";
 import Support from "@/pages/Support";
+import Eroboard from "@/pages/Eroboard";
 
 const queryClient = new QueryClient();
 
@@ -49,6 +50,7 @@ function App() {
                 <Route path="/privacy" element={<Privacy />} />
                 <Route path="/contact" element={<Contact />} />
                 <Route path="/support" element={<Support />} />
+                <Route path="/eroboard" element={<Eroboard />} />
               </Routes>
               <Toaster />
             </Router>
