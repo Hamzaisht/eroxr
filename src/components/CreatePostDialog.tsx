@@ -326,17 +326,18 @@ export const CreatePostDialog = ({
 
                       {/* Upload Drop Zone or Media Preview */}
                       {selectedFiles && selectedFiles.length > 0 ? (
-                        <div className="border-2 border-dashed border-cyan-400/40 rounded-xl p-4 bg-gradient-to-br from-cyan-400/5 to-purple-400/5">
-                          {/* Enhanced Upload Animation */}
+                        <div className="border-2 border-dashed border-cyan-400/40 rounded-xl bg-gradient-to-br from-cyan-400/5 to-purple-400/5 min-h-[400px] flex flex-col">
+                          {/* Upload Animation - Minimal overlay */}
                           {uploadInProgress && (
-                            <div className="text-center mb-4">
+                            <div className="absolute inset-4 bg-black/40 backdrop-blur-sm rounded-lg flex items-center justify-center z-10">
                               <motion.div
                                 initial={{ scale: 0.8, opacity: 0 }}
                                 animate={{ scale: 1, opacity: 1 }}
                                 transition={{ duration: 0.3 }}
+                                className="text-center"
                               >
                                 {/* Quantum Upload Animation */}
-                                <div className="relative mx-auto w-20 h-20 mb-4">
+                                <div className="relative mx-auto w-16 h-16 mb-3">
                                   <motion.div
                                     className="absolute inset-0 rounded-full border-4 border-cyan-400/30"
                                     animate={{
@@ -371,160 +372,94 @@ export const CreatePostDialog = ({
                                       ease: "easeInOut"
                                     }}
                                   />
-                                  {/* Particle effects */}
-                                  {[...Array(8)].map((_, i) => (
-                                    <motion.div
-                                      key={i}
-                                      className="absolute w-1.5 h-1.5 bg-cyan-400 rounded-full"
-                                      style={{
-                                        top: '50%',
-                                        left: '50%',
-                                        originX: 0.5,
-                                        originY: 0.5,
-                                      }}
-                                      animate={{
-                                        x: Math.cos(i * 45 * Math.PI / 180) * 30,
-                                        y: Math.sin(i * 45 * Math.PI / 180) * 30,
-                                        scale: [0, 1.5, 0],
-                                        opacity: [0, 1, 0],
-                                      }}
-                                      transition={{
-                                        duration: 1.5,
-                                        repeat: Infinity,
-                                        delay: i * 0.1,
-                                        ease: "easeInOut"
-                                      }}
-                                    />
-                                  ))}
                                 </div>
-                                
-                                <p className="text-cyan-400 font-medium text-lg">Quantum Processing...</p>
-                                <p className="text-white/60 text-sm">Transcending media to digital realm</p>
-                                
-                                {/* Animated Progress Bar */}
-                                <div className="mt-4 w-full bg-black/30 rounded-full h-2 overflow-hidden">
-                                  <motion.div
-                                    className="h-full bg-gradient-to-r from-cyan-400 to-purple-400"
-                                    initial={{ width: "0%" }}
-                                    animate={{ width: "100%" }}
-                                    transition={{ duration: 0.8, ease: "easeOut" }}
-                                  />
-                                </div>
+                                <p className="text-cyan-400 font-medium">Quantum Processing...</p>
                               </motion.div>
                             </div>
                           )}
                           
-                          {/* Success State */}
-                          {uploadSuccess && !uploadInProgress && (
-                            <div className="text-center mb-4">
-                              <motion.div
-                                initial={{ scale: 0 }}
-                                animate={{ scale: 1 }}
-                                transition={{ type: "spring", damping: 15, stiffness: 300 }}
-                              >
-                                <div className="relative mx-auto w-16 h-16 mb-3">
+                          {/* Fullscreen Media Preview Grid */}
+                          {!uploadInProgress && (
+                            <div className="flex-1 p-4">
+                              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 h-full">
+                                {Array.from(selectedFiles).map((file, index) => (
                                   <motion.div
-                                    animate={{
-                                      scale: [1, 1.2, 1],
-                                      rotate: [0, 360]
-                                    }}
-                                    transition={{
-                                      scale: { duration: 2, repeat: Infinity },
-                                      rotate: { duration: 4, repeat: Infinity, ease: "linear" }
-                                    }}
+                                    key={`${file.name}-${index}`}
+                                    initial={{ opacity: 0, scale: 0.8, y: 20 }}
+                                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                                    transition={{ duration: 0.4, delay: index * 0.1 }}
+                                    className="relative rounded-xl overflow-hidden bg-black/20 border border-white/10 group hover:border-cyan-400/40 transition-all duration-300 min-h-[200px]"
                                   >
-                                    <CheckCircle className="w-16 h-16 text-green-400" />
+                                    {file.type.startsWith('image/') ? (
+                                      <div className="w-full h-full">
+                                        <img
+                                          src={URL.createObjectURL(file)}
+                                          alt={`Preview ${index + 1}`}
+                                          className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+                                        />
+                                      </div>
+                                    ) : file.type.startsWith('video/') ? (
+                                      <div className="w-full h-full relative">
+                                        <video
+                                          src={URL.createObjectURL(file)}
+                                          className="w-full h-full object-cover"
+                                          muted
+                                          loop
+                                          autoPlay
+                                          playsInline
+                                        />
+                                        {/* Video overlay indicator */}
+                                        <div className="absolute top-3 right-3 bg-purple-500/80 rounded-full p-2">
+                                          <Video className="h-4 w-4 text-white" />
+                                        </div>
+                                        {/* Duration indicator */}
+                                        <div className="absolute bottom-3 left-3 bg-black/60 backdrop-blur-sm rounded-lg px-3 py-1.5">
+                                          <span className="text-white/90 text-sm font-mono">5s loop</span>
+                                        </div>
+                                      </div>
+                                    ) : (
+                                      <div className="w-full h-full bg-gradient-to-br from-pink-500/20 to-purple-500/20 flex items-center justify-center">
+                                        <Image className="h-12 w-12 text-pink-400" />
+                                      </div>
+                                    )}
+                                    
+                                    {/* File name overlay */}
+                                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 via-black/60 to-transparent p-4">
+                                      <p className="text-white/90 text-sm font-semibold truncate">{file.name}</p>
+                                      <p className="text-white/60 text-xs">{(file.size / 1024 / 1024).toFixed(1)} MB</p>
+                                    </div>
+                                    
+                                    {/* Hover effects */}
+                                    <div className="absolute inset-0 bg-gradient-to-t from-cyan-400/0 via-transparent to-purple-400/0 opacity-0 group-hover:opacity-20 transition-opacity duration-300" />
                                   </motion.div>
+                                ))}
+                                
+                                {/* Add more media card */}
+                                <motion.div 
+                                  initial={{ opacity: 0, scale: 0.8 }}
+                                  animate={{ opacity: 1, scale: 1 }}
+                                  transition={{ duration: 0.4, delay: selectedFiles.length * 0.1 }}
+                                  className="border-2 border-dashed border-white/20 rounded-xl p-6 text-center cursor-pointer hover:border-cyan-400/40 transition-all duration-300 group min-h-[200px] flex flex-col items-center justify-center"
+                                  onClick={handleMediaSelect}
+                                  whileHover={{ scale: 1.02 }}
+                                  whileTap={{ scale: 0.98 }}
+                                >
                                   <motion.div
-                                    className="absolute inset-0 bg-green-400/20 rounded-full blur-xl"
-                                    animate={{ opacity: [0.3, 0.7, 0.3] }}
-                                    transition={{ duration: 2, repeat: Infinity }}
-                                  />
-                                </div>
-                                <p className="text-green-400 font-medium text-lg">Upload Complete!</p>
-                                <p className="text-white/60 text-sm">Ready to launch creation</p>
-                              </motion.div>
-                            </div>
-                          )}
-                          
-                          {/* Media Thumbnails Grid */}
-                          {!uploadInProgress && (
-                            <div className="grid grid-cols-2 md:grid-cols-3 gap-4 max-h-80 overflow-y-auto">
-                              {Array.from(selectedFiles).map((file, index) => (
-                                <motion.div
-                                  key={`${file.name}-${index}`}
-                                  initial={{ opacity: 0, scale: 0.8, y: 20 }}
-                                  animate={{ opacity: 1, scale: 1, y: 0 }}
-                                  transition={{ duration: 0.4, delay: index * 0.1 }}
-                                  className="relative rounded-xl overflow-hidden bg-black/20 border border-white/10 group hover:border-cyan-400/40 transition-all duration-300"
-                                >
-                                  {file.type.startsWith('image/') ? (
-                                    <div className="aspect-square">
-                                      <img
-                                        src={URL.createObjectURL(file)}
-                                        alt={`Preview ${index + 1}`}
-                                        className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
-                                      />
-                                    </div>
-                                  ) : file.type.startsWith('video/') ? (
-                                    <div className="aspect-square relative">
-                                      <video
-                                        src={URL.createObjectURL(file)}
-                                        className="w-full h-full object-cover"
-                                        muted
-                                        loop
-                                        autoPlay
-                                        playsInline
-                                      />
-                                      {/* Video overlay indicator */}
-                                      <div className="absolute top-2 right-2 bg-purple-500/80 rounded-full p-1.5">
-                                        <Video className="h-3 w-3 text-white" />
-                                      </div>
-                                      {/* Duration indicator */}
-                                      <div className="absolute bottom-2 left-2 bg-black/60 backdrop-blur-sm rounded px-2 py-1">
-                                        <span className="text-white/80 text-xs font-mono">5s loop</span>
-                                      </div>
-                                    </div>
-                                  ) : (
-                                    <div className="aspect-square bg-gradient-to-br from-pink-500/20 to-purple-500/20 flex items-center justify-center">
-                                      <Image className="h-8 w-8 text-pink-400" />
-                                    </div>
-                                  )}
-                                  
-                                  {/* File name overlay */}
-                                  <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-2">
-                                    <p className="text-white/90 text-xs truncate font-medium">{file.name}</p>
-                                    <p className="text-white/60 text-xs">{(file.size / 1024 / 1024).toFixed(1)} MB</p>
-                                  </div>
-                                  
-                                  {/* Hover effects */}
-                                  <div className="absolute inset-0 bg-gradient-to-t from-cyan-400/0 via-transparent to-purple-400/0 opacity-0 group-hover:opacity-20 transition-opacity duration-300" />
+                                    animate={{ rotate: [0, 180, 360] }}
+                                    transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
+                                    className="group-hover:text-cyan-400 transition-colors duration-300 mb-3"
+                                  >
+                                    <Upload className="h-8 w-8" />
+                                  </motion.div>
+                                  <p className="text-white/60 text-lg font-medium group-hover:text-white/80 transition-colors duration-300 mb-2">
+                                    Add More Media
+                                  </p>
+                                  <p className="text-white/40 text-sm">
+                                    Expand your cosmic creation
+                                  </p>
                                 </motion.div>
-                              ))}
-                            </div>
-                          )}
-                          
-                          {/* Add more media button */}
-                          {!uploadInProgress && (
-                            <motion.div 
-                              className="mt-4 border border-dashed border-white/20 rounded-lg p-4 text-center cursor-pointer hover:border-cyan-400/40 transition-all duration-300 group"
-                              onClick={handleMediaSelect}
-                              whileHover={{ scale: 1.02 }}
-                              whileTap={{ scale: 0.98 }}
-                            >
-                              <div className="flex items-center justify-center gap-2">
-                                <motion.div
-                                  animate={{ rotate: [0, 180, 360] }}
-                                  transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-                                  className="group-hover:text-cyan-400 transition-colors duration-300"
-                                >
-                                  <Upload className="h-4 w-4" />
-                                </motion.div>
-                                <p className="text-white/60 text-sm group-hover:text-white/80 transition-colors duration-300">
-                                  Click to add more cosmic media
-                                </p>
                               </div>
-                            </motion.div>
+                            </div>
                           )}
                         </div>
                       ) : (
