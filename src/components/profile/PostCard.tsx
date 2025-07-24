@@ -228,7 +228,15 @@ export const PostCard = ({ post, isOwnProfile }: PostCardProps) => {
               }`}
             >
               <Heart className={`w-6 h-6 ${isLiked ? 'fill-current' : ''}`} />
-              <span className="text-sm font-bold">{post.likes_count.toLocaleString()}</span>
+            </motion.button>
+
+            <motion.button
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
+              className="flex items-center gap-2 text-gray-400 hover:text-cyan-400 transition-colors"
+            >
+              <MessageCircle className="w-6 h-6" />
+              <span className="text-sm font-bold">{post.comments_count.toLocaleString()}</span>
             </motion.button>
 
             <div className="flex items-center gap-2 text-gray-400">

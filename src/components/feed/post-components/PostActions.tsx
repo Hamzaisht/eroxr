@@ -63,9 +63,8 @@ export const PostActions = ({
               {isLiking ? (
                 <Loader2 className="h-5 w-5 animate-spin" />
               ) : (
-                <Heart className={cn("h-5 w-5", hasLiked && "fill-luxury-primary text-luxury-primary")} />
+              <Heart className={cn("h-5 w-5", hasLiked && "fill-luxury-primary text-luxury-primary")} />
               )}
-              <span className="text-luxury-neutral/80">{likesCount || 0}</span>
             </Button>
           </TooltipTrigger>
           <TooltipContent 
@@ -73,6 +72,26 @@ export const PostActions = ({
             className="bg-luxury-darker border-luxury-primary/20 text-luxury-neutral"
           >
             <p>{hasLiked ? "Unlike" : "Like"} this post</p>
+          </TooltipContent>
+        </Tooltip>
+        
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="flex items-center gap-2 hover:bg-luxury-primary/10"
+              onClick={onComment}
+            >
+              <MessageCircle className="h-5 w-5" />
+              <span className="text-luxury-neutral/80">{commentsCount || 0}</span>
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent 
+            side="bottom"
+            className="bg-luxury-darker border-luxury-primary/20 text-luxury-neutral"
+          >
+            <p>Comment on this post</p>
           </TooltipContent>
         </Tooltip>
         

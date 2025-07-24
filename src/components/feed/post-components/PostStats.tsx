@@ -35,7 +35,16 @@ export const PostStats = ({
           className={`flex items-center gap-2 ${isLiked ? 'text-red-500' : 'text-gray-600'}`}
         >
           <Heart className={`h-5 w-5 ${isLiked ? 'fill-current' : ''}`} />
-          <span>{likesCount}</span>
+        </Button>
+        
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={onComment}
+          className="flex items-center gap-2 text-gray-600"
+        >
+          <MessageCircle className="h-5 w-5" />
+          <span>{commentsCount}</span>
         </Button>
         
         <Button

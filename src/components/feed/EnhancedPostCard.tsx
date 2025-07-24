@@ -251,7 +251,15 @@ export const EnhancedPostCard = ({
                 }`}
               >
                 <Heart className={`h-5 w-5 ${isLiked ? 'fill-current' : ''}`} />
-                <span className="text-sm font-medium">{likesCount}</span>
+              </motion.button>
+
+              <motion.button
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.9 }}
+                className="flex items-center space-x-2 text-luxury-muted hover:text-luxury-primary transition-colors duration-300"
+              >
+                <MessageCircle className="h-5 w-5" />
+                <span className="text-sm font-medium">{post.comments_count || 0}</span>
               </motion.button>
 
               {post.view_count && (

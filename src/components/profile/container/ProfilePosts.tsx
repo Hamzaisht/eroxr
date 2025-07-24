@@ -237,8 +237,12 @@ export const ProfilePosts = ({ profileId }: ProfilePostsProps) => {
                   }`}
                 >
                   <Heart className={`w-4 h-4 mr-1 ${likedPosts.has(post.id) ? 'fill-current' : ''}`} />
-                  <span>{post.likes_count || 0}</span>
                 </Button>
+                
+                <div className="flex items-center gap-1 text-slate-400">
+                  <MessageCircle className="w-4 h-4" />
+                  <span>{post.comments_count || 0}</span>
+                </div>
                 
                 <div className="flex items-center gap-1 text-slate-400">
                   <Eye className="w-4 h-4" />
