@@ -11,6 +11,8 @@ import { Sparkles, X, Globe, Upload, Image, Video, Camera, Zap, CheckCircle, Ale
 import { Progress } from "@/components/ui/progress";
 import { useRef, useState, useEffect } from "react";
 import { useMediaUpload } from "@/hooks/useMediaUpload";
+import { MediaUploadService } from "@/services/mediaUploadService";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface CreatePostDialogProps {
   open: boolean;
@@ -26,8 +28,9 @@ export const CreatePostDialog = ({
   onFileSelect 
 }: CreatePostDialogProps) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const { uploadMultiple } = useMediaUpload();
+  const { user } = useAuth();
   const [selectedFiles, setSelectedFiles] = useState<FileList | null>(externalSelectedFiles || null);
+  const [isUploading, setIsUploading] = useState(false);
   const {
     content,
     setContent,
@@ -92,19 +95,44 @@ export const CreatePostDialog = ({
     }
   };
 
-  // INSTANT upload like Facebook/Instagram - no processing delay
+  // REAL media upload - production ready
   useEffect(() => {
-    if (selectedFiles && selectedFiles.length > 0) {
-      // Immediate upload completion with real UUID asset IDs
-      const fileArray = Array.from(selectedFiles);
-      const mockUrls = fileArray.map((file, index) => URL.createObjectURL(file));
-      // Generate proper UUID format for asset IDs
-      const mockAssetIds = fileArray.map(() => crypto.randomUUID());
-      
-      // Complete instantly - no handleMediaUploadStart()
-      handleMediaUploadComplete(mockUrls, mockAssetIds);
+    if (selectedFiles && selectedFiles.length > 0 && user?.id) {
+      handleRealMediaUpload();
     }
-  }, [selectedFiles]);
+  }, [selectedFiles, user?.id]);
+
+  const handleRealMediaUpload = async () => {
+    if (!selectedFiles || !user?.id) return;
+
+    setIsUploading(true);
+    handleMediaUploadStart();
+
+    try {
+      const fileArray = Array.from(selectedFiles);
+      console.log("CreatePostDialog - Starting real media upload:", fileArray.length, "files");
+
+      // Upload files using the real MediaUploadService
+      const uploadResult = await MediaUploadService.uploadFiles(fileArray, user.id);
+
+      if (uploadResult.success && uploadResult.assetIds.length > 0) {
+        console.log("CreatePostDialog - Real upload successful:", {
+          assetIds: uploadResult.assetIds,
+          urls: uploadResult.urls
+        });
+        
+        handleMediaUploadComplete(uploadResult.urls, uploadResult.assetIds);
+      } else {
+        throw new Error(uploadResult.error || "Upload failed");
+      }
+      
+    } catch (error: any) {
+      console.error("CreatePostDialog - Real upload failed:", error);
+      handleMediaUploadComplete([], []); // Reset on error
+    } finally {
+      setIsUploading(false);
+    }
+  };
 
   const handleVisibilityChange = (value: string) => {
     setVisibility(value as "public" | "subscribers_only" | "private" | "hidden");
@@ -347,41 +375,53 @@ export const CreatePostDialog = ({
                                           transition={{ duration: 0.4 }}
                                           className="relative w-full h-full overflow-hidden bg-black/10 group hover:bg-black/20 transition-all duration-300 rounded-l-2xl"
                                         >
-                                          {file.type.startsWith('image/') ? (
-                                            <div className="w-full h-full relative">
-                                              <img
-                                                src={URL.createObjectURL(file)}
-                                                alt="Main preview"
-                                                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                                              />
-                                              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                                            </div>
-                                           ) : file.type.startsWith('video/') ? (
+                                           {file.type.startsWith('image/') ? (
                                              <div className="w-full h-full relative">
-                                               <video
+                                               <img
                                                  src={URL.createObjectURL(file)}
-                                                 className="w-full h-full object-cover"
-                                                 muted
-                                                 loop
-                                                 autoPlay
-                                                 playsInline
+                                                 alt="Main preview"
+                                                 className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                                                />
-                                                {/* Small processing circle - visible in center */}
-                                                <motion.div 
-                                                  className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-cyan-400/90 backdrop-blur-sm flex items-center justify-center z-20"
-                                                 animate={{ rotate: 360 }}
-                                                 transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-                                               >
-                                                 <div className="w-2 h-2 rounded-full bg-white" />
-                                               </motion.div>
-                                               <div className="absolute top-4 right-4 bg-purple-500/90 backdrop-blur-sm rounded-full p-2">
-                                                 <Video className="h-5 w-5 text-white" />
-                                               </div>
-                                               <div className="absolute bottom-4 left-4 bg-black/70 backdrop-blur-sm rounded-lg px-3 py-2">
-                                                 <span className="text-white/90 text-sm font-medium">∞ Auto Loop</span>
-                                               </div>
+                                               {/* Loading circle during upload - only show when actually uploading */}
+                                               {isUploading && (
+                                                 <motion.div 
+                                                   className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-cyan-400/90 backdrop-blur-sm flex items-center justify-center z-20"
+                                                   animate={{ rotate: 360 }}
+                                                   transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                                                 >
+                                                   <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                                                 </motion.div>
+                                               )}
+                                               <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                                              </div>
-                                          ) : (
+                                           ) : file.type.startsWith('video/') ? (
+                                              <div className="w-full h-full relative">
+                                                <video
+                                                  src={URL.createObjectURL(file)}
+                                                  className="w-full h-full object-cover"
+                                                  muted
+                                                  loop
+                                                  autoPlay
+                                                  playsInline
+                                                />
+                                                {/* Loading circle during upload - only show when actually uploading */}
+                                                {isUploading && (
+                                                  <motion.div 
+                                                    className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-cyan-400/90 backdrop-blur-sm flex items-center justify-center z-20"
+                                                    animate={{ rotate: 360 }}
+                                                    transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                                                  >
+                                                    <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                                                  </motion.div>
+                                                )}
+                                                <div className="absolute top-4 right-4 bg-purple-500/90 backdrop-blur-sm rounded-full p-2">
+                                                  <Video className="h-5 w-5 text-white" />
+                                                </div>
+                                                <div className="absolute bottom-4 left-4 bg-black/70 backdrop-blur-sm rounded-lg px-3 py-2">
+                                                  <span className="text-white/90 text-sm font-medium">∞ Auto Loop</span>
+                                                </div>
+                                              </div>
+                                           ) : (
                                             <div className="w-full h-full bg-gradient-to-br from-pink-500/20 to-purple-500/20 flex items-center justify-center">
                                               <Image className="h-20 w-20 text-pink-400 opacity-60" />
                                             </div>
