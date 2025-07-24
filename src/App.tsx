@@ -47,8 +47,8 @@ function App() {
                 <Route path="/contact" element={<Contact />} />
                 <Route path="/support" element={<Support />} />
               </Routes>
+              <Toaster />
             </Router>
-            <Toaster />
             <Sonner />
           </TooltipProvider>
         </ToastProvider>
