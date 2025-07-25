@@ -275,85 +275,232 @@ export const GodmodeContent: React.FC = () => {
         </div>
       </div>
 
-      {/* Filters */}
+      {/* Enhanced Filters */}
       <div className="premium-glass-panel p-6">
-        <div className="flex flex-wrap items-center gap-4">
-          <div className="flex-1 min-w-64">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <Input
-                placeholder="Search content..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 bg-black/20 border-white/10"
-              />
+        <div className="space-y-4">
+          {/* Main Search Bar */}
+          <div className="relative">
+            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+            <Input
+              placeholder="🔍 Search across all content types..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-12 pr-4 py-3 text-lg bg-black/20 border-white/10 rounded-xl focus:ring-2 focus:ring-blue-400/50 transition-all duration-200"
+            />
+            {searchTerm && (
+              <button
+                onClick={() => setSearchTerm('')}
+                className="absolute right-4 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-white transition-colors"
+              >
+                ✕
+              </button>
+            )}
+          </div>
+
+          {/* Filter Row */}
+          <div className="flex flex-wrap items-center gap-3">
+            {/* Content Type Filter */}
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-medium text-white/80">Content Type:</span>
+              <Select value={filterType} onValueChange={setFilterType}>
+                <SelectTrigger className="w-52 bg-black/30 border-white/20 rounded-lg hover:bg-black/40 transition-all duration-200">
+                  <SelectValue placeholder="All Content Types" />
+                </SelectTrigger>
+                <SelectContent className="bg-black/95 backdrop-blur-xl border-white/10 rounded-xl z-50">
+                  <SelectItem value="all" className="hover:bg-white/10 rounded-lg">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 bg-white rounded-full"></div>
+                      All Content
+                    </div>
+                  </SelectItem>
+                  
+                  {/* Content Types */}
+                  <SelectItem value="posts" className="hover:bg-blue-500/10 rounded-lg">
+                    <div className="flex items-center gap-2">
+                      <FileText className="w-4 h-4 text-blue-400" />
+                      Posts
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="stories" className="hover:bg-purple-500/10 rounded-lg">
+                    <div className="flex items-center gap-2">
+                      <Clock className="w-4 h-4 text-purple-400" />
+                      Stories
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="messages" className="hover:bg-orange-500/10 rounded-lg">
+                    <div className="flex items-center gap-2">
+                      <Video className="w-4 h-4 text-orange-400" />
+                      Messages
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="media" className="hover:bg-green-500/10 rounded-lg">
+                    <div className="flex items-center gap-2">
+                      <Image className="w-4 h-4 text-green-400" />
+                      Media Assets
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="profile_photos" className="hover:bg-pink-500/10 rounded-lg">
+                    <div className="flex items-center gap-2">
+                      <Users className="w-4 h-4 text-pink-400" />
+                      Profile Photos
+                    </div>
+                  </SelectItem>
+                  
+                  {/* Media Types */}
+                  <div className="border-t border-white/10 my-2"></div>
+                  <SelectItem value="videos" className="hover:bg-red-500/10 rounded-lg">
+                    <div className="flex items-center gap-2">
+                      <Play className="w-4 h-4 text-red-400" />
+                      Videos Only
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="images" className="hover:bg-yellow-500/10 rounded-lg">
+                    <div className="flex items-center gap-2">
+                      <Image className="w-4 h-4 text-yellow-400" />
+                      Images Only
+                    </div>
+                  </SelectItem>
+                  
+                  {/* Access Types */}
+                  <div className="border-t border-white/10 my-2"></div>
+                  <SelectItem value="ppv" className="hover:bg-emerald-500/10 rounded-lg">
+                    <div className="flex items-center gap-2">
+                      <DollarSign className="w-4 h-4 text-emerald-400" />
+                      PPV Content
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="public" className="hover:bg-cyan-500/10 rounded-lg">
+                    <div className="flex items-center gap-2">
+                      <Eye className="w-4 h-4 text-cyan-400" />
+                      Public
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="private" className="hover:bg-indigo-500/10 rounded-lg">
+                    <div className="flex items-center gap-2">
+                      <Eye className="w-4 h-4 text-indigo-400" />
+                      Private
+                    </div>
+                  </SelectItem>
+                  
+                  {/* Ghost Mode Exclusive */}
+                  {isGhostMode && (
+                    <>
+                      <div className="border-t border-red-500/20 my-2"></div>
+                      <SelectItem value="deleted" className="hover:bg-red-500/20 rounded-lg border border-red-500/30">
+                        <div className="flex items-center gap-2">
+                          <Trash2 className="w-4 h-4 text-red-400 animate-pulse" />
+                          <span className="text-red-400 font-medium">🗑️ Deleted Content</span>
+                          <div className="ml-auto px-2 py-1 bg-red-500/20 text-red-300 text-xs rounded-full">GHOST</div>
+                        </div>
+                      </SelectItem>
+                    </>
+                  )}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* User Filter */}
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-medium text-white/80">User:</span>
+              <div className="relative">
+                <Users className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input
+                  placeholder="Filter by username..."
+                  value={filterUser}
+                  onChange={(e) => setFilterUser(e.target.value)}
+                  className="pl-10 w-44 bg-black/20 border-white/10 rounded-lg"
+                />
+              </div>
+            </div>
+
+            {/* Tags Filter */}
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-medium text-white/80">Tags:</span>
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground">#</span>
+                <Input
+                  placeholder="Filter by tags..."
+                  value={filterTags}
+                  onChange={(e) => setFilterTags(e.target.value)}
+                  className="pl-8 w-40 bg-black/20 border-white/10 rounded-lg"
+                />
+              </div>
+            </div>
+
+            {/* View Mode Toggle */}
+            <div className="flex items-center gap-2 ml-auto">
+              <span className="text-sm font-medium text-white/80">View:</span>
+              <div className="flex gap-1 p-1 bg-black/30 rounded-lg border border-white/10">
+                <Button
+                  variant={viewMode === 'grid' ? 'default' : 'ghost'}
+                  size="sm"
+                  onClick={() => setViewMode('grid')}
+                  className={`${viewMode === 'grid' ? 'bg-blue-500/20 text-blue-400' : 'hover:bg-white/10'} transition-all duration-200`}
+                >
+                  <Grid className="w-4 h-4" />
+                </Button>
+                <Button
+                  variant={viewMode === 'list' ? 'default' : 'ghost'}
+                  size="sm"
+                  onClick={() => setViewMode('list')}
+                  className={`${viewMode === 'list' ? 'bg-blue-500/20 text-blue-400' : 'hover:bg-white/10'} transition-all duration-200`}
+                >
+                  <List className="w-4 h-4" />
+                </Button>
+              </div>
             </div>
           </div>
-          
-          <Select value={filterType} onValueChange={setFilterType}>
-            <SelectTrigger className="w-48 bg-black/20 border-white/10">
-              <SelectValue placeholder="Content Type" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Content</SelectItem>
-              <SelectItem value="posts">Posts</SelectItem>
-              <SelectItem value="stories">Stories</SelectItem>
-              <SelectItem value="messages">Messages</SelectItem>
-              <SelectItem value="media">Media Assets</SelectItem>
-              <SelectItem value="profile_photos">Profile Photos</SelectItem>
-              <SelectItem value="videos">Videos</SelectItem>
-              <SelectItem value="images">Images</SelectItem>
-              <SelectItem value="ppv">PPV Content</SelectItem>
-              <SelectItem value="public">Public</SelectItem>
-              <SelectItem value="private">Private</SelectItem>
-              {isGhostMode && <SelectItem value="deleted">🗑️ Deleted Content</SelectItem>}
-            </SelectContent>
-          </Select>
 
-          {isGhostMode && (
-            <Button
-              variant={showDeleted ? "default" : "outline"}
-              size="sm"
-              onClick={() => setShowDeleted(!showDeleted)}
-              className={`${showDeleted ? 'bg-red-500/20 text-red-400 border-red-500/40' : 'border-red-400/20 text-red-400 hover:bg-red-500/10'} transition-all duration-200`}
-            >
-              <Trash2 className="w-4 h-4 mr-2" />
-              Show Deleted
-            </Button>
+          {/* Active Filters Display */}
+          {(filterType !== 'all' || filterUser || filterTags || showDeleted) && (
+            <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-white/10">
+              <span className="text-sm text-white/60">Active filters:</span>
+              
+              {filterType !== 'all' && (
+                <div className="flex items-center gap-1 px-3 py-1 bg-blue-500/20 text-blue-300 rounded-full text-sm border border-blue-500/30">
+                  Type: {filterType}
+                  <button onClick={() => setFilterType('all')} className="ml-1 hover:text-white">✕</button>
+                </div>
+              )}
+              
+              {filterUser && (
+                <div className="flex items-center gap-1 px-3 py-1 bg-purple-500/20 text-purple-300 rounded-full text-sm border border-purple-500/30">
+                  User: {filterUser}
+                  <button onClick={() => setFilterUser('')} className="ml-1 hover:text-white">✕</button>
+                </div>
+              )}
+              
+              {filterTags && (
+                <div className="flex items-center gap-1 px-3 py-1 bg-green-500/20 text-green-300 rounded-full text-sm border border-green-500/30">
+                  Tags: #{filterTags}
+                  <button onClick={() => setFilterTags('')} className="ml-1 hover:text-white">✕</button>
+                </div>
+              )}
+              
+              {showDeleted && isGhostMode && (
+                <div className="flex items-center gap-1 px-3 py-1 bg-red-500/20 text-red-300 rounded-full text-sm border border-red-500/30 animate-pulse">
+                  <Trash2 className="w-3 h-3" />
+                  Showing Deleted
+                  <button onClick={() => setShowDeleted(false)} className="ml-1 hover:text-white">✕</button>
+                </div>
+              )}
+              
+              <button 
+                onClick={() => {
+                  setFilterType('all');
+                  setFilterUser('');
+                  setFilterTags('');
+                  setShowDeleted(false);
+                }}
+                className="px-3 py-1 bg-white/10 text-white/60 hover:text-white rounded-full text-sm transition-colors"
+              >
+                Clear all
+              </button>
+            </div>
           )}
-
-          <Input
-            placeholder="Filter by user..."
-            value={filterUser}
-            onChange={(e) => setFilterUser(e.target.value)}
-            className="w-40 bg-black/20 border-white/10"
-          />
-
-          <Input
-            placeholder="Filter by tags..."
-            value={filterTags}
-            onChange={(e) => setFilterTags(e.target.value)}
-            className="w-40 bg-black/20 border-white/10"
-          />
-
-          <div className="flex gap-2">
-            <Button
-              variant={viewMode === 'grid' ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => setViewMode('grid')}
-            >
-              <Grid className="w-4 h-4" />
-            </Button>
-            <Button
-              variant={viewMode === 'list' ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => setViewMode('list')}
-            >
-              <List className="w-4 h-4" />
-            </Button>
-          </div>
         </div>
       </div>
+
 
       {/* Content Grid/List */}
       <div className={`${
