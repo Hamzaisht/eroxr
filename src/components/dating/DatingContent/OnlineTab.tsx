@@ -363,145 +363,145 @@ export function OnlineTab({ session, userProfile }: OnlineTabProps) {
             whileHover={{ scale: 1.02 }}
             className="group"
           >
-            <div className="relative bg-luxury-darker/40 backdrop-blur-md border border-luxury-primary/10 hover:border-luxury-primary/30 transition-all duration-300 rounded-2xl overflow-hidden hover:shadow-lg hover:shadow-luxury-primary/20">
-              {/* Background Pattern */}
-              <div className="absolute inset-0 opacity-5">
-                <div className="absolute inset-0 bg-gradient-to-br from-luxury-primary/20 via-transparent to-luxury-accent/20"></div>
-              </div>
-              
-              <div className="relative flex items-center p-4">
-                {/* Profile Section */}
-                <div className="flex items-center gap-4 flex-1 min-w-0">
-                  <div className="relative">
+            <div className="relative flex items-center justify-between">
+              {/* Profile Card */}
+              <div className="flex-1 bg-luxury-darker/40 backdrop-blur-md border border-luxury-primary/10 hover:border-luxury-primary/30 transition-all duration-300 rounded-2xl overflow-hidden hover:shadow-lg hover:shadow-luxury-primary/20">
+                {/* Background Pattern */}
+                <div className="absolute inset-0 opacity-5">
+                  <div className="absolute inset-0 bg-gradient-to-br from-luxury-primary/20 via-transparent to-luxury-accent/20"></div>
+                </div>
+                
+                <div className="relative flex items-center p-4">
+                  {/* Profile Section */}
+                  <div className="flex items-center gap-4 flex-1 min-w-0">
                     <div className="relative">
-                      <Avatar className="h-14 w-14 ring-2 ring-luxury-primary/30 ring-offset-2 ring-offset-luxury-darker transition-transform group-hover:scale-105">
-                        <AvatarImage 
-                          src={user.avatar_url || user.profiles?.avatar_url || undefined} 
-                          className="object-cover"
-                        />
-                        <AvatarFallback className="bg-gradient-to-br from-luxury-primary/20 to-luxury-accent/20 text-luxury-primary font-bold text-lg">
-                          {(user.profiles?.username || user.title)?.charAt(0)?.toUpperCase() || 'U'}
-                        </AvatarFallback>
-                      </Avatar>
-                      
-                      {/* Online Status Indicator */}
-                      <div className={`absolute -bottom-1 -right-1 w-5 h-5 rounded-full border-3 border-luxury-darker shadow-lg ${
-                        user.online_status === 'online' ? 'bg-green-500' : 
-                        user.online_status === 'recently_active' ? 'bg-yellow-500' : 'bg-gray-500'
-                      }`}>
-                        {user.online_status === 'online' && (
-                          <div className="absolute inset-0 bg-green-500 rounded-full animate-ping opacity-40"></div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                  
-                  {/* User Info */}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      <h3 className="font-bold text-white text-lg truncate group-hover:text-luxury-primary transition-colors">
-                        {user.profiles?.username || user.title}
-                      </h3>
-                      
-                      {/* Badges */}
-                      <div className="flex gap-1">
-                        {user.isCurrentUser && (
-                          <Badge className="bg-luxury-primary text-luxury-darker text-xs font-bold px-2 py-0.5">
-                            YOU
-                          </Badge>
-                        )}
-                        {user.is_verified && (
-                          <CheckCircle2 className="h-4 w-4 text-blue-400 drop-shadow-sm" />
-                        )}
-                        {user.is_premium && (
-                          <Crown className="h-4 w-4 text-yellow-400 drop-shadow-sm" />
-                        )}
+                      <div className="relative">
+                        <Avatar className="h-14 w-14 ring-2 ring-luxury-primary/30 ring-offset-2 ring-offset-luxury-darker transition-transform group-hover:scale-105">
+                          <AvatarImage 
+                            src={user.avatar_url || user.profiles?.avatar_url || undefined} 
+                            className="object-cover"
+                          />
+                          <AvatarFallback className="bg-gradient-to-br from-luxury-primary/20 to-luxury-accent/20 text-luxury-primary font-bold text-lg">
+                            {(user.profiles?.username || user.title)?.charAt(0)?.toUpperCase() || 'U'}
+                          </AvatarFallback>
+                        </Avatar>
+                        
+                        {/* Online Status Indicator */}
+                        <div className={`absolute -bottom-1 -right-1 w-5 h-5 rounded-full border-3 border-luxury-darker shadow-lg ${
+                          user.online_status === 'online' ? 'bg-green-500' : 
+                          user.online_status === 'recently_active' ? 'bg-yellow-500' : 'bg-gray-500'
+                        }`}>
+                          {user.online_status === 'online' && (
+                            <div className="absolute inset-0 bg-green-500 rounded-full animate-ping opacity-40"></div>
+                          )}
+                        </div>
                       </div>
                     </div>
                     
-                    {/* Status and Location */}
-                    <div className="flex items-center gap-3 text-sm">
-                      <div className="flex items-center gap-1.5">
-                        <div className={`w-2 h-2 rounded-full ${
-                          user.online_status === 'online' ? 'bg-green-500' : 
-                          user.online_status === 'recently_active' ? 'bg-yellow-500' : 'bg-gray-500'
-                        }`}></div>
-                        <span className={`font-medium ${
-                          user.online_status === 'online' ? 'text-green-400' : 
-                          user.online_status === 'recently_active' ? 'text-yellow-400' : 'text-gray-400'
-                        }`}>
-                          {getStatusText(user.online_status || 'offline', user.profiles?.last_seen)}
-                        </span>
-                      </div>
-                      
-                      {/* Country Flag */}
-                      {user.country && (
-                        <div className="flex items-center gap-1.5 bg-luxury-primary/10 px-2 py-1 rounded-full">
-                          <span className="text-xl leading-none">{getCountryFlag(user.country)}</span>
-                          {user.city && (
-                            <span className="text-luxury-neutral text-xs font-medium capitalize">
-                              {user.city}
-                            </span>
+                    {/* User Info */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <h3 className="font-bold text-white text-lg truncate group-hover:text-luxury-primary transition-colors">
+                          {user.profiles?.username || user.title}
+                        </h3>
+                        
+                        {/* Badges */}
+                        <div className="flex gap-1">
+                          {user.isCurrentUser && (
+                            <Badge className="bg-luxury-primary text-luxury-darker text-xs font-bold px-2 py-0.5">
+                              YOU
+                            </Badge>
+                          )}
+                          {user.is_verified && (
+                            <CheckCircle2 className="h-4 w-4 text-blue-400 drop-shadow-sm" />
+                          )}
+                          {user.is_premium && (
+                            <Crown className="h-4 w-4 text-yellow-400 drop-shadow-sm" />
                           )}
                         </div>
-                      )}
+                      </div>
+                      
+                      {/* Status and Location */}
+                      <div className="flex items-center gap-3 text-sm">
+                        <div className="flex items-center gap-1.5">
+                          <div className={`w-2 h-2 rounded-full ${
+                            user.online_status === 'online' ? 'bg-green-500' : 
+                            user.online_status === 'recently_active' ? 'bg-yellow-500' : 'bg-gray-500'
+                          }`}></div>
+                          <span className={`font-medium ${
+                            user.online_status === 'online' ? 'text-green-400' : 
+                            user.online_status === 'recently_active' ? 'text-yellow-400' : 'text-gray-400'
+                          }`}>
+                            {getStatusText(user.online_status || 'offline', user.profiles?.last_seen)}
+                          </span>
+                        </div>
+                        
+                        {/* Country Flag */}
+                        {user.country && (
+                          <div className="flex items-center gap-1.5 bg-luxury-primary/10 px-2 py-1 rounded-full">
+                            <span className="text-xl leading-none">{getCountryFlag(user.country)}</span>
+                            {user.city && (
+                              <span className="text-luxury-neutral text-xs font-medium capitalize">
+                                {user.city}
+                              </span>
+                            )}
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
+              </div>
+              
+              {/* Action Buttons - Outside the clickable card */}
+              <div className="flex gap-3 ml-4 shrink-0 relative z-50">
+                <button
+                  className="h-12 w-12 rounded-full border-2 border-blue-500/50 bg-blue-500/20 hover:border-blue-500 hover:bg-blue-500/40 transition-all duration-200 hover:scale-110 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    console.log('Message button clicked for user:', user.profiles?.username);
+                    if (!user.isCurrentUser) {
+                      handleMessage(user);
+                    }
+                  }}
+                  disabled={user.isCurrentUser}
+                  type="button"
+                >
+                  <MessageCircle className="h-5 w-5 text-blue-400" />
+                </button>
                 
-                {/* Action Buttons */}
-                <div className="flex gap-3 pl-4 shrink-0" style={{ pointerEvents: 'auto', zIndex: 50 }}>
-                  <button
-                    className="h-12 w-12 rounded-full border-2 border-blue-500/50 bg-blue-500/20 hover:border-blue-500 hover:bg-blue-500/40 transition-all duration-200 hover:scale-110 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      console.log('Message button clicked for user:', user.profiles?.username);
-                      if (!user.isCurrentUser) {
-                        handleMessage(user);
-                      }
-                    }}
-                    disabled={user.isCurrentUser}
-                    type="button"
-                    style={{ pointerEvents: user.isCurrentUser ? 'none' : 'auto' }}
-                  >
-                    <MessageCircle className="h-5 w-5 text-blue-400" />
-                  </button>
-                  
-                  <button
-                    className="h-12 w-12 rounded-full border-2 border-yellow-500/50 bg-yellow-500/20 hover:border-yellow-500 hover:bg-yellow-500/40 transition-all duration-200 hover:scale-110 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      console.log('Bookmark button clicked for user:', user.profiles?.username);
-                      if (!user.isCurrentUser) {
-                        handleBookmark(user);
-                      }
-                    }}
-                    disabled={user.isCurrentUser}
-                    type="button"
-                    style={{ pointerEvents: user.isCurrentUser ? 'none' : 'auto' }}
-                  >
-                    <Bookmark className="h-5 w-5 text-yellow-400" />
-                  </button>
-                  
-                  <button
-                    className="h-12 w-12 rounded-full border-2 border-luxury-primary/50 bg-luxury-primary/20 hover:border-luxury-primary hover:bg-luxury-primary/40 transition-all duration-200 hover:scale-110 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      console.log('Connection button clicked for user:', user.profiles?.username);
-                      if (!user.isCurrentUser) {
-                        handleRequestConnection(user);
-                      }
-                    }}
-                    disabled={user.isCurrentUser}
-                    type="button"
-                    style={{ pointerEvents: user.isCurrentUser ? 'none' : 'auto' }}
-                  >
-                    <UserPlus className="h-5 w-5 text-luxury-primary" />
-                  </button>
-                </div>
+                <button
+                  className="h-12 w-12 rounded-full border-2 border-yellow-500/50 bg-yellow-500/20 hover:border-yellow-500 hover:bg-yellow-500/40 transition-all duration-200 hover:scale-110 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    console.log('Bookmark button clicked for user:', user.profiles?.username);
+                    if (!user.isCurrentUser) {
+                      handleBookmark(user);
+                    }
+                  }}
+                  disabled={user.isCurrentUser}
+                  type="button"
+                >
+                  <Bookmark className="h-5 w-5 text-yellow-400" />
+                </button>
+                
+                <button
+                  className="h-12 w-12 rounded-full border-2 border-luxury-primary/50 bg-luxury-primary/20 hover:border-luxury-primary hover:bg-luxury-primary/40 transition-all duration-200 hover:scale-110 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    console.log('Connection button clicked for user:', user.profiles?.username);
+                    if (!user.isCurrentUser) {
+                      handleRequestConnection(user);
+                    }
+                  }}
+                  disabled={user.isCurrentUser}
+                  type="button"
+                >
+                  <UserPlus className="h-5 w-5 text-luxury-primary" />
+                </button>
               </div>
             </div>
           </motion.div>
