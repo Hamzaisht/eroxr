@@ -226,11 +226,8 @@ export function OnlineTab({ session, userProfile }: OnlineTabProps) {
       return;
     }
 
-    // Navigate to messages or open message dialog
-    toast({
-      title: "Message sent",
-      description: `Opening conversation with ${user.profiles?.username || 'user'}`,
-    });
+    // Navigate to messages with this user
+    window.location.href = `/messages?userId=${user.user_id}`;
   };
 
   const handleBookmark = async (user: OnlineUser) => {
@@ -243,11 +240,28 @@ export function OnlineTab({ session, userProfile }: OnlineTabProps) {
       return;
     }
 
-    // Add to bookmarks/favorites
-    toast({
-      title: "Profile bookmarked",
-      description: `${user.profiles?.username || 'Profile'} added to favorites`,
-    });
+    try {
+      const { error } = await supabase
+        .from('favorites')
+        .insert([{
+          user_id: session.user.id,
+          target_user_id: user.user_id,
+          target_ad_id: user.id
+        }]);
+
+      if (error) throw error;
+
+      toast({
+        title: "Profile bookmarked",
+        description: `${user.profiles?.username || 'Profile'} added to favorites`,
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to bookmark profile. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleRequestConnection = async (user: OnlineUser) => {
@@ -260,11 +274,28 @@ export function OnlineTab({ session, userProfile }: OnlineTabProps) {
       return;
     }
 
-    // Send connection request
-    toast({
-      title: "Connection requested",
-      description: `Connection request sent to ${user.profiles?.username || 'user'}`,
-    });
+    try {
+      const { error } = await supabase
+        .from('connection_requests')
+        .insert([{
+          requester_id: session.user.id,
+          target_user_id: user.user_id,
+          status: 'pending'
+        }]);
+
+      if (error) throw error;
+
+      toast({
+        title: "Connection requested",
+        description: `Connection request sent to ${user.profiles?.username || 'user'}`,
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to send connection request. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   if (!session) {

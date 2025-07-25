@@ -24,7 +24,6 @@ export function EnhancedDatingHeader({
   const [searchVisible, setSearchVisible] = useState(false);
 
   const tabs = [
-    { value: "browse", label: "Browse", icon: Search },
     { value: "trending", label: "Trending", icon: Zap },
     { value: "popular", label: "Popular", icon: Crown },
     { value: "quick-match", label: "Quick Match", icon: Zap },
@@ -144,8 +143,12 @@ export function EnhancedDatingHeader({
             <div className="glass-panel p-4 rounded-xl">
               <input
                 type="text"
-                placeholder="Search divine profiles..."
+                placeholder="Search Divine Profiles - Browse all dating ads here..."
                 className="w-full bg-transparent border-none outline-none text-white placeholder-white/50"
+                onChange={(e) => {
+                  // Implement search functionality
+                  console.log('Searching for:', e.target.value);
+                }}
               />
             </div>
           </motion.div>
