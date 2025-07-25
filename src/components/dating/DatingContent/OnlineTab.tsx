@@ -25,6 +25,7 @@ interface OnlineUser extends DatingAd {
   };
   last_active?: string;
   online_status?: 'online' | 'recently_active' | 'offline';
+  isCurrentUser?: boolean;
 }
 
 export function OnlineTab({ session, userProfile }: OnlineTabProps) {
@@ -41,7 +42,7 @@ export function OnlineTab({ session, userProfile }: OnlineTabProps) {
     try {
       setIsLoading(true);
       
-      // Fetch active dating ads first
+      // Fetch active dating ads first (including current user's ads)
       const { data: datingAds, error: adsError } = await supabase
         .from('dating_ads')
         .select('*')
@@ -67,7 +68,7 @@ export function OnlineTab({ session, userProfile }: OnlineTabProps) {
       // Get user IDs from dating ads
       const userIds = datingAds.map(ad => ad.user_id).filter(Boolean);
 
-      // Fetch profiles for those users who have bodycontact enabled
+      // Fetch profiles for those users who have bodycontact enabled (including current user)
       const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
         .select('id, username, avatar_url, location, last_seen, can_access_bodycontact')
@@ -84,7 +85,7 @@ export function OnlineTab({ session, userProfile }: OnlineTabProps) {
         return;
       }
 
-      // Combine dating ads with profiles
+      // Combine dating ads with profiles (including current user)
       const usersWithProfiles = datingAds
         .map(ad => {
           const profile = profiles?.find(p => p.id === ad.user_id);
@@ -93,12 +94,31 @@ export function OnlineTab({ session, userProfile }: OnlineTabProps) {
           return {
             ...ad,
             profiles: profile,
-            online_status: getOnlineStatus(profile.last_seen)
+            online_status: getOnlineStatus(profile.last_seen),
+            isCurrentUser: session?.user?.id === ad.user_id // Mark if this is the current user
           };
         })
         .filter(Boolean) as OnlineUser[];
 
-      setOnlineUsers(usersWithProfiles);
+      // Sort so current user appears first, then by online status and last activity
+      const sortedUsers = usersWithProfiles.sort((a, b) => {
+        // Current user first
+        if (a.isCurrentUser && !b.isCurrentUser) return -1;
+        if (!a.isCurrentUser && b.isCurrentUser) return 1;
+        
+        // Then by online status
+        const statusOrder = { online: 0, recently_active: 1, offline: 2 };
+        const aStatus = statusOrder[a.online_status || 'offline'];
+        const bStatus = statusOrder[b.online_status || 'offline'];
+        if (aStatus !== bStatus) return aStatus - bStatus;
+        
+        // Finally by last activity
+        const aTime = new Date(a.profiles?.last_seen || a.last_active || 0).getTime();
+        const bTime = new Date(b.profiles?.last_seen || b.last_active || 0).getTime();
+        return bTime - aTime;
+      });
+
+      setOnlineUsers(sortedUsers);
     } catch (error) {
       console.error('Error in fetchOnlineUsers:', error);
     } finally {
@@ -269,13 +289,22 @@ export function OnlineTab({ session, userProfile }: OnlineTabProps) {
                     </div>
                   )}
                   
-                  {/* Online Status Badge */}
-                  <div className="absolute top-3 left-3">
-                    <Badge variant="secondary" className="bg-background/80 backdrop-blur-sm">
-                      <Circle className={`h-2 w-2 mr-1 ${getStatusColor(user.online_status || 'offline')} fill-current`} />
-                      {user.online_status === 'online' ? 'Online' : 'Active'}
-                    </Badge>
-                  </div>
+                   {/* Online Status Badge */}
+                   <div className="absolute top-3 left-3">
+                     <Badge variant="secondary" className="bg-background/80 backdrop-blur-sm">
+                       <Circle className={`h-2 w-2 mr-1 ${getStatusColor(user.online_status || 'offline')} fill-current`} />
+                       {user.online_status === 'online' ? 'Online' : 'Active'}
+                     </Badge>
+                   </div>
+
+                   {/* Current User Badge */}
+                   {user.isCurrentUser && (
+                     <div className="absolute top-3 left-3 -mt-8">
+                       <Badge className="bg-primary/90 text-primary-foreground backdrop-blur-sm">
+                         You
+                       </Badge>
+                     </div>
+                   )}
 
                   {/* View Count */}
                   <div className="absolute top-3 right-3">
