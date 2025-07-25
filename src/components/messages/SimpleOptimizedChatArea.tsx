@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, memo, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { motion } from 'framer-motion';
-import { Info, Send, Phone, Video, MoreVertical, Paperclip, Smile, Camera, Zap } from 'lucide-react';
+import { Info, Send, Phone, Video, MoreVertical, Paperclip, Smile, Camera, Zap, Check, CheckCheck } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
@@ -20,6 +20,8 @@ import { MediaPreviewInChat } from './chat/MediaPreviewInChat';
 import { MessageBubble } from './chat/MessageBubble';
 import { MessageEditDialog } from './dialogs/MessageEditDialog';
 import { AnimatePresence } from 'framer-motion';
+import { useEnhancedRealtime } from '@/hooks/useEnhancedRealtime';
+import { useTypingIndicator } from '@/hooks/useTypingIndicator';
 
 interface PendingAttachment {
   id: string;
@@ -36,6 +38,7 @@ interface Message {
   sender_id: string;
   recipient_id: string;
   message_type?: 'text' | 'image' | 'video' | 'audio' | 'file';
+  delivery_status?: 'sending' | 'sent' | 'delivered' | 'seen';
 }
 
 interface ChatAreaProps {
@@ -68,6 +71,19 @@ export const SimpleOptimizedChatArea = memo(({ conversationId, onShowDetails }: 
     conversationId,
     () => fetchMessages()
   );
+
+  // Typing indicator hook
+  const { sendTypingStatus } = useTypingIndicator(conversationId);
+
+  // Handle typing status when user types
+  const handleInputChange = useCallback((value: string) => {
+    setNewMessage(value);
+    if (value.trim()) {
+      sendTypingStatus(true);
+    } else {
+      sendTypingStatus(false);
+    }
+  }, [sendTypingStatus]);
 
   // Fetch messages
   const fetchMessages = useCallback(async () => {
@@ -463,14 +479,13 @@ export const SimpleOptimizedChatArea = memo(({ conversationId, onShowDetails }: 
     }
   };
 
-  // Simulate typing indicator
+  // Use real-time typing indicator from enhanced realtime hook
+  const { isTyping: realTimeTyping } = useEnhancedRealtime(conversationId);
+  
+  // Update local typing state based on real-time data
   useEffect(() => {
-    if (messages.length > 0) {
-      setIsTyping(true);
-      const timeout = setTimeout(() => setIsTyping(false), 2000);
-      return () => clearTimeout(timeout);
-    }
-  }, [messages]);
+    setIsTyping(realTimeTyping);
+  }, [realTimeTyping]);
 
   return (
     <div className="flex flex-col h-full">{/* Remove relative positioning */}
@@ -549,14 +564,91 @@ export const SimpleOptimizedChatArea = memo(({ conversationId, onShowDetails }: 
             {messages.map((message) => {
               const isOwn = message.sender_id === user?.id;
               return (
-                <MessageBubble
+                <motion.div
                   key={message.id}
-                  message={message}
-                  isOwn={isOwn}
-                  userProfile={userProfile}
-                  onEdit={handleEditMessage}
-                  onDelete={handleDeleteMessage}
-                />
+                  initial={{ opacity: 0, y: 20, scale: 0.9 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: -20, scale: 0.9 }}
+                  transition={{ type: "spring", stiffness: 400, damping: 25 }}
+                  className={`flex ${isOwn ? 'justify-end' : 'justify-start'} group`}
+                >
+                  <div className="flex items-end space-x-2 max-w-xs lg:max-w-md relative">
+                    {!isOwn && (
+                      <Avatar className="h-6 w-6">
+                        <AvatarImage src={userProfile?.avatar_url} />
+                        <AvatarFallback className="bg-gradient-to-r from-purple-500 to-cyan-500 text-white text-xs">
+                          {userProfile?.username?.[0]?.toUpperCase() || '?'}
+                        </AvatarFallback>
+                      </Avatar>
+                    )}
+                    
+                    <div className="relative">
+                      <motion.div
+                        className={`px-4 py-3 rounded-2xl backdrop-blur-sm transition-all duration-300 hover:scale-[1.02] ${
+                          isOwn
+                            ? 'bg-white/95 text-gray-900 rounded-br-md shadow-lg border border-white/20'
+                            : 'bg-gray-900/80 text-white border border-gray-700/50 rounded-bl-md shadow-xl'
+                        }`}
+                        style={{
+                          backdropFilter: 'blur(20px)',
+                          boxShadow: isOwn 
+                            ? '0 8px 32px rgba(255, 255, 255, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.2)'
+                            : '0 8px 32px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1)'
+                        }}
+                      >
+                        {/* Render message content based on type */}
+                        {message.message_type === 'text' || !message.message_type ? (
+                          <p className="break-words">{message.content}</p>
+                        ) : message.message_type === 'image' ? (
+                          <div className="space-y-2">
+                            <img 
+                              src={message.content} 
+                              alt="Image"
+                              className="max-w-[200px] max-h-[200px] object-cover rounded-md"
+                            />
+                          </div>
+                        ) : message.message_type === 'video' ? (
+                          <div className="space-y-2">
+                            <video 
+                              controls 
+                              className="max-w-[200px] max-h-[200px] object-cover rounded-md"
+                            >
+                              <source src={message.content} type="video/mp4" />
+                              Your browser does not support the video tag.
+                            </video>
+                          </div>
+                        ) : (
+                          <p className="break-words">{message.content}</p>
+                        )}
+                        
+                        {/* Message timestamp and delivery status */}
+                        <div className="flex items-center justify-between mt-1 text-xs opacity-70">
+                          <span>{new Date(message.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                          {isOwn && message.delivery_status && (
+                            <div className="flex items-center">
+                              {message.delivery_status === 'seen' ? (
+                                <div className="flex items-center text-blue-400">
+                                  <CheckCheck className="h-3 w-3" />
+                                  <CheckCheck className="h-3 w-3 -ml-1" />
+                                </div>
+                              ) : message.delivery_status === 'delivered' ? (
+                                <div className="flex items-center text-gray-400">
+                                  <CheckCheck className="h-3 w-3" />
+                                  <CheckCheck className="h-3 w-3 -ml-1" />
+                                </div>
+                              ) : (
+                                <div className="flex items-center text-gray-500">
+                                  <Check className="h-3 w-3" />
+                                  <Check className="h-3 w-3 -ml-1" />
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      </motion.div>
+                    </div>
+                  </div>
+                </motion.div>
               );
             })}
           </AnimatePresence>
@@ -619,10 +711,7 @@ export const SimpleOptimizedChatArea = memo(({ conversationId, onShowDetails }: 
             <Input
               value={newMessage}
               onChange={(e) => {
-                const value = e.target.value;
-                // Transform common text shortcuts to emojis as user types
-                const transformedValue = transformTextToEmoji(value);
-                setNewMessage(transformedValue);
+                handleInputChange(e.target.value);
               }}
               onKeyPress={(e) => e.key === 'Enter' && !e.shiftKey && sendMessage()}
               placeholder="Type your message..."
