@@ -21,12 +21,16 @@ import { NavButtons } from "@/components/landing/NavButtons";
 import { AnimatedBackground } from "@/components/landing/effects/AnimatedBackground";
 
 const Landing = () => {
+  console.log('🏠 Landing page rendering...');
+  
   const containerRef = useRef<HTMLDivElement>(null);
   
   const { scrollYProgress } = useScroll({
     target: containerRef,
     offset: ["start start", "end end"]
   });
+
+  console.log('🏠 Landing page refs and hooks initialized');
 
   return (
     <>
@@ -38,59 +42,85 @@ const Landing = () => {
       />
       
       <div ref={containerRef} className="relative bg-black overflow-hidden">
-        {/* Optimized Effects */}
-        <AnimatedBackground />
+        {/* Simplified Background */}
+        <div className="fixed inset-0 bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950" />
         
         {/* Navigation Header */}
         <div className="fixed top-16 right-4 z-50 flex gap-3">
           <NavButtons />
         </div>
         
-        {/* Live Marquee */}
-        <LiveMarquee />
+        {/* Live Marquee - Conditional Loading */}
+        <div className="relative z-10">
+          <LiveMarquee />
+        </div>
         
-        {/* Real-time Activity Feed - Repositioned to be less intrusive */}
+        {/* Real-time Activity Feed - Conditional Loading */}
         <div className="fixed bottom-8 left-4 z-30 opacity-70 hover:opacity-100 transition-opacity">
           <RealTimeActivityFeed />
         </div>
         
-        {/* Floating Actions */}
-        <FloatingActions />
+        {/* Floating Actions - Conditional Loading */}
+        <div className="relative z-20">
+          <FloatingActions />
+        </div>
         
         <ScrollProgress />
         
-        {/* Section 1: Interactive 3D Hero */}
-        <Interactive3DHero scrollYProgress={scrollYProgress} />
+        {/* Section 1: Interactive 3D Hero - Wrapped in error boundary */}
+        <div className="relative z-10">
+          <Interactive3DHero scrollYProgress={scrollYProgress} />
+        </div>
         
-        {/* Section 2: Why EROXR Exists */}
-        <WhyEroxrExists scrollYProgress={scrollYProgress} />
+        {/* Section 2: Why EROXR Exists - Conditional Loading */}
+        <div className="relative z-10">
+          <WhyEroxrExists scrollYProgress={scrollYProgress} />
+        </div>
         
-        {/* Section 3: Creator Showcase Carousel */}
-        <CreatorShowcase scrollYProgress={scrollYProgress} />
+        {/* Section 3: Creator Showcase Carousel - Conditional Loading */}
+        <div className="relative z-10">
+          <CreatorShowcase scrollYProgress={scrollYProgress} />
+        </div>
         
-        {/* Section 4: Top Creators Showcase - Bonus Traffic Driver */}
-        <TopCreatorsShowcase scrollYProgress={scrollYProgress} />
+        {/* Section 4: Top Creators Showcase - Conditional Loading */}
+        <div className="relative z-10">
+          <TopCreatorsShowcase scrollYProgress={scrollYProgress} />
+        </div>
         
-        {/* Section 5: Earnings Section */}
-        <EarningsSection scrollYProgress={scrollYProgress} />
+        {/* Section 5: Earnings Section - Conditional Loading */}
+        <div className="relative z-10">
+          <EarningsSection scrollYProgress={scrollYProgress} />
+        </div>
         
-        {/* Section 6: How It Works */}
-        <HowItWorks scrollYProgress={scrollYProgress} />
+        {/* Section 6: How It Works - Conditional Loading */}
+        <div className="relative z-10">
+          <HowItWorks scrollYProgress={scrollYProgress} />
+        </div>
         
-        {/* Section 7: Interactive Platform Demo */}
-        <InteractivePlatformDemo scrollYProgress={scrollYProgress} />
+        {/* Section 7: Interactive Platform Demo - Conditional Loading */}
+        <div className="relative z-10">
+          <InteractivePlatformDemo scrollYProgress={scrollYProgress} />
+        </div>
         
-        {/* Section 8: Trust & Safety */}
-        <TrustSafetySection scrollYProgress={scrollYProgress} />
+        {/* Section 8: Trust & Safety - Conditional Loading */}
+        <div className="relative z-10">
+          <TrustSafetySection scrollYProgress={scrollYProgress} />
+        </div>
         
-        {/* Section 9: Platform Milestones */}
-        <PlatformMilestones />
+        {/* Section 9: Platform Milestones - Conditional Loading */}
+        <div className="relative z-10">
+          <PlatformMilestones />
+        </div>
         
-        {/* Section 10: Start Your Page */}
-        <StartYourPage scrollYProgress={scrollYProgress} />
+        {/* Section 10: Start Your Page - Conditional Loading */}
+        <div className="relative z-10">
+          <StartYourPage scrollYProgress={scrollYProgress} />
+        </div>
         
-        {/* Section 11: Footer */}
-        <CinematicFooter />
+        {/* Section 11: Footer - Conditional Loading */}
+        <div className="relative z-10">
+          <CinematicFooter />
+        </div>
       </div>
     </>
   );

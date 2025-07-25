@@ -1,56 +1,53 @@
-
-import { Component, ErrorInfo, ReactNode } from "react";
-import { Button } from "@/components/ui/button";
-import { RefreshCw } from "lucide-react";
+import React from 'react';
 
 interface ErrorBoundaryProps {
-  children: ReactNode;
-  fallback?: ReactNode;
+  children: React.ReactNode;
+  fallback?: React.ReactNode;
 }
 
 interface ErrorBoundaryState {
   hasError: boolean;
-  error: Error | null;
+  error?: Error;
 }
 
-export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
+export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundaryState> {
   constructor(props: ErrorBoundaryProps) {
     super(props);
-    this.state = { hasError: false, error: null };
+    this.state = { hasError: false };
   }
 
   static getDerivedStateFromError(error: Error): ErrorBoundaryState {
-    // Update state so the next render will show the fallback UI
+    console.error('🚨 ErrorBoundary caught error:', error);
     return { hasError: true, error };
   }
 
-  componentDidCatch(error: Error, errorInfo: ErrorInfo): void {
-    // You can also log the error to an error reporting service
-    console.error("Error caught by ErrorBoundary:", error, errorInfo);
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+    console.error('🚨 ErrorBoundary componentDidCatch:', error, errorInfo);
   }
 
-  resetErrorBoundary = (): void => {
-    this.setState({ hasError: false, error: null });
-  };
-
-  render(): ReactNode {
+  render() {
     if (this.state.hasError) {
-      // Custom fallback UI
       return this.props.fallback || (
-        <div className="p-6 rounded-lg border border-red-500/20 bg-red-500/5 flex flex-col items-center justify-center gap-4">
-          <div className="text-center">
-            <h2 className="text-xl font-bold text-red-500 mb-2">Something went wrong</h2>
-            <p className="text-sm text-gray-400 mb-4">
-              {this.state.error?.message || "An unexpected error occurred"}
+        <div className="min-h-screen flex items-center justify-center bg-black text-white">
+          <div className="text-center p-8">
+            <h1 className="text-4xl font-bold mb-4">Something went wrong</h1>
+            <p className="text-xl text-gray-400 mb-6">
+              We encountered an error while loading the page.
             </p>
-            <Button
-              variant="outline"
-              onClick={this.resetErrorBoundary}
-              className="flex items-center gap-2"
+            <button 
+              onClick={() => window.location.reload()}
+              className="px-6 py-3 bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors"
             >
-              <RefreshCw className="h-4 w-4" />
-              Try again
-            </Button>
+              Reload Page
+            </button>
+            {this.state.error && (
+              <details className="mt-6 text-left bg-gray-900 p-4 rounded-lg">
+                <summary className="cursor-pointer text-red-400 mb-2">Error Details</summary>
+                <pre className="text-sm text-gray-300 overflow-auto">
+                  {this.state.error.toString()}
+                </pre>
+              </details>
+            )}
           </div>
         </div>
       );
@@ -59,21 +56,3 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
     return this.props.children;
   }
 }
-
-// Higher-order component wrapper for functional components
-export const withErrorBoundary = <P extends object>(
-  Component: React.ComponentType<P>,
-  fallback?: ReactNode
-): React.FC<P> => {
-  const WithErrorBoundary: React.FC<P> = (props) => (
-    <ErrorBoundary fallback={fallback}>
-      <Component {...props} />
-    </ErrorBoundary>
-  );
-
-  // Set display name for debugging
-  const displayName = Component.displayName || Component.name || "Component";
-  WithErrorBoundary.displayName = `withErrorBoundary(${displayName})`;
-
-  return WithErrorBoundary;
-};
