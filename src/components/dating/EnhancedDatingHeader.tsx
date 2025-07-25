@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Grid, List, Zap, Crown, Search, Filter } from "lucide-react";
+import { Plus, Grid, List, Zap, Crown, Search, Filter, Circle } from "lucide-react";
 import { motion } from "framer-motion";
 import { useState } from "react";
 
@@ -29,6 +29,7 @@ export function EnhancedDatingHeader({
     { value: "popular", label: "Popular", icon: Crown },
     { value: "quick-match", label: "Quick Match", icon: Zap },
     { value: "favorites", label: "Favorites", icon: Crown },
+    { value: "online", label: "Online", icon: Circle },
     { value: "nearby", label: "Nearby", icon: Search },
   ];
 
