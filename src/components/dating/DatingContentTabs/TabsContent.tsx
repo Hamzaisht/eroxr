@@ -6,6 +6,7 @@ import { PopularAdsTab } from "./PopularAdsTab";
 import { QuickMatchTab } from "./QuickMatchTab";
 import { FavoritesTab } from "./FavoritesTab";
 import { NearbyTab } from "./NearbyTab";
+import { OnlineTab } from "../DatingContent/OnlineTab";
 import { DatingAd } from "@/components/ads/types/dating";
 
 interface TabsContentProps {
@@ -102,6 +103,12 @@ export function DatingContentTabs({
       </TabsContent>
       <TabsContent value="nearby">
         <NearbyTab />
+      </TabsContent>
+      <TabsContent value="online">
+        <OnlineTab
+          session={session}
+          userProfile={userProfile}
+        />
       </TabsContent>
     </Tabs>
   );
