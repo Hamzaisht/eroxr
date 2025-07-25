@@ -6,6 +6,7 @@ import { useSession } from "@supabase/auth-helpers-react";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { motion } from "framer-motion";
 
 interface AdActionsProps {
   ad: DatingAd;
@@ -107,41 +108,61 @@ export const AdActions = ({ ad }: AdActionsProps) => {
 
   return (
     <div className="absolute top-2 right-2 flex flex-col gap-1.5 transition-opacity duration-200 z-20">
-      <Button 
-        size="icon" 
-        variant="ghost" 
-        className="bg-white/10 backdrop-blur-sm text-white hover:bg-white/20 h-8 w-8 rounded-full border border-white/20"
-        onClick={handleLike}
+      <motion.div
+        whileHover={{ scale: 1.1 }}
+        whileTap={{ scale: 0.9 }}
       >
-        <Heart className="h-4 w-4" />
-      </Button>
+        <Button 
+          size="icon" 
+          variant="ghost" 
+          className="dating-glass-panel action-button-glow text-white hover:bg-white/20 h-10 w-10 rounded-full border border-white/20 interactive-scale"
+          onClick={handleLike}
+        >
+          <Heart className="h-4 w-4" />
+        </Button>
+      </motion.div>
       
-      <Button 
-        size="icon" 
-        variant="ghost" 
-        className="bg-white/10 backdrop-blur-sm text-white hover:bg-white/20 h-8 w-8 rounded-full border border-white/20"
-        onClick={handleMessage}
+      <motion.div
+        whileHover={{ scale: 1.1 }}
+        whileTap={{ scale: 0.9 }}
       >
-        <MessageCircle className="h-4 w-4" />
-      </Button>
+        <Button 
+          size="icon" 
+          variant="ghost" 
+          className="dating-glass-panel action-button-glow text-white hover:bg-white/20 h-10 w-10 rounded-full border border-white/20 interactive-scale"
+          onClick={handleMessage}
+        >
+          <MessageCircle className="h-4 w-4" />
+        </Button>
+      </motion.div>
       
-      <Button 
-        size="icon" 
-        variant="ghost" 
-        className="bg-white/10 backdrop-blur-sm text-white hover:bg-white/20 h-8 w-8 rounded-full border border-white/20"
-        onClick={handleConnect}
+      <motion.div
+        whileHover={{ scale: 1.1 }}
+        whileTap={{ scale: 0.9 }}
       >
-        <UserPlus className="h-4 w-4" />
-      </Button>
+        <Button 
+          size="icon" 
+          variant="ghost" 
+          className="dating-glass-panel action-button-glow text-white hover:bg-white/20 h-10 w-10 rounded-full border border-white/20 interactive-scale"
+          onClick={handleConnect}
+        >
+          <UserPlus className="h-4 w-4" />
+        </Button>
+      </motion.div>
       
-      <Button 
-        size="icon" 
-        variant="ghost" 
-        className="bg-white/10 backdrop-blur-sm text-white hover:bg-white/20 h-8 w-8 rounded-full border border-white/20"
-        onClick={handleShare}
+      <motion.div
+        whileHover={{ scale: 1.1 }}
+        whileTap={{ scale: 0.9 }}
       >
-        <Share2 className="h-4 w-4" />
-      </Button>
+        <Button 
+          size="icon" 
+          variant="ghost" 
+          className="dating-glass-panel action-button-glow text-white hover:bg-white/20 h-10 w-10 rounded-full border border-white/20 interactive-scale"
+          onClick={handleShare}
+        >
+          <Share2 className="h-4 w-4" />
+        </Button>
+      </motion.div>
     </div>
   );
 };

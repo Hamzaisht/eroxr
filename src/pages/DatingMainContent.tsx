@@ -9,7 +9,8 @@ import { DatingAd } from "@/types/dating";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { FloatingActionButton } from "../components/dating/FloatingActionButton";
-// Removed heavy GreekSymbolsBackground for performance
+import { DatingErrorBoundary } from "../components/dating/ErrorBoundary";
+import { DatingSkeletonLoader, DatingHeaderSkeleton } from "../components/dating/EnhancedLoadingStates";
 
 export interface DatingFiltersPanelProps {
   // Define all required props to match what's being passed
@@ -292,103 +293,128 @@ export default function DatingMainContent(props: any) {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-black via-purple-950/20 to-cyan-950/20 relative overflow-hidden">
-      {/* Simplified Background - No Heavy Particles */}
-      <div className="absolute inset-0 bg-gradient-to-br from-black/50 via-purple-950/10 to-cyan-950/10" />
+    <DatingErrorBoundary>
+      <div className="min-h-screen dating-gradient-bg dating-neural-pattern relative overflow-hidden">
+        {/* Performance Optimized Background */}
+        <div className="absolute inset-0 neural-mesh opacity-30" />
 
-      <div className="container mx-auto py-6 relative z-10">
-        {/* Enhanced Header */}
-        <EnhancedDatingHeader 
-          activeTab={selectedTab}
-          onTabChange={setSelectedTab}
-          viewMode={viewMode}
-          onViewModeChange={setViewMode}
-          onCreateAd={handleCreateAd}
-          onToggleFilters={toggleFilters}
-        />
-        
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-          {/* Enhanced Filter Section */}
-          <div className="lg:col-span-1">
-            <EnhancedFiltersPanel
-            isFilterCollapsed={props.isFilterCollapsed || isFilterCollapsed}
-            setIsFilterCollapsed={props.setIsFilterCollapsed || setIsFilterCollapsed}
-            showFilters={props.showFilters || showFilters}
-            selectedCountry={props.selectedCountry || selectedCountry}
-            setSelectedCountry={props.setSelectedCountry || setSelectedCountry}
-            selectedGender={props.selectedGender || selectedGender}
-            setSelectedGender={props.setSelectedGender || setSelectedGender}
-            minAge={props.minAge || minAge}
-            setMinAge={props.setMinAge || setMinAge}
-            maxAge={props.maxAge || maxAge}
-            setMaxAge={props.setMaxAge || setMaxAge}
-            selectedTag={props.selectedTag || selectedTag}
-            setSelectedTag={props.setSelectedTag || setSelectedTag}
-            selectedLookingFor={props.selectedLookingFor || selectedLookingFor}
-            setSelectedLookingFor={props.setSelectedLookingFor || setSelectedLookingFor}
-            isFilterApplied={props.isFilterApplied || isFilterApplied}
-            handleApplyFilters={props.handleApplyFilters || handleApplyFilters}
-            handleResetFilters={props.handleResetFilters || handleResetFilters}
-            selectedCity={props.selectedCity || selectedCity}
-            setSelectedCity={props.setSelectedCity || setSelectedCity}
-            selectedVerified={props.selectedVerified || selectedVerified}
-            setSelectedVerified={props.setSelectedVerified || setSelectedVerified}
-            selectedPremium={props.selectedPremium || selectedPremium}
-            setSelectedPremium={props.setSelectedPremium || setSelectedPremium}
-            distanceRange={props.distanceRange || distanceRange}
-            setDistanceRange={props.setDistanceRange || setDistanceRange}
+        <div className="container mx-auto py-6 relative z-10">
+          {/* Enhanced Header with Loading State */}
+          {isLoading ? (
+            <DatingHeaderSkeleton />
+          ) : (
+            <EnhancedDatingHeader 
+              activeTab={selectedTab}
+              onTabChange={setSelectedTab}
+              viewMode={viewMode}
+              onViewModeChange={setViewMode}
+              onCreateAd={handleCreateAd}
+              onToggleFilters={toggleFilters}
+              onSearch={(query) => {
+                // Implement search functionality
+                console.log('Search query:', query);
+              }}
             />
-          </div>
+          )}
           
-          {/* Content Section */}
-          <div className="lg:col-span-3">
-          <DatingContent 
-            datingAds={props.datingAds || filteredAds || []}
-            isLoading={props.isLoading || isLoading}
-            activeTab={props.activeTab || selectedTab}
-            userProfile={props.userProfile || userProfile}
-            handleAdCreationSuccess={props.handleAdCreationSuccess || handleAdCreationSuccess}
-            handleTagClick={props.handleTagClick || handleTagClick}
-            handleTabChange={props.setActiveTab || setSelectedTab}
-            handleFilterToggle={props.handleFilterToggle || toggleFilters}
-          />
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+            {/* Enhanced Filter Section with Responsive Design */}
+            <div className="lg:col-span-1">
+              {isLoading ? (
+                <div className="space-y-4">
+                  <div className="dating-skeleton h-32 rounded-xl" />
+                  <div className="dating-skeleton h-48 rounded-xl" />
+                </div>
+              ) : (
+                <EnhancedFiltersPanel
+                  isFilterCollapsed={isFilterCollapsed}
+                  setIsFilterCollapsed={setIsFilterCollapsed}
+                  showFilters={showFilters}
+                  selectedCountry={selectedCountry}
+                  setSelectedCountry={setSelectedCountry}
+                  selectedGender={selectedGender}
+                  setSelectedGender={setSelectedGender}
+                  minAge={minAge}
+                  setMinAge={setMinAge}
+                  maxAge={maxAge}
+                  setMaxAge={setMaxAge}
+                  selectedTag={selectedTag}
+                  setSelectedTag={setSelectedTag}
+                  selectedLookingFor={selectedLookingFor}
+                  setSelectedLookingFor={setSelectedLookingFor}
+                  isFilterApplied={isFilterApplied}
+                  handleApplyFilters={handleApplyFilters}
+                  handleResetFilters={handleResetFilters}
+                  selectedCity={selectedCity}
+                  setSelectedCity={setSelectedCity}
+                  selectedVerified={selectedVerified}
+                  setSelectedVerified={setSelectedVerified}
+                  selectedPremium={selectedPremium}
+                  setSelectedPremium={setSelectedPremium}
+                  distanceRange={distanceRange}
+                  setDistanceRange={setDistanceRange}
+                />
+              )}
+            </div>
+            
+            {/* Content Section with Enhanced Loading */}
+            <div className="lg:col-span-3">
+              {isLoading ? (
+                <DatingSkeletonLoader count={6} type={viewMode} />
+              ) : (
+                <DatingContent 
+                  datingAds={filteredAds}
+                  isLoading={isRefetching}
+                  activeTab={selectedTab}
+                  userProfile={userProfile}
+                  handleAdCreationSuccess={handleAdCreationSuccess}
+                  handleTagClick={handleTagClick}
+                  handleTabChange={setSelectedTab}
+                  handleFilterToggle={toggleFilters}
+                />
+              )}
+            </div>
           </div>
         </div>
+
+        {/* Enhanced Create Ad Dialog with Error Handling */}
+        <CreateAdDialog 
+          open={showCreateAdDialog}
+          onOpenChange={setShowCreateAdDialog}
+          onSuccess={handleAdCreationSuccess}
+        />
+
+        {/* Enhanced Floating Action Button */}
+        <FloatingActionButton 
+          onCreateAd={handleCreateAd}
+          onQuickMatch={() => {
+            setSelectedTab("quick-match");
+            toast({
+              title: "🔥 Quick Match",
+              description: "Finding divine connections for you!",
+              className: "success-pulse",
+            });
+          }}
+          onMessages={() => {
+            navigate("/messages");
+            toast({
+              title: "💬 Messages",
+              description: "Opening your divine conversations",
+            });
+          }}
+          onSearch={() => {
+            toast({
+              title: "🔍 Search Active",
+              description: "Use the divine filters to find your match",
+            });
+            setShowFilters(true);
+            setIsFilterCollapsed(false);
+          }}
+        />
+
+        {/* Performance optimization utilities */}
+        <div className="hidden will-change-transform gpu-accelerated" />
       </div>
-
-      {/* Create Ad Dialog - NEW FUTURISTIC VERSION */}
-      <CreateAdDialog 
-        open={showCreateAdDialog}
-        onOpenChange={setShowCreateAdDialog}
-        onSuccess={handleAdCreationSuccess}
-      />
-
-      {/* Floating Action Button */}
-      <FloatingActionButton 
-        onCreateAd={handleCreateAd}
-        onQuickMatch={() => {
-          setSelectedTab("quick-match");
-          toast({
-            title: "Quick Match",
-            description: "Finding compatible profiles for you!",
-          });
-        }}
-        onMessages={() => {
-          navigate("/messages");
-          toast({
-            title: "Messages",
-            description: "Opening your conversations",
-          });
-        }}
-        onSearch={() => {
-          toast({
-            title: "Search Active",
-            description: "Use the filters to search for profiles",
-          });
-          setShowFilters(true);
-          setIsFilterCollapsed(false);
-        }}
-      />
-    </div>
+    </DatingErrorBoundary>
   );
 }

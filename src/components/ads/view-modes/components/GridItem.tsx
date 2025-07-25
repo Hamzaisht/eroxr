@@ -40,7 +40,7 @@ export const GridItem = ({
       exit={{ opacity: 0, scale: 0.9 }}
       whileHover={{ scale: 1.03, transition: { duration: 0.2 } }}
       transition={{ duration: 0.2 }}
-      className="bg-luxury-dark/40 backdrop-blur-sm rounded-xl overflow-hidden shadow-lg border border-luxury-primary/10 cursor-pointer group relative flex flex-col"
+      className="dating-glass-panel dating-card-hover rounded-xl overflow-hidden shadow-lg border border-luxury-primary/10 cursor-pointer group relative flex flex-col will-change-transform gpu-accelerated"
       onClick={() => onSelect(ad)}
       onMouseEnter={() => !isMobile && onHover(ad.id)}
       onMouseLeave={() => !isMobile && onHover(null)}
@@ -58,11 +58,18 @@ export const GridItem = ({
         
         {/* Match percentage badge */}
         {matchInfo && (
-          <div className="absolute bottom-2 left-2 z-10">
-            <div className={`text-xs font-medium ${matchInfo.color} text-white px-2 py-1 rounded-md`}>
-              {matchPercentage}% Match
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="absolute bottom-2 left-2 z-10"
+          >
+            <div className={`text-xs font-medium px-3 py-1.5 rounded-full ${
+              matchPercentage && matchPercentage >= 80 ? 'high-match' :
+              matchPercentage && matchPercentage >= 60 ? 'medium-match' : 'low-match'
+            }`}>
+              ⚡ {matchPercentage}% Match
             </div>
-          </div>
+          </motion.div>
         )}
       </div>
       
@@ -71,14 +78,21 @@ export const GridItem = ({
         <AdStats ad={ad} />
         <AdTags ad={ad} onTagClick={onTagClick} />
         
-        {/* Last active indicator */}
+        {/* Enhanced Last active indicator */}
         {ad.last_active && (
-          <div className="flex items-center gap-1.5 text-xs text-luxury-neutral mt-2">
-            <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse"></div>
+          <motion.div 
+            initial={{ opacity: 0, x: -10 }}
+            animate={{ opacity: 1, x: 0 }}
+            className="flex items-center gap-1.5 text-xs text-luxury-neutral mt-2"
+          >
+            <div className="h-2 w-2 rounded-full status-online"></div>
             <span>Active recently</span>
-          </div>
+          </motion.div>
         )}
       </div>
+      
+      {/* Hover overlay effect */}
+      <div className="absolute inset-0 bg-gradient-to-t from-luxury-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
     </motion.div>
   );
 };

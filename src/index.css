@@ -4,6 +4,7 @@
 @import "./styles/scrollbar.css";
 @import "./styles/glassmorphism.css";
 @import "./styles/cinematic-effects.css";
+@import "./styles/dating-enhanced.css";
 @tailwind base;
 @tailwind components;
 @tailwind utilities;

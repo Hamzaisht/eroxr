@@ -1,0 +1,282 @@
+/* Enhanced Dating Page Styles - Launch Ready */
+
+/* Dating Page Specific Glassmorphism */
+.dating-glass-panel {
+  background: rgba(255, 255, 255, 0.02);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.dating-card-hover {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.dating-card-hover:hover {
+  transform: translateY(-4px) scale(1.02);
+  box-shadow: 
+    0 20px 40px rgba(139, 92, 246, 0.2),
+    0 0 60px rgba(220, 38, 238, 0.1);
+}
+
+/* Enhanced Profile Cards */
+.profile-card-shimmer {
+  position: relative;
+  overflow: hidden;
+}
+
+.profile-card-shimmer::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.1),
+    transparent
+  );
+  animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+  0% { left: -100%; }
+  100% { left: 100%; }
+}
+
+/* Dating Page Gradients */
+.dating-gradient-bg {
+  background: 
+    radial-gradient(ellipse 80% 50% at 50% 0%, hsl(271, 100%, 8%) 0%, transparent 60%),
+    radial-gradient(ellipse 100% 80% at 80% 20%, hsl(280, 100%, 6%) 0%, transparent 60%),
+    radial-gradient(ellipse 120% 100% at 20% 80%, hsl(290, 100%, 4%) 0%, transparent 50%),
+    linear-gradient(180deg, hsl(0, 0%, 0%) 0%, hsl(0, 0%, 1%) 50%, hsl(0, 0%, 2%) 100%);
+}
+
+.dating-neural-pattern {
+  background-image: 
+    radial-gradient(circle at 25% 25%, hsl(271, 100%, 71%, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 75% 75%, hsl(280, 100%, 70%, 0.08) 0%, transparent 50%),
+    linear-gradient(45deg, transparent 48%, hsl(271, 100%, 71%, 0.03) 49%, hsl(271, 100%, 71%, 0.03) 51%, transparent 52%);
+  background-size: 200px 200px, 150px 150px, 50px 50px;
+  animation: neural-drift 20s ease-in-out infinite;
+}
+
+@keyframes neural-drift {
+  0%, 100% { background-position: 0% 0%, 100% 100%, 0% 0%; }
+  33% { background-position: 30% 70%, 70% 30%, 10% 90%; }
+  66% { background-position: 70% 30%, 30% 70%, 90% 10%; }
+}
+
+/* Enhanced Action Buttons */
+.action-button-glow {
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.action-button-glow::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s ease;
+}
+
+.action-button-glow:hover::before {
+  left: 100%;
+}
+
+.action-button-glow:hover {
+  box-shadow: 0 0 20px rgba(139, 92, 246, 0.5);
+  transform: scale(1.05);
+}
+
+/* Dating Status Indicators */
+.status-online {
+  animation: pulse-green 2s infinite;
+}
+
+.status-away {
+  animation: pulse-yellow 2s infinite;
+}
+
+@keyframes pulse-green {
+  0%, 100% { 
+    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7);
+    background-color: rgb(34, 197, 94);
+  }
+  50% { 
+    box-shadow: 0 0 0 10px rgba(34, 197, 94, 0);
+    background-color: rgb(34, 197, 94);
+  }
+}
+
+@keyframes pulse-yellow {
+  0%, 100% { 
+    box-shadow: 0 0 0 0 rgba(234, 179, 8, 0.7);
+    background-color: rgb(234, 179, 8);
+  }
+  50% { 
+    box-shadow: 0 0 0 10px rgba(234, 179, 8, 0);
+    background-color: rgb(234, 179, 8);
+  }
+}
+
+/* Enhanced Loading States */
+.dating-skeleton {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.05) 25%,
+    rgba(255, 255, 255, 0.1) 50%,
+    rgba(255, 255, 255, 0.05) 75%
+  );
+  background-size: 200% 100%;
+  animation: loading-shimmer 1.5s infinite;
+}
+
+@keyframes loading-shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+/* Dating Page Responsive Improvements */
+@media (max-width: 768px) {
+  .dating-glass-panel {
+    backdrop-filter: blur(15px);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+  }
+  
+  .dating-card-hover:hover {
+    transform: none;
+    box-shadow: 0 8px 16px rgba(139, 92, 246, 0.15);
+  }
+}
+
+/* Enhanced Typography for Dating */
+.dating-title {
+  font-family: 'Playfair Display', serif;
+  background: linear-gradient(135deg, hsl(271, 100%, 71%), hsl(280, 100%, 70%), hsl(310, 100%, 75%));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow: 0 0 30px rgba(139, 92, 246, 0.3);
+}
+
+.dating-subtitle {
+  color: rgba(255, 255, 255, 0.7);
+  font-weight: 400;
+  letter-spacing: 0.5px;
+}
+
+/* Enhanced Interaction States */
+.interactive-scale {
+  transition: transform 0.2s ease;
+}
+
+.interactive-scale:hover {
+  transform: scale(1.05);
+}
+
+.interactive-scale:active {
+  transform: scale(0.98);
+}
+
+/* Dating Page Accessibility Improvements */
+.focus-ring {
+  outline: 2px solid hsl(271, 100%, 71%);
+  outline-offset: 2px;
+}
+
+.skip-link {
+  position: absolute;
+  top: -40px;
+  left: 6px;
+  background: hsl(0, 0%, 0%);
+  color: white;
+  padding: 8px;
+  text-decoration: none;
+  transition: top 0.3s;
+}
+
+.skip-link:focus {
+  top: 6px;
+}
+
+/* Enhanced Filter Panel */
+.filter-section-header {
+  position: relative;
+  overflow: hidden;
+}
+
+.filter-section-header::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(90deg, transparent, rgba(139, 92, 246, 0.1), transparent);
+  transform: translateX(-100%);
+  transition: transform 0.6s ease;
+}
+
+.filter-section-header:hover::before {
+  transform: translateX(100%);
+}
+
+/* Performance Optimizations */
+.will-change-transform {
+  will-change: transform;
+}
+
+.gpu-accelerated {
+  transform: translateZ(0);
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+  -webkit-perspective: 1000;
+  perspective: 1000;
+}
+
+/* Dating Page Success States */
+.success-pulse {
+  animation: success-pulse 0.6s ease-out;
+}
+
+@keyframes success-pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.1); box-shadow: 0 0 20px rgba(34, 197, 94, 0.5); }
+  100% { transform: scale(1); }
+}
+
+/* Enhanced Match Indicators */
+.match-percentage {
+  background: linear-gradient(135deg, rgba(34, 197, 94, 0.2), rgba(59, 130, 246, 0.2));
+  border: 1px solid rgba(34, 197, 94, 0.3);
+  backdrop-filter: blur(10px);
+}
+
+.high-match {
+  background: linear-gradient(135deg, rgba(34, 197, 94, 0.3), rgba(16, 185, 129, 0.2));
+  border-color: rgba(34, 197, 94, 0.5);
+  box-shadow: 0 0 15px rgba(34, 197, 94, 0.3);
+}
+
+.medium-match {
+  background: linear-gradient(135deg, rgba(234, 179, 8, 0.3), rgba(245, 158, 11, 0.2));
+  border-color: rgba(234, 179, 8, 0.5);
+  box-shadow: 0 0 15px rgba(234, 179, 8, 0.3);
+}
+
+.low-match {
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.3), rgba(220, 38, 38, 0.2));
+  border-color: rgba(239, 68, 68, 0.5);
+  box-shadow: 0 0 15px rgba(239, 68, 68, 0.3);
+}
