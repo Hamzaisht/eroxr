@@ -450,54 +450,57 @@ export function OnlineTab({ session, userProfile }: OnlineTabProps) {
                 </div>
                 
                 {/* Action Buttons */}
-                <div className="flex gap-2 pl-4 relative z-10">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="h-10 w-10 p-0 border-blue-500/40 bg-blue-500/10 hover:border-blue-500/80 hover:bg-blue-500/30 transition-all duration-200 hover:scale-110 cursor-pointer shadow-lg"
+                <div className="flex gap-3 pl-4 shrink-0" style={{ pointerEvents: 'auto', zIndex: 50 }}>
+                  <button
+                    className="h-12 w-12 rounded-full border-2 border-blue-500/50 bg-blue-500/20 hover:border-blue-500 hover:bg-blue-500/40 transition-all duration-200 hover:scale-110 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
                     onClick={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
-                      console.log('Message button clicked');
-                      handleMessage(user);
+                      console.log('Message button clicked for user:', user.profiles?.username);
+                      if (!user.isCurrentUser) {
+                        handleMessage(user);
+                      }
                     }}
                     disabled={user.isCurrentUser}
                     type="button"
+                    style={{ pointerEvents: user.isCurrentUser ? 'none' : 'auto' }}
                   >
                     <MessageCircle className="h-5 w-5 text-blue-400" />
-                  </Button>
+                  </button>
                   
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="h-10 w-10 p-0 border-yellow-500/40 bg-yellow-500/10 hover:border-yellow-500/80 hover:bg-yellow-500/30 transition-all duration-200 hover:scale-110 cursor-pointer shadow-lg"
+                  <button
+                    className="h-12 w-12 rounded-full border-2 border-yellow-500/50 bg-yellow-500/20 hover:border-yellow-500 hover:bg-yellow-500/40 transition-all duration-200 hover:scale-110 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
                     onClick={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
-                      console.log('Bookmark button clicked');
-                      handleBookmark(user);
+                      console.log('Bookmark button clicked for user:', user.profiles?.username);
+                      if (!user.isCurrentUser) {
+                        handleBookmark(user);
+                      }
                     }}
                     disabled={user.isCurrentUser}
                     type="button"
+                    style={{ pointerEvents: user.isCurrentUser ? 'none' : 'auto' }}
                   >
                     <Bookmark className="h-5 w-5 text-yellow-400" />
-                  </Button>
+                  </button>
                   
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="h-10 w-10 p-0 border-luxury-primary/40 bg-luxury-primary/10 hover:border-luxury-primary/80 hover:bg-luxury-primary/30 transition-all duration-200 hover:scale-110 cursor-pointer shadow-lg"
+                  <button
+                    className="h-12 w-12 rounded-full border-2 border-luxury-primary/50 bg-luxury-primary/20 hover:border-luxury-primary hover:bg-luxury-primary/40 transition-all duration-200 hover:scale-110 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
                     onClick={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
-                      console.log('Connection button clicked');
-                      handleRequestConnection(user);
+                      console.log('Connection button clicked for user:', user.profiles?.username);
+                      if (!user.isCurrentUser) {
+                        handleRequestConnection(user);
+                      }
                     }}
                     disabled={user.isCurrentUser}
                     type="button"
+                    style={{ pointerEvents: user.isCurrentUser ? 'none' : 'auto' }}
                   >
                     <UserPlus className="h-5 w-5 text-luxury-primary" />
-                  </Button>
+                  </button>
                 </div>
               </div>
             </div>
