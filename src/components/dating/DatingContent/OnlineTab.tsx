@@ -155,15 +155,31 @@ export function OnlineTab({ session, userProfile }: OnlineTabProps) {
   };
 
   const getCountryFlag = (country?: string) => {
+    if (!country) return '🌍';
+    
     const countryFlags: Record<string, string> = {
-      'denmark': '🇩🇰',
-      'sweden': '🇸🇪', 
-      'norway': '🇳🇴',
-      'finland': '🇫🇮',
-      'iceland': '🇮🇸'
+      // Country codes
+      'no': '🇳🇴', 'norway': '🇳🇴',
+      'dk': '🇩🇰', 'denmark': '🇩🇰',
+      'se': '🇸🇪', 'sweden': '🇸🇪', 
+      'fi': '🇫🇮', 'finland': '🇫🇮',
+      'is': '🇮🇸', 'iceland': '🇮🇸',
+      'de': '🇩🇪', 'germany': '🇩🇪',
+      'us': '🇺🇸', 'usa': '🇺🇸', 'united states': '🇺🇸',
+      'gb': '🇬🇧', 'uk': '🇬🇧', 'united kingdom': '🇬🇧',
+      'fr': '🇫🇷', 'france': '🇫🇷',
+      'es': '🇪🇸', 'spain': '🇪🇸',
+      'it': '🇮🇹', 'italy': '🇮🇹',
+      'nl': '🇳🇱', 'netherlands': '🇳🇱',
+      'be': '🇧🇪', 'belgium': '🇧🇪',
+      'ch': '🇨🇭', 'switzerland': '🇨🇭',
+      'at': '🇦🇹', 'austria': '🇦🇹',
+      'pl': '🇵🇱', 'poland': '🇵🇱',
+      'cz': '🇨🇿', 'czech republic': '🇨🇿',
+      'ca': '🇨🇦', 'canada': '🇨🇦',
+      'au': '🇦🇺', 'australia': '🇦🇺'
     };
     
-    if (!country) return '🌍';
     return countryFlags[country.toLowerCase()] || '🌍';
   };
 
