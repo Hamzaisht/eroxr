@@ -246,7 +246,7 @@ export function OnlineTab({ session, userProfile }: OnlineTabProps) {
                   <div className="absolute top-3 right-3">
                     <Badge variant="secondary" className="bg-background/80 backdrop-blur-sm">
                       <Eye className="h-3 w-3 mr-1" />
-                      {user.view_count || user.views_count || 0}
+                      {user.view_count || 0}
                     </Badge>
                   </div>
                 </div>

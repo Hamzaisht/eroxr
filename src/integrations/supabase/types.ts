@@ -2164,6 +2164,7 @@ export type Database = {
           avatar_url: string | null
           banner_url: string | null
           bio: string | null
+          can_access_bodycontact: boolean | null
           content_privacy_default: string | null
           content_warning_enabled: boolean | null
           created_at: string
@@ -2180,6 +2181,7 @@ export type Database = {
           is_verified: boolean | null
           last_dob_change: string | null
           last_name: string | null
+          last_seen: string | null
           last_username_change: string | null
           location: string | null
           marketing_emails: boolean | null
@@ -2205,6 +2207,7 @@ export type Database = {
           avatar_url?: string | null
           banner_url?: string | null
           bio?: string | null
+          can_access_bodycontact?: boolean | null
           content_privacy_default?: string | null
           content_warning_enabled?: boolean | null
           created_at?: string
@@ -2221,6 +2224,7 @@ export type Database = {
           is_verified?: boolean | null
           last_dob_change?: string | null
           last_name?: string | null
+          last_seen?: string | null
           last_username_change?: string | null
           location?: string | null
           marketing_emails?: boolean | null
@@ -2246,6 +2250,7 @@ export type Database = {
           avatar_url?: string | null
           banner_url?: string | null
           bio?: string | null
+          can_access_bodycontact?: boolean | null
           content_privacy_default?: string | null
           content_warning_enabled?: boolean | null
           created_at?: string
@@ -2262,6 +2267,7 @@ export type Database = {
           is_verified?: boolean | null
           last_dob_change?: string | null
           last_name?: string | null
+          last_seen?: string | null
           last_username_change?: string | null
           location?: string | null
           marketing_emails?: boolean | null
