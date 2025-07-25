@@ -46,14 +46,15 @@ export const GridItem = ({
       onMouseLeave={() => !isMobile && onHover(null)}
       onTouchStart={() => isMobile && onHover(isHovered ? null : ad.id)}
     >
-      <AdActions ad={ad} />
-      
       <div className="aspect-video w-full relative">
         <VideoThumbnail 
           videoUrl={ad.video_url} 
           isHovered={isHovered}
           isMobile={isMobile}
         />
+        
+        {/* Action Buttons - positioned over the video */}
+        <AdActions ad={ad} />
         
         {/* Match percentage badge */}
         {matchInfo && (

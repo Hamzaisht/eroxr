@@ -106,7 +106,7 @@ export const AdActions = ({ ad }: AdActionsProps) => {
   };
 
   return (
-    <div className="absolute top-2 right-2 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10">
+    <div className="absolute top-2 right-2 flex flex-col gap-1.5 transition-opacity duration-200 z-20">
       <Button 
         size="icon" 
         variant="ghost" 
