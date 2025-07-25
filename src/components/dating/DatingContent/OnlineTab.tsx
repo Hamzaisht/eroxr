@@ -450,44 +450,53 @@ export function OnlineTab({ session, userProfile }: OnlineTabProps) {
                 </div>
                 
                 {/* Action Buttons */}
-                <div className="flex gap-2 pl-4">
+                <div className="flex gap-2 pl-4 relative z-10">
                   <Button
                     size="sm"
                     variant="outline"
-                    className="h-9 w-9 p-0 border-blue-500/30 bg-blue-500/5 hover:border-blue-500/60 hover:bg-blue-500/20 transition-all duration-200 group-hover:scale-105"
+                    className="h-10 w-10 p-0 border-blue-500/40 bg-blue-500/10 hover:border-blue-500/80 hover:bg-blue-500/30 transition-all duration-200 hover:scale-110 cursor-pointer shadow-lg"
                     onClick={(e) => {
+                      e.preventDefault();
                       e.stopPropagation();
+                      console.log('Message button clicked');
                       handleMessage(user);
                     }}
                     disabled={user.isCurrentUser}
+                    type="button"
                   >
-                    <MessageCircle className="h-4 w-4 text-blue-400" />
+                    <MessageCircle className="h-5 w-5 text-blue-400" />
                   </Button>
                   
                   <Button
                     size="sm"
                     variant="outline"
-                    className="h-9 w-9 p-0 border-yellow-500/30 bg-yellow-500/5 hover:border-yellow-500/60 hover:bg-yellow-500/20 transition-all duration-200 group-hover:scale-105"
+                    className="h-10 w-10 p-0 border-yellow-500/40 bg-yellow-500/10 hover:border-yellow-500/80 hover:bg-yellow-500/30 transition-all duration-200 hover:scale-110 cursor-pointer shadow-lg"
                     onClick={(e) => {
+                      e.preventDefault();
                       e.stopPropagation();
+                      console.log('Bookmark button clicked');
                       handleBookmark(user);
                     }}
                     disabled={user.isCurrentUser}
+                    type="button"
                   >
-                    <Bookmark className="h-4 w-4 text-yellow-400" />
+                    <Bookmark className="h-5 w-5 text-yellow-400" />
                   </Button>
                   
                   <Button
                     size="sm"
                     variant="outline"
-                    className="h-9 w-9 p-0 border-luxury-primary/30 bg-luxury-primary/5 hover:border-luxury-primary/60 hover:bg-luxury-primary/20 transition-all duration-200 group-hover:scale-105"
+                    className="h-10 w-10 p-0 border-luxury-primary/40 bg-luxury-primary/10 hover:border-luxury-primary/80 hover:bg-luxury-primary/30 transition-all duration-200 hover:scale-110 cursor-pointer shadow-lg"
                     onClick={(e) => {
+                      e.preventDefault();
                       e.stopPropagation();
+                      console.log('Connection button clicked');
                       handleRequestConnection(user);
                     }}
                     disabled={user.isCurrentUser}
+                    type="button"
                   >
-                    <UserPlus className="h-4 w-4 text-luxury-primary" />
+                    <UserPlus className="h-5 w-5 text-luxury-primary" />
                   </Button>
                 </div>
               </div>
