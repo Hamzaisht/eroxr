@@ -23,9 +23,16 @@ export const FavoritesView = ({ userProfile }: FavoritesViewProps) => {
   const session = useSession();
   
   useEffect(() => {
-    if (!session?.user?.id) return;
+    console.log('FavoritesView useEffect triggered', { sessionExists: !!session?.user?.id });
+    
+    if (!session?.user?.id) {
+      console.log('No session user ID, skipping favorites fetch');
+      setLoading(false);
+      return;
+    }
     
     const fetchFavorites = async () => {
+      console.log('Fetching favorites for user:', session.user.id);
       setLoading(true);
       
       try {
@@ -38,6 +45,8 @@ export const FavoritesView = ({ userProfile }: FavoritesViewProps) => {
           
         if (favoritesError) throw favoritesError;
         
+        console.log('Favorites data:', favoritesData);
+        
         if (favoritesData && favoritesData.length > 0) {
           // Get the actual profile data
           const profileIds = favoritesData.map(fav => fav.dating_ad_id);
@@ -49,6 +58,8 @@ export const FavoritesView = ({ userProfile }: FavoritesViewProps) => {
             
           if (profilesError) throw profilesError;
           
+          console.log('Profiles data:', profilesData);
+          
           // Sort profiles in the same order as favorites
           const sortedProfiles = profileIds
             .map(id => profilesData?.find(profile => profile.id === id))
@@ -56,6 +67,7 @@ export const FavoritesView = ({ userProfile }: FavoritesViewProps) => {
           
           setFavorites(sortedProfiles);
         } else {
+          console.log('No favorites found');
           setFavorites([]);
         }
       } catch (error) {
@@ -71,7 +83,7 @@ export const FavoritesView = ({ userProfile }: FavoritesViewProps) => {
     };
     
     fetchFavorites();
-  }, [session, toast]);
+  }, [session?.user?.id]); // Only depend on the user ID, not the whole session or toast
   
   const handleRemoveFavorite = async (profileId: string) => {
     if (!session?.user?.id) return;
