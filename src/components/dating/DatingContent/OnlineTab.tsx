@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Circle, Clock, MapPin, MessageCircle, Bookmark, UserPlus, Heart, Eye } from 'lucide-react';
+import { Circle, Clock, MapPin, MessageCircle, Bookmark, UserPlus, Heart, Eye, CheckCircle2, Crown } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -255,108 +255,159 @@ export function OnlineTab({ session, userProfile }: OnlineTabProps) {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center gap-2">
-        <Circle className="h-5 w-5 text-green-500 animate-pulse" />
-        <h2 className="text-xl font-semibold text-foreground">Online Now ({onlineUsers.length})</h2>
+    <div className="space-y-6 p-1">
+      {/* Header */}
+      <div className="flex items-center justify-between p-4 bg-luxury-darker/60 backdrop-blur-sm border border-luxury-primary/20 rounded-xl">
+        <div className="flex items-center gap-3">
+          <div className="relative">
+            <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
+            <div className="absolute inset-0 w-3 h-3 bg-green-500 rounded-full animate-ping opacity-20"></div>
+          </div>
+          <h2 className="text-xl font-bold bg-gradient-to-r from-luxury-primary to-luxury-accent bg-clip-text text-transparent">
+            Online Now
+          </h2>
+        </div>
+        <Badge variant="secondary" className="bg-luxury-primary/10 text-luxury-primary font-semibold">
+          {onlineUsers.length} Active
+        </Badge>
       </div>
       
+      {/* Users List */}
       <div className="space-y-3">
         {onlineUsers.map((user, index) => (
           <motion.div
             key={user.id}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3, delay: index * 0.05 }}
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.4, delay: index * 0.1, ease: "easeOut" }}
+            whileHover={{ scale: 1.02 }}
+            className="group"
           >
-            <div className="relative flex items-center bg-card/50 backdrop-blur-sm border border-border/50 hover:border-border transition-all group cursor-pointer rounded-lg overflow-hidden">
-              {/* Cover Banner */}
-              <div className="relative w-20 h-16 bg-gradient-to-br from-primary/20 to-secondary/20 flex-shrink-0">
-                <div className="absolute inset-0 bg-black/10"></div>
-                <div className="absolute top-1 right-1 text-lg">
-                  {getCountryFlag(user.country)}
-                </div>
-                {user.isCurrentUser && (
-                  <div className="absolute top-1 left-1">
-                    <Badge className="bg-primary/90 text-primary-foreground text-xs px-1 py-0">
-                      You
-                    </Badge>
+            <div className="relative bg-luxury-darker/40 backdrop-blur-md border border-luxury-primary/10 hover:border-luxury-primary/30 transition-all duration-300 rounded-2xl overflow-hidden hover:shadow-lg hover:shadow-luxury-primary/20">
+              {/* Background Pattern */}
+              <div className="absolute inset-0 opacity-5">
+                <div className="absolute inset-0 bg-gradient-to-br from-luxury-primary/20 via-transparent to-luxury-accent/20"></div>
+              </div>
+              
+              <div className="relative flex items-center p-4">
+                {/* Profile Section */}
+                <div className="flex items-center gap-4 flex-1 min-w-0">
+                  <div className="relative">
+                    <div className="relative">
+                      <Avatar className="h-14 w-14 ring-2 ring-luxury-primary/30 ring-offset-2 ring-offset-luxury-darker transition-transform group-hover:scale-105">
+                        <AvatarImage 
+                          src={user.avatar_url || user.profiles?.avatar_url || undefined} 
+                          className="object-cover"
+                        />
+                        <AvatarFallback className="bg-gradient-to-br from-luxury-primary/20 to-luxury-accent/20 text-luxury-primary font-bold text-lg">
+                          {(user.profiles?.username || user.title)?.charAt(0)?.toUpperCase() || 'U'}
+                        </AvatarFallback>
+                      </Avatar>
+                      
+                      {/* Online Status Indicator */}
+                      <div className={`absolute -bottom-1 -right-1 w-5 h-5 rounded-full border-3 border-luxury-darker shadow-lg ${
+                        user.online_status === 'online' ? 'bg-green-500' : 
+                        user.online_status === 'recently_active' ? 'bg-yellow-500' : 'bg-gray-500'
+                      }`}>
+                        {user.online_status === 'online' && (
+                          <div className="absolute inset-0 bg-green-500 rounded-full animate-ping opacity-40"></div>
+                        )}
+                      </div>
+                    </div>
                   </div>
-                )}
-              </div>
-              
-              {/* Profile Picture */}
-              <div className="relative -ml-6 z-10">
-                <Avatar className="h-12 w-12 ring-2 ring-primary/30 ring-offset-2 ring-offset-card">
-                  <AvatarImage src={user.avatar_url || user.profiles?.avatar_url || undefined} />
-                  <AvatarFallback className="bg-primary/20 text-primary">
-                    {(user.profiles?.username || user.title)?.charAt(0)?.toUpperCase() || 'U'}
-                  </AvatarFallback>
-                </Avatar>
-                <div className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-card ${
-                  user.online_status === 'online' ? 'bg-green-500' : 
-                  user.online_status === 'recently_active' ? 'bg-yellow-500' : 'bg-gray-500'
-                }`}></div>
-              </div>
-              
-              {/* User Info */}
-              <div className="flex-1 min-w-0 px-3 py-2">
-                <div className="flex items-center gap-2">
-                  <h3 className="font-semibold text-foreground truncate text-sm">
-                    {user.profiles?.username || user.title}
-                  </h3>
-                  {user.is_verified && <Circle className="h-3 w-3 text-blue-500 fill-current" />}
-                  {user.is_premium && <Circle className="h-3 w-3 text-yellow-500 fill-current" />}
+                  
+                  {/* User Info */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      <h3 className="font-bold text-white text-lg truncate group-hover:text-luxury-primary transition-colors">
+                        {user.profiles?.username || user.title}
+                      </h3>
+                      
+                      {/* Badges */}
+                      <div className="flex gap-1">
+                        {user.isCurrentUser && (
+                          <Badge className="bg-luxury-primary text-luxury-darker text-xs font-bold px-2 py-0.5">
+                            YOU
+                          </Badge>
+                        )}
+                        {user.is_verified && (
+                          <CheckCircle2 className="h-4 w-4 text-blue-400 drop-shadow-sm" />
+                        )}
+                        {user.is_premium && (
+                          <Crown className="h-4 w-4 text-yellow-400 drop-shadow-sm" />
+                        )}
+                      </div>
+                    </div>
+                    
+                    {/* Status and Location */}
+                    <div className="flex items-center gap-3 text-sm">
+                      <div className="flex items-center gap-1.5">
+                        <div className={`w-2 h-2 rounded-full ${
+                          user.online_status === 'online' ? 'bg-green-500' : 
+                          user.online_status === 'recently_active' ? 'bg-yellow-500' : 'bg-gray-500'
+                        }`}></div>
+                        <span className={`font-medium ${
+                          user.online_status === 'online' ? 'text-green-400' : 
+                          user.online_status === 'recently_active' ? 'text-yellow-400' : 'text-gray-400'
+                        }`}>
+                          {getStatusText(user.online_status || 'offline', user.profiles?.last_seen)}
+                        </span>
+                      </div>
+                      
+                      {/* Country Flag */}
+                      {user.country && (
+                        <div className="flex items-center gap-1.5 bg-luxury-primary/10 px-2 py-1 rounded-full">
+                          <span className="text-lg leading-none">{getCountryFlag(user.country)}</span>
+                          <span className="text-luxury-neutral text-xs font-medium capitalize">
+                            {user.city || user.country}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2 mt-0.5">
-                  <Circle className={`w-2 h-2 ${
-                    user.online_status === 'online' ? 'text-green-500' : 
-                    user.online_status === 'recently_active' ? 'text-yellow-500' : 'text-gray-500'
-                  } fill-current`} />
-                  <span className="text-xs text-muted-foreground">
-                    {getStatusText(user.online_status || 'offline', user.profiles?.last_seen)}
-                  </span>
+                
+                {/* Action Buttons */}
+                <div className="flex gap-2 pl-4">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-9 w-9 p-0 border-blue-500/30 bg-blue-500/5 hover:border-blue-500/60 hover:bg-blue-500/20 transition-all duration-200 group-hover:scale-105"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleMessage(user);
+                    }}
+                    disabled={user.isCurrentUser}
+                  >
+                    <MessageCircle className="h-4 w-4 text-blue-400" />
+                  </Button>
+                  
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-9 w-9 p-0 border-yellow-500/30 bg-yellow-500/5 hover:border-yellow-500/60 hover:bg-yellow-500/20 transition-all duration-200 group-hover:scale-105"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleBookmark(user);
+                    }}
+                    disabled={user.isCurrentUser}
+                  >
+                    <Bookmark className="h-4 w-4 text-yellow-400" />
+                  </Button>
+                  
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-9 w-9 p-0 border-luxury-primary/30 bg-luxury-primary/5 hover:border-luxury-primary/60 hover:bg-luxury-primary/20 transition-all duration-200 group-hover:scale-105"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleRequestConnection(user);
+                    }}
+                    disabled={user.isCurrentUser}
+                  >
+                    <UserPlus className="h-4 w-4 text-luxury-primary" />
+                  </Button>
                 </div>
-              </div>
-              
-              {/* Action Buttons */}
-              <div className="flex gap-1 px-3 py-2">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="h-7 px-2 text-xs border-blue-500/30 hover:border-blue-500/60 hover:bg-blue-500/10"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleMessage(user);
-                  }}
-                  disabled={user.isCurrentUser}
-                >
-                  <MessageCircle className="h-3 w-3" />
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="h-7 px-2 text-xs border-yellow-500/30 hover:border-yellow-500/60 hover:bg-yellow-500/10"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleBookmark(user);
-                  }}
-                  disabled={user.isCurrentUser}
-                >
-                  <Bookmark className="h-3 w-3" />
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="h-7 px-2 text-xs border-purple-500/30 hover:border-purple-500/60 hover:bg-purple-500/10"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleRequestConnection(user);
-                  }}
-                  disabled={user.isCurrentUser}
-                >
-                  <UserPlus className="h-3 w-3" />
-                </Button>
               </div>
             </div>
           </motion.div>
