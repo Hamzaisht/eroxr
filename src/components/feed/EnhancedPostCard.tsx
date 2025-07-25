@@ -153,7 +153,7 @@ export const EnhancedPostCard = ({
                 onClick={handleProfileClick}
                 className="cursor-pointer"
               >
-                <Avatar className="h-12 w-12 ring-2 ring-luxury-primary/30 hover:ring-luxury-primary/60 transition-all duration-300">
+                <Avatar className="h-14 w-14 ring-2 ring-luxury-primary/30 hover:ring-luxury-primary/60 transition-all duration-300">
                   <AvatarImage 
                     src={post.creator.avatar_url || undefined} 
                     alt={post.creator.username || 'Creator'} 
@@ -168,7 +168,7 @@ export const EnhancedPostCard = ({
                 <div className="flex items-center gap-2">
                   <h3 
                     onClick={handleProfileClick}
-                    className="font-semibold text-luxury-neutral truncate hover:text-luxury-primary transition-colors duration-300 cursor-pointer"
+                    className="text-sm font-medium text-luxury-neutral truncate hover:text-luxury-primary transition-colors duration-300 cursor-pointer"
                   >
                     {post.creator.username || 'Anonymous'}
                   </h3>
