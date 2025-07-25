@@ -42,13 +42,13 @@ export function OnlineTab({ session, userProfile }: OnlineTabProps) {
     try {
       setIsLoading(true);
       
-      // Fetch active dating ads first (including current user's ads)
+      // Fetch active dating ads with deduplication
       const { data: datingAds, error: adsError } = await supabase
         .from('dating_ads')
         .select('*')
         .eq('is_active', true)
         .order('last_active', { ascending: false })
-        .limit(100);
+        .limit(50); // Limit to prevent excessive data
 
       if (adsError) {
         console.error('Error fetching dating ads:', adsError);
@@ -65,10 +65,20 @@ export function OnlineTab({ session, userProfile }: OnlineTabProps) {
         return;
       }
 
-      // Get user IDs from dating ads
-      const userIds = datingAds.map(ad => ad.user_id).filter(Boolean);
+      // Deduplicate ads by user_id to prevent double entries
+      const uniqueAds = datingAds.reduce((acc, ad) => {
+        if (!acc.some(existing => existing.user_id === ad.user_id)) {
+          acc.push(ad);
+        }
+        return acc;
+      }, [] as typeof datingAds);
 
-      // Fetch profiles for those users who have bodycontact enabled (including current user)
+      console.log(`📊 Deduplicated ${datingAds.length} ads to ${uniqueAds.length} unique ads`);
+
+      // Get user IDs from unique dating ads
+      const userIds = uniqueAds.map(ad => ad.user_id).filter(Boolean);
+
+      // Fetch profiles for those users who have bodycontact enabled
       const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
         .select('id, username, avatar_url, location, last_seen, can_access_bodycontact')
@@ -85,25 +95,40 @@ export function OnlineTab({ session, userProfile }: OnlineTabProps) {
         return;
       }
 
+      // Update current user's last_seen to now if they're the logged-in user
+      if (session?.user?.id) {
+        await supabase
+          .from('profiles')
+          .update({ last_seen: new Date().toISOString() })
+          .eq('id', session.user.id);
+      }
+
       // Combine dating ads with profiles (including current user)
-      const usersWithProfiles = datingAds
+      const usersWithProfiles = uniqueAds
         .map(ad => {
           const profile = profiles?.find(p => p.id === ad.user_id);
           if (!profile) return null;
           
-          // Debug log to see the user data structure
+          // For current user, use real-time online status
+          const isCurrentUser = session?.user?.id === ad.user_id;
+          const effectiveLastSeen = isCurrentUser ? new Date().toISOString() : profile.last_seen;
+          
           console.log('User ad data:', {
             username: profile.username,
             country: ad.country,
             city: ad.city,
-            isCurrentUser: session?.user?.id === ad.user_id
+            isCurrentUser,
+            lastSeen: effectiveLastSeen
           });
           
           return {
             ...ad,
-            profiles: profile,
-            online_status: getOnlineStatus(profile.last_seen),
-            isCurrentUser: session?.user?.id === ad.user_id // Mark if this is the current user
+            profiles: {
+              ...profile,
+              last_seen: effectiveLastSeen
+            },
+            online_status: isCurrentUser ? 'online' : getOnlineStatus(profile.last_seen),
+            isCurrentUser
           };
         })
         .filter(Boolean) as OnlineUser[];
@@ -165,9 +190,6 @@ export function OnlineTab({ session, userProfile }: OnlineTabProps) {
   const getCountryFlag = (country?: string) => {
     if (!country) return '🌍';
     
-    // Debug log to see what country value we're getting
-    console.log('Country value received:', country, 'Type:', typeof country);
-    
     const countryFlags: Record<string, string> = {
       // Country codes
       'no': '🇳🇴', 'norway': '🇳🇴',
@@ -191,10 +213,7 @@ export function OnlineTab({ session, userProfile }: OnlineTabProps) {
       'au': '🇦🇺', 'australia': '🇦🇺'
     };
     
-    const flagResult = countryFlags[country.toLowerCase()] || '🌍';
-    console.log('Flag result for', country, ':', flagResult);
-    
-    return flagResult;
+    return countryFlags[country.toLowerCase()] || '🌍';
   };
 
   const handleMessage = async (user: OnlineUser) => {
