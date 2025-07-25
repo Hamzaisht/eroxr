@@ -9,7 +9,7 @@ import { DatingAd } from "@/types/dating";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { FloatingActionButton } from "../components/dating/FloatingActionButton";
-import { GreekSymbolsBackground } from "../components/dating/animations/GreekMythologyElements";
+// Removed heavy GreekSymbolsBackground for performance
 
 export interface DatingFiltersPanelProps {
   // Define all required props to match what's being passed
@@ -79,35 +79,7 @@ export default function DatingMainContent(props: any) {
 
   useEffect(() => {
     fetchDatingAds();
-    
-    // Set up real-time subscription for instant updates
-    const channel = supabase
-      .channel('dating_ads_changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'dating_ads'
-        },
-        (payload) => {
-          console.log('Real-time update:', payload);
-          // Prevent duplicate refetches
-          if (!isRefetching) {
-            setIsRefetching(true);
-            setTimeout(() => {
-              fetchDatingAds();
-              setIsRefetching(false);
-            }, 500);
-          }
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [selectedTab, isFilterApplied, isRefetching]);
+  }, [selectedTab, isFilterApplied]);
 
   useEffect(() => {
     fetchUserProfile();
@@ -321,24 +293,8 @@ export default function DatingMainContent(props: any) {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-black via-purple-950/20 to-cyan-950/20 relative overflow-hidden">
-      {/* Background Effects */}
-      <div className="absolute inset-0 neural-bg opacity-20" />
-      <GreekSymbolsBackground />
-      <div className="absolute inset-0 pointer-events-none">
-        {[...Array(20)].map((_, i) => (
-          <div
-            key={i}
-            className="absolute floating-element"
-            style={{
-              left: `${Math.random() * 100}%`,
-              top: `${Math.random() * 100}%`,
-              width: `${2 + Math.random() * 4}px`,
-              height: `${2 + Math.random() * 4}px`,
-              animationDelay: `${Math.random() * 10}s`,
-            }}
-          />
-        ))}
-      </div>
+      {/* Simplified Background - No Heavy Particles */}
+      <div className="absolute inset-0 bg-gradient-to-br from-black/50 via-purple-950/10 to-cyan-950/10" />
 
       <div className="container mx-auto py-6 relative z-10">
         {/* Enhanced Header */}
