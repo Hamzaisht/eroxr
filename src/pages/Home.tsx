@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { HomeLayout } from "@/components/home/HomeLayout";
 import { InteractiveNav } from "@/components/layout/InteractiveNav";
+import { MobileBottomNav } from "@/components/layout/MobileBottomNav";
 import { FeedHeader } from "@/components/home/FeedHeader";
 import { FeedContent } from "@/components/home/feed/FeedContent";
 import { StoryReel } from "@/components/StoryReel";
@@ -94,7 +95,7 @@ const Home = () => {
     <>
       <InteractiveNav />
       <HomeLayout>
-        <div className="md:ml-20 space-y-6">
+        <div className="md:ml-20 space-y-3 sm:space-y-6 pb-20 md:pb-6">
         {/* Welcome Banner - Only show for non-premium users as marketing */}
         {showWelcome && !hasPremium && !isSuperAdmin && (
           <WelcomeBanner 
@@ -145,6 +146,8 @@ const Home = () => {
         open={goLiveDialog.isOpen}
         onOpenChange={goLiveDialog.closeDialog}
       />
+      
+      <MobileBottomNav />
       </HomeLayout>
     </>
   );

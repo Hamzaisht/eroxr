@@ -141,19 +141,19 @@ export const EnhancedPostCard = ({
           y: -50,
           transition: { duration: 0.3, ease: "easeInOut" }
         }}
-        className="bg-gradient-to-br from-luxury-dark/80 to-luxury-darker/80 backdrop-blur-xl border border-luxury-primary/20 rounded-3xl overflow-hidden shadow-luxury hover:shadow-luxury-hover transition-all duration-500 hover:scale-[1.02] group"
+        className="bg-gradient-to-br from-luxury-dark/80 to-luxury-darker/80 backdrop-blur-xl border border-luxury-primary/20 rounded-2xl sm:rounded-3xl overflow-hidden shadow-luxury hover:shadow-luxury-hover transition-all duration-500 hover:scale-[1.02] group mx-2 sm:mx-0 mb-4"
       >
         {/* Header */}
-        <div className="p-6 pb-0">
+        <div className="p-3 sm:p-6 pb-0">
           <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-3 sm:space-x-4">
               <motion.div
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={handleProfileClick}
                 className="cursor-pointer"
               >
-                <Avatar className="h-14 w-14 ring-2 ring-luxury-primary/30 hover:ring-luxury-primary/60 transition-all duration-300">
+                <Avatar className="h-12 w-12 sm:h-14 sm:w-14 ring-2 ring-luxury-primary/30 hover:ring-luxury-primary/60 transition-all duration-300">
                   <AvatarImage 
                     src={post.creator.avatar_url || undefined} 
                     alt={post.creator.username || 'Creator'} 
@@ -209,7 +209,7 @@ export const EnhancedPostCard = ({
         </div>
 
         {/* Content */}
-        <div className="p-6 pt-4">
+        <div className="p-3 sm:p-6 pt-2 sm:pt-4">
           <p className="text-luxury-neutral leading-relaxed mb-4 whitespace-pre-wrap">
             {post.content}
           </p>
@@ -239,9 +239,9 @@ export const EnhancedPostCard = ({
         </div>
 
         {/* Actions */}
-        <div className="px-6 pb-6">
+        <div className="px-3 sm:px-6 pb-3 sm:pb-6">
           <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-6">
+            <div className="flex items-center space-x-4 sm:space-x-6">
               <motion.button
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.9 }}

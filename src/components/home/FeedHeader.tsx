@@ -11,9 +11,9 @@ interface FeedHeaderProps {
 
 export const FeedHeader = ({ activeTab, onTabChange }: FeedHeaderProps) => {
   return (
-    <div className="flex items-center justify-between">
+    <div className="flex items-center justify-between px-2 sm:px-0">
       <Tabs value={activeTab} onValueChange={onTabChange} className="w-full">
-        <TabsList className="w-full justify-start h-14 bg-transparent border-b border-luxury-primary/5">
+        <TabsList className="w-full justify-start h-12 sm:h-14 bg-transparent border-b border-luxury-primary/5">
           <TabsTrigger 
             value="feed"
             className="feed-tab"

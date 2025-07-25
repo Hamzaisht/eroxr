@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { InteractiveNav } from "@/components/layout/InteractiveNav";
 import { HomeLayout } from "@/components/home/HomeLayout";
+import { MobileBottomNav } from "@/components/layout/MobileBottomNav";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { usePlatformSubscription } from "@/hooks/usePlatformSubscription";
 import { useUserRole } from "@/hooks/useUserRole";
@@ -22,7 +23,7 @@ const Dating = () => {
       <>
         <InteractiveNav />
         <HomeLayout>
-          <div className="md:ml-20 flex items-center justify-center min-h-[60vh]">
+          <div className="md:ml-20 flex items-center justify-center min-h-[60vh] pb-20 md:pb-6">
             <motion.div 
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -54,6 +55,7 @@ const Dating = () => {
               </motion.button>
             </motion.div>
           </div>
+          <MobileBottomNav />
         </HomeLayout>
       </>
     );
@@ -63,9 +65,10 @@ const Dating = () => {
     <DatingErrorBoundary>
       <InteractiveNav />
       <HomeLayout>
-        <div className="md:ml-20">
+        <div className="md:ml-20 pb-20 md:pb-6">
           <DatingMainContent />
         </div>
+        <MobileBottomNav />
       </HomeLayout>
     </DatingErrorBoundary>
   );

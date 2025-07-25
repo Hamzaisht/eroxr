@@ -54,24 +54,32 @@ export const InteractiveNav = () => {
         <Button 
           variant="ghost" 
           size="icon"
-          className="fixed top-3 left-4 z-50 md:hidden bg-white/5 hover:bg-white/10 backdrop-blur-lg"
+          className="fixed top-4 left-4 z-50 md:hidden bg-luxury-darker/80 hover:bg-luxury-darker/90 backdrop-blur-lg border border-luxury-primary/20 rounded-xl shadow-lg"
         >
-          <Menu className="h-5 w-5 sm:h-6 sm:w-6" />
+          <Menu className="h-5 w-5 text-luxury-neutral" />
         </Button>
       </SheetTrigger>
-      <SheetContent side="left" className="w-[80%] max-w-[300px] bg-gradient-to-b from-[#0D1117]/95 via-[#161B22]/95 to-[#0D1117]/95 backdrop-blur-xl border-luxury-primary/10 p-4">
-        <div className="flex flex-col h-full py-6 sm:py-8">
-          <motion.div
-            className="px-4 mb-6 sm:mb-8"
-            whileHover={{ scale: 1.05 }}
-            onClick={() => navigate("/")}
-          >
-            <h1 className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-luxury-primary via-luxury-accent to-luxury-secondary bg-clip-text text-transparent cursor-pointer">
+      <SheetContent side="left" className="w-[85%] max-w-[320px] bg-gradient-to-b from-[#0D1117]/98 via-[#161B22]/98 to-[#0D1117]/98 backdrop-blur-xl border-luxury-primary/10 p-0">
+        <div className="flex flex-col h-full">
+          {/* Header */}
+          <div className="px-6 py-6 border-b border-luxury-primary/10">
+            <motion.div
+              className="flex items-center gap-3"
+              whileHover={{ scale: 1.02 }}
+              onClick={() => navigate("/")}
+            >
+              <div className="w-8 h-8 bg-gradient-to-r from-luxury-primary to-luxury-accent rounded-lg flex items-center justify-center">
+                <span className="text-white font-bold text-sm">E</span>
+              </div>
+              <h1 className="text-xl font-bold bg-gradient-to-r from-luxury-primary via-luxury-accent to-luxury-secondary bg-clip-text text-transparent cursor-pointer">
               Eroxr
-            </h1>
-          </motion.div>
+              </h1>
+            </motion.div>
+          </div>
 
-          <div className="space-y-1 sm:space-y-2 px-4">
+          {/* Navigation Menu */}
+          <div className="flex-1 px-4 py-2">
+            <div className="space-y-1">
             {menuItems.map((item) => (
               <NavMenuItem
                 key={item.path}
@@ -97,9 +105,13 @@ export const InteractiveNav = () => {
                 }}
               />
             )}
+            </div>
           </div>
 
-          <UserProfileSection isExpanded={true} currentUser={currentUser} />
+          {/* User Profile Section */}
+          <div className="px-4 py-6 border-t border-luxury-primary/10 mt-auto">
+            <UserProfileSection isExpanded={true} currentUser={currentUser} />
+          </div>
         </div>
       </SheetContent>
     </Sheet>

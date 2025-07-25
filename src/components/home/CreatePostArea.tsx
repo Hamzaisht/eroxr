@@ -118,9 +118,9 @@ export const CreatePostArea = ({ onCreatePost, onGoLive }: CreatePostAreaProps) 
 
   return (
     <>
-      <Card className="bg-luxury-darker border-luxury-neutral/10">
-        <CardContent className="p-4">
-          <div className="flex items-center gap-3 mb-4">
+      <Card className="bg-luxury-darker border-luxury-neutral/10 mx-2 sm:mx-0">
+        <CardContent className="p-3 sm:p-4">
+          <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4">
             <UserAvatar 
               userId={user?.id}
               username={username}
@@ -135,16 +135,16 @@ export const CreatePostArea = ({ onCreatePost, onGoLive }: CreatePostAreaProps) 
             </Button>
           </div>
           
-          <div className="flex items-center justify-between pt-3 border-t border-luxury-neutral/10">
-            <div className="flex items-center gap-2">
+          <div className="flex items-center justify-between pt-2 sm:pt-3 border-t border-luxury-neutral/10">
+            <div className="flex items-center gap-1 sm:gap-2 overflow-x-auto">
               <Button
                 variant="ghost"
                 size="sm"
                 className="text-luxury-neutral/60 hover:text-luxury-neutral"
                 onClick={handleCreatePost}
               >
-                <Image className="h-4 w-4 mr-2" />
-                Photo
+                <Image className="h-4 w-4 mr-1 sm:mr-2" />
+                <span className="hidden sm:inline">Photo</span>
               </Button>
               
               <Button
@@ -153,8 +153,8 @@ export const CreatePostArea = ({ onCreatePost, onGoLive }: CreatePostAreaProps) 
                 className="text-luxury-neutral/60 hover:text-luxury-neutral"
                 onClick={handleCreatePost}
               >
-                <Video className="h-4 w-4 mr-2" />
-                Video
+                <Video className="h-4 w-4 mr-1 sm:mr-2" />
+                <span className="hidden sm:inline">Video</span>
               </Button>
               
               <Button
@@ -163,8 +163,8 @@ export const CreatePostArea = ({ onCreatePost, onGoLive }: CreatePostAreaProps) 
                 className="text-luxury-neutral/60 hover:text-luxury-neutral"
                 onClick={handleAudioAction}
               >
-                <Mic className="h-4 w-4 mr-2" />
-                Audio
+                <Mic className="h-4 w-4 mr-1 sm:mr-2" />
+                <span className="hidden sm:inline">Audio</span>
               </Button>
             </div>
             
@@ -174,8 +174,8 @@ export const CreatePostArea = ({ onCreatePost, onGoLive }: CreatePostAreaProps) 
               className="text-luxury-primary hover:text-luxury-primary/80"
               onClick={handleGoLive}
             >
-              <Camera className="h-4 w-4 mr-2" />
-              Go Live
+              <Camera className="h-4 w-4 mr-1 sm:mr-2" />
+              <span className="hidden sm:inline">Go Live</span>
             </Button>
           </div>
         </CardContent>

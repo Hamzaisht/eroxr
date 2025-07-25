@@ -15,8 +15,8 @@ export const HomeLayout = ({ children }: HomeLayoutProps) => {
         <div className="absolute bottom-40 right-32 w-80 h-80 bg-luxury-accent/3 rounded-full blur-3xl animate-pulse delay-1000" />
       </div>
 
-      {/* Main content */}
-      <div className="relative z-10 w-full max-w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      {/* Main content with mobile-first responsive design */}
+      <div className="relative z-10 w-full max-w-full mx-auto px-2 sm:px-4 lg:px-8 py-2 sm:py-6">
         <div className="w-full max-w-7xl mx-auto">
           {children}
         </div>

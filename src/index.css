@@ -624,6 +624,81 @@ body.story-viewer-open {
   to { transform: rotate(360deg); }
 }
 
+/* Mobile-first responsive utilities */
+.safe-area-pb {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* Mobile touch improvements */
+@media (max-width: 768px) {
+  /* Larger touch targets */
+  button, a, [role="button"] {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  /* Smooth scrolling for mobile */
+  * {
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  /* Hide scrollbar on mobile */
+  ::-webkit-scrollbar {
+    display: none;
+  }
+  
+  /* Prevent zoom on input focus */
+  input, select, textarea {
+    font-size: 16px;
+  }
+  
+  /* Mobile story reel optimization */
+  .story-reel {
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+  }
+  
+  .story-item {
+    scroll-snap-align: start;
+  }
+}
+
+/* Mobile post card optimizations */
+@media (max-width: 640px) {
+  .enhanced-post-card {
+    margin-left: 0.5rem;
+    margin-right: 0.5rem;
+    border-radius: 1rem;
+  }
+  
+  .enhanced-post-card .post-actions {
+    padding: 0.75rem 1rem;
+  }
+  
+  .enhanced-post-card .post-content {
+    padding: 0.75rem 1rem;
+  }
+}
+
+/* OnlyFans-style mobile feed */
+@media (max-width: 768px) {
+  .mobile-feed {
+    padding-left: 0;
+    padding-right: 0;
+  }
+  
+  .mobile-post-card {
+    border-radius: 0;
+    border-left: none;
+    border-right: none;
+    margin-bottom: 0.5rem;
+  }
+  
+  .mobile-nav-spacing {
+    padding-bottom: 5rem; /* Space for bottom nav */
+  }
+}
+
 
 .floating-elements {
   position: absolute;

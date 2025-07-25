@@ -54,10 +54,10 @@ export const StoryReel = memo(() => {
 
   if (isLoading) {
     return (
-      <div className="relative z-10 flex items-center justify-start w-full gap-4 px-4 py-6 overflow-x-auto">
+      <div className="relative z-10 flex items-center justify-start w-full gap-3 sm:gap-4 px-2 sm:px-4 py-4 sm:py-6 overflow-x-auto">
         {[...Array(6)].map((_, i) => (
           <div key={i} className="flex-shrink-0">
-            <div className="w-16 h-16 rounded-full bg-gray-200 animate-pulse" />
+            <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-gray-200 animate-pulse" />
           </div>
         ))}
       </div>
@@ -66,7 +66,7 @@ export const StoryReel = memo(() => {
 
   return (
     <>
-      <div className="relative z-10 flex items-center justify-start w-full gap-4 px-4 py-6 overflow-x-auto">
+      <div className="relative z-10 flex items-center justify-start w-full gap-3 sm:gap-4 px-2 sm:px-4 py-4 sm:py-6 overflow-x-auto story-reel">
         {/* User's Story or Add Story Button */}
         <StoryAvatar
           story={userStory}
