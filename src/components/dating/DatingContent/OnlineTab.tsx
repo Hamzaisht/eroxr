@@ -91,6 +91,14 @@ export function OnlineTab({ session, userProfile }: OnlineTabProps) {
           const profile = profiles?.find(p => p.id === ad.user_id);
           if (!profile) return null;
           
+          // Debug log to see the user data structure
+          console.log('User ad data:', {
+            username: profile.username,
+            country: ad.country,
+            city: ad.city,
+            isCurrentUser: session?.user?.id === ad.user_id
+          });
+          
           return {
             ...ad,
             profiles: profile,
@@ -157,6 +165,9 @@ export function OnlineTab({ session, userProfile }: OnlineTabProps) {
   const getCountryFlag = (country?: string) => {
     if (!country) return '🌍';
     
+    // Debug log to see what country value we're getting
+    console.log('Country value received:', country, 'Type:', typeof country);
+    
     const countryFlags: Record<string, string> = {
       // Country codes
       'no': '🇳🇴', 'norway': '🇳🇴',
@@ -180,7 +191,10 @@ export function OnlineTab({ session, userProfile }: OnlineTabProps) {
       'au': '🇦🇺', 'australia': '🇦🇺'
     };
     
-    return countryFlags[country.toLowerCase()] || '🌍';
+    const flagResult = countryFlags[country.toLowerCase()] || '🌍';
+    console.log('Flag result for', country, ':', flagResult);
+    
+    return flagResult;
   };
 
   const handleMessage = async (user: OnlineUser) => {
