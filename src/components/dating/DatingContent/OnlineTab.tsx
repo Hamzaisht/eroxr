@@ -373,10 +373,12 @@ export function OnlineTab({ session, userProfile }: OnlineTabProps) {
                       {/* Country Flag */}
                       {user.country && (
                         <div className="flex items-center gap-1.5 bg-luxury-primary/10 px-2 py-1 rounded-full">
-                          <span className="text-lg leading-none">{getCountryFlag(user.country)}</span>
-                          <span className="text-luxury-neutral text-xs font-medium capitalize">
-                            {user.city || user.country}
-                          </span>
+                          <span className="text-xl leading-none">{getCountryFlag(user.country)}</span>
+                          {user.city && (
+                            <span className="text-luxury-neutral text-xs font-medium capitalize">
+                              {user.city}
+                            </span>
+                          )}
                         </div>
                       )}
                     </div>
