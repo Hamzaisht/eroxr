@@ -294,9 +294,7 @@ export default function DatingMainContent(props: any) {
 
   return (
     <DatingErrorBoundary>
-      <div className="min-h-screen dating-gradient-bg dating-neural-pattern relative overflow-hidden">
-        {/* Performance Optimized Background */}
-        <div className="absolute inset-0 neural-mesh opacity-30" />
+      <div className="min-h-screen dating-gradient-bg relative overflow-hidden">
 
         <div className="container mx-auto py-6 relative z-10">
           {/* Enhanced Header with Loading State */}
