@@ -41,42 +41,64 @@ export function OnlineTab({ session, userProfile }: OnlineTabProps) {
     try {
       setIsLoading(true);
       
-      // Fetch dating ads from users who have bodycontact enabled and are recently active
-      const { data, error } = await supabase
+      // Fetch active dating ads first
+      const { data: datingAds, error: adsError } = await supabase
         .from('dating_ads')
-        .select(`
-          *,
-          profiles!inner(
-            username,
-            avatar_url,
-            location,
-            last_seen,
-            can_access_bodycontact
-          )
-        `)
+        .select('*')
         .eq('is_active', true)
-        .eq('profiles.can_access_bodycontact', true)
-        .gte('last_active', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()) // Last 24 hours
         .order('last_active', { ascending: false })
-        .limit(50);
+        .limit(100);
 
-      if (error) {
-        console.error('Error fetching online users:', error);
+      if (adsError) {
+        console.error('Error fetching dating ads:', adsError);
         toast({
-          title: "Error loading online users",
-          description: "Could not load online users. Please try again.",
+          title: "Error loading dating ads",
+          description: "Could not load dating ads. Please try again.",
           variant: "destructive",
         });
         return;
       }
 
-      // Add online status based on last_active time
-      const usersWithStatus = data?.map(user => ({
-        ...user,
-        online_status: getOnlineStatus(user.last_active)
-      })) || [];
+      if (!datingAds || datingAds.length === 0) {
+        setOnlineUsers([]);
+        return;
+      }
 
-      setOnlineUsers(usersWithStatus);
+      // Get user IDs from dating ads
+      const userIds = datingAds.map(ad => ad.user_id).filter(Boolean);
+
+      // Fetch profiles for those users who have bodycontact enabled
+      const { data: profiles, error: profilesError } = await supabase
+        .from('profiles')
+        .select('id, username, avatar_url, location, last_seen, can_access_bodycontact')
+        .in('id', userIds)
+        .eq('can_access_bodycontact', true);
+
+      if (profilesError) {
+        console.error('Error fetching profiles:', profilesError);
+        toast({
+          title: "Error loading profiles",
+          description: "Could not load user profiles. Please try again.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Combine dating ads with profiles
+      const usersWithProfiles = datingAds
+        .map(ad => {
+          const profile = profiles?.find(p => p.id === ad.user_id);
+          if (!profile) return null;
+          
+          return {
+            ...ad,
+            profiles: profile,
+            online_status: getOnlineStatus(profile.last_seen)
+          };
+        })
+        .filter(Boolean) as OnlineUser[];
+
+      setOnlineUsers(usersWithProfiles);
     } catch (error) {
       console.error('Error in fetchOnlineUsers:', error);
     } finally {
@@ -104,12 +126,25 @@ export function OnlineTab({ session, userProfile }: OnlineTabProps) {
     }
   };
 
-  const getStatusText = (status: 'online' | 'recently_active' | 'offline', lastActive?: string) => {
+  const getStatusText = (status: 'online' | 'recently_active' | 'offline', lastSeen?: string) => {
     switch (status) {
       case 'online': return 'Online now';
-      case 'recently_active': return lastActive ? `Active ${formatDistanceToNow(new Date(lastActive), { addSuffix: true })}` : 'Recently active';
-      default: return 'Offline';
+      case 'recently_active': return lastSeen ? `Active ${formatDistanceToNow(new Date(lastSeen), { addSuffix: true })}` : 'Recently active';
+      default: return lastSeen ? `Last seen ${formatDistanceToNow(new Date(lastSeen), { addSuffix: true })}` : 'Offline';
     }
+  };
+
+  const getCountryFlag = (country?: string) => {
+    const countryFlags: Record<string, string> = {
+      'denmark': '🇩🇰',
+      'sweden': '🇸🇪', 
+      'norway': '🇳🇴',
+      'finland': '🇫🇮',
+      'iceland': '🇮🇸'
+    };
+    
+    if (!country) return '🌍';
+    return countryFlags[country.toLowerCase()] || '🌍';
   };
 
   const handleMessage = async (user: OnlineUser) => {
@@ -257,18 +292,18 @@ export function OnlineTab({ session, userProfile }: OnlineTabProps) {
                     <h3 className="font-semibold text-lg text-foreground truncate">
                       {user.profiles?.username || user.title}
                     </h3>
-                    <p className={`text-sm ${getStatusColor(user.online_status || 'offline')}`}>
-                      {getStatusText(user.online_status || 'offline', user.last_active)}
-                    </p>
+                     <p className={`text-sm ${getStatusColor(user.online_status || 'offline')}`}>
+                       {getStatusText(user.online_status || 'offline', user.profiles?.last_seen)}
+                     </p>
                   </div>
 
-                  {/* Location */}
-                  {(user.profiles?.location || user.city) && (
-                    <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                      <MapPin className="h-3 w-3" />
-                      <span className="truncate">{user.profiles?.location || user.city}</span>
-                    </div>
-                  )}
+                   {/* Location with Country Flag */}
+                   {(user.country || user.city) && (
+                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                       <span className="text-lg">{getCountryFlag(user.country)}</span>
+                       <span className="truncate capitalize">{user.country || user.city}</span>
+                     </div>
+                   )}
 
                   {/* Tags */}
                   {user.tags && user.tags.length > 0 && (
