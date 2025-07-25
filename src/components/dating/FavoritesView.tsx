@@ -32,7 +32,7 @@ export const FavoritesView = ({ userProfile }: FavoritesViewProps) => {
         // Get favorite profile IDs
         const { data: favoritesData, error: favoritesError } = await supabase
           .from('profile_favorites')
-          .select('favorite_profile_id, created_at')
+          .select('dating_ad_id, created_at')
           .eq('user_id', session.user.id)
           .order('created_at', { ascending: false });
           
@@ -40,7 +40,7 @@ export const FavoritesView = ({ userProfile }: FavoritesViewProps) => {
         
         if (favoritesData && favoritesData.length > 0) {
           // Get the actual profile data
-          const profileIds = favoritesData.map(fav => fav.favorite_profile_id);
+          const profileIds = favoritesData.map(fav => fav.dating_ad_id);
           
           const { data: profilesData, error: profilesError } = await supabase
             .from('dating_ads')
@@ -81,7 +81,7 @@ export const FavoritesView = ({ userProfile }: FavoritesViewProps) => {
         .from('profile_favorites')
         .delete()
         .eq('user_id', session.user.id)
-        .eq('favorite_profile_id', profileId);
+        .eq('dating_ad_id', profileId);
         
       if (error) throw error;
       

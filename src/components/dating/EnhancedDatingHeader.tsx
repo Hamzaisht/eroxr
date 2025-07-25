@@ -24,12 +24,12 @@ export function EnhancedDatingHeader({
   const [searchVisible, setSearchVisible] = useState(false);
 
   const tabs = [
-    { value: "browse", label: "Discover", icon: Search },
-    { value: "trending", label: "Olympus", icon: Zap },
-    { value: "popular", label: "Elite", icon: Crown },
-    { value: "quick-match", label: "Fates", icon: Zap },
-    { value: "favorites", label: "Beloved", icon: Crown },
-    { value: "nearby", label: "Local", icon: Search },
+    { value: "browse", label: "Browse", icon: Search },
+    { value: "trending", label: "Trending", icon: Zap },
+    { value: "popular", label: "Popular", icon: Crown },
+    { value: "quick-match", label: "Quick Match", icon: Zap },
+    { value: "favorites", label: "Favorites", icon: Crown },
+    { value: "nearby", label: "Nearby", icon: Search },
   ];
 
   return (
