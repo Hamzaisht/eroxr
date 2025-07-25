@@ -261,125 +261,104 @@ export function OnlineTab({ session, userProfile }: OnlineTabProps) {
         <h2 className="text-xl font-semibold text-foreground">Online Now ({onlineUsers.length})</h2>
       </div>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {onlineUsers.map((user) => (
+      <div className="space-y-3">
+        {onlineUsers.map((user, index) => (
           <motion.div
             key={user.id}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="group"
+            transition={{ duration: 0.3, delay: index * 0.05 }}
           >
-            <Card className="overflow-hidden border-border/50 bg-card/50 backdrop-blur-sm hover:border-border transition-all duration-300 hover:shadow-lg">
-              <CardContent className="p-0">
-                {/* Profile Image */}
-                <div className="relative aspect-[4/5] bg-muted">
-                  {user.avatar_url || user.profiles?.avatar_url ? (
-                    <img
-                      src={user.avatar_url || user.profiles?.avatar_url}
-                      alt={user.profiles?.username || 'User'}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/20 to-secondary/20">
-                      <Avatar className="w-20 h-20">
-                        <AvatarFallback className="text-2xl">
-                          {user.profiles?.username?.charAt(0).toUpperCase() || 'U'}
-                        </AvatarFallback>
-                      </Avatar>
-                    </div>
-                  )}
-                  
-                   {/* Online Status Badge */}
-                   <div className="absolute top-3 left-3">
-                     <Badge variant="secondary" className="bg-background/80 backdrop-blur-sm">
-                       <Circle className={`h-2 w-2 mr-1 ${getStatusColor(user.online_status || 'offline')} fill-current`} />
-                       {user.online_status === 'online' ? 'Online' : 'Active'}
-                     </Badge>
-                   </div>
-
-                   {/* Current User Badge */}
-                   {user.isCurrentUser && (
-                     <div className="absolute top-3 left-3 -mt-8">
-                       <Badge className="bg-primary/90 text-primary-foreground backdrop-blur-sm">
-                         You
-                       </Badge>
-                     </div>
-                   )}
-
-                  {/* View Count */}
-                  <div className="absolute top-3 right-3">
-                    <Badge variant="secondary" className="bg-background/80 backdrop-blur-sm">
-                      <Eye className="h-3 w-3 mr-1" />
-                      {user.view_count || 0}
+            <div className="relative flex items-center bg-card/50 backdrop-blur-sm border border-border/50 hover:border-border transition-all group cursor-pointer rounded-lg overflow-hidden">
+              {/* Cover Banner */}
+              <div className="relative w-20 h-16 bg-gradient-to-br from-primary/20 to-secondary/20 flex-shrink-0">
+                <div className="absolute inset-0 bg-black/10"></div>
+                <div className="absolute top-1 right-1 text-lg">
+                  {getCountryFlag(user.country)}
+                </div>
+                {user.isCurrentUser && (
+                  <div className="absolute top-1 left-1">
+                    <Badge className="bg-primary/90 text-primary-foreground text-xs px-1 py-0">
+                      You
                     </Badge>
                   </div>
+                )}
+              </div>
+              
+              {/* Profile Picture */}
+              <div className="relative -ml-6 z-10">
+                <Avatar className="h-12 w-12 ring-2 ring-primary/30 ring-offset-2 ring-offset-card">
+                  <AvatarImage src={user.avatar_url || user.profiles?.avatar_url || undefined} />
+                  <AvatarFallback className="bg-primary/20 text-primary">
+                    {(user.profiles?.username || user.title)?.charAt(0)?.toUpperCase() || 'U'}
+                  </AvatarFallback>
+                </Avatar>
+                <div className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-card ${
+                  user.online_status === 'online' ? 'bg-green-500' : 
+                  user.online_status === 'recently_active' ? 'bg-yellow-500' : 'bg-gray-500'
+                }`}></div>
+              </div>
+              
+              {/* User Info */}
+              <div className="flex-1 min-w-0 px-3 py-2">
+                <div className="flex items-center gap-2">
+                  <h3 className="font-semibold text-foreground truncate text-sm">
+                    {user.profiles?.username || user.title}
+                  </h3>
+                  {user.is_verified && <Circle className="h-3 w-3 text-blue-500 fill-current" />}
+                  {user.is_premium && <Circle className="h-3 w-3 text-yellow-500 fill-current" />}
                 </div>
-
-                {/* Profile Info */}
-                <div className="p-4 space-y-3">
-                  <div className="space-y-1">
-                    <h3 className="font-semibold text-lg text-foreground truncate">
-                      {user.profiles?.username || user.title}
-                    </h3>
-                     <p className={`text-sm ${getStatusColor(user.online_status || 'offline')}`}>
-                       {getStatusText(user.online_status || 'offline', user.profiles?.last_seen)}
-                     </p>
-                  </div>
-
-                   {/* Location with Country Flag */}
-                   {(user.country || user.city) && (
-                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                       <span className="text-lg">{getCountryFlag(user.country)}</span>
-                       <span className="truncate capitalize">{user.country || user.city}</span>
-                     </div>
-                   )}
-
-                  {/* Tags */}
-                  {user.tags && user.tags.length > 0 && (
-                    <div className="flex flex-wrap gap-1">
-                      {user.tags.slice(0, 3).map((tag, index) => (
-                        <Badge key={index} variant="outline" className="text-xs">
-                          {tag}
-                        </Badge>
-                      ))}
-                      {user.tags.length > 3 && (
-                        <Badge variant="outline" className="text-xs">
-                          +{user.tags.length - 3}
-                        </Badge>
-                      )}
-                    </div>
-                  )}
-
-                  {/* Action Buttons */}
-                  <div className="grid grid-cols-3 gap-2 pt-2">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => handleMessage(user)}
-                      className="border-blue-500/30 hover:border-blue-500/60 hover:bg-blue-500/10"
-                    >
-                      <MessageCircle className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => handleBookmark(user)}
-                      className="border-yellow-500/30 hover:border-yellow-500/60 hover:bg-yellow-500/10"
-                    >
-                      <Bookmark className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => handleRequestConnection(user)}
-                      className="border-purple-500/30 hover:border-purple-500/60 hover:bg-purple-500/10"
-                    >
-                      <UserPlus className="h-4 w-4" />
-                    </Button>
-                  </div>
+                <div className="flex items-center gap-2 mt-0.5">
+                  <Circle className={`w-2 h-2 ${
+                    user.online_status === 'online' ? 'text-green-500' : 
+                    user.online_status === 'recently_active' ? 'text-yellow-500' : 'text-gray-500'
+                  } fill-current`} />
+                  <span className="text-xs text-muted-foreground">
+                    {getStatusText(user.online_status || 'offline', user.profiles?.last_seen)}
+                  </span>
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+              
+              {/* Action Buttons */}
+              <div className="flex gap-1 px-3 py-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-7 px-2 text-xs border-blue-500/30 hover:border-blue-500/60 hover:bg-blue-500/10"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleMessage(user);
+                  }}
+                  disabled={user.isCurrentUser}
+                >
+                  <MessageCircle className="h-3 w-3" />
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-7 px-2 text-xs border-yellow-500/30 hover:border-yellow-500/60 hover:bg-yellow-500/10"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleBookmark(user);
+                  }}
+                  disabled={user.isCurrentUser}
+                >
+                  <Bookmark className="h-3 w-3" />
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-7 px-2 text-xs border-purple-500/30 hover:border-purple-500/60 hover:bg-purple-500/10"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleRequestConnection(user);
+                  }}
+                  disabled={user.isCurrentUser}
+                >
+                  <UserPlus className="h-3 w-3" />
+                </Button>
+              </div>
+            </div>
           </motion.div>
         ))}
       </div>
