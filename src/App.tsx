@@ -11,6 +11,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { AdminSessionProvider } from "@/contexts/AdminSessionContext";
 import { ScrollToTop } from "@/components/ScrollToTop";
+import { AppViewport } from "@/components/mobile/AppViewport";
 import Landing from "@/pages/Landing";
 import Home from "@/pages/Home";
 import Login from "@/pages/Login";
@@ -50,6 +51,7 @@ function App() {
               <ToastProvider>
               <TooltipProvider>
             <Router>
+              <AppViewport />
               <ScrollToTop />
               <Routes>
                 <Route path="/" element={<Landing />} />

@@ -23,9 +23,14 @@ export const MobileBottomNav = () => {
     <motion.div
       initial={{ y: 100 }}
       animate={{ y: 0 }}
-      className="fixed bottom-0 left-0 right-0 z-40 md:hidden bg-luxury-darker/95 backdrop-blur-xl border-t border-luxury-primary/10 px-2 py-2 safe-area-pb"
+      className="mobile-bottom-nav touch-feedback z-50 md:hidden"
+      style={{
+        background: 'rgba(0, 0, 0, 0.95)',
+        backdropFilter: 'blur(20px)',
+        borderTop: '1px solid rgba(139, 92, 246, 0.2)'
+      }}
     >
-      <div className="flex items-center justify-around">
+      <div className="flex items-center justify-around px-2 py-2 safe-area-pb">
         {navItems.map((item) => {
           const isActive = location.pathname === item.path;
           const Icon = item.icon;
@@ -35,7 +40,8 @@ export const MobileBottomNav = () => {
               key={item.path}
               onClick={() => handleNavClick(item.path)}
               className={cn(
-                "flex flex-col items-center justify-center py-2 px-3 rounded-xl transition-all duration-200",
+                "touch-target flex flex-col items-center justify-center rounded-xl transition-all duration-200 relative",
+                "min-h-12 min-w-12 px-2 py-1",
                 isActive 
                   ? "bg-luxury-primary/20 text-luxury-primary" 
                   : "text-luxury-neutral/60 hover:text-luxury-neutral hover:bg-luxury-primary/10"
@@ -44,11 +50,11 @@ export const MobileBottomNav = () => {
               whileHover={{ scale: 1.05 }}
             >
               <Icon className={cn(
-                "h-5 w-5 transition-all duration-200",
+                "h-5 w-5 transition-all duration-200 mb-1",
                 isActive ? "text-luxury-primary" : "text-luxury-neutral/60"
               )} />
               <span className={cn(
-                "text-xs mt-1 font-medium transition-all duration-200",
+                "text-xs font-medium transition-all duration-200 leading-none",
                 isActive ? "text-luxury-primary" : "text-luxury-neutral/60"
               )}>
                 {item.label}
@@ -57,7 +63,7 @@ export const MobileBottomNav = () => {
               {isActive && (
                 <motion.div
                   layoutId="bottomNavIndicator"
-                  className="absolute top-0 left-1/2 transform -translate-x-1/2 w-8 h-0.5 bg-luxury-primary rounded-full"
+                  className="absolute -top-1 left-1/2 transform -translate-x-1/2 w-8 h-1 bg-luxury-primary rounded-full shadow-lg"
                   transition={{ type: "spring", stiffness: 400, damping: 30 }}
                 />
               )}

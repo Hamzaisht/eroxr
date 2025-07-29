@@ -3,6 +3,9 @@ import { useState, useEffect } from "react";
 import { HomeLayout } from "@/components/home/HomeLayout";
 import { InteractiveNav } from "@/components/layout/InteractiveNav";
 import { MobileBottomNav } from "@/components/layout/MobileBottomNav";
+import { MobileAppLayout } from "@/components/layout/MobileAppLayout";
+import { ResponsiveContainer } from "@/components/layout/ResponsiveContainer";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { FeedHeader } from "@/components/home/FeedHeader";
 import { FeedContent } from "@/components/home/feed/FeedContent";
 import { StoryReel } from "@/components/StoryReel";
@@ -29,6 +32,7 @@ const Home = () => {
   const { user, profile, isLoading } = useCurrentUser();
   const { hasPremium, isLoading: subscriptionLoading } = usePlatformSubscription();
   const { isSuperAdmin, role } = useUserRole();
+  const isMobile = useIsMobile();
 
   // Auto-assign super admin role on first load for the main user (only once per session)
   useEffect(() => {
@@ -90,6 +94,62 @@ const Home = () => {
     if (profile?.username) return `@${profile.username}`;
     return user.email?.split('@')[0] || 'User';
   };
+
+  if (isMobile) {
+    return (
+      <MobileAppLayout>
+        <InteractiveNav />
+        
+        <ResponsiveContainer className="space-y-4">
+          {/* Welcome Banner - Only show for non-premium users as marketing */}
+          {showWelcome && !hasPremium && !isSuperAdmin && (
+            <WelcomeBanner 
+              username={getUserDisplayName()}
+              onDismiss={() => setShowWelcome(false)}
+            />
+          )}
+          
+          {/* Stories Section - Always visible */}
+          <StoryReel />
+          
+          {/* Create Post Area - Show for all users with upgrade prompt for free users */}
+          {hasPremium || isSuperAdmin ? (
+            <CreatePostArea 
+              onCreatePost={createPostDialog.openDialog}
+              onGoLive={goLiveDialog.openDialog}
+            />
+          ) : (
+            <FreemiumTeaser contentType="upload" className="w-full">
+              <CreatePostArea 
+                onCreatePost={createPostDialog.openDialog}
+                onGoLive={goLiveDialog.openDialog}
+              />
+            </FreemiumTeaser>
+          )}
+          
+          {/* Feed Header with Tabs */}
+          <FeedHeader 
+            activeTab={activeTab} 
+            onTabChange={setActiveTab} 
+          />
+          
+          {/* Dynamic Content Based on Active Tab */}
+          {renderContent()}
+        </ResponsiveContainer>
+
+        {/* Dialogs */}
+        <CreatePostDialog 
+          open={createPostDialog.isOpen}
+          onOpenChange={createPostDialog.closeDialog}
+        />
+        
+        <GoLiveDialog 
+          open={goLiveDialog.isOpen}
+          onOpenChange={goLiveDialog.closeDialog}
+        />
+      </MobileAppLayout>
+    );
+  }
 
   return (
     <>
