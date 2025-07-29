@@ -1,5 +1,6 @@
 
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { InteractiveNav } from "@/components/layout/InteractiveNav";
 import { HomeLayout } from "@/components/home/HomeLayout";
 import { MobileBottomNav } from "@/components/layout/MobileBottomNav";
@@ -11,6 +12,7 @@ import DatingMainContent from "./DatingMainContent";
 import { motion } from "framer-motion";
 
 const Dating = () => {
+  const navigate = useNavigate();
   const { user } = useCurrentUser();
   const { hasPremium } = usePlatformSubscription();
   const { isSuperAdmin } = useUserRole();
@@ -48,7 +50,7 @@ const Dating = () => {
                 transition={{ delay: 0.4 }}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                onClick={() => window.location.href = '/login'}
+                onClick={() => navigate('/login')}
                 className="w-full bg-gradient-to-r from-cyan-500 to-purple-600 hover:from-cyan-400 hover:to-purple-500 text-white font-semibold py-3 px-6 rounded-xl transition-all duration-300 action-button-glow"
               >
                 Enter the Divine Realm

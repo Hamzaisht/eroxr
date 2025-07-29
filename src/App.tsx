@@ -10,6 +10,7 @@ import { ToastProvider } from "@/hooks/use-toast";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { AdminSessionProvider } from "@/contexts/AdminSessionContext";
+import { ScrollToTop } from "@/components/ScrollToTop";
 import Landing from "@/pages/Landing";
 import Home from "@/pages/Home";
 import Login from "@/pages/Login";
@@ -49,6 +50,7 @@ function App() {
               <ToastProvider>
               <TooltipProvider>
             <Router>
+              <ScrollToTop />
               <Routes>
                 <Route path="/" element={<Landing />} />
                 <Route path="/home" element={<Home />} />

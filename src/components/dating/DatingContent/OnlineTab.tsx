@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Circle, Clock, MapPin, MessageCircle, Bookmark, UserPlus, Heart, Eye, CheckCircle2, Crown } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
@@ -29,6 +30,7 @@ interface OnlineUser extends DatingAd {
 }
 
 export function OnlineTab({ session, userProfile }: OnlineTabProps) {
+  const navigate = useNavigate();
   const [onlineUsers, setOnlineUsers] = useState<OnlineUser[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
@@ -227,7 +229,7 @@ export function OnlineTab({ session, userProfile }: OnlineTabProps) {
     }
 
     // Navigate to messages with this user
-    window.location.href = `/messages?userId=${user.user_id}`;
+    navigate(`/messages?userId=${user.user_id}`);
   };
 
   const handleBookmark = async (user: OnlineUser) => {

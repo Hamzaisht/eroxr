@@ -1,5 +1,6 @@
 import { useState, memo, useCallback, useMemo, useEffect } from 'react';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
+import { FixedBackButton } from '@/components/ui/fixed-back-button';
 import { ConversationSidebar } from '@/components/messages/ConversationSidebar';
 import { SimpleOptimizedChatArea } from '@/components/messages/SimpleOptimizedChatArea';
 import { ChatDetails } from '@/components/messages/ChatDetails';
@@ -346,6 +347,9 @@ const Messages = memo(() => {
   return (
     <>
       <InteractiveNav />
+      <div className="md:ml-20 p-4">
+        <FixedBackButton />
+      </div>
       <div className="md:ml-20">
         {renderMessagesContent()}
       </div>

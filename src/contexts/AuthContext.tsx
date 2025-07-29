@@ -57,6 +57,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     console.log('🔄 AuthProvider: Initializing optimized auth system');
     
     let isMounted = true;
+    let hasInitialized = false;
     
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
@@ -69,13 +70,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           hasUser: !!newSession?.user
         });
         
-        // Profile creation is now handled by the database trigger
-        
-        // Update auth state
-        setSession(newSession);
-        setUser(newSession?.user ?? null);
-        setError(null);
-        setLoading(false);
+        // Only process changes after initial setup to prevent loops
+        if (hasInitialized) {
+          setSession(newSession);
+          setUser(newSession?.user ?? null);
+          setError(null);
+          setLoading(false);
+        }
       }
     );
 
@@ -98,6 +99,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
       
       setLoading(false);
+      hasInitialized = true;
     });
 
     return () => {
