@@ -625,22 +625,13 @@ export const SimpleOptimizedChatArea = memo(({ conversationId, onShowDetails }: 
                         <div className="flex items-center justify-between mt-1 text-xs opacity-70">
                           <span>{new Date(message.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                           {isOwn && message.delivery_status && (
-                            <div className="flex items-center">
+                            <div className="flex items-center ml-2">
                               {message.delivery_status === 'seen' ? (
-                                <div className="flex items-center text-blue-400">
-                                  <CheckCheck className="h-3 w-3" />
-                                  <CheckCheck className="h-3 w-3 -ml-1" />
-                                </div>
+                                <CheckCheck className="h-3 w-3 text-blue-400" />
                               ) : message.delivery_status === 'delivered' ? (
-                                <div className="flex items-center text-gray-400">
-                                  <CheckCheck className="h-3 w-3" />
-                                  <CheckCheck className="h-3 w-3 -ml-1" />
-                                </div>
+                                <CheckCheck className="h-3 w-3 text-white/40" />
                               ) : (
-                                <div className="flex items-center text-gray-500">
-                                  <Check className="h-3 w-3" />
-                                  <Check className="h-3 w-3 -ml-1" />
-                                </div>
+                                <Check className="h-3 w-3 text-white/40" />
                               )}
                             </div>
                           )}
