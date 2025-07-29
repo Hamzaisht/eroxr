@@ -4,6 +4,7 @@ import { Search, Filter, Plus, Grid3X3, List, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { cn } from "@/lib/utils";
 
 interface EnhancedDatingHeaderProps {
   activeTab: string;
@@ -97,9 +98,10 @@ export function EnhancedDatingHeader({
               </p>
             </motion.div>
             
-            <div className={`flex items-center ${
-              isMobile ? "gap-2" : "gap-3"
-            }`}>
+            <div className={cn(
+              "flex items-center flex-shrink-0",
+              isMobile ? "gap-1" : "gap-3"
+            )}>
               {/* Search Toggle - Mobile Optimized */}
               <motion.div
                 initial={{ opacity: 0, x: 20 }}
@@ -177,7 +179,10 @@ export function EnhancedDatingHeader({
                 <Button
                   onClick={onCreateAd}
                   size={isMobile ? "sm" : "default"}
-                  className="touch-target bg-gradient-to-r from-cyan-500 to-purple-600 hover:from-cyan-400 hover:to-purple-500 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300 action-button-glow"
+                  className={cn(
+                    "touch-target bg-gradient-to-r from-cyan-500 to-purple-600 hover:from-cyan-400 hover:to-purple-500 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300 action-button-glow",
+                    isMobile && "px-3 py-2 text-sm whitespace-nowrap"
+                  )}
                   aria-label="Create new ad"
                 >
                   <Plus className={`${isMobile ? "h-4 w-4" : "h-5 w-5"} ${isMobile ? "mr-1" : "mr-2"}`} />

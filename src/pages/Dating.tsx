@@ -110,12 +110,16 @@ const Dating = () => {
   if (isMobile) {
     return (
       <MobileAppLayout>
-        <InteractiveNav />
-        <ResponsiveContainer>
-          <DatingErrorBoundary>
-            <DatingMainContent />
-          </DatingErrorBoundary>
-        </ResponsiveContainer>
+        <div className="flex flex-col h-full">
+          <InteractiveNav />
+          <div className="flex-1 overflow-hidden">
+            <ResponsiveContainer className="h-full">
+              <DatingErrorBoundary>
+                <DatingMainContent />
+              </DatingErrorBoundary>
+            </ResponsiveContainer>
+          </div>
+        </div>
       </MobileAppLayout>
     );
   }

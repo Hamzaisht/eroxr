@@ -76,6 +76,7 @@ export const MobileAppLayout = ({
       <main className={cn(
         "relative z-10 min-h-screen-mobile smooth-mobile-scroll",
         "safe-area-pt safe-area-pl safe-area-pr critical-render",
+        "overflow-auto", // Ensure scrollability
         !shouldHideBottomNav && "pb-20 safe-area-pb"
       )}>
         {children}

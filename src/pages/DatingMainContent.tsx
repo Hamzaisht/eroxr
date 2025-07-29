@@ -294,9 +294,9 @@ export default function DatingMainContent(props: any) {
 
   return (
     <DatingErrorBoundary>
-      <div className="min-h-screen dating-gradient-bg relative overflow-hidden touch-optimized gpu-accelerate">
-
-        <div className="container mx-auto py-6 relative z-10">
+      <div className="h-full dating-gradient-bg relative overflow-hidden touch-optimized gpu-accelerate">
+        <div className="h-full overflow-y-auto smooth-mobile-scroll">
+          <div className="container mx-auto py-6 relative z-10 min-h-full">
           {/* Enhanced Header with Loading State */}
           {isLoading ? (
             <DatingHeaderSkeleton />
@@ -372,6 +372,7 @@ export default function DatingMainContent(props: any) {
                 />
               )}
             </div>
+          </div>
           </div>
         </div>
 
