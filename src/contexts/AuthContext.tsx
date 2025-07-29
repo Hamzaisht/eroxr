@@ -2,6 +2,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
+import { useInactivityTimeout } from '@/hooks/useInactivityTimeout';
 
 interface AuthContextType {
   user: User | null;
@@ -21,6 +22,36 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const signOut = async () => {
+    console.log('🚪 AuthProvider: Signing out');
+    setError(null);
+    
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        console.error('❌ AuthProvider: Signout error:', error);
+        setError(error.message);
+      } else {
+        console.log('✅ AuthProvider: Signout successful');
+      }
+    } catch (err: any) {
+      console.error('💥 AuthProvider: Signout error:', err);
+      setError(err.message);
+    }
+  };
+
+  // 30-minute inactivity timeout (30 * 60 * 1000 = 1800000 milliseconds)
+  const INACTIVITY_TIMEOUT = 30 * 60 * 1000;
+
+  useInactivityTimeout({
+    timeout: INACTIVITY_TIMEOUT,
+    onTimeout: () => {
+      console.log('⏰ AuthProvider: User inactive for 30 minutes, signing out');
+      signOut();
+    },
+    enabled: !!session && !!user // Only enable timeout when user is logged in
+  });
 
   useEffect(() => {
     console.log('🔄 AuthProvider: Initializing optimized auth system');
@@ -125,24 +156,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.error('💥 AuthProvider: Signin error:', err);
       setError(err.message);
       return { error: err };
-    }
-  };
-
-  const signOut = async () => {
-    console.log('🚪 AuthProvider: Signing out');
-    setError(null);
-    
-    try {
-      const { error } = await supabase.auth.signOut();
-      if (error) {
-        console.error('❌ AuthProvider: Signout error:', error);
-        setError(error.message);
-      } else {
-        console.log('✅ AuthProvider: Signout successful');
-      }
-    } catch (err: any) {
-      console.error('💥 AuthProvider: Signout error:', err);
-      setError(err.message);
     }
   };
 
