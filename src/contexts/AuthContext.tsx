@@ -1,5 +1,5 @@
 
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState, useCallback, useMemo } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { useInactivityTimeout } from '@/hooks/useInactivityTimeout';
@@ -23,7 +23,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const signOut = async () => {
+  const signOut = useCallback(async () => {
     console.log('🚪 AuthProvider: Signing out');
     setError(null);
     
@@ -39,7 +39,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.error('💥 AuthProvider: Signout error:', err);
       setError(err.message);
     }
-  };
+  }, []);
 
   // 30-minute inactivity timeout (30 * 60 * 1000 = 1800000 milliseconds)
   const INACTIVITY_TIMEOUT = 30 * 60 * 1000;
@@ -109,7 +109,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
   }, []);
 
-  const signUp = async (email: string, password: string, metadata?: any) => {
+  const signUp = useCallback(async (email: string, password: string, metadata?: any) => {
     console.log('📝 AuthProvider: Attempting signup for:', email);
     setError(null);
     
@@ -135,9 +135,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setError(err.message);
       return { error: err };
     }
-  };
+  }, []);
 
-  const signIn = async (email: string, password: string) => {
+  const signIn = useCallback(async (email: string, password: string) => {
     console.log('🔑 AuthProvider: Attempting signin for:', email);
     setError(null);
     
@@ -159,13 +159,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setError(err.message);
       return { error: err };
     }
-  };
+  }, []);
 
-  const clearError = () => {
+  const clearError = useCallback(() => {
     setError(null);
-  };
+  }, []);
 
-  const value = {
+  const value = useMemo(() => ({
     user,
     session,
     loading,
@@ -174,7 +174,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     signIn,
     signOut,
     clearError
-  };
+  }), [user, session, loading, error, signUp, signIn, signOut, clearError]);
 
   return (
     <AuthContext.Provider value={value}>
