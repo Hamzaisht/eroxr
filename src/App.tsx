@@ -8,10 +8,11 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ToastProvider } from "@/hooks/use-toast";
 import { AuthProvider } from "@/contexts/AuthContext";
-import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { PlatformErrorBoundary } from "@/components/error/PlatformErrorBoundary";
 import { AdminSessionProvider } from "@/contexts/AdminSessionContext";
 import { ScrollToTop } from "@/components/ScrollToTop";
 import { AppViewport } from "@/components/mobile/AppViewport";
+import { PlatformHealthIndicator } from "@/components/platform/PlatformHealthIndicator";
 import Landing from "@/pages/Landing";
 import Home from "@/pages/Home";
 import Login from "@/pages/Login";
@@ -44,7 +45,7 @@ const queryClient = new QueryClient();
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <ErrorBoundary>
+      <PlatformErrorBoundary>
         <SessionContextProvider supabaseClient={supabase}>
           <AuthProvider>
             <AdminSessionProvider>
@@ -52,6 +53,7 @@ function App() {
               <TooltipProvider>
             <Router>
               <AppViewport />
+              <PlatformHealthIndicator />
               <ScrollToTop />
               <Routes>
                 <Route path="/" element={<Landing />} />
@@ -91,7 +93,7 @@ function App() {
           </AdminSessionProvider>
         </AuthProvider>
       </SessionContextProvider>
-      </ErrorBoundary>
+      </PlatformErrorBoundary>
     </QueryClientProvider>
   );
 }

@@ -14,6 +14,7 @@ import { calculateMatchPercentage, getMatchLabel } from '@/components/dating/uti
 import { useSession } from '@supabase/auth-helpers-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { usePlatformOptimizations } from '@/hooks/usePlatformOptimizations';
 
 interface EnhancedAdCardProps {
   ad: DatingAd;
@@ -33,24 +34,49 @@ export const EnhancedAdCard = ({ ad, onSelect, isMobile, userProfile, index = 0 
   const cardRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { optimizedApiCall } = usePlatformOptimizations();
 
-  // Check if user has already liked this ad
+  // Check if user has already liked this ad (optimized with caching and deduplication)
   useEffect(() => {
-    if (!session?.user?.id) return;
+    if (!session?.user?.id || !ad.id) return;
+    
+    let isMounted = true;
     
     const checkLikeStatus = async () => {
-      const { data } = await supabase
-        .from('dating_ad_likes')
-        .select('id')
-        .eq('user_id', session.user.id)
-        .eq('dating_ad_id', ad.id)
-        .maybeSingle();
-      
-      setIsLiked(!!data);
+      try {
+        const cacheKey = `like_status_${session.user.id}_${ad.id}`;
+        
+        const result = await optimizedApiCall(
+          cacheKey,
+          async () => {
+            const { data } = await supabase
+              .from('dating_ad_likes')
+              .select('id')
+              .eq('user_id', session.user.id)
+              .eq('dating_ad_id', ad.id)
+              .maybeSingle();
+            
+            return !!data;
+          },
+          { cache: true, ttl: 60000 } // Cache for 1 minute
+        );
+        
+        if (isMounted) {
+          setIsLiked(result);
+        }
+      } catch (error) {
+        console.error('Error checking like status:', error);
+      }
     };
+
+    // Debounce the check to prevent rapid fire requests
+    const timeoutId = setTimeout(checkLikeStatus, 100);
     
-    checkLikeStatus();
-  }, [session?.user?.id, ad.id]);
+    return () => {
+      isMounted = false;
+      clearTimeout(timeoutId);
+    };
+  }, [session?.user?.id, ad.id, optimizedApiCall]);
 
   // Calculate match percentage
   const matchPercentage = calculateMatchPercentage(userProfile || null, ad);
