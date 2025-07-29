@@ -6,6 +6,7 @@
 @import "./styles/cinematic-effects.css";
 @import "./styles/dating-enhanced.css";
 @import "./styles/mobile-optimizations.css";
+@import "./styles/mobile-performance.css";
 @tailwind base;
 @tailwind components;
 @tailwind utilities;

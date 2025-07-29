@@ -66,7 +66,7 @@ export const StoryReel = memo(() => {
 
   return (
     <>
-      <div className="relative z-10 flex items-center justify-start w-full gap-3 sm:gap-4 px-2 sm:px-4 py-4 sm:py-6 overflow-x-auto story-reel">
+      <div className="relative z-10 flex items-center justify-start w-full gap-3 sm:gap-4 px-2 sm:px-4 py-4 sm:py-6 overflow-x-auto story-reel safe-area-pl safe-area-pr">
         {/* User's Story or Add Story Button */}
         <StoryAvatar
           story={userStory}

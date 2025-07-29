@@ -23,7 +23,7 @@ export const MobileBottomNav = () => {
     <motion.div
       initial={{ y: 100 }}
       animate={{ y: 0 }}
-      className="mobile-bottom-nav touch-feedback z-50 md:hidden"
+      className="mobile-bottom-nav touch-feedback gpu-accelerate z-50 md:hidden"
       style={{
         background: 'rgba(0, 0, 0, 0.95)',
         backdropFilter: 'blur(20px)',
@@ -40,7 +40,7 @@ export const MobileBottomNav = () => {
               key={item.path}
               onClick={() => handleNavClick(item.path)}
               className={cn(
-                "touch-target flex flex-col items-center justify-center rounded-xl transition-all duration-200 relative",
+                "touch-target touch-feedback mobile-focus-visible flex flex-col items-center justify-center rounded-xl transition-all duration-200 relative",
                 "min-h-12 min-w-12 px-2 py-1",
                 isActive 
                   ? "bg-luxury-primary/20 text-luxury-primary" 

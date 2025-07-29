@@ -154,7 +154,7 @@ export const CreatePostDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="max-w-4xl max-h-[95vh] overflow-hidden bg-transparent border-0 p-0 shadow-none">
+      <DialogContent className="max-w-4xl max-h-[95vh] mobile:max-w-[95vw] mobile:max-h-[90vh] overflow-hidden bg-transparent border-0 p-0 shadow-none">
         <motion.div 
           className="relative futuristic-container"
           initial={{ opacity: 0, scale: 0.9, y: 50 }}
@@ -228,7 +228,7 @@ export const CreatePostDialog = ({
                     <h2 className="text-2xl font-bold bg-gradient-to-r from-cyan-400 via-purple-400 via-pink-400 to-yellow-400 bg-clip-text text-transparent">
                       Create New Post
                     </h2>
-                    <p className="text-sm text-white/60 font-light">Unleash your creative vision to the cosmos</p>
+                    <p className="text-sm text-luxury-muted font-light">Unleash your creative vision to the cosmos</p>
                   </div>
                 </div>
                 
@@ -236,7 +236,7 @@ export const CreatePostDialog = ({
                   variant="ghost"
                   size="sm"
                   onClick={handleClose}
-                  className="text-white/60 hover:text-white hover:bg-white/10 transition-all duration-300 hover:scale-110 rounded-full"
+                  className="text-luxury-muted hover:text-luxury-neutral hover:bg-luxury-accent/10 transition-all duration-300 hover:scale-110 rounded-full"
                 >
                   <X className="h-5 w-5" />
                 </Button>
@@ -244,7 +244,7 @@ export const CreatePostDialog = ({
 
               {/* Content with custom scrollbar */}
               <motion.div 
-                className="relative px-8 space-y-8 max-h-[65vh] overflow-y-auto custom-scrollbar"
+                className="relative px-8 mobile:px-4 space-y-8 mobile:space-y-6 max-h-[65vh] mobile:max-h-[60vh] overflow-y-auto custom-scrollbar"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, delay: 0.3 }}
@@ -253,17 +253,17 @@ export const CreatePostDialog = ({
                 <div className="space-y-4">
                   <div className="flex items-center gap-3">
                     <Sparkles className="w-5 h-5 text-cyan-400" />
-                    <label className="text-lg font-semibold text-white">What's illuminating your mind?</label>
+                    <label className="text-lg font-semibold text-luxury-neutral">What's illuminating your mind?</label>
                   </div>
                   <div className="relative">
                     <Textarea
                       placeholder="Share your cosmic thoughts and creative energy..."
                       value={content}
                       onChange={(e) => setContent(e.target.value)}
-                      className="min-h-[140px] bg-black/30 border border-white/20 text-white placeholder:text-white/40 resize-none focus:border-cyan-400/60 focus:ring-2 focus:ring-cyan-400/20 transition-all duration-300 rounded-xl backdrop-blur-sm"
+                      className="min-h-[140px] bg-luxury-darker/30 border border-luxury-primary/20 text-luxury-neutral placeholder:text-luxury-muted resize-none focus:border-luxury-primary/60 focus:ring-2 focus:ring-luxury-primary/20 transition-all duration-300 rounded-xl backdrop-blur-sm"
                       maxLength={characterLimit}
                     />
-                    <div className="absolute bottom-4 right-4 text-xs text-white/50 font-mono">
+                    <div className="absolute bottom-4 right-4 text-xs text-luxury-muted font-mono">
                       <span className={charactersUsed > characterLimit * 0.9 ? 'text-yellow-400' : charactersUsed > characterLimit * 0.95 ? 'text-red-400' : ''}>
                         {charactersUsed}
                       </span>

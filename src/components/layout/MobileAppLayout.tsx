@@ -52,7 +52,7 @@ export const MobileAppLayout = ({
   return (
     <div className={cn(
       "min-h-screen-mobile bg-luxury-gradient relative overflow-x-hidden",
-      "mobile-app-container",
+      "mobile-app-container gpu-accelerate touch-optimized app-container",
       className
     )}>
       {/* Mobile viewport meta optimization */}
@@ -74,8 +74,8 @@ export const MobileAppLayout = ({
 
       {/* Main content area with proper spacing */}
       <main className={cn(
-        "relative z-10 min-h-screen-mobile",
-        "safe-area-pt safe-area-pl safe-area-pr",
+        "relative z-10 min-h-screen-mobile smooth-mobile-scroll",
+        "safe-area-pt safe-area-pl safe-area-pr critical-render",
         !shouldHideBottomNav && "pb-20 safe-area-pb"
       )}>
         {children}
