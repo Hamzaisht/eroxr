@@ -1,8 +1,9 @@
-import { Button } from "@/components/ui/button";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Grid, List, Zap, Crown, Search, Filter, Circle } from "lucide-react";
-import { motion } from "framer-motion";
 import { useState } from "react";
+import { motion } from "framer-motion";
+import { Search, Filter, Plus, Grid3X3, List, X } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface EnhancedDatingHeaderProps {
   activeTab: string;
@@ -24,30 +25,31 @@ export function EnhancedDatingHeader({
   onSearch
 }: EnhancedDatingHeaderProps) {
   const [searchVisible, setSearchVisible] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const isMobile = useIsMobile();
 
-  const tabs = [
-    { value: "trending", label: "Trending", icon: Zap },
-    { value: "popular", label: "Popular", icon: Crown },
-    { value: "quick-match", label: "Quick Match", icon: Zap },
-    { value: "favorites", label: "Favorites", icon: Crown },
-    { value: "online", label: "Online", icon: Circle },
-    { value: "nearby", label: "Nearby", icon: Search },
-  ];
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    onSearch?.(searchQuery);
+  };
 
   return (
     <div className="relative">
       {/* Neural Network Background */}
       <div className="absolute inset-0 neural-bg opacity-20 pointer-events-none" />
       
-      {/* Glass Container */}
+      {/* Glass Container - Mobile Optimized */}
       <motion.div 
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="glass-panel rounded-2xl p-6 mb-8 relative overflow-hidden"
+        className={`
+          glass-panel rounded-2xl relative overflow-hidden
+          ${isMobile ? "p-4 mb-4" : "p-6 mb-8"}
+        `}
       >
-        {/* Floating Particles */}
+        {/* Floating Particles - Reduced for mobile */}
         <div className="absolute inset-0 pointer-events-none">
-          {[...Array(6)].map((_, i) => (
+          {[...Array(isMobile ? 3 : 6)].map((_, i) => (
             <motion.div
               key={i}
               className="absolute w-2 h-2 bg-gradient-to-r from-cyan-400 to-purple-600 rounded-full"
@@ -69,165 +71,190 @@ export function EnhancedDatingHeader({
           ))}
         </div>
 
-        <div className="flex flex-col space-y-6 relative z-10">
-          {/* Header Row */}
+        <div className={`flex flex-col relative z-10 ${
+          isMobile ? "space-y-3" : "space-y-6"
+        }`}>
+          {/* Header Row - Mobile Optimized */}
           <div className="flex items-center justify-between">
             <motion.div
               initial={{ scale: 0.8 }}
               animate={{ scale: 1 }}
               transition={{ delay: 0.2 }}
             >
-              <h1 className="text-4xl font-bold holographic-text">
+              <h1 className={`font-bold holographic-text ${
+                isMobile 
+                  ? "text-2xl leading-tight" 
+                  : "text-4xl"
+              }`}>
                 ⚡ Eros Nexus
               </h1>
-              <p className="text-sm text-white/60 mt-1">
+              <p className={`text-white/60 mt-1 ${
+                isMobile 
+                  ? "text-xs" 
+                  : "text-sm"
+              }`}>
                 Where gods and mortals meet
               </p>
             </motion.div>
             
-            <div className="flex items-center gap-3">
-              {/* Search Toggle */}
+            <div className={`flex items-center ${
+              isMobile ? "gap-2" : "gap-3"
+            }`}>
+              {/* Search Toggle - Mobile Optimized */}
               <motion.div
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.4 }}
               >
                 <Button
-                  variant="outline"
-                  size="icon"
+                  variant="ghost"
+                  size={isMobile ? "sm" : "default"}
                   onClick={() => setSearchVisible(!searchVisible)}
-                  className="glass-panel border-cyan-400/30 hover:border-cyan-400/60 transition-all duration-300"
+                  className="touch-target text-white/70 hover:text-white hover:bg-white/10 transition-all duration-200"
+                  aria-label="Toggle search"
                 >
-                  <Search className="h-4 w-4" />
+                  {searchVisible ? (
+                    <X className={isMobile ? "h-4 w-4" : "h-5 w-5"} />
+                  ) : (
+                    <Search className={isMobile ? "h-4 w-4" : "h-5 w-5"} />
+                  )}
                 </Button>
               </motion.div>
 
-              {/* Filter Toggle */}
+              {/* View Mode Toggle - Hidden on Mobile, Show in Tablet+ */}
+              {!isMobile && (
+                <motion.div
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.5 }}
+                  className="flex items-center bg-white/5 rounded-lg p-1"
+                >
+                  <Button
+                    variant={viewMode === 'grid' ? 'secondary' : 'ghost'}
+                    size="sm"
+                    onClick={() => onViewModeChange('grid')}
+                    className="text-white/70 hover:text-white px-3"
+                    aria-label="Grid view"
+                  >
+                    <Grid3X3 className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant={viewMode === 'list' ? 'secondary' : 'ghost'}
+                    size="sm"
+                    onClick={() => onViewModeChange('list')}
+                    className="text-white/70 hover:text-white px-3"
+                    aria-label="List view"
+                  >
+                    <List className="h-4 w-4" />
+                  </Button>
+                </motion.div>
+              )}
+              
+              {/* Filter Toggle - Mobile Optimized */}
               <motion.div
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.6 }}
               >
                 <Button
                   variant="outline"
-                  size="icon"
+                  size={isMobile ? "sm" : "default"}
                   onClick={onToggleFilters}
-                  className="glass-panel border-purple-400/30 hover:border-purple-400/60 transition-all duration-300"
+                  className="touch-target border-white/20 text-white/80 hover:text-white hover:bg-white/10 hover:border-white/40 transition-all duration-200"
+                  aria-label="Toggle filters"
                 >
-                  <Filter className="h-4 w-4" />
+                  <Filter className={`${isMobile ? "h-4 w-4" : "h-5 w-5"} ${isMobile ? "mr-1" : "mr-2"}`} />
+                  {isMobile ? "Filters" : "Divine Filters"}
                 </Button>
               </motion.div>
 
-              {/* Create Ad Button */}
+              {/* Create Ad Button - Mobile Optimized */}
               <motion.div
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="energy-pulse"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.7 }}
               >
-                <Button 
+                <Button
                   onClick={onCreateAd}
-                  className="futuristic-container bg-gradient-to-r from-cyan-500 to-purple-600 hover:from-cyan-400 hover:to-purple-500 text-white font-semibold px-6 py-2 rounded-xl transition-all duration-300 shadow-lg"
+                  size={isMobile ? "sm" : "default"}
+                  className="touch-target bg-gradient-to-r from-cyan-500 to-purple-600 hover:from-cyan-400 hover:to-purple-500 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300 action-button-glow"
+                  aria-label="Create new ad"
                 >
-                  <Plus className="h-4 w-4 mr-2" />
-                  Ascend to Olympus
+                  <Plus className={`${isMobile ? "h-4 w-4" : "h-5 w-5"} ${isMobile ? "mr-1" : "mr-2"}`} />
+                  {isMobile ? "Create" : "Create Ad"}
                 </Button>
               </motion.div>
             </div>
           </div>
 
-          {/* Search Bar */}
+          {/* Enhanced Search Bar - Mobile Optimized */}
+          {searchVisible && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.3 }}
+              className="overflow-hidden"
+            >
+              <form onSubmit={handleSearch} className="w-full">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-white/50" />
+                  <Input
+                    type="text"
+                    placeholder="Search divine connections..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className={`
+                      w-full pl-10 pr-4 
+                      ${isMobile ? "py-3 text-base" : "py-4"} 
+                      bg-white/10 border-white/20 text-white placeholder-white/50 
+                      focus:border-cyan-400 focus:ring-cyan-400/20 rounded-xl 
+                      transition-all duration-200 backdrop-blur-sm
+                      mobile-input
+                    `}
+                    autoComplete="off"
+                  />
+                </div>
+              </form>
+            </motion.div>
+          )}
+
+          {/* Navigation Tabs - Mobile Optimized */}
           <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ 
-              height: searchVisible ? "auto" : 0, 
-              opacity: searchVisible ? 1 : 0 
-            }}
-            className="overflow-hidden"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.8 }}
+            className="flex items-center justify-between"
           >
-            <div className="glass-panel p-4 rounded-xl">
-              <input
-                type="text"
-                placeholder="Search Divine Profiles - Browse all dating ads here..."
-                className="w-full bg-transparent border-none outline-none text-white placeholder-white/50"
-                onChange={(e) => {
-                  onSearch?.(e.target.value);
-                }}
-              />
+            <div className={`flex items-center ${
+              isMobile 
+                ? "space-x-1 overflow-x-auto hide-scrollbar" 
+                : "space-x-4"
+            } w-full`}>
+              {[
+                { id: 'browse', label: isMobile ? 'Browse' : 'Browse Profiles', icon: '👥' },
+                { id: 'online', label: 'Online', icon: '🟢' },
+                { id: 'nearby', label: 'Nearby', icon: '📍' },
+                { id: 'quick-match', label: isMobile ? 'Match' : 'Quick Match', icon: '⚡' },
+              ].map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => onTabChange(tab.id)}
+                  className={`
+                    ${isMobile ? "touch-target px-3 py-2 text-sm whitespace-nowrap flex-shrink-0" : "px-6 py-3"} 
+                    rounded-full transition-all duration-300 font-medium 
+                    ${activeTab === tab.id
+                      ? 'bg-white/20 text-white shadow-lg backdrop-blur-sm border border-white/30'
+                      : 'text-white/70 hover:text-white hover:bg-white/10'
+                    }
+                  `}
+                >
+                  <span className="mr-2">{tab.icon}</span>
+                  {tab.label}
+                </button>
+              ))}
             </div>
           </motion.div>
-
-          {/* Tabs and View Controls */}
-          <div className="flex items-center justify-between">
-            <motion.div
-              initial={{ x: -20, opacity: 0 }}
-              animate={{ x: 0, opacity: 1 }}
-              transition={{ delay: 0.3 }}
-            >
-              <Tabs value={activeTab} onValueChange={onTabChange} className="w-auto">
-                <TabsList className="glass-panel h-12 p-1 rounded-xl">
-                  {tabs.map((tab, index) => (
-                    <motion.div
-                      key={tab.value}
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.1 * index }}
-                    >
-                      <TabsTrigger 
-                        value={tab.value}
-                        className="relative px-4 py-2 rounded-lg transition-all duration-300 data-[state=active]:bg-gradient-to-r data-[state=active]:from-cyan-500/20 data-[state=active]:to-purple-600/20 data-[state=active]:text-white hover:bg-white/10"
-                      >
-                        <tab.icon className="h-4 w-4 mr-2" />
-                        {tab.label}
-                        {activeTab === tab.value && (
-                          <motion.div
-                            layoutId="activeTab"
-                            className="absolute inset-0 bg-gradient-to-r from-cyan-500/30 to-purple-600/30 rounded-lg -z-10"
-                            transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
-                          />
-                        )}
-                      </TabsTrigger>
-                    </motion.div>
-                  ))}
-                </TabsList>
-              </Tabs>
-            </motion.div>
-
-            {/* View Mode Controls */}
-            <motion.div
-              initial={{ x: 20, opacity: 0 }}
-              animate={{ x: 0, opacity: 1 }}
-              transition={{ delay: 0.4 }}
-              className="flex items-center gap-2"
-            >
-              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                <Button
-                  variant={viewMode === 'grid' ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => onViewModeChange('grid')}
-                  className={`glass-panel transition-all duration-300 ${
-                    viewMode === 'grid' 
-                      ? 'bg-gradient-to-r from-cyan-500/30 to-purple-600/30 border-cyan-400/50' 
-                      : 'border-white/20 hover:border-cyan-400/40'
-                  }`}
-                >
-                  <Grid className="h-4 w-4" />
-                </Button>
-              </motion.div>
-              
-              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                <Button
-                  variant={viewMode === 'list' ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => onViewModeChange('list')}
-                  className={`glass-panel transition-all duration-300 ${
-                    viewMode === 'list' 
-                      ? 'bg-gradient-to-r from-cyan-500/30 to-purple-600/30 border-cyan-400/50' 
-                      : 'border-white/20 hover:border-cyan-400/40'
-                  }`}
-                >
-                  <List className="h-4 w-4" />
-                </Button>
-              </motion.div>
-            </motion.div>
-          </div>
         </div>
 
         {/* Quantum Border Effect */}
