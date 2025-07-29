@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Phone, Video, Info, MoreVertical, Paperclip, Mic, Send, Camera, Calendar, Edit3, Trash2, Heart, HeartOff } from 'lucide-react';
+import { Phone, Video, Info, MoreVertical, Paperclip, Mic, Send, Camera, Calendar, Edit3, Trash2, Heart, HeartOff, Check, CheckCheck } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
@@ -448,9 +448,14 @@ export const ChatArea = ({ conversationId, onShowDetails }: ChatAreaProps) => {
                     <div className={`flex items-center gap-2 mt-2 ${isOwn ? 'justify-end' : 'justify-start'}`}>
                       <span className="text-xs text-white/60">{formatTime(message.created_at)}</span>
                       {isOwn && (
-                        <div className="flex gap-1">
-                          <div className={`w-1 h-1 rounded-full ${message.delivery_status === 'seen' ? 'bg-blue-400' : message.delivery_status === 'delivered' ? 'bg-white/60' : 'bg-white/40'}`} />
-                          <div className={`w-1 h-1 rounded-full ${message.delivery_status === 'seen' ? 'bg-blue-400' : 'bg-white/40'}`} />
+                        <div className="flex items-center ml-2">
+                          {message.delivery_status === 'seen' ? (
+                            <CheckCheck className="h-3 w-3 text-blue-400" />
+                          ) : message.delivery_status === 'delivered' ? (
+                            <CheckCheck className="h-3 w-3 text-white/40" />
+                          ) : (
+                            <Check className="h-3 w-3 text-white/40" />
+                          )}
                         </div>
                       )}
                     </div>
