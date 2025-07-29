@@ -3,7 +3,7 @@ import { AlertTriangle, CheckCircle, Activity, Wifi, WifiOff } from 'lucide-reac
 import { usePlatformHealth } from '@/hooks/usePlatformHealth';
 import { cn } from '@/lib/utils';
 
-export const PlatformHealthIndicator = () => {
+const PlatformHealthIndicator = () => {
   const { health, isChecking, isHealthy, isDegraded, isDown } = usePlatformHealth();
 
   const getStatusIcon = () => {
@@ -65,3 +65,5 @@ export const PlatformHealthIndicator = () => {
     </AnimatePresence>
   );
 };
+
+export { PlatformHealthIndicator };
