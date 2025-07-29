@@ -96,20 +96,23 @@ export const usePlatformHealth = () => {
   const checkApiHealth = async (): Promise<{ status: 'healthy' | 'degraded' | 'down', error?: string }> => {
     try {
       const start = performance.now();
+      // Use a simple function call that doesn't require parameters
       const { data, error } = await supabase
-        .rpc('is_super_admin', { user_id: 'test' });
+        .rpc('get_current_user_role');
       
       const duration = performance.now() - start;
       
-      // RPC should return false for test user, error is expected for invalid user
+      if (error) {
+        return { status: 'down', error: error.message };
+      }
+      
       if (duration > 2000) {
         return { status: 'degraded', error: 'Slow RPC response' };
       }
       
       return { status: 'healthy' };
     } catch (error) {
-      // Some errors are expected for test calls
-      return { status: 'healthy' };
+      return { status: 'down', error: error instanceof Error ? error.message : 'API call failed' };
     }
   };
 

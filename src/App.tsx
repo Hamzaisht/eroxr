@@ -13,6 +13,7 @@ import { AdminSessionProvider } from "@/contexts/AdminSessionContext";
 import { ScrollToTop } from "@/components/ScrollToTop";
 import { AppViewport } from "@/components/mobile/AppViewport";
 import { PlatformHealthIndicator } from "@/components/platform/PlatformHealthIndicator";
+import { MobileOptimizations } from "@/components/performance/MobileOptimizations";
 import Landing from "@/pages/Landing";
 import Home from "@/pages/Home";
 import Login from "@/pages/Login";
@@ -52,8 +53,9 @@ function App() {
               <ToastProvider>
               <TooltipProvider>
             <Router>
-              <AppViewport />
-              <PlatformHealthIndicator />
+              <MobileOptimizations>
+                <AppViewport />
+                <PlatformHealthIndicator />
               <ScrollToTop />
               <Routes>
                 <Route path="/" element={<Landing />} />
@@ -86,6 +88,7 @@ function App() {
                 <Route path="/godmode/*" element={<Godmode />} />
               </Routes>
               <Toaster />
+              </MobileOptimizations>
             </Router>
             <Sonner />
             </TooltipProvider>
