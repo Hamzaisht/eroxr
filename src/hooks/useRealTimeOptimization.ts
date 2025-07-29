@@ -73,7 +73,7 @@ export const useRealTimeOptimization = (options: RealtimeOptimizationOptions = {
     }, {} as Record<string, any[]>);
 
     // Call callback with grouped messages
-    Object.entries(groupedMessages).forEach(([type, msgs]) => {
+    Object.entries(groupedMessages).forEach(([type, msgs]: [string, any[]]) => {
       callback({
         eventType: type,
         messages: msgs,
@@ -108,14 +108,14 @@ export const useRealTimeOptimization = (options: RealtimeOptimizationOptions = {
           },
         })
         .on(
-          'postgres_changes',
+          'postgres_changes' as any,
           {
             event: config.event || '*',
             schema: 'public',
             table: config.table,
             ...(config.filter && { filter: config.filter }),
           },
-          (payload) => {
+          (payload: any) => {
             console.log(`📨 Realtime update for ${channelKey}:`, payload);
             
             // Add to buffer for batch processing
