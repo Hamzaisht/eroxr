@@ -3,6 +3,7 @@ import { DirectMessage } from "@/integrations/supabase/types/message";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
+import { Check, CheckCheck } from "lucide-react";
 
 interface MessageBubbleProps {
   message: DirectMessage;
@@ -60,8 +61,28 @@ export const MessageBubble = ({
           </div>
         )}
         
-        <div className="text-xs opacity-70 mt-1">
-          {formatDistanceToNow(new Date(message.created_at), { addSuffix: true })}
+        <div className="text-xs opacity-70 mt-1 flex items-center justify-between">
+          <span>{formatDistanceToNow(new Date(message.created_at), { addSuffix: true })}</span>
+          {isOwnMessage && message.delivery_status && (
+            <div className="flex items-center ml-2">
+              {message.delivery_status === 'seen' ? (
+                <CheckCheck className={cn(
+                  "h-3 w-3",
+                  "text-blue-400"
+                )} />
+              ) : message.delivery_status === 'delivered' ? (
+                <CheckCheck className={cn(
+                  "h-3 w-3", 
+                  "text-white/40"
+                )} />
+              ) : (
+                <Check className={cn(
+                  "h-3 w-3",
+                  "text-white/40"
+                )} />
+              )}
+            </div>
+          )}
         </div>
       </div>
     </div>
