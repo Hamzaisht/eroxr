@@ -2,9 +2,11 @@ import { useState, useEffect, useRef } from "react";
 import { DatingAd } from "../types/dating";
 import { EnhancedAdCard } from "./components/grid-item/EnhancedAdCard";
 import { FullscreenAdViewer } from "../video-profile/FullscreenAdViewer";
-import { useMediaQuery } from "@/hooks/useMediaQuery";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { SkeletonCards } from "./SkeletonCards";
 import { useInfiniteScroll } from "@/hooks/useInfiniteScroll";
+import { useSwipeGestures } from "@/hooks/useSwipeGestures";
+import { useOptimizedScroll } from "@/hooks/useOptimizedScroll";
 import { supabase } from "@/integrations/supabase/client";
 
 interface GridViewModeProps {
@@ -22,8 +24,18 @@ export const GridViewMode = ({
 }: GridViewModeProps) => {
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [selectedAd, setSelectedAd] = useState<DatingAd | null>(null);
-  const isMobile = useMediaQuery("(max-width: 768px)");
+  const isMobile = useIsMobile();
   const gridRef = useRef<HTMLDivElement>(null);
+  
+  // Use optimized scroll instead of basic scroll handling
+  const { scrollToTop } = useOptimizedScroll({
+    threshold: 100,
+    enablePullToRefresh: isMobile,
+    onRefresh: () => {
+      // Trigger refresh logic
+      console.log('Refreshing grid...');
+    }
+  });
   
   const {
     data: visibleAds,
@@ -73,46 +85,18 @@ export const GridViewMode = ({
     }
   };
   
-  useEffect(() => {
-    if (!isMobile || !gridRef.current) return;
-    
-    let startY = 0;
-    let isRefreshing = false;
-    
-    const handleTouchStart = (e: TouchEvent) => {
-      startY = e.touches[0].clientY;
-    };
-    
-    const handleTouchMove = (e: TouchEvent) => {
-      const currentY = e.touches[0].clientY;
-      const diff = currentY - startY;
-      
-      if (diff > 70 && window.scrollY === 0 && !isRefreshing) {
-        isRefreshing = true;
-        
-        if (gridRef.current) {
-          gridRef.current.style.transform = `translateY(60px)`;
-          gridRef.current.style.transition = 'transform 0.3s ease';
-        }
-        
-        setTimeout(() => {
-          if (gridRef.current) {
-            gridRef.current.style.transform = '';
-          }
-          
-          isRefreshing = false;
-        }, 1000);
+  // Use swipe gestures for better mobile experience
+  const { ref: swipeRef } = useSwipeGestures({
+    onSwipeDown: () => {
+      if (window.scrollY === 0) {
+        // Pull to refresh
+        scrollToTop();
+        console.log('Refreshing via swipe...');
       }
-    };
-    
-    document.addEventListener('touchstart', handleTouchStart);
-    document.addEventListener('touchmove', handleTouchMove);
-    
-    return () => {
-      document.removeEventListener('touchstart', handleTouchStart);
-      document.removeEventListener('touchmove', handleTouchMove);
-    };
-  }, [isMobile]);
+    },
+    enabled: isMobile,
+    threshold: 50
+  });
   
   if (isLoading) {
     return <SkeletonCards count={6} type="grid" />;
@@ -129,8 +113,13 @@ export const GridViewMode = ({
   return (
     <>
       <div 
-        ref={gridRef}
-        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"
+        ref={(el) => {
+          gridRef.current = el;
+          if (swipeRef) {
+            swipeRef.current = el;
+          }
+        }}
+        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 touch-optimized gpu-accelerate"
         style={{ minHeight: '200px' }}
       >
         {visibleAds.map((ad, index) => {
