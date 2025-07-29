@@ -41,6 +41,16 @@ export const MobileOptimizations: React.FC<MobileOptimizationsProps> = ({ childr
     detectDeviceCapabilities();
   }, [isMobile]);
 
+  // Create scroll handler using useCallback at component level
+  const handleScroll = useCallback(() => {
+    if (isLowEndDevice) {
+      // Throttle scroll events on low-end devices
+      requestAnimationFrame(() => {
+        // Scroll handling
+      });
+    }
+  }, [isLowEndDevice]);
+
   // Optimize touch handling for mobile
   useEffect(() => {
     if (!isMobile) return;
@@ -54,16 +64,6 @@ export const MobileOptimizations: React.FC<MobileOptimizationsProps> = ({ childr
       document.addEventListener('touchend', () => {}, options);
     };
 
-    // Reduce viewport meta refresh rate on scroll
-    const handleScroll = useCallback(() => {
-      if (isLowEndDevice) {
-        // Throttle scroll events on low-end devices
-        requestAnimationFrame(() => {
-          // Scroll handling
-        });
-      }
-    }, [isLowEndDevice]);
-
     optimizeTouchHandling();
     
     if (isLowEndDevice) {
@@ -73,7 +73,7 @@ export const MobileOptimizations: React.FC<MobileOptimizationsProps> = ({ childr
         window.removeEventListener('scroll', handleScroll);
       };
     }
-  }, [isMobile, isLowEndDevice]);
+  }, [isMobile, isLowEndDevice, handleScroll]);
 
   // Apply mobile-specific CSS optimizations
   useEffect(() => {
