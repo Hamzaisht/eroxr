@@ -120,7 +120,7 @@ export const EarningsOverview = ({ data, isLoading }: EarningsOverviewProps) => 
     >
       {/* Enhanced Header with Gradient and Animations */}
       <motion.div 
-        className="flex items-center justify-between"
+        className="flex flex-col sm:flex-row sm:items-center justify-between gap-4"
         initial={{ opacity: 0, x: -20 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ delay: 0.2 }}
@@ -129,7 +129,7 @@ export const EarningsOverview = ({ data, isLoading }: EarningsOverviewProps) => 
           <div className="absolute -inset-2 bg-gradient-to-r from-green-500/20 via-transparent to-green-500/20 blur-lg opacity-50" />
           <div className="relative">
             <motion.h1 
-              className="text-3xl font-bold bg-gradient-to-r from-white via-green-400 to-white bg-clip-text text-transparent mb-2"
+              className="text-xl sm:text-2xl md:text-3xl font-bold bg-gradient-to-r from-white via-green-400 to-white bg-clip-text text-transparent mb-2"
               animate={{ 
                 backgroundPosition: ["0%", "100%", "0%"]
               }}
@@ -141,17 +141,17 @@ export const EarningsOverview = ({ data, isLoading }: EarningsOverviewProps) => 
             >
               Good morning! 💰
             </motion.h1>
-            <p className="text-muted-foreground">Here's your earnings summary</p>
+            <p className="text-muted-foreground text-sm sm:text-base">Here's your earnings summary</p>
           </div>
         </div>
         <motion.div 
-          className="flex items-center gap-4"
+          className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4"
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.4 }}
         >
           <Select value={timeFilter} onValueChange={setTimeFilter}>
-            <SelectTrigger className="w-40 bg-background/80 backdrop-blur-sm border-border/50 hover:border-primary/50 transition-all duration-300">
+            <SelectTrigger className="w-full sm:w-40 bg-background/80 backdrop-blur-sm border-border/50 hover:border-primary/50 transition-all duration-300">
               <SelectValue />
             </SelectTrigger>
             <SelectContent className="bg-background/95 backdrop-blur-sm border-border/50">
@@ -165,8 +165,9 @@ export const EarningsOverview = ({ data, isLoading }: EarningsOverviewProps) => 
           <motion.div
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
+            className="w-full sm:w-auto"
           >
-            <Button className="bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 shadow-lg hover:shadow-primary/25 transition-all duration-300">
+            <Button className="w-full sm:w-auto bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 shadow-lg hover:shadow-primary/25 transition-all duration-300">
               <Download className="h-4 w-4 mr-2" />
               Export
             </Button>
@@ -176,7 +177,7 @@ export const EarningsOverview = ({ data, isLoading }: EarningsOverviewProps) => 
 
       {/* Enhanced KPI Cards with Hover Effects */}
       <motion.div 
-        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"
+        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.6, staggerChildren: 0.1 }}
@@ -205,13 +206,13 @@ export const EarningsOverview = ({ data, isLoading }: EarningsOverviewProps) => 
                   transition={{ duration: 0.3 }}
                 />
                 
-                <CardContent className="relative p-6">
+                <CardContent className="relative p-4 md:p-6">
                   <div className="flex items-center justify-between mb-4">
                     <motion.div
                       whileHover={{ scale: 1.1, rotate: 5 }}
                       transition={{ type: "spring", stiffness: 400 }}
                     >
-                      <Icon className={`h-8 w-8 ${kpi.color} group-hover:drop-shadow-lg transition-all duration-300`} />
+                      <Icon className={`h-6 w-6 md:h-8 md:w-8 ${kpi.color} group-hover:drop-shadow-lg transition-all duration-300`} />
                     </motion.div>
                     <motion.div
                       whileHover={{ scale: 1.05 }}
@@ -225,12 +226,12 @@ export const EarningsOverview = ({ data, isLoading }: EarningsOverviewProps) => 
                   </div>
                   <div>
                     <motion.p 
-                      className="text-2xl font-bold text-foreground mb-1 group-hover:text-primary transition-colors duration-300"
+                      className="text-xl md:text-2xl font-bold text-foreground mb-1 group-hover:text-primary transition-colors duration-300"
                       whileHover={{ scale: 1.05 }}
                     >
                       {kpi.value}
                     </motion.p>
-                    <p className="text-sm text-muted-foreground group-hover:text-muted-foreground/80 transition-colors duration-300">{kpi.title}</p>
+                    <p className="text-xs md:text-sm text-muted-foreground group-hover:text-muted-foreground/80 transition-colors duration-300">{kpi.title}</p>
                   </div>
                 </CardContent>
               </Card>
@@ -241,7 +242,7 @@ export const EarningsOverview = ({ data, isLoading }: EarningsOverviewProps) => 
 
       {/* Enhanced Charts Row with Hover Effects */}
       <motion.div 
-        className="grid grid-cols-1 lg:grid-cols-3 gap-8"
+        className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.8 }}
@@ -271,7 +272,7 @@ export const EarningsOverview = ({ data, isLoading }: EarningsOverviewProps) => 
               </CardTitle>
             </CardHeader>
             <CardContent className="relative">
-              <ResponsiveContainer width="100%" height={300}>
+              <ResponsiveContainer width="100%" height={250}>
                 <AreaChart data={earningsData}>
                   <defs>
                   <linearGradient id="colorTotal" x1="0" y1="0" x2="0" y2="1">
@@ -329,7 +330,7 @@ export const EarningsOverview = ({ data, isLoading }: EarningsOverviewProps) => 
               </CardTitle>
             </CardHeader>
             <CardContent className="relative">
-              <ResponsiveContainer width="100%" height={300}>
+              <ResponsiveContainer width="100%" height={250}>
                 <RechartsPieChart>
                   <Pie
                   data={revenueSourcesData}
