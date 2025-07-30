@@ -1842,6 +1842,36 @@ export type Database = {
         }
         Relationships: []
       }
+      pdf_exports: {
+        Row: {
+          created_at: string
+          export_data: Json | null
+          export_type: string
+          exported_at: string
+          file_size: number | null
+          id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          export_data?: Json | null
+          export_type?: string
+          exported_at?: string
+          file_size?: number | null
+          id?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          export_data?: Json | null
+          export_type?: string
+          exported_at?: string
+          file_size?: number | null
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       platform_features: {
         Row: {
           created_at: string | null
@@ -3629,6 +3659,10 @@ export type Database = {
         Args: { p_table_name: string; p_column_name: string }
         Returns: boolean
       }
+      check_monthly_export_limit: {
+        Args: { p_user_id: string }
+        Returns: boolean
+      }
       check_user_has_role: {
         Args: { check_user_id: string; required_role: string }
         Returns: boolean
@@ -3743,6 +3777,10 @@ export type Database = {
           retention_data: Json
           geographic_breakdown: Json
         }[]
+      }
+      get_monthly_export_count: {
+        Args: { p_user_id: string }
+        Returns: number
       }
       get_most_engaged_fans: {
         Args: { p_creator_id: string; p_limit?: number }

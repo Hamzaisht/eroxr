@@ -20,6 +20,8 @@ import {
 } from "lucide-react";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart as RechartsPieChart, Pie, Cell, BarChart, Bar } from "recharts";
 import { useState } from "react";
+import { ExportButton } from "@/components/eroboard/ExportButton";
+import { EroboardPdfData } from "@/utils/eroboardPdfExporter";
 
 interface EarningsOverviewProps {
   data: any;
@@ -184,10 +186,21 @@ export const EarningsOverview = ({ data, isLoading }: EarningsOverviewProps) => 
             whileTap={{ scale: 0.95 }}
             className="w-full sm:w-auto"
           >
-            <Button className="w-full sm:w-auto bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 shadow-lg hover:shadow-primary/25 transition-all duration-300">
-              <Download className="h-4 w-4 mr-2" />
-              Export
-            </Button>
+            <ExportButton 
+              data={{
+                stats: data.stats,
+                earningsData: data.earningsData || [],
+                revenueBreakdown: data.revenueBreakdown || { subscriptions: 0, tips: 0, liveStreamPurchases: 0, messages: 0 },
+                contentPerformanceData: data.contentPerformanceData || [],
+                geographicData: data.geographicData || [],
+                engagedFansData: data.engagedFansData || [],
+                conversionFunnelData: data.conversionFunnelData || [],
+                growthAnalyticsData: data.growthAnalyticsData || {},
+                streamingAnalyticsData: data.streamingAnalyticsData || {},
+                contentAnalyticsData: data.contentAnalyticsData || {}
+              } as EroboardPdfData}
+              className="w-full sm:w-auto bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 shadow-lg hover:shadow-primary/25 transition-all duration-300"
+            />
           </motion.div>
         </motion.div>
       </motion.div>
