@@ -130,7 +130,7 @@ const Eroboard = () => {
             <div className="relative">
               <div className="absolute -inset-2 md:-inset-4 bg-gradient-to-r from-primary/20 via-transparent to-primary/20 blur-xl opacity-50" />
               <div className="relative">
-                <h1 className="text-2xl md:text-4xl font-bold bg-gradient-to-r from-foreground via-primary to-foreground bg-clip-text text-transparent mb-2">
+                <h1 className="text-2xl md:text-4xl font-bold text-white mb-2">
                   EroBoard Analytics
                 </h1>
                 <p className="text-muted-foreground flex items-center gap-2 text-sm md:text-base">
