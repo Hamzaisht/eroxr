@@ -122,16 +122,16 @@ export const GrowthAnalytics = ({ data, isLoading }: GrowthAnalyticsProps) => {
   const COLORS = ['#8b5cf6', '#06b6d4', '#10b981', '#f59e0b', '#ef4444'];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 md:space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row gap-4 justify-between items-start">
+      <div className="flex flex-col sm:flex-row gap-3 md:gap-4 justify-between items-start">
         <div>
-          <h2 className="text-2xl font-bold text-white mb-2">Growth Analytics</h2>
-          <p className="text-gray-400">Track your growth metrics and retention patterns</p>
+          <h2 className="text-xl sm:text-2xl font-bold text-white mb-2">Growth Analytics</h2>
+          <p className="text-gray-400 text-sm sm:text-base">Track your growth metrics and retention patterns</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
           <Select value={timeFilter} onValueChange={setTimeFilter}>
-            <SelectTrigger className="w-32 bg-luxury-darker border-luxury-neutral/20">
+            <SelectTrigger className="w-full sm:w-32 bg-luxury-darker border-luxury-neutral/20">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -140,7 +140,7 @@ export const GrowthAnalytics = ({ data, isLoading }: GrowthAnalyticsProps) => {
               <SelectItem value="90d">Last 90 days</SelectItem>
             </SelectContent>
           </Select>
-          <Button variant="outline" size="sm" className="border-luxury-neutral/20">
+          <Button variant="outline" size="sm" className="border-luxury-neutral/20 w-full sm:w-auto">
             <Download className="h-4 w-4 mr-2" />
             Export
           </Button>
@@ -148,23 +148,23 @@ export const GrowthAnalytics = ({ data, isLoading }: GrowthAnalyticsProps) => {
       </div>
 
       {/* Growth Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
         {growthStats.map((stat, index) => {
           const Icon = stat.icon;
           const TrendIcon = stat.trend === 'up' ? TrendingUp : TrendingDown;
           return (
             <Card key={index} className="bg-luxury-darker border-luxury-neutral/10 hover:border-luxury-primary/30 transition-all">
-              <CardContent className="p-6">
+              <CardContent className="p-4 md:p-6">
                 <div className="flex items-center justify-between mb-4">
-                  <Icon className={`h-8 w-8 ${stat.color}`} />
-                  <Badge className={`${stat.trend === 'up' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-red-500/20 text-red-400'} border-0 flex items-center gap-1`}>
+                  <Icon className={`h-6 w-6 md:h-8 md:w-8 ${stat.color}`} />
+                  <Badge className={`${stat.trend === 'up' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-red-500/20 text-red-400'} border-0 flex items-center gap-1 text-xs`}>
                     <TrendIcon className="h-3 w-3" />
                     {stat.change}
                   </Badge>
                 </div>
                 <div>
-                  <p className="text-2xl font-bold text-white mb-1">{stat.value}</p>
-                  <p className="text-sm text-gray-400">{stat.title}</p>
+                  <p className="text-lg md:text-2xl font-bold text-white mb-1">{stat.value}</p>
+                  <p className="text-xs md:text-sm text-gray-400">{stat.title}</p>
                 </div>
               </CardContent>
             </Card>
@@ -174,14 +174,14 @@ export const GrowthAnalytics = ({ data, isLoading }: GrowthAnalyticsProps) => {
 
       {/* Daily Growth Chart */}
       <Card className="bg-luxury-darker border-luxury-neutral/10">
-        <CardHeader>
-          <CardTitle className="text-white flex items-center gap-2">
-            <BarChart3 className="h-5 w-5 text-luxury-primary" />
+        <CardHeader className="pb-4">
+          <CardTitle className="text-white flex items-center gap-2 text-base md:text-lg">
+            <BarChart3 className="h-4 w-4 md:h-5 md:w-5 text-luxury-primary" />
             Daily Growth Trends
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="h-80">
+          <div className="h-64 md:h-80">
             <ResponsiveContainer width="100%" height="100%">
               <ComposedChart data={dailyGrowthData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
@@ -217,31 +217,31 @@ export const GrowthAnalytics = ({ data, isLoading }: GrowthAnalyticsProps) => {
         </CardContent>
       </Card>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
         {/* Retention Analysis */}
         <Card className="bg-luxury-darker border-luxury-neutral/10">
-          <CardHeader>
-            <CardTitle className="text-white flex items-center gap-2">
-              <Target className="h-5 w-5 text-luxury-primary" />
+          <CardHeader className="pb-4">
+            <CardTitle className="text-white flex items-center gap-2 text-base md:text-lg">
+              <Target className="h-4 w-4 md:h-5 md:w-5 text-luxury-primary" />
               Retention Analysis
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
+            <div className="space-y-3 md:space-y-4">
               {retentionData.map((period, index) => (
                 <div key={index} className="flex items-center justify-between">
-                  <div>
-                    <p className="text-white font-medium">{period.period}</p>
-                    <p className="text-gray-400 text-sm">{period.users || Math.floor(period.retention * 10)} users</p>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-white font-medium text-sm md:text-base">{period.period}</p>
+                    <p className="text-gray-400 text-xs md:text-sm">{period.users || Math.floor(period.retention * 10)} users</p>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <div className="w-24 h-2 bg-luxury-neutral/20 rounded-full overflow-hidden">
+                  <div className="flex items-center gap-3 flex-shrink-0 ml-3">
+                    <div className="w-20 md:w-24 h-2 bg-luxury-neutral/20 rounded-full overflow-hidden">
                       <div 
                         className="h-full bg-gradient-to-r from-luxury-primary to-luxury-accent rounded-full"
                         style={{ width: `${period.retention}%` }}
                       />
                     </div>
-                    <span className="text-white font-medium w-12 text-right">{period.retention}%</span>
+                    <span className="text-white font-medium w-10 md:w-12 text-right text-sm md:text-base">{period.retention}%</span>
                   </div>
                 </div>
               ))}
@@ -251,21 +251,21 @@ export const GrowthAnalytics = ({ data, isLoading }: GrowthAnalyticsProps) => {
 
         {/* Geographic Growth */}
         <Card className="bg-luxury-darker border-luxury-neutral/10">
-          <CardHeader>
-            <CardTitle className="text-white flex items-center gap-2">
-              <Globe className="h-5 w-5 text-luxury-primary" />
+          <CardHeader className="pb-4">
+            <CardTitle className="text-white flex items-center gap-2 text-base md:text-lg">
+              <Globe className="h-4 w-4 md:h-5 md:w-5 text-luxury-primary" />
               Geographic Growth
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="h-64">
+            <div className="h-48 md:h-64">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
                     data={hasRealGrowthData && growthData.geographic_breakdown ? growthData.geographic_breakdown : data.geographicData}
                     cx="50%"
                     cy="50%"
-                    outerRadius={80}
+                    outerRadius={60}
                     fill="#8884d8"
                     dataKey="percentage"
                     label={({ country, percentage }) => `${country} ${percentage}%`}
@@ -284,43 +284,43 @@ export const GrowthAnalytics = ({ data, isLoading }: GrowthAnalyticsProps) => {
 
       {/* Growth Predictions */}
       <Card className="bg-luxury-darker border-luxury-neutral/10">
-        <CardHeader>
-          <CardTitle className="text-white flex items-center gap-2">
-            <Zap className="h-5 w-5 text-luxury-primary" />
+        <CardHeader className="pb-4">
+          <CardTitle className="text-white flex items-center gap-2 text-base md:text-lg">
+            <Zap className="h-4 w-4 md:h-5 md:w-5 text-luxury-primary" />
             Growth Predictions
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="text-center p-6 bg-luxury-dark rounded-lg border border-luxury-neutral/10">
-              <UserPlus className="h-8 w-8 text-blue-400 mx-auto mb-3" />
-              <p className="text-2xl font-bold text-white mb-1">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+            <div className="text-center p-4 md:p-6 bg-luxury-dark rounded-lg border border-luxury-neutral/10">
+              <UserPlus className="h-6 w-6 md:h-8 md:w-8 text-blue-400 mx-auto mb-3" />
+              <p className="text-xl md:text-2xl font-bold text-white mb-1">
                 {hasRealGrowthData ? (data.stats?.followers || 0) + Math.floor((growthData.follower_growth_rate || 15) / 100 * (data.stats?.followers || 100)) : "1,250"}
               </p>
-              <p className="text-gray-400">Projected followers next month</p>
-              <Badge className="bg-blue-500/20 text-blue-400 mt-2">
+              <p className="text-gray-400 text-sm md:text-base">Projected followers next month</p>
+              <Badge className="bg-blue-500/20 text-blue-400 mt-2 text-xs">
                 +{hasRealGrowthData ? growthData.follower_growth_rate?.toFixed(1) : "15.5"}% growth
               </Badge>
             </div>
             
-            <div className="text-center p-6 bg-luxury-dark rounded-lg border border-luxury-neutral/10">
-              <Target className="h-8 w-8 text-green-400 mx-auto mb-3" />
-              <p className="text-2xl font-bold text-white mb-1">
+            <div className="text-center p-4 md:p-6 bg-luxury-dark rounded-lg border border-luxury-neutral/10">
+              <Target className="h-6 w-6 md:h-8 md:w-8 text-green-400 mx-auto mb-3" />
+              <p className="text-xl md:text-2xl font-bold text-white mb-1">
                 ${hasRealGrowthData ? ((data.stats?.totalEarnings || 0) * 1.25).toFixed(0) : "5,200"}
               </p>
-              <p className="text-gray-400">Projected earnings next month</p>
-              <Badge className="bg-green-500/20 text-green-400 mt-2">
+              <p className="text-gray-400 text-sm md:text-base">Projected earnings next month</p>
+              <Badge className="bg-green-500/20 text-green-400 mt-2 text-xs">
                 +25% revenue growth
               </Badge>
             </div>
             
-            <div className="text-center p-6 bg-luxury-dark rounded-lg border border-luxury-neutral/10">
-              <TrendingUp className="h-8 w-8 text-purple-400 mx-auto mb-3" />
-              <p className="text-2xl font-bold text-white mb-1">
+            <div className="text-center p-4 md:p-6 bg-luxury-dark rounded-lg border border-luxury-neutral/10 sm:col-span-2 lg:col-span-1">
+              <TrendingUp className="h-6 w-6 md:h-8 md:w-8 text-purple-400 mx-auto mb-3" />
+              <p className="text-xl md:text-2xl font-bold text-white mb-1">
                 {hasRealGrowthData ? `${(growthData.retention_rate || 85) + 2}%` : "87%"}
               </p>
-              <p className="text-gray-400">Predicted retention rate</p>
-              <Badge className="bg-purple-500/20 text-purple-400 mt-2">
+              <p className="text-gray-400 text-sm md:text-base">Predicted retention rate</p>
+              <Badge className="bg-purple-500/20 text-purple-400 mt-2 text-xs">
                 +2% improvement
               </Badge>
             </div>
