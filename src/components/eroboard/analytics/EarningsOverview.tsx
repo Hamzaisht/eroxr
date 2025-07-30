@@ -129,7 +129,7 @@ export const EarningsOverview = ({ data, isLoading }: EarningsOverviewProps) => 
           <div className="absolute -inset-2 bg-gradient-to-r from-green-500/20 via-transparent to-green-500/20 blur-lg opacity-50" />
           <div className="relative">
             <motion.h1 
-              className="text-xl sm:text-2xl md:text-3xl font-bold bg-gradient-to-r from-white via-green-400 to-white bg-clip-text text-transparent mb-2"
+              className="text-xl sm:text-2xl md:text-3xl font-bold text-white mb-2"
               animate={{ 
                 backgroundPosition: ["0%", "100%", "0%"]
               }}
