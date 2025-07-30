@@ -158,7 +158,12 @@ export const EarningsOverview = ({ data, isLoading }: EarningsOverviewProps) => 
                 ease: "linear"
               }}
             >
-              Good morning! 💰
+              {(() => {
+                const hour = new Date().getHours();
+                if (hour < 12) return "Good morning! 💰";
+                if (hour < 18) return "Good afternoon! 💰";
+                return "Good evening! 💰";
+              })()}
             </motion.h1>
             <p className="text-muted-foreground text-sm sm:text-base">Here's your earnings summary</p>
           </div>
