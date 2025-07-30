@@ -60,33 +60,37 @@ export const ContentAnalytics = ({ data, isLoading }: ContentAnalyticsProps) => 
   const contentData = data.contentAnalyticsData;
   const hasRealContentData = contentData && Object.keys(contentData).length > 0;
 
-  // Content performance metrics
+  // Content performance metrics with real percentage calculations
   const contentStats = [
     {
       title: "Total Content",
-      value: hasRealContentData ? contentData.total_posts : data.stats?.totalContent || 0,
-      change: "+12%",
+      value: (data.contentAnalyticsData?.totalPosts || 0).toLocaleString(),
+      change: `${data.contentAnalyticsData?.growthMetrics?.postsChange >= 0 ? '+' : ''}${data.contentAnalyticsData?.growthMetrics?.postsChange || 0}%`,
+      trend: (data.contentAnalyticsData?.growthMetrics?.postsChange || 0) >= 0 ? "up" : "down",
       icon: FileText,
       color: "text-blue-400"
     },
     {
       title: "Total Views",
-      value: hasRealContentData ? contentData.total_views?.toLocaleString() : data.stats?.totalViews?.toLocaleString() || "0",
-      change: "+25%",
+      value: (data.contentAnalyticsData?.totalViews || 0).toLocaleString(),
+      change: `${data.contentAnalyticsData?.growthMetrics?.viewsChange >= 0 ? '+' : ''}${data.contentAnalyticsData?.growthMetrics?.viewsChange || 0}%`,
+      trend: (data.contentAnalyticsData?.growthMetrics?.viewsChange || 0) >= 0 ? "up" : "down",
       icon: Eye,
       color: "text-green-400"
     },
     {
       title: "Avg Engagement",
-      value: `${hasRealContentData ? contentData.avg_engagement_rate?.toFixed(1) : data.stats?.engagementRate?.toFixed(1) || "0"}%`,
-      change: "+8%",
+      value: `${(data.contentAnalyticsData?.avgEngagementRate || 0).toFixed(1)}%`,
+      change: `${data.contentAnalyticsData?.growthMetrics?.engagementChange >= 0 ? '+' : ''}${data.contentAnalyticsData?.growthMetrics?.engagementChange || 0}%`,
+      trend: (data.contentAnalyticsData?.growthMetrics?.engagementChange || 0) >= 0 ? "up" : "down",
       icon: TrendingUp,
       color: "text-purple-400"
     },
     {
       title: "Best Performing",
-      value: hasRealContentData ? contentData.content_type_breakdown?.videos > contentData.content_type_breakdown?.images ? "Videos" : "Images" : "Videos",
-      change: "Video content",
+      value: hasRealContentData && data.contentAnalyticsData?.content_type_breakdown?.videos > data.contentAnalyticsData?.content_type_breakdown?.images ? "Videos" : "Images",
+      change: "Top Type",
+      trend: "up",
       icon: Video,
       color: "text-pink-400"
     }
@@ -146,7 +150,11 @@ export const ContentAnalytics = ({ data, isLoading }: ContentAnalyticsProps) => 
               <CardContent className="p-4 md:p-6">
                 <div className="flex items-center justify-between mb-4">
                   <Icon className={`h-6 w-6 md:h-8 md:w-8 ${stat.color}`} />
-                  <Badge className="bg-emerald-500/20 text-emerald-400 border-0 text-xs">
+                  <Badge className={`border-0 text-xs ${
+                    stat.trend === 'up' 
+                      ? 'bg-emerald-500/20 text-emerald-400' 
+                      : 'bg-red-500/20 text-red-400'
+                  }`}>
                     {stat.change}
                   </Badge>
                 </div>

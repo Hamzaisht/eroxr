@@ -180,7 +180,31 @@ export function useEroboardData() {
       const totalEarnings = totalPurchases + totalTips;
       console.log(`💎 Total earnings: $${totalEarnings} (Purchases: $${totalPurchases} + Tips: $${totalTips})`);
 
-      // 5. Create revenue breakdown
+      // 5. Get previous period data for comparisons
+      const previousPeriodEnd1 = subDays(effectiveDateRange.from, 1);
+      const previousPeriodStart1 = subDays(previousPeriodEnd1, 30);
+      
+      // Previous period purchases
+      const { data: previousPurchases } = await supabase
+        .from('post_purchases')
+        .select('amount, posts!inner(creator_id)')
+        .eq('posts.creator_id', session.user.id)
+        .gte('created_at', format(previousPeriodStart1, 'yyyy-MM-dd'))
+        .lte('created_at', format(previousPeriodEnd1, 'yyyy-MM-dd'));
+
+      // Previous period tips
+      const { data: previousTips } = await supabase
+        .from('tips')
+        .select('amount')
+        .eq('recipient_id', session.user.id)
+        .gte('created_at', format(previousPeriodStart1, 'yyyy-MM-dd'))
+        .lte('created_at', format(previousPeriodEnd1, 'yyyy-MM-dd'));
+
+      const previousTotalEarnings = 
+        (previousPurchases || []).reduce((sum, p) => sum + (p.amount || 0), 0) +
+        (previousTips || []).reduce((sum, t) => sum + (t.amount || 0), 0);
+
+      // 6. Create revenue breakdown
       const breakdown = {
         subscriptions: purchasesData.filter(p => (p.amount || 0) >= 20).reduce((sum, p) => sum + (p.amount || 0), 0),
         messages: purchasesData.filter(p => (p.amount || 0) >= 5 && (p.amount || 0) < 20).reduce((sum, p) => sum + (p.amount || 0), 0),
@@ -191,7 +215,7 @@ export function useEroboardData() {
       setRevenueBreakdown(breakdown);
       console.log('📊 Revenue breakdown:', breakdown);
 
-      // 6. Create earnings timeline
+      // 7. Create earnings timeline
       const allEarnings = [
         ...purchasesData.map(p => ({ amount: p.amount || 0, date: p.created_at })),
         ...tipsData.map(t => ({ amount: t.amount || 0, date: t.created_at }))
@@ -379,15 +403,47 @@ export function useEroboardData() {
         totalStreamTime: '0h 0m',
         averageViewers: 0,
         peakViewers: 0,
-        totalRevenue: 0
+        totalRevenue: 0,
+        growthMetrics: {
+          streamTimeChange: 0,
+          viewersChange: 0,
+          revenueChange: 0,
+          avgViewersChange: 0
+        }
       });
 
-      // Content analytics
+      // Content analytics with growth metrics
+      const previousPeriodEnd2 = subDays(effectiveDateRange.from, 1);
+      const previousPeriodStart2 = subDays(previousPeriodEnd2, 30);
+      
+      // Get previous period posts for comparison
+      const { data: previousPosts } = await supabase
+        .from('posts')
+        .select('view_count, likes_count, comments_count')
+        .eq('creator_id', session.user.id)
+        .gte('created_at', format(previousPeriodStart2, 'yyyy-MM-dd'))
+        .lte('created_at', format(previousPeriodEnd2, 'yyyy-MM-dd'));
+
+      const prevTotalViews = (previousPosts || []).reduce((sum, post) => sum + (post.view_count || 0), 0);
+      const prevTotalLikes = (previousPosts || []).reduce((sum, post) => sum + (post.likes_count || 0), 0);
+      const prevTotalComments = (previousPosts || []).reduce((sum, post) => sum + (post.comments_count || 0), 0);
+      const prevEngagementRate = prevTotalViews > 0 ? ((prevTotalLikes + prevTotalComments) / prevTotalViews) * 100 : 0;
+
+      // Calculate percentage changes
+      const viewsChange = prevTotalViews > 0 ? ((totalViews - prevTotalViews) / prevTotalViews) * 100 : totalViews > 0 ? 100 : 0;
+      const engagementChange = prevEngagementRate > 0 ? ((engagementRate - prevEngagementRate) / prevEngagementRate) * 100 : engagementRate > 0 ? 100 : 0;
+      const postsChange = (previousPosts?.length || 0) > 0 ? ((postsData.length - (previousPosts?.length || 0)) / (previousPosts?.length || 1)) * 100 : postsData.length > 0 ? 100 : 0;
+
       setContentAnalyticsData({
         totalPosts: postsData.length,
         totalViews: totalViews,
         avgEngagementRate: engagementRate,
-        topPerformingContent: contentPerformance.slice(0, 5)
+        topPerformingContent: contentPerformance.slice(0, 5),
+        growthMetrics: {
+          postsChange: Number(postsChange.toFixed(1)),
+          viewsChange: Number(viewsChange.toFixed(1)),
+          engagementChange: Number(engagementChange.toFixed(1))
+        }
       });
 
       setInitialDataLoaded(true);

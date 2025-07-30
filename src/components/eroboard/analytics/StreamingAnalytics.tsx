@@ -46,41 +46,37 @@ export const StreamingAnalytics = ({ data, isLoading }: StreamingAnalyticsProps)
   const streamingData = data.streamingAnalyticsData;
   const hasRealStreamingData = streamingData && Object.keys(streamingData).length > 0;
 
-  // Real streaming stats from database
+  // Real streaming stats from database with proper percentage calculations
   const streamingStats = [
     {
       title: "Total Stream Time",
-      value: hasRealStreamingData 
-        ? `${Math.floor(streamingData.total_stream_time?.hours || 0)}h ${Math.floor(streamingData.total_stream_time?.minutes || 0)}m`
-        : `${Math.floor((data.stats?.totalViews || 0) / 100)}h`,
-      change: "+12.5%",
+      value: data.streamingAnalyticsData?.totalStreamTime || "0h 0m",
+      change: `${data.streamingAnalyticsData?.growthMetrics?.streamTimeChange >= 0 ? '+' : ''}${data.streamingAnalyticsData?.growthMetrics?.streamTimeChange || 0}%`,
+      trend: (data.streamingAnalyticsData?.growthMetrics?.streamTimeChange || 0) >= 0 ? "up" : "down",
       icon: Clock,
       color: "text-blue-400"
     },
     {
       title: "Peak Viewers",
-      value: hasRealStreamingData 
-        ? (streamingData.peak_viewers || 0).toString()
-        : Math.floor((data.stats?.followers || 0) * 0.1).toString(),
-      change: "+8.3%",
+      value: (data.streamingAnalyticsData?.peakViewers || 0).toLocaleString(),
+      change: `${data.streamingAnalyticsData?.growthMetrics?.viewersChange >= 0 ? '+' : ''}${data.streamingAnalyticsData?.growthMetrics?.viewersChange || 0}%`,
+      trend: (data.streamingAnalyticsData?.growthMetrics?.viewersChange || 0) >= 0 ? "up" : "down",
       icon: Users,
       color: "text-green-400"
     },
     {
       title: "Stream Revenue",
-      value: hasRealStreamingData
-        ? `$${Number(streamingData.total_revenue || 0).toLocaleString()}`
-        : `$${Math.floor((data.stats?.totalEarnings || 0) * 0.3).toLocaleString()}`,
-      change: "+15.7%",
+      value: `$${(data.streamingAnalyticsData?.totalRevenue || 0).toLocaleString()}`,
+      change: `${data.streamingAnalyticsData?.growthMetrics?.revenueChange >= 0 ? '+' : ''}${data.streamingAnalyticsData?.growthMetrics?.revenueChange || 0}%`,
+      trend: (data.streamingAnalyticsData?.growthMetrics?.revenueChange || 0) >= 0 ? "up" : "down",
       icon: DollarSign,
       color: "text-luxury-primary"
     },
     {
       title: "Avg Viewers",
-      value: hasRealStreamingData
-        ? Math.floor(streamingData.avg_viewers || 0).toString()
-        : Math.floor((data.stats?.totalViews || 0) * 0.5).toLocaleString(),
-      change: "+22.1%",
+      value: (data.streamingAnalyticsData?.averageViewers || 0).toLocaleString(),
+      change: `${data.streamingAnalyticsData?.growthMetrics?.avgViewersChange >= 0 ? '+' : ''}${data.streamingAnalyticsData?.growthMetrics?.avgViewersChange || 0}%`,
+      trend: (data.streamingAnalyticsData?.growthMetrics?.avgViewersChange || 0) >= 0 ? "up" : "down",
       icon: Eye,
       color: "text-pink-400"
     }
@@ -160,8 +156,12 @@ export const StreamingAnalytics = ({ data, isLoading }: StreamingAnalyticsProps)
               <CardContent className="p-4 md:p-6">
                 <div className="flex items-center justify-between mb-4">
                   <Icon className={`h-6 w-6 md:h-8 md:w-8 ${stat.color}`} />
-                  <Badge className="bg-green-500/20 text-green-400 text-xs">
-                    <TrendingUp className="h-3 w-3 mr-1" />
+                  <Badge className={`text-xs ${
+                    stat.trend === 'up' 
+                      ? 'bg-green-500/20 text-green-400' 
+                      : 'bg-red-500/20 text-red-400'
+                  }`}>
+                    <TrendingUp className={`h-3 w-3 mr-1 ${stat.trend === 'down' ? 'rotate-180' : ''}`} />
                     {stat.change}
                   </Badge>
                 </div>
