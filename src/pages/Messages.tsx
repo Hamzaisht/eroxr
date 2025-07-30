@@ -192,29 +192,35 @@ const Messages = memo(() => {
   }
 
   const renderMobileHeader = () => (
-    <div className="md:hidden flex items-center justify-between p-4 bg-black/40 backdrop-blur-md border-b border-white/10 relative z-50">
-      {selectedConversationId ? (
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={handleBackToConversations}
-          className="text-white/70 hover:text-white hover:bg-white/10"
-        >
-          <ChevronLeft className="h-5 w-5" />
-          <span>Back</span>
-        </Button>
-      ) : (
-        <h1 className="text-xl font-bold text-white">Messages</h1>
-      )}
-      
-      <Button
-        variant="ghost"
-        size="sm"
-        onClick={toggleMobileMenu}
-        className="text-white/70 hover:text-white hover:bg-white/10"
-      >
-        {isMobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-      </Button>
+    <div className="md:hidden bg-black/20 backdrop-blur-xl border-b border-white/5 safe-area-pt">
+      <div className="flex items-center justify-between px-4 py-3">
+        {selectedConversationId ? (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleBackToConversations}
+            className="text-white/80 hover:text-white hover:bg-white/10 -ml-2"
+          >
+            <ChevronLeft className="h-5 w-5" />
+            <span className="text-sm">Chats</span>
+          </Button>
+        ) : (
+          <div className="flex items-center">
+            <h1 className="text-lg font-semibold text-white">Messages</h1>
+          </div>
+        )}
+        
+        {!selectedConversationId && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={toggleMobileMenu}
+            className="text-white/80 hover:text-white hover:bg-white/10 -mr-2"
+          >
+            {isMobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          </Button>
+        )}
+      </div>
     </div>
   );
 
@@ -324,7 +330,7 @@ const Messages = memo(() => {
         
         {renderMobileHeader()}
         
-        <div className="flex-1 flex md:h-[calc(100vh-4rem)] h-[calc(100vh-8rem)] md:h-[calc(100vh-4rem)] relative">
+        <div className="flex-1 flex md:h-[calc(100vh-4rem)] h-[calc(100vh-env(safe-area-inset-top)-5rem)] relative">
           {/* Desktop: Show sidebar always, Mobile: Show as overlay */}
           {isDesktop && renderSidebar()}
           {!isDesktop && renderSidebar()}
@@ -347,7 +353,7 @@ const Messages = memo(() => {
   return (
     <>
       <InteractiveNav />
-      <div className="md:ml-20 p-4">
+      <div className="hidden md:block md:ml-20 p-4">
         <FixedBackButton />
       </div>
       <div className="md:ml-20">
