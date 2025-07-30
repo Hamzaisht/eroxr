@@ -35,8 +35,8 @@ export const LuxuryTabs = ({ tabs, activeTab, onTabChange, className = "" }: Lux
                 key={tab.id}
                 onClick={() => onTabChange(tab.id)}
                 className={`
-                  relative flex items-center justify-center gap-3 px-8 py-4 rounded-2xl font-medium
-                  transition-all duration-500 overflow-hidden group min-w-[140px]
+                  relative flex items-center justify-center gap-2 px-4 sm:px-8 py-3 sm:py-4 rounded-2xl font-medium
+                  transition-all duration-500 overflow-hidden group min-w-[80px] sm:min-w-[140px] flex-1 sm:flex-none
                   ${isActive 
                     ? 'text-white' 
                     : 'text-white/60 hover:text-white/90'
@@ -58,9 +58,10 @@ export const LuxuryTabs = ({ tabs, activeTab, onTabChange, className = "" }: Lux
                 <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-out" />
                 
                 {/* Content */}
-                <div className="relative z-10 flex items-center gap-2">
-                  {Icon && <Icon className="h-5 w-5" />}
-                  <span className="hidden sm:inline font-medium">{tab.label}</span>
+                <div className="relative z-10 flex items-center justify-center gap-2 w-full">
+                  {Icon && <Icon className="h-4 w-4 sm:h-5 sm:w-5 shrink-0" />}
+                  <span className="hidden sm:inline font-medium truncate">{tab.label}</span>
+                  <span className="sm:hidden font-medium text-xs truncate max-w-[40px]">{tab.label}</span>
                 </div>
                 
                 {/* Glow effect for active tab */}
