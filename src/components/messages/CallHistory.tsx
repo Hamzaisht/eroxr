@@ -149,10 +149,14 @@ export const CallHistory = ({ onCallUser, onMessageUser }: CallHistoryProps) => 
 
   if (callHistory.length === 0) {
     return (
-      <div className="text-center py-12">
-        <Phone className="h-16 w-16 text-white/30 mx-auto mb-4" />
-        <h3 className="text-lg font-medium text-white mb-2">No Call History</h3>
-        <p className="text-white/60">Your recent calls will appear here</p>
+      <div className="flex flex-col items-center justify-center text-center py-8 px-4 h-full min-h-[300px]">
+        <div className="bg-white/5 rounded-full p-6 mb-6">
+          <Phone className="h-12 w-12 text-white/40 mx-auto" />
+        </div>
+        <h3 className="text-lg font-semibold text-white mb-2">No Call History</h3>
+        <p className="text-white/60 text-sm max-w-[200px] leading-relaxed">
+          Your recent calls will appear here
+        </p>
       </div>
     );
   }
