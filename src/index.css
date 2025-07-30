@@ -298,6 +298,30 @@
 
 .story-ui-overlay > * {
   pointer-events: auto;
+  
+  /* Mobile optimizations for shorts */
+  .safe-area-padding-top {
+    padding-top: env(safe-area-inset-top, 0);
+  }
+  
+  .safe-area-padding-bottom {
+    padding-bottom: env(safe-area-inset-bottom, 0);
+  }
+  
+  .h-safe-area-inset-top {
+    height: env(safe-area-inset-top, 0);
+  }
+  
+  /* Touch optimization */
+  .touch-feedback {
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+  
+  .touch-feedback:active {
+    transform: scale(0.95);
+    transition: transform 0.1s ease;
+  }
 }
 
 /* Story Bar Optimizations */

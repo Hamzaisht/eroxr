@@ -293,177 +293,188 @@ const Shorts = () => {
       <div className="hidden md:block">
         <InteractiveNav />
       </div>
+      
+      {/* Mobile-First Container */}
       <div 
-        className="fixed inset-0 bg-black overflow-hidden z-50 md:ml-20 touch-optimized safe-area-optimized"
+        className="fixed inset-0 bg-black overflow-hidden z-50 md:ml-20"
         onWheel={handleScroll}
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
       >
-
-      {/* Video Container */}
-      <div className="relative w-full h-full">
-        <ShortVideoPlayer
-          videoUrl={currentVideo.video_url}
-          thumbnailUrl={currentVideo.thumbnail_url}
-          creatorId={currentVideo.creator_id}
-          isCurrentVideo={true}
-          onError={() => {
-            toast({
-              title: "Video Error",
-              description: "Failed to load video",
-              variant: "destructive",
-            });
-          }}
-        />
-
-        {/* Creator Info Overlay - Mobile Optimized */}
-        <div className="absolute bottom-0 left-0 right-12 sm:right-16 bg-gradient-to-t from-black/90 via-black/50 to-transparent p-3 sm:p-6 backdrop-blur-sm safe-area-optimized">
-          <div className="space-y-3 sm:space-y-4">
-            {/* Creator */}
-            <div className="flex items-center gap-3 sm:gap-4">
-              <div 
-                className="flex items-center gap-2 sm:gap-3 cursor-pointer group transition-all duration-300 hover:scale-105 touch-feedback"
-                onClick={() => handleProfileClick(currentVideo.creator_id)}
-              >
-                <div className="relative">
-                  <Avatar className="h-10 w-10 sm:h-14 sm:w-14 border-2 border-white/20 shadow-xl shadow-black/40 transition-all duration-300 group-hover:border-primary group-hover:shadow-primary/30">
-                    <AvatarImage src={currentVideo.avatar_url} className="object-cover" />
-                    <AvatarFallback className="bg-gradient-to-br from-primary to-primary/70 text-black font-bold text-sm sm:text-lg">
-                      {currentVideo.username?.[0]?.toUpperCase() || "U"}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="absolute -bottom-1 -right-1 w-3 h-3 sm:w-4 sm:h-4 bg-green-500 rounded-full border-2 border-black"></div>
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-white font-semibold text-sm sm:text-lg transition-colors group-hover:text-primary truncate mobile-text-scale">
-                    @{currentVideo.username || 'Unknown'}
-                  </p>
-                  <p className="text-white/70 text-xs sm:text-sm">
-                    {currentVideo.view_count?.toLocaleString() || 0} views
-                  </p>
-                </div>
-              </div>
-              
-              {/* Creator Actions Menu */}
-              {isCreator && (
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 backdrop-blur-sm transition-all duration-300 border border-white/20"
-                    >
-                      <MoreHorizontal className="h-5 w-5 text-white" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent 
-                    align="end" 
-                    className="bg-black/90 backdrop-blur-md border-white/20 text-white min-w-[160px]"
-                  >
-                    <DropdownMenuItem 
-                      onClick={handleEdit}
-                      className="hover:bg-white/10 focus:bg-white/10 cursor-pointer"
-                    >
-                      <Edit3 className="w-4 h-4 mr-2" />
-                      Edit Video
-                    </DropdownMenuItem>
-                    <DropdownMenuItem 
-                      onClick={handleDelete}
-                      className="hover:bg-red-500/20 focus:bg-red-500/20 text-red-400 cursor-pointer"
-                    >
-                      <Trash2 className="w-4 h-4 mr-2" />
-                      Delete Video
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              )}
-            </div>
-
-            {/* Description - Mobile Optimized */}
-            {currentVideo.description && (
-              <p className="text-white/90 text-sm sm:text-base leading-relaxed line-clamp-2 sm:line-clamp-3 font-light mobile-text-scale">
-                {currentVideo.description}
-              </p>
-            )}
-
-            {/* Hashtags simulation - Mobile Optimized */}
-            <div className="flex flex-wrap gap-1 sm:gap-2">
-              <span className="text-primary text-xs sm:text-sm font-medium hover:text-primary/80 cursor-pointer transition-colors touch-feedback">
-                #shorts
-              </span>
-              <span className="text-primary text-xs sm:text-sm font-medium hover:text-primary/80 cursor-pointer transition-colors touch-feedback">
-                #viral
-              </span>
-            </div>
-
-            {/* Timestamp - Mobile Optimized */}
-            <p className="text-white/60 text-xs">
-              {new Date(currentVideo.created_at).toLocaleDateString()}
-            </p>
-          </div>
-        </div>
-
-        {/* Actions - Mobile Optimized */}
-        <div className="absolute bottom-24 sm:bottom-32 right-2 sm:right-4 z-20">
-          <ShortActions
-            hasLiked={userInteractions[currentVideo.id]?.hasLiked || false}
-            hasSaved={userInteractions[currentVideo.id]?.hasSaved || false}
-            likesCount={currentVideo.like_count || 0}
-            commentsCount={currentVideo.comment_count || 0}
-            sharesCount={currentVideo.share_count || 0}
-            onLike={() => handleLike(currentVideo.id)}
-            onComment={handleComment}
-            onShare={() => handleShare(currentVideo)}
-            onSave={() => handleSave(currentVideo.id)}
-            isDeleting={false}
+        {/* Full Screen Video Container */}
+        <div className="relative w-full h-full h-screen">
+          <ShortVideoPlayer
+            videoUrl={currentVideo.video_url}
+            thumbnailUrl={currentVideo.thumbnail_url}
+            creatorId={currentVideo.creator_id}
+            isCurrentVideo={true}
+            onError={() => {
+              toast({
+                title: "Video Error",
+                description: "Failed to load video",
+                variant: "destructive",
+              });
+            }}
           />
-        </div>
 
-        {/* Progress Indicator - Mobile Optimized */}
-        <div className="absolute top-4 sm:top-6 right-2 sm:right-4 z-20 safe-area-optimized">
-          <div className="bg-black/50 backdrop-blur-md rounded-full px-2 sm:px-3 py-1 sm:py-2 border border-white/10">
-            <span className="text-white text-xs font-medium">
-              {currentVideoIndex + 1}/{shorts.length}
-            </span>
+          {/* Mobile Gradient Overlay */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/20 pointer-events-none" />
+
+          {/* Top Status Bar Safe Area */}
+          <div className="absolute top-0 left-0 right-0 h-safe-area-inset-top bg-black/20 md:hidden" />
+
+          {/* Progress Indicator - Top Right */}
+          <div className="absolute top-4 right-4 z-30 safe-area-padding-top">
+            <div className="bg-black/60 backdrop-blur-sm rounded-full px-3 py-1.5 border border-white/10">
+              <span className="text-white text-xs font-medium">
+                {currentVideoIndex + 1}/{shorts.length}
+              </span>
+            </div>
+            {/* Progress bar */}
+            <div className="w-16 h-1 bg-white/20 rounded-full mt-2 overflow-hidden">
+              <div 
+                className="h-full bg-primary rounded-full transition-all duration-300"
+                style={{ width: `${((currentVideoIndex + 1) / shorts.length) * 100}%` }}
+              />
+            </div>
           </div>
-          {/* Progress bar */}
-          <div className="w-12 sm:w-16 h-1 bg-white/20 rounded-full mt-2 overflow-hidden">
+
+          {/* Creator Info - Bottom Left */}
+          <div className="absolute bottom-0 left-0 right-20 bg-gradient-to-t from-black/90 to-transparent p-4 safe-area-padding-bottom">
+            <div className="space-y-3">
+              {/* Creator Profile */}
+              <div className="flex items-center gap-3">
+                <div 
+                  className="flex items-center gap-3 cursor-pointer group transition-all duration-300 hover:scale-105"
+                  onClick={() => handleProfileClick(currentVideo.creator_id)}
+                >
+                  <div className="relative">
+                    <Avatar className="h-12 w-12 border-2 border-white/30 shadow-xl">
+                      <AvatarImage src={currentVideo.avatar_url} className="object-cover" />
+                      <AvatarFallback className="bg-gradient-to-br from-primary to-primary/70 text-black font-bold">
+                        {currentVideo.username?.[0]?.toUpperCase() || "U"}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 bg-green-500 rounded-full border-2 border-black"></div>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-white font-semibold text-base transition-colors group-hover:text-primary truncate">
+                      @{currentVideo.username || 'Unknown'}
+                    </p>
+                    <p className="text-white/70 text-sm">
+                      {currentVideo.view_count?.toLocaleString() || 0} views
+                    </p>
+                  </div>
+                </div>
+                
+                {/* Creator Actions Menu */}
+                {isCreator && (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 backdrop-blur-sm border border-white/20"
+                      >
+                        <MoreHorizontal className="h-5 w-5 text-white" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent 
+                      align="end" 
+                      className="bg-black/90 backdrop-blur-md border-white/20 text-white min-w-[160px]"
+                    >
+                      <DropdownMenuItem 
+                        onClick={handleEdit}
+                        className="hover:bg-white/10 focus:bg-white/10 cursor-pointer"
+                      >
+                        <Edit3 className="w-4 h-4 mr-2" />
+                        Edit Video
+                      </DropdownMenuItem>
+                      <DropdownMenuItem 
+                        onClick={handleDelete}
+                        className="hover:bg-red-500/20 focus:bg-red-500/20 text-red-400 cursor-pointer"
+                      >
+                        <Trash2 className="w-4 h-4 mr-2" />
+                        Delete Video
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                )}
+              </div>
+
+              {/* Description */}
+              {currentVideo.description && (
+                <p className="text-white/90 text-sm leading-relaxed line-clamp-3 max-w-[280px]">
+                  {currentVideo.description}
+                </p>
+              )}
+
+              {/* Hashtags */}
+              <div className="flex flex-wrap gap-2">
+                <span className="text-primary text-sm font-medium hover:text-primary/80 cursor-pointer transition-colors">
+                  #shorts
+                </span>
+                <span className="text-primary text-sm font-medium hover:text-primary/80 cursor-pointer transition-colors">
+                  #viral
+                </span>
+              </div>
+
+              {/* Stats Row */}
+              <div className="flex items-center gap-4 text-white/60 text-sm">
+                <span>{currentVideo.like_count?.toLocaleString() || 0} likes</span>
+                <span>{new Date(currentVideo.created_at).toLocaleDateString()}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Actions - Right Side */}
+          <div className="absolute bottom-24 right-3 z-30 safe-area-padding-bottom">
+            <ShortActions
+              hasLiked={userInteractions[currentVideo.id]?.hasLiked || false}
+              hasSaved={userInteractions[currentVideo.id]?.hasSaved || false}
+              likesCount={currentVideo.like_count || 0}
+              commentsCount={currentVideo.comment_count || 0}
+              sharesCount={currentVideo.share_count || 0}
+              onLike={() => handleLike(currentVideo.id)}
+              onComment={handleComment}
+              onShare={() => handleShare(currentVideo)}
+              onSave={() => handleSave(currentVideo.id)}
+              isDeleting={false}
+            />
+          </div>
+
+          {/* Mobile Navigation Helper (Invisible touch areas) */}
+          <div className="md:hidden absolute inset-0 z-10 pointer-events-none">
+            {/* Top half - Previous video */}
             <div 
-              className="h-full bg-primary rounded-full transition-all duration-300"
-              style={{ width: `${((currentVideoIndex + 1) / shorts.length) * 100}%` }}
+              className="absolute top-0 left-0 right-0 h-1/2 pointer-events-auto"
+              onClick={handlePrev}
+            />
+            {/* Bottom half - Next video */}
+            <div 
+              className="absolute bottom-0 left-0 right-0 h-1/2 pointer-events-auto"
+              onClick={handleNext}
+            />
+          </div>
+
+          {/* Desktop Navigation */}
+          <div className="hidden md:block">
+            <ShortNavigationButtons
+              currentVideoIndex={currentVideoIndex}
+              totalShorts={shorts.length}
+              onNextClick={handleNext}
+              onPrevClick={handlePrev}
             />
           </div>
         </div>
 
-        {/* Mobile Navigation Helper */}
-        <div className="md:hidden">
-          <ShortNavigationButtons
-            currentVideoIndex={currentVideoIndex}
-            totalShorts={shorts.length}
-            onNextClick={handleNext}
-            onPrevClick={handlePrev}
-          />
-        </div>
-
-        {/* Ambient Glow Effects */}
-        <div className="absolute inset-0 pointer-events-none overflow-hidden">
-          <div className="absolute top-0 left-0 w-40 h-40 bg-primary/5 rounded-full blur-3xl animate-pulse" />
-          <div className="absolute bottom-0 right-0 w-48 h-48 bg-blue-500/5 rounded-full blur-3xl animate-pulse delay-1000" />
-          <div className="absolute top-1/2 left-1/4 w-32 h-32 bg-purple-500/5 rounded-full blur-3xl animate-pulse delay-500" />
-          
-          {/* Floating particles */}
-          <div className="absolute top-1/4 right-1/3 w-2 h-2 bg-white/20 rounded-full animate-bounce delay-300" />
-          <div className="absolute bottom-1/3 left-1/5 w-1 h-1 bg-primary/40 rounded-full animate-bounce delay-700" />
-        </div>
-      </div>
-
-      {/* Comments Modal */}
-      <CommentsModal
-        isOpen={showComments}
-        onClose={() => setShowComments(false)}
-        videoId={currentVideo.id}
-        videoTitle={currentVideo.title}
-      />
+        {/* Comments Modal */}
+        <CommentsModal
+          isOpen={showComments}
+          onClose={() => setShowComments(false)}
+          videoId={currentVideo.id}
+          videoTitle={currentVideo.title}
+        />
       </div>
     </>
   );

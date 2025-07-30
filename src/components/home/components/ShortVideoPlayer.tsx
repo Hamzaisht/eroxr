@@ -93,7 +93,7 @@ export const ShortVideoPlayer = memo(({
   
   return (
     <div 
-      className="relative h-full w-full bg-black group"
+      className="absolute inset-0 bg-black group"
       onMouseEnter={() => setShowControls(true)}
       onMouseLeave={() => setShowControls(false)}
       onClick={togglePlay}
@@ -106,6 +106,7 @@ export const ShortVideoPlayer = memo(({
         loop
         muted={isMuted}
         playsInline
+        autoPlay={isCurrentVideo}
         onLoadedData={() => {
           console.log('ShortVideoPlayer - Video loaded successfully:', videoUrl);
           setError(false);
@@ -122,19 +123,17 @@ export const ShortVideoPlayer = memo(({
         onPause={() => setIsPlaying(false)}
       />
       
-      {/* Play/Pause Overlay */}
-      <div className={`absolute inset-0 flex items-center justify-center transition-opacity duration-200 ${
-        showControls || !isPlaying ? 'opacity-100' : 'opacity-0'
-      }`}>
-        {!isPlaying && (
-          <div className="bg-black/50 backdrop-blur-sm rounded-full p-4">
-            <Play className="w-12 h-12 text-white fill-white" />
+      {/* Play/Pause Overlay - Only show when paused */}
+      {!isPlaying && (
+        <div className="absolute inset-0 flex items-center justify-center bg-black/20">
+          <div className="bg-black/60 backdrop-blur-sm rounded-full p-6">
+            <Play className="w-16 h-16 text-white fill-white" />
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
-      {/* Controls Overlay */}
-      <div className={`absolute bottom-4 left-4 transition-opacity duration-200 ${
+      {/* Volume Control - Desktop only */}
+      <div className={`hidden md:block absolute bottom-4 left-4 transition-opacity duration-200 ${
         showControls ? 'opacity-100' : 'opacity-0'
       }`}>
         <button
@@ -146,13 +145,6 @@ export const ShortVideoPlayer = memo(({
         >
           {isMuted ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
         </button>
-      </div>
-
-      {/* Cyberpunk Glow Border */}
-      <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute inset-0 border border-primary/20 shadow-lg shadow-primary/10" />
-        <div className="absolute top-0 left-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl animate-pulse" />
-        <div className="absolute bottom-0 right-0 w-40 h-40 bg-blue-500/5 rounded-full blur-3xl animate-pulse delay-1000" />
       </div>
     </div>
   );
