@@ -97,15 +97,24 @@ export const ExportButton: React.FC<ExportButtonProps> = ({
     setShowDialog(false);
 
     try {
+      console.log('🔍 Starting PDF export process...');
+      
       // Get user profile data
       const userProfile = await getUserProfile();
+      console.log('✅ User profile retrieved:', userProfile);
       if (!userProfile) {
         throw new Error('Failed to get user profile');
       }
 
       // Generate PDF
+      console.log('🔍 Starting PDF generation with data:', {
+        statsKeys: Object.keys(data.stats || {}),
+        hasEarningsData: !!data.earningsData,
+        hasRevenueBreakdown: !!data.revenueBreakdown
+      });
       const exporter = new EroboardPdfExporter();
       const pdfBlob = await exporter.generatePDF(data, userProfile);
+      console.log('✅ PDF generated successfully, size:', pdfBlob.size);
 
       // Record the export
       await recordExport(session.user.id, pdfBlob.size, {
