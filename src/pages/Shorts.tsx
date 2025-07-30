@@ -286,9 +286,12 @@ const Shorts = () => {
 
   return (
     <>
-      <InteractiveNav />
+      {/* Hide navigation on mobile for full-screen experience */}
+      <div className="hidden md:block">
+        <InteractiveNav />
+      </div>
       <div 
-        className="fixed inset-0 bg-black overflow-hidden z-50 md:ml-20"
+        className="fixed inset-0 bg-black overflow-hidden z-50 md:ml-20 touch-optimized safe-area-optimized"
         onWheel={handleScroll}
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
@@ -310,29 +313,29 @@ const Shorts = () => {
           }}
         />
 
-        {/* Creator Info Overlay */}
-        <div className="absolute bottom-0 left-0 right-16 bg-gradient-to-t from-black/90 via-black/50 to-transparent p-6 backdrop-blur-sm">
-          <div className="space-y-4">
+        {/* Creator Info Overlay - Mobile Optimized */}
+        <div className="absolute bottom-0 left-0 right-12 sm:right-16 bg-gradient-to-t from-black/90 via-black/50 to-transparent p-3 sm:p-6 backdrop-blur-sm safe-area-optimized">
+          <div className="space-y-3 sm:space-y-4">
             {/* Creator */}
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-3 sm:gap-4">
               <div 
-                className="flex items-center gap-3 cursor-pointer group transition-all duration-300 hover:scale-105"
+                className="flex items-center gap-2 sm:gap-3 cursor-pointer group transition-all duration-300 hover:scale-105 touch-feedback"
                 onClick={() => handleProfileClick(currentVideo.creator_id)}
               >
                 <div className="relative">
-                  <Avatar className="h-14 w-14 border-2 border-white/20 shadow-xl shadow-black/40 transition-all duration-300 group-hover:border-primary group-hover:shadow-primary/30">
+                  <Avatar className="h-10 w-10 sm:h-14 sm:w-14 border-2 border-white/20 shadow-xl shadow-black/40 transition-all duration-300 group-hover:border-primary group-hover:shadow-primary/30">
                     <AvatarImage src={currentVideo.avatar_url} className="object-cover" />
-                    <AvatarFallback className="bg-gradient-to-br from-primary to-primary/70 text-black font-bold text-lg">
+                    <AvatarFallback className="bg-gradient-to-br from-primary to-primary/70 text-black font-bold text-sm sm:text-lg">
                       {currentVideo.username?.[0]?.toUpperCase() || "U"}
                     </AvatarFallback>
                   </Avatar>
-                  <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-black"></div>
+                  <div className="absolute -bottom-1 -right-1 w-3 h-3 sm:w-4 sm:h-4 bg-green-500 rounded-full border-2 border-black"></div>
                 </div>
-                <div className="flex-1">
-                  <p className="text-white font-semibold text-lg transition-colors group-hover:text-primary">
+                <div className="flex-1 min-w-0">
+                  <p className="text-white font-semibold text-sm sm:text-lg transition-colors group-hover:text-primary truncate mobile-text-scale">
                     @{currentVideo.username || 'Unknown'}
                   </p>
-                  <p className="text-white/70 text-sm">
+                  <p className="text-white/70 text-xs sm:text-sm">
                     {currentVideo.view_count?.toLocaleString() || 0} views
                   </p>
                 </div>
@@ -373,32 +376,32 @@ const Shorts = () => {
               )}
             </div>
 
-            {/* Description */}
+            {/* Description - Mobile Optimized */}
             {currentVideo.description && (
-              <p className="text-white/90 text-base leading-relaxed line-clamp-3 font-light">
+              <p className="text-white/90 text-sm sm:text-base leading-relaxed line-clamp-2 sm:line-clamp-3 font-light mobile-text-scale">
                 {currentVideo.description}
               </p>
             )}
 
-            {/* Hashtags simulation */}
-            <div className="flex flex-wrap gap-2">
-              <span className="text-primary text-sm font-medium hover:text-primary/80 cursor-pointer transition-colors">
+            {/* Hashtags simulation - Mobile Optimized */}
+            <div className="flex flex-wrap gap-1 sm:gap-2">
+              <span className="text-primary text-xs sm:text-sm font-medium hover:text-primary/80 cursor-pointer transition-colors touch-feedback">
                 #shorts
               </span>
-              <span className="text-primary text-sm font-medium hover:text-primary/80 cursor-pointer transition-colors">
+              <span className="text-primary text-xs sm:text-sm font-medium hover:text-primary/80 cursor-pointer transition-colors touch-feedback">
                 #viral
               </span>
             </div>
 
-            {/* Timestamp */}
+            {/* Timestamp - Mobile Optimized */}
             <p className="text-white/60 text-xs">
               {new Date(currentVideo.created_at).toLocaleDateString()}
             </p>
           </div>
         </div>
 
-        {/* Actions */}
-        <div className="absolute bottom-32 right-4 z-20">
+        {/* Actions - Mobile Optimized */}
+        <div className="absolute bottom-24 sm:bottom-32 right-2 sm:right-4 z-20">
           <ShortActions
             hasLiked={userInteractions[currentVideo.id]?.hasLiked || false}
             hasSaved={userInteractions[currentVideo.id]?.hasSaved || false}
@@ -413,20 +416,30 @@ const Shorts = () => {
           />
         </div>
 
-        {/* Progress Indicator - enhanced */}
-        <div className="absolute top-6 right-4 z-20">
-          <div className="bg-black/50 backdrop-blur-md rounded-full px-3 py-2 border border-white/10">
+        {/* Progress Indicator - Mobile Optimized */}
+        <div className="absolute top-4 sm:top-6 right-2 sm:right-4 z-20 safe-area-optimized">
+          <div className="bg-black/50 backdrop-blur-md rounded-full px-2 sm:px-3 py-1 sm:py-2 border border-white/10">
             <span className="text-white text-xs font-medium">
               {currentVideoIndex + 1}/{shorts.length}
             </span>
           </div>
           {/* Progress bar */}
-          <div className="w-16 h-1 bg-white/20 rounded-full mt-2 overflow-hidden">
+          <div className="w-12 sm:w-16 h-1 bg-white/20 rounded-full mt-2 overflow-hidden">
             <div 
               className="h-full bg-primary rounded-full transition-all duration-300"
               style={{ width: `${((currentVideoIndex + 1) / shorts.length) * 100}%` }}
             />
           </div>
+        </div>
+
+        {/* Mobile Navigation Helper */}
+        <div className="md:hidden">
+          <ShortNavigationButtons
+            currentVideoIndex={currentVideoIndex}
+            totalShorts={shorts.length}
+            onNextClick={handleNext}
+            onPrevClick={handlePrev}
+          />
         </div>
 
         {/* Ambient Glow Effects */}

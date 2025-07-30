@@ -66,21 +66,21 @@ export const ShortActions = ({
   };
   
   return (
-    <div className="flex flex-col gap-6">
-      {/* Like Button */}
+    <div className="flex flex-col gap-4 sm:gap-6">
+      {/* Like Button - Mobile Optimized */}
       <div className="flex flex-col items-center">
         <Button
           variant="ghost"
           size="icon"
-          className="w-12 h-12 rounded-full bg-black/30 hover:bg-black/50 backdrop-blur-sm"
+          className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-black/30 hover:bg-black/50 backdrop-blur-sm touch-feedback mobile-focus-visible"
           onClick={handleLike}
           disabled={isLiking}
         >
           {isLiking ? (
-            <Loader2 className="h-6 w-6 animate-spin" />
+            <Loader2 className="h-5 w-5 sm:h-6 sm:w-6 animate-spin" />
           ) : (
             <Heart 
-              className={cn("h-6 w-6", hasLiked ? "fill-red-500 text-red-500" : "text-white")} 
+              className={cn("h-5 w-5 sm:h-6 sm:w-6", hasLiked ? "fill-red-500 text-red-500" : "text-white")} 
             />
           )}
         </Button>
@@ -89,34 +89,34 @@ export const ShortActions = ({
         </span>
       </div>
       
-      {/* Comment Button */}
+      {/* Comment Button - Mobile Optimized */}
       <div className="flex flex-col items-center">
         <Button
           variant="ghost"
           size="icon"
-          className="w-12 h-12 rounded-full bg-black/30 hover:bg-black/50 backdrop-blur-sm"
+          className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-black/30 hover:bg-black/50 backdrop-blur-sm touch-feedback mobile-focus-visible"
           onClick={onComment}
         >
-          <MessageCircle className="h-6 w-6 text-white" />
+          <MessageCircle className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
         </Button>
         <span className="text-center text-white text-xs mt-1 font-medium">
           {commentsCount > 0 ? commentsCount.toLocaleString() : ''}
         </span>
       </div>
       
-      {/* Share Button */}
+      {/* Share Button - Mobile Optimized */}
       <div className="flex flex-col items-center">
         <Button
           variant="ghost"
           size="icon"
-          className="w-12 h-12 rounded-full bg-black/30 hover:bg-black/50 backdrop-blur-sm"
+          className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-black/30 hover:bg-black/50 backdrop-blur-sm touch-feedback mobile-focus-visible"
           onClick={handleShare}
           disabled={isSharing}
         >
           {isSharing ? (
-            <Loader2 className="h-6 w-6 animate-spin" />
+            <Loader2 className="h-5 w-5 sm:h-6 sm:w-6 animate-spin" />
           ) : (
-            <Share2 className="h-6 w-6 text-white" />
+            <Share2 className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
           )}
         </Button>
         <span className="text-center text-white text-xs mt-1 font-medium">
@@ -124,20 +124,20 @@ export const ShortActions = ({
         </span>
       </div>
       
-      {/* Save/Bookmark Button */}
+      {/* Save/Bookmark Button - Mobile Optimized */}
       <div className="flex flex-col items-center">
         <Button
           variant="ghost"
           size="icon"
-          className="w-12 h-12 rounded-full bg-black/30 hover:bg-black/50 backdrop-blur-sm"
+          className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-black/30 hover:bg-black/50 backdrop-blur-sm touch-feedback mobile-focus-visible"
           onClick={handleSave}
           disabled={isSaving}
         >
           {isSaving ? (
-            <Loader2 className="h-6 w-6 animate-spin" />
+            <Loader2 className="h-5 w-5 sm:h-6 sm:w-6 animate-spin" />
           ) : (
             <Bookmark 
-              className={cn("h-6 w-6", hasSaved ? "fill-primary text-primary" : "text-white")} 
+              className={cn("h-5 w-5 sm:h-6 sm:w-6", hasSaved ? "fill-primary text-primary" : "text-white")} 
             />
           )}
         </Button>
@@ -148,14 +148,14 @@ export const ShortActions = ({
           <Button
             variant="ghost"
             size="icon"
-            className="w-12 h-12 rounded-full bg-black/30 hover:bg-red-500/30 backdrop-blur-sm"
+            className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-black/30 hover:bg-red-500/30 backdrop-blur-sm touch-feedback mobile-focus-visible"
             onClick={onDelete}
             disabled={isDeleting}
           >
             {isDeleting ? (
-              <Loader2 className="h-6 w-6 animate-spin" />
+              <Loader2 className="h-5 w-5 sm:h-6 sm:w-6 animate-spin" />
             ) : (
-              <Trash2 className="h-6 w-6 text-white" />
+              <Trash2 className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
             )}
           </Button>
         </div>
