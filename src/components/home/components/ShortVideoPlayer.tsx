@@ -78,11 +78,14 @@ export const ShortVideoPlayer = memo(({
   }
   
   if (!videoUrl || error) {
+    console.log('ShortVideoPlayer - No video URL or error:', { videoUrl, error });
     return (
       <div className="absolute inset-0 flex items-center justify-center bg-black">
         <div className="text-center">
           <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
           <p className="text-white/80">Video unavailable</p>
+          {!videoUrl && <p className="text-white/60 text-sm mt-2">No video URL provided</p>}
+          {error && <p className="text-white/60 text-sm mt-2">Video failed to load</p>}
         </div>
       </div>
     );
@@ -99,17 +102,19 @@ export const ShortVideoPlayer = memo(({
         ref={videoRef}
         src={videoUrl}
         poster={thumbnailUrl}
-        className="h-full w-full object-contain bg-black"
+        className="h-full w-full object-cover bg-black"
         loop
         muted={isMuted}
         playsInline
         onLoadedData={() => {
+          console.log('ShortVideoPlayer - Video loaded successfully:', videoUrl);
           setError(false);
           if (isCurrentVideo) {
             setIsPlaying(true);
           }
         }}
-        onError={() => {
+        onError={(e) => {
+          console.error('ShortVideoPlayer - Video error:', { videoUrl, error: e });
           setError(true);
           onError();
         }}

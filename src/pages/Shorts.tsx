@@ -83,6 +83,8 @@ const Shorts = () => {
 
       if (error) throw error;
       
+      console.log('Shorts - Raw data from database:', data);
+      
       // Transform the data to flatten the profiles relationship
       const transformedData = data?.map(video => ({
         ...video,
@@ -92,6 +94,7 @@ const Shorts = () => {
         profiles: undefined
       }));
 
+      console.log('Shorts - Transformed data:', transformedData);
       return transformedData as ShortVideo[];
     }
   });
