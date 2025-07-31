@@ -100,7 +100,7 @@ export function EnhancedDatingHeader({
             
             <div className={cn(
               "flex items-center flex-shrink-0",
-              isMobile ? "gap-1" : "gap-3"
+              isMobile ? "gap-0.5 min-w-0" : "gap-3"
             )}>
               {/* Search Toggle - Mobile Optimized */}
               <motion.div
@@ -158,15 +158,18 @@ export function EnhancedDatingHeader({
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.6 }}
               >
-                <Button
+                 <Button
                   variant="outline"
                   size={isMobile ? "sm" : "default"}
                   onClick={onToggleFilters}
-                  className="touch-target border-white/20 text-white/80 hover:text-white hover:bg-white/10 hover:border-white/40 transition-all duration-200"
+                  className={cn(
+                    "touch-target border-white/20 text-white/80 hover:text-white hover:bg-white/10 hover:border-white/40 transition-all duration-200",
+                    isMobile && "px-2 py-2 text-xs"
+                  )}
                   aria-label="Toggle filters"
                 >
-                  <Filter className={`${isMobile ? "h-4 w-4" : "h-5 w-5"} ${isMobile ? "mr-1" : "mr-2"}`} />
-                  {isMobile ? "Filters" : "Divine Filters"}
+                  <Filter className={`${isMobile ? "h-3 w-3" : "h-5 w-5"} ${isMobile ? "mr-0.5" : "mr-2"}`} />
+                  {isMobile ? "Filter" : "Divine Filters"}
                 </Button>
               </motion.div>
 
@@ -176,18 +179,18 @@ export function EnhancedDatingHeader({
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.7 }}
               >
-                <Button
-                  onClick={onCreateAd}
-                  size={isMobile ? "sm" : "default"}
-                  className={cn(
-                    "touch-target bg-gradient-to-r from-cyan-500 to-purple-600 hover:from-cyan-400 hover:to-purple-500 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300 action-button-glow",
-                    isMobile && "px-3 py-2 text-sm whitespace-nowrap"
-                  )}
-                  aria-label="Create new ad"
-                >
-                  <Plus className={`${isMobile ? "h-4 w-4" : "h-5 w-5"} ${isMobile ? "mr-1" : "mr-2"}`} />
-                  {isMobile ? "Create" : "Create Ad"}
-                </Button>
+                 <Button
+                   onClick={onCreateAd}
+                   size={isMobile ? "sm" : "default"}
+                   className={cn(
+                     "touch-target bg-gradient-to-r from-cyan-500 to-purple-600 hover:from-cyan-400 hover:to-purple-500 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300 action-button-glow",
+                     isMobile && "px-2 py-2 text-xs whitespace-nowrap min-w-0"
+                   )}
+                   aria-label="Create new ad"
+                 >
+                   <Plus className={`${isMobile ? "h-3 w-3" : "h-5 w-5"} ${isMobile ? "mr-0.5" : "mr-2"}`} />
+                   {isMobile ? "Add" : "Create Ad"}
+                 </Button>
               </motion.div>
             </div>
           </div>
