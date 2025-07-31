@@ -221,7 +221,7 @@ export class EroboardPdfExporter {
       this.pdf.setTextColor(0, 0, 0);
       this.pdf.setFontSize(9);
       this.pdf.text(item.name.substring(0, 15), this.margin, this.currentY + 5);
-      this.pdf.text(item.value.toLocaleString(), this.margin + 40 + barWidth + 5, this.currentY + 5);
+      this.pdf.text((item.value || 0).toLocaleString(), this.margin + 40 + barWidth + 5, this.currentY + 5);
       
       this.currentY += barHeight + 3;
     });
@@ -235,21 +235,21 @@ export class EroboardPdfExporter {
     
     // Executive Summary
     this.addSectionTitle('📊 EXECUTIVE SUMMARY');
-    this.addKeyValuePair('Total Earnings', `$${data.stats.totalEarnings.toLocaleString()}`, true);
-    this.addKeyValuePair('Total Subscribers', data.stats.totalSubscribers.toLocaleString(), true);
-    this.addKeyValuePair('Total Followers', data.stats.followers.toLocaleString(), true);
-    this.addKeyValuePair('Engagement Rate', `${data.stats.engagementRate.toFixed(1)}%`, true);
-    this.addKeyValuePair('Total Content Posts', data.stats.totalContent.toLocaleString());
-    this.addKeyValuePair('Total Views', data.stats.totalViews.toLocaleString());
-    this.addKeyValuePair('Revenue Share', `${(data.stats.revenueShare * 100).toFixed(0)}%`);
+    this.addKeyValuePair('Total Earnings', `$${(data.stats.totalEarnings || 0).toLocaleString()}`, true);
+    this.addKeyValuePair('Total Subscribers', (data.stats.totalSubscribers || 0).toLocaleString(), true);
+    this.addKeyValuePair('Total Followers', (data.stats.followers || 0).toLocaleString(), true);
+    this.addKeyValuePair('Engagement Rate', `${(data.stats.engagementRate || 0).toFixed(1)}%`, true);
+    this.addKeyValuePair('Total Content Posts', (data.stats.totalContent || 0).toLocaleString());
+    this.addKeyValuePair('Total Views', (data.stats.totalViews || 0).toLocaleString());
+    this.addKeyValuePair('Revenue Share', `${((data.stats.revenueShare || 0) * 100).toFixed(0)}%`);
     this.currentY += 10;
     
     // Revenue Breakdown
     this.addSectionTitle('💰 REVENUE BREAKDOWN');
-    this.addKeyValuePair('Subscriptions Revenue', `$${data.revenueBreakdown.subscriptions.toLocaleString()}`);
-    this.addKeyValuePair('Tips Revenue', `$${data.revenueBreakdown.tips.toLocaleString()}`);
-    this.addKeyValuePair('PPV Messages Revenue', `$${data.revenueBreakdown.messages.toLocaleString()}`);
-    this.addKeyValuePair('Live Stream Revenue', `$${data.revenueBreakdown.liveStreamPurchases.toLocaleString()}`);
+    this.addKeyValuePair('Subscriptions Revenue', `$${(data.revenueBreakdown.subscriptions || 0).toLocaleString()}`);
+    this.addKeyValuePair('Tips Revenue', `$${(data.revenueBreakdown.tips || 0).toLocaleString()}`);
+    this.addKeyValuePair('PPV Messages Revenue', `$${(data.revenueBreakdown.messages || 0).toLocaleString()}`);
+    this.addKeyValuePair('Live Stream Revenue', `$${(data.revenueBreakdown.liveStreamPurchases || 0).toLocaleString()}`);
     
     // Revenue chart
     const revenueChartData = [
@@ -265,9 +265,9 @@ export class EroboardPdfExporter {
     
     // Content Performance
     this.addSectionTitle('📈 CONTENT PERFORMANCE');
-    this.addKeyValuePair('Total Posts', data.contentAnalyticsData.totalPosts.toLocaleString());
-    this.addKeyValuePair('Total Content Views', data.contentAnalyticsData.totalViews.toLocaleString());
-    this.addKeyValuePair('Average Engagement Rate', `${data.contentAnalyticsData.avgEngagementRate.toFixed(1)}%`);
+    this.addKeyValuePair('Total Posts', (data.contentAnalyticsData.totalPosts || 0).toLocaleString());
+    this.addKeyValuePair('Total Content Views', (data.contentAnalyticsData.totalViews || 0).toLocaleString());
+    this.addKeyValuePair('Average Engagement Rate', `${(data.contentAnalyticsData.avgEngagementRate || 0).toFixed(1)}%`);
     
     // Top performing content table
     if (data.contentPerformanceData.length > 0) {
@@ -277,9 +277,9 @@ export class EroboardPdfExporter {
       const contentRows = topContent.map(content => [
         content.content.substring(0, 30) + '...',
         content.type.charAt(0).toUpperCase() + content.type.slice(1),
-        content.views.toLocaleString(),
-        content.likes.toLocaleString(),
-        `$${content.earnings.toFixed(2)}`
+        (content.views || 0).toLocaleString(),
+        (content.likes || 0).toLocaleString(),
+        `$${(content.earnings || 0).toFixed(2)}`
       ]);
       this.addTable(contentHeaders, contentRows);
     }
@@ -290,20 +290,20 @@ export class EroboardPdfExporter {
       const geoHeaders = ['Country', 'Fans', 'Percentage', 'Sessions', 'Page Views'];
       const geoRows = data.geographicData.map(geo => [
         geo.country,
-        geo.fans.toLocaleString(),
-        `${geo.percentage.toFixed(1)}%`,
-        geo.sessions.toLocaleString(),
-        geo.pageViews.toLocaleString()
+        (geo.fans || 0).toLocaleString(),
+        `${(geo.percentage || 0).toFixed(1)}%`,
+        (geo.sessions || 0).toLocaleString(),
+        (geo.pageViews || 0).toLocaleString()
       ]);
       this.addTable(geoHeaders, geoRows);
     }
     
     // Growth Analytics
     this.addSectionTitle('📊 GROWTH ANALYTICS');
-    this.addKeyValuePair('Follower Growth Rate', `${data.growthAnalyticsData.follower_growth_rate.toFixed(1)}%`);
-    this.addKeyValuePair('Subscription Rate', `${data.growthAnalyticsData.subscription_rate.toFixed(1)}%`);
-    this.addKeyValuePair('Retention Rate', `${data.growthAnalyticsData.retention_rate.toFixed(1)}%`);
-    this.addKeyValuePair('Churn Rate', `${data.growthAnalyticsData.churn_rate.toFixed(1)}%`);
+    this.addKeyValuePair('Follower Growth Rate', `${(data.growthAnalyticsData.follower_growth_rate || 0).toFixed(1)}%`);
+    this.addKeyValuePair('Subscription Rate', `${(data.growthAnalyticsData.subscription_rate || 0).toFixed(1)}%`);
+    this.addKeyValuePair('Retention Rate', `${(data.growthAnalyticsData.retention_rate || 0).toFixed(1)}%`);
+    this.addKeyValuePair('Churn Rate', `${(data.growthAnalyticsData.churn_rate || 0).toFixed(1)}%`);
     
     // Conversion Funnel
     this.addSectionTitle('🎯 CONVERSION FUNNEL');
@@ -311,8 +311,8 @@ export class EroboardPdfExporter {
       const funnelHeaders = ['Stage', 'Count', 'Conversion Rate'];
       const funnelRows = data.conversionFunnelData.map(stage => [
         stage.stage,
-        stage.count.toLocaleString(),
-        `${stage.percentage.toFixed(1)}%`
+        (stage.count || 0).toLocaleString(),
+        `${(stage.percentage || 0).toFixed(1)}%`
       ]);
       this.addTable(funnelHeaders, funnelRows);
     }
@@ -320,9 +320,9 @@ export class EroboardPdfExporter {
     // Streaming Analytics
     this.addSectionTitle('📺 STREAMING ANALYTICS');
     this.addKeyValuePair('Total Stream Time', data.streamingAnalyticsData.totalStreamTime);
-    this.addKeyValuePair('Average Viewers', data.streamingAnalyticsData.averageViewers.toLocaleString());
-    this.addKeyValuePair('Peak Viewers', data.streamingAnalyticsData.peakViewers.toLocaleString());
-    this.addKeyValuePair('Stream Revenue', `$${data.streamingAnalyticsData.totalRevenue.toLocaleString()}`);
+    this.addKeyValuePair('Average Viewers', (data.streamingAnalyticsData.averageViewers || 0).toLocaleString());
+    this.addKeyValuePair('Peak Viewers', (data.streamingAnalyticsData.peakViewers || 0).toLocaleString());
+    this.addKeyValuePair('Stream Revenue', `$${(data.streamingAnalyticsData.totalRevenue || 0).toLocaleString()}`);
     
     // Earnings Timeline (simplified representation)
     if (data.earningsData.length > 0) {
