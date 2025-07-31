@@ -27,7 +27,7 @@ interface ContentItem {
   comments_count: number;
   view_count: number;
   created_at: string;
-  content_type: 'post' | 'story' | 'video' | 'message' | 'media' | 'profile_photo' | 'deleted';
+  content_type: 'post' | 'story' | 'video' | 'message' | 'media' | 'comment' | 'deleted';
   // Additional fields for different content types
   message_type?: string;
   sender_id?: string;
@@ -545,7 +545,7 @@ export const GodmodeContent: React.FC = () => {
                     item.content_type === 'story' ? 'border-purple-400 text-purple-400' :
                     item.content_type === 'message' ? 'border-orange-400 text-orange-400' :
                     item.content_type === 'media' ? 'border-green-400 text-green-400' :
-                    item.content_type === 'profile_photo' ? 'border-pink-400 text-pink-400' :
+                    item.content_type === 'comment' ? 'border-pink-400 text-pink-400' :
                     item.content_type === 'deleted' ? 'border-red-500 text-red-500 animate-pulse' :
                     'border-gray-400 text-gray-400'
                   }`}

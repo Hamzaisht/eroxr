@@ -20,7 +20,7 @@ interface ContentItem {
   comments_count: number;
   view_count: number;
   created_at: string;
-  content_type: 'post' | 'story' | 'video' | 'message' | 'media' | 'profile_photo' | 'deleted';
+  content_type: 'post' | 'story' | 'video' | 'message' | 'media' | 'comment' | 'deleted';
   deleted_at?: string;
   is_deleted?: boolean;
   message_type?: string;
@@ -40,6 +40,7 @@ interface RealtimeStats {
   totalStories: number;
   totalMessages: number;
   totalMedia: number;
+  totalComments: number;
   totalProfiles: number;
   flagged: number;
   deletedContent: number;
@@ -54,6 +55,8 @@ export const useRealtimeContent = () => {
     totalStories: 0,
     totalMessages: 0,
     totalMedia: 0,
+    totalVideos: 0,
+    totalComments: 0,
     totalProfiles: 0,
     flagged: 0,
     deletedContent: 0,
@@ -65,11 +68,12 @@ export const useRealtimeContent = () => {
     if (!isGhostMode) return;
     
     try {
-      const [postsResult, storiesResult, messagesResult, mediaResult, profilesResult, flaggedResult] = await Promise.all([
+      const [postsResult, storiesResult, messagesResult, mediaResult, commentsResult, profilesResult, flaggedResult] = await Promise.all([
         supabase.from('posts').select('id', { count: 'exact', head: true }),
         supabase.from('stories').select('id', { count: 'exact', head: true }),
         supabase.from('direct_messages').select('id', { count: 'exact', head: true }),
         supabase.from('media_assets').select('id', { count: 'exact', head: true }),
+        supabase.from('comments').select('id', { count: 'exact', head: true }),
         supabase.from('profiles').select('id', { count: 'exact', head: true }),
         supabase.from('flagged_content').select('id', { count: 'exact', head: true })
       ]);
@@ -90,6 +94,8 @@ export const useRealtimeContent = () => {
         totalStories: storiesResult.count || 0,
         totalMessages: messagesResult.count || 0,
         totalMedia: mediaResult.count || 0,
+        totalVideos: videosResult.count || 0,
+        totalComments: commentsResult.count || 0,
         totalProfiles: profilesResult.count || 0,
         flagged: flaggedResult.count || 0,
         deletedContent: deletedCount,
@@ -119,7 +125,8 @@ export const useRealtimeContent = () => {
       const shouldFetchStories = !filterType || filterType === 'all' || filterType === 'stories' || filterType === 'videos' || filterType === 'images';
       const shouldFetchMessages = !filterType || filterType === 'all' || filterType === 'messages' || filterType === 'private';
       const shouldFetchMedia = !filterType || filterType === 'all' || filterType === 'media' || filterType === 'videos' || filterType === 'images';
-      const shouldFetchProfiles = !filterType || filterType === 'all' || filterType === 'profile_photos' || filterType === 'images';
+      const shouldFetchVideos = !filterType || filterType === 'all' || filterType === 'videos';
+      const shouldFetchComments = !filterType || filterType === 'all' || filterType === 'comments';
       const shouldFetchDeleted = includeDeleted && (filterType === 'all' || filterType === 'deleted');
 
       // 1. Posts
@@ -251,6 +258,97 @@ export const useRealtimeContent = () => {
         );
       }
 
+      // 4. Media Assets (including videos)
+      if (shouldFetchMedia) {
+        let mediaQuery = supabase
+          .from('media_assets')
+          .select(`
+            id, storage_path, mime_type, media_type, access_level, alt_text,
+            post_id, created_at, updated_at, original_name, file_size, deleted_at
+          `)
+          .order('created_at', { ascending: false })
+          .limit(100);
+
+        if (!includeDeleted) mediaQuery = mediaQuery.is('deleted_at', null);
+
+        contentPromises.push(
+          mediaQuery.then(({ data, error }) => {
+            if (error) {
+              console.error('Media error:', error);
+              return [];
+            }
+
+            return data?.map(item => ({
+              ...item,
+              content: item.alt_text || item.original_name || 'Media asset',
+              content_type: item.deleted_at ? 'deleted' as const : 'media' as const,
+              creator_id: '',
+              creator: { username: 'System', avatar_url: '' },
+              media_url: item.media_type === 'image' ? [item.storage_path] : null,
+              video_urls: item.media_type === 'video' ? [item.storage_path] : null,
+              visibility: item.access_level || 'public',
+              is_ppv: false,
+              ppv_amount: null,
+              tags: null,
+              likes_count: 0,
+              comments_count: 0,
+              view_count: 0,
+              is_deleted: !!item.deleted_at
+            })) || [];
+          })
+        );
+      }
+
+      // 5. Comments
+      if (shouldFetchComments) {
+        let commentsQuery = supabase
+          .from('comments')
+          .select(`
+            id, content, user_id, post_id, created_at, updated_at
+          `)
+          .order('created_at', { ascending: false })
+          .limit(100);
+
+        if (searchTerm) commentsQuery = commentsQuery.ilike('content', `%${searchTerm}%`);
+
+        contentPromises.push(
+          commentsQuery.then(async ({ data, error }) => {
+            if (error) {
+              console.error('Comments error:', error);
+              return [];
+            }
+
+            const creatorIds = data?.map(c => c.user_id).filter(Boolean) || [];
+            const { data: creators } = await supabase
+              .from('profiles')
+              .select('id, username, avatar_url')
+              .in('id', creatorIds);
+
+            return data?.map(item => {
+              const creator = creators?.find(c => c.id === item.user_id);
+              return {
+                ...item,
+                content_type: 'comment' as const,
+                creator_id: item.user_id,
+                creator: creator || { username: 'Unknown', avatar_url: '' },
+                media_url: null,
+                video_urls: null,
+                visibility: 'public',
+                is_ppv: false,
+                ppv_amount: null,
+                tags: null,
+                likes_count: 0,
+                comments_count: 0,
+                view_count: 0,
+                is_deleted: false
+              };
+            }) || [];
+          })
+        );
+      }
+
+      // Execute all queries
+
       // Execute all queries
       const allResults = await Promise.all(contentPromises);
       const allContent = allResults.flat();
@@ -264,11 +362,13 @@ export const useRealtimeContent = () => {
             case 'posts': return item.content_type === 'post';
             case 'stories': return item.content_type === 'story';
             case 'messages': return item.content_type === 'message';
+            case 'videos': return item.content_type === 'video' || (item.video_urls && item.video_urls.length > 0);
+            case 'comments': return item.content_type === 'comment';
+            case 'media': return item.content_type === 'media';
             case 'deleted': return item.content_type === 'deleted' || item.is_deleted;
             case 'ppv': return item.is_ppv;
             case 'public': return item.visibility === 'public';
             case 'private': return item.visibility === 'private' || item.visibility === 'subscribers_only';
-            case 'videos': return item.video_urls && item.video_urls.length > 0;
             case 'images': return item.media_url && item.media_url.length > 0;
             default: return true;
           }
@@ -333,6 +433,20 @@ export const useRealtimeContent = () => {
       supabase
         .channel('media_changes')
         .on('postgres_changes', { event: '*', schema: 'public', table: 'media_assets' }, () => {
+          fetchStats();
+        })
+        .subscribe(),
+
+      supabase
+        .channel('videos_changes')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'videos' }, () => {
+          fetchStats();
+        })
+        .subscribe(),
+
+      supabase
+        .channel('comments_changes')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'comments' }, () => {
           fetchStats();
         })
         .subscribe()
