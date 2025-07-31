@@ -207,12 +207,12 @@ export const useRealtimeContent = () => {
           .from('direct_messages')
           .select(`
             id, content, message_type, sender_id, recipient_id, duration,
-            expires_at, is_expired, created_at, deleted_at
+            expires_at, is_expired, created_at
           `)
           .order('created_at', { ascending: false })
           .limit(100);
 
-        if (!includeDeleted) messagesQuery = messagesQuery.is('deleted_at', null);
+        // Note: direct_messages table doesn't have deleted_at column
         if (searchTerm) messagesQuery = messagesQuery.ilike('content', `%${searchTerm}%`);
 
         contentPromises.push(
@@ -232,7 +232,7 @@ export const useRealtimeContent = () => {
               const sender = senders?.find(s => s.id === item.sender_id);
               return {
                 ...item,
-                content_type: item.deleted_at ? 'deleted' as const : 'message' as const,
+                content_type: 'message' as const,
                 creator_id: item.sender_id,
                 creator: sender || { username: 'Unknown', avatar_url: '' },
                 media_url: null,
@@ -244,7 +244,7 @@ export const useRealtimeContent = () => {
                 likes_count: 0,
                 comments_count: 0,
                 view_count: 0,
-                is_deleted: !!item.deleted_at
+                is_deleted: false
               };
             }) || [];
           })
