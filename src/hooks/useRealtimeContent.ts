@@ -55,7 +55,6 @@ export const useRealtimeContent = () => {
     totalStories: 0,
     totalMessages: 0,
     totalMedia: 0,
-    totalVideos: 0,
     totalComments: 0,
     totalProfiles: 0,
     flagged: 0,
@@ -94,7 +93,6 @@ export const useRealtimeContent = () => {
         totalStories: storiesResult.count || 0,
         totalMessages: messagesResult.count || 0,
         totalMedia: mediaResult.count || 0,
-        totalVideos: videosResult.count || 0,
         totalComments: commentsResult.count || 0,
         totalProfiles: profilesResult.count || 0,
         flagged: flaggedResult.count || 0,
@@ -437,12 +435,6 @@ export const useRealtimeContent = () => {
         })
         .subscribe(),
 
-      supabase
-        .channel('videos_changes')
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'videos' }, () => {
-          fetchStats();
-        })
-        .subscribe(),
 
       supabase
         .channel('comments_changes')
