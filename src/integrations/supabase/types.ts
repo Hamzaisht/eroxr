@@ -3835,6 +3835,15 @@ export type Database = {
           media_count: number
         }[]
       }
+      get_user_profiles_batch: {
+        Args: { user_ids: string[] }
+        Returns: {
+          id: string
+          username: string
+          avatar_url: string
+          display_name: string
+        }[]
+      }
       get_user_role: {
         Args: { user_id: string }
         Returns: string

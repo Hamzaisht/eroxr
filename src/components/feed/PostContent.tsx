@@ -3,6 +3,8 @@ import { useState } from "react";
 import { Maximize2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { FullscreenMediaViewer } from "@/components/media/FullscreenMediaViewer";
+import { OptimizedImage } from "@/components/ui/OptimizedImage";
+import { getOptimizedUrl } from "@/utils/media/imageOptimization";
 
 interface PostContentProps {
   content: string;
@@ -23,7 +25,8 @@ export const PostContent = ({ content, mediaAssets, className = "" }: PostConten
   } | null>(null);
 
   const getMediaUrl = (storagePath: string) => {
-    return `https://ysqbdaeohlupucdmivkt.supabase.co/storage/v1/object/public/media/${storagePath}`;
+    // Use the optimized media utility instead of raw URLs
+    return getOptimizedUrl(storagePath, 'post_preview', 'media');
   };
 
   const openFullscreen = (asset: any) => {
@@ -50,12 +53,16 @@ export const PostContent = ({ content, mediaAssets, className = "" }: PostConten
             <div key={asset.id} className="relative group">
               {asset.media_type.startsWith('image') ? (
                 <div className="relative">
-                  <img
-                    src={getMediaUrl(asset.storage_path)}
-                    alt={asset.alt_text || 'Post image'}
-                    className="w-full aspect-auto max-h-[500px] object-contain rounded-lg cursor-pointer"
-                    onClick={() => openFullscreen(asset)}
-                  />
+                  <div onClick={() => openFullscreen(asset)} className="cursor-pointer">
+                    <OptimizedImage
+                      src={asset.storage_path}
+                      alt={asset.alt_text || 'Post image'}
+                      preset="post_preview"
+                      bucket="media"
+                      className="w-full aspect-auto max-h-[500px] object-contain rounded-lg"
+                      priority={true}
+                    />
+                  </div>
                   <Button
                     variant="ghost"
                     size="icon"

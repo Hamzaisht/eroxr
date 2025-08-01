@@ -1,4 +1,5 @@
 import { memo, useMemo, useCallback, useState } from 'react';
+import { OptimizedImage } from '@/components/ui/OptimizedImage';
 import { DatingAd } from '@/types/dating';
 
 // Memoized profile card component
@@ -56,15 +57,14 @@ export const OptimizedProfileCard = memo(({
     >
       {/* Optimized image loading */}
       <div className="aspect-video relative overflow-hidden">
-        <img
-          src={ad.avatar_url || ad.avatarUrl}
+        <OptimizedImage
+          src={ad.avatar_url || ad.avatarUrl || ''}
           alt={`${displayData.title}'s profile`}
-          loading="lazy"
-          decoding="async"
+          preset="profile_card"
+          bucket="avatars"
           className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-          onError={(e) => {
-            e.currentTarget.src = `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(displayData.title)}`;
-          }}
+          priority={isVisible}
+          fallbackSrc={`https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(displayData.title)}&backgroundColor=6366f1`}
         />
         
         {/* Status indicator */}
