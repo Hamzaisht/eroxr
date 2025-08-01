@@ -32,6 +32,11 @@ export const QuantumProfileViewer = ({ profileId, onBack }: QuantumProfileViewer
   const [activeTab, setActiveTab] = useState('posts');
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   
+  console.log('🎯 QuantumProfileViewer - profileId:', profileId);
+  console.log('🎯 QuantumProfileViewer - loading:', loading);
+  console.log('🎯 QuantumProfileViewer - error:', error);
+  console.log('🎯 QuantumProfileViewer - profile:', profile);
+  
   const isOwnProfile = user?.id === profileId;
 
   useEffect(() => {

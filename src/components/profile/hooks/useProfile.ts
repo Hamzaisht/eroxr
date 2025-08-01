@@ -11,6 +11,12 @@ interface Profile {
   banner_url: string | null;
   interests: string[] | null;
   created_at: string;
+  updated_at?: string;
+  first_name?: string | null;
+  last_name?: string | null;
+  is_verified?: boolean;
+  is_paying_customer?: boolean;
+  profile_visibility?: boolean;
 }
 
 export const useProfile = (profileId: string) => {
@@ -25,7 +31,7 @@ export const useProfile = (profileId: string) => {
       
       const { data, error: fetchError } = await supabase
         .from('profiles')
-        .select('id, username, bio, location, avatar_url, banner_url, interests, created_at')
+        .select('*')
         .eq('id', profileId)
         .maybeSingle();
 
@@ -43,7 +49,7 @@ export const useProfile = (profileId: string) => {
         return;
       }
 
-      console.log('✅ Profile: Profile fetched successfully');
+      console.log('✅ Profile: Profile fetched successfully:', data);
       setProfile(data as Profile);
       setError(null);
     } catch (err: any) {
@@ -51,6 +57,7 @@ export const useProfile = (profileId: string) => {
       setError(err.message);
       setProfile(null);
     } finally {
+      console.log('🏁 Profile: Loading finished, loading=false');
       setLoading(false);
     }
   };
