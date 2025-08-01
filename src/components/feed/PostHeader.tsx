@@ -1,6 +1,6 @@
 
 import { formatDistanceToNow } from "date-fns";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { OptimizedAvatar } from "@/components/ui/OptimizedImage";
 import { PostManagementActions } from "./PostManagementActions";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -31,12 +31,14 @@ export const PostHeader = ({
   return (
     <div className="flex items-center justify-between">
       <div className="flex items-center space-x-3">
-        <Avatar className="h-10 w-10">
-          <AvatarImage src={creator.avatar_url} />
-          <AvatarFallback>
-            {creator.username.slice(0, 2).toUpperCase()}
-          </AvatarFallback>
-        </Avatar>
+        <OptimizedAvatar
+          src={creator.avatar_url}
+          userId={creator.id}
+          username={creator.username}
+          size="md"
+          priority={true}
+          className="h-10 w-10"
+        />
         <div>
           <p className="font-medium text-sm">{creator.username}</p>
           <p className="text-xs text-muted-foreground">

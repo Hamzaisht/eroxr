@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { OptimizedAvatar } from "@/components/ui/OptimizedImage";
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Check, MapPin, Eye } from 'lucide-react';
@@ -61,10 +61,12 @@ export const VideoProfileCard: React.FC<VideoProfileCardProps> = ({
           <div className="absolute bottom-0 left-0 right-0 p-2 bg-gradient-to-t from-black/70 to-transparent">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <Avatar className="h-8 w-8 border-2 border-white">
-                  <AvatarImage src={ad.avatarUrl || ""} alt={ad.username} />
-                  <AvatarFallback>{ad.username?.[0]?.toUpperCase() || "U"}</AvatarFallback>
-                </Avatar>
+                <OptimizedAvatar
+                  src={ad.avatarUrl}
+                  username={ad.username}
+                  size="sm"
+                  className="h-8 w-8 border-2 border-white"
+                />
                 <div>
                   <p className="text-white text-sm font-medium">{ad.username}</p>
                   {ad.isVerified && (

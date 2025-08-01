@@ -1,5 +1,5 @@
 
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { OptimizedAvatar } from "@/components/ui/OptimizedImage";
 import { DatingAd } from '../../../types/dating';
 import { Clock } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
@@ -31,12 +31,12 @@ export const UserInfo = ({ ad }: UserInfoProps) => {
   return (
     <div className="flex items-center justify-between">
       <div className="flex items-center space-x-2">
-        <Avatar className="h-8 w-8 border border-luxury-primary/20">
-          <AvatarImage src={ad.avatarUrl || ad.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(ad.title || 'User')}&backgroundColor=6366f1`} />
-          <AvatarFallback className="bg-luxury-darker text-luxury-neutral">
-            {ad.title?.charAt(0).toUpperCase() || ad.username?.charAt(0).toUpperCase() || 'U'}
-          </AvatarFallback>
-        </Avatar>
+        <OptimizedAvatar
+          src={ad.avatarUrl || ad.avatar_url}
+          username={ad.title || ad.username || 'User'}
+          size="sm"
+          className="h-8 w-8 border border-luxury-primary/20"
+        />
         <div>
           <div className="font-medium text-white line-clamp-1">{ad.title}</div>
           <div className="flex items-center text-xs text-luxury-neutral">

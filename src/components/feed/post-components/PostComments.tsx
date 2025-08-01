@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { OptimizedAvatar } from "@/components/ui/OptimizedImage";
 import { Send } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
@@ -44,10 +44,11 @@ export const PostComments = ({ postId, comments, onAddComment }: PostCommentsPro
     <div className="space-y-4">
       {/* Comment Input */}
       <div className="flex gap-3">
-        <Avatar className="h-8 w-8">
-          <AvatarImage src="" alt="You" />
-          <AvatarFallback>Y</AvatarFallback>
-        </Avatar>
+        <OptimizedAvatar
+          username="You"
+          size="sm"
+          className="h-8 w-8"
+        />
         <div className="flex-1 space-y-2">
           <Textarea
             placeholder="Write a comment..."
@@ -68,10 +69,12 @@ export const PostComments = ({ postId, comments, onAddComment }: PostCommentsPro
       <div className="space-y-4">
         {comments.map((comment) => (
           <div key={comment.id} className="flex gap-3">
-            <Avatar className="h-8 w-8">
-              <AvatarImage src={comment.author.avatar} alt={comment.author.username} />
-              <AvatarFallback>{comment.author.username.slice(0, 2).toUpperCase()}</AvatarFallback>
-            </Avatar>
+            <OptimizedAvatar
+              src={comment.author.avatar}
+              username={comment.author.username}
+              size="sm"
+              className="h-8 w-8"
+            />
             <div className="flex-1">
               <div className="bg-gray-100 rounded-lg p-3">
                 <div className="font-medium text-sm mb-1">{comment.author.username}</div>

@@ -1,5 +1,5 @@
 
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { OptimizedImage } from "@/components/ui/OptimizedImage";
 import { getAgeRangeValues } from "@/utils/dating/ageRangeUtils";
 import { VerifiedBadge } from "../badges/VerifiedBadge";
 import { PremiumBadge } from "../badges/PremiumBadge";
@@ -53,10 +53,13 @@ export const ListViewMode = ({
             className="flex bg-luxury-darker/50 backdrop-blur-sm border border-luxury-primary/10 rounded-xl overflow-hidden hover:border-luxury-primary/30 transition-all"
           >
             <div className="w-48 h-48 bg-luxury-darker overflow-hidden flex-shrink-0">
-              <img 
-                src={ad.avatarUrl || ad.avatar_url || "https://via.placeholder.com/200"} 
-                alt={ad.title} 
+              <OptimizedImage
+                src={ad.avatarUrl || ad.avatar_url || ""}
+                alt={ad.title}
+                preset="profile_card"
+                bucket="avatars"
                 className="w-full h-full object-cover"
+                fallbackSrc="https://via.placeholder.com/200"
               />
             </div>
             

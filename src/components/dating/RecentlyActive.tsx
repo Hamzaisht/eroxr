@@ -2,7 +2,7 @@
 import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
 import { DatingAd } from "@/components/ads/types/dating";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { OptimizedAvatar } from "@/components/ui/OptimizedImage";
 import { differenceInMinutes, formatDistanceToNow } from "date-fns";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
@@ -49,12 +49,12 @@ export const RecentlyActive = ({ ads, onSelectProfile }: RecentlyActiveProps) =>
                   className="relative cursor-pointer flex-shrink-0"
                   onClick={() => onSelectProfile(user)}
                 >
-                  <Avatar className="h-16 w-16 border-2 border-luxury-primary">
-                    <AvatarImage src={user.avatar_url || undefined} alt={user.title} />
-                    <AvatarFallback>
-                      {user.title?.charAt(0)}
-                    </AvatarFallback>
-                  </Avatar>
+                  <OptimizedAvatar
+                    src={user.avatar_url}
+                    username={user.title}
+                    size="lg"
+                    className="h-16 w-16 border-2 border-luxury-primary"
+                  />
                   <div className="absolute -bottom-1 -right-1 h-4 w-4 rounded-full bg-green-500 border-2 border-luxury-dark animate-pulse" />
                 </motion.div>
               </TooltipTrigger>

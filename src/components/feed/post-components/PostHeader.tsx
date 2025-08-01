@@ -1,5 +1,5 @@
 
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { OptimizedAvatar } from "@/components/ui/OptimizedImage";
 import { format } from "date-fns";
 
 interface PostHeaderProps {
@@ -21,12 +21,13 @@ export const PostHeader = ({
 
   return (
     <div className="flex items-center gap-3">
-      <Avatar className="h-10 w-10 ring-2 ring-luxury-primary/20">
-        <AvatarImage src={creator.avatar_url || ""} alt={username} />
-        <AvatarFallback className="bg-luxury-darker text-luxury-neutral">
-          {username[0]?.toUpperCase() || "?"}
-        </AvatarFallback>
-      </Avatar>
+      <OptimizedAvatar
+        src={creator.avatar_url}
+        username={username}
+        size="md"
+        priority={true}
+        className="h-10 w-10 ring-2 ring-luxury-primary/20"
+      />
       <div>
         <h3 className="font-semibold text-luxury-neutral">
           {username}

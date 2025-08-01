@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { OptimizedAvatar, OptimizedImage } from '@/components/ui/OptimizedImage';
 import { MapPin, Users, CheckCircle, User } from 'lucide-react';
 
 interface CreatorCardProps {
@@ -58,19 +58,14 @@ export const CreatorCard: React.FC<CreatorCardProps> = ({
       <Card className="bg-luxury-dark/60 backdrop-blur-xl border border-luxury-primary/20 hover:border-luxury-primary/40 transition-all duration-500 overflow-hidden h-full shadow-luxury hover:shadow-luxury-hover">
         {/* Enhanced Banner */}
         <div className="relative h-36 bg-premium-gradient overflow-hidden">
-          {bannerUrl ? (
-            <img
-              src={bannerUrl}
-              alt={`${username}'s banner`}
-              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-              onError={(e) => {
-                const target = e.target as HTMLImageElement;
-                target.style.display = 'none';
-              }}
-            />
-          ) : (
-            <div className="w-full h-full bg-premium-gradient" />
-          )}
+          <OptimizedImage
+            src={bannerUrl || ''}
+            alt={`${username}'s banner`}
+            preset="banner_small"
+            bucket="banners"
+            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+            fallbackSrc="https://images.unsplash.com/photo-1579952363873-27d3bfad9c0d?w=400&h=120&fit=crop&crop=entropy"
+          />
           
           {/* Luxury overlay gradient */}
           <div className="absolute inset-0 bg-gradient-to-t from-luxury-dark/60 to-transparent" />
@@ -80,12 +75,13 @@ export const CreatorCard: React.FC<CreatorCardProps> = ({
             <div className="relative">
               {/* Avatar luxury glow */}
               <div className="absolute inset-0 bg-button-gradient rounded-full blur-sm opacity-50" />
-              <Avatar className="relative w-20 h-20 border-4 border-luxury-dark/80 shadow-luxury">
-                <AvatarImage src={avatarUrl || undefined} alt={username} />
-                <AvatarFallback className="bg-button-gradient text-white font-bold text-xl">
-                  {username ? username.slice(0, 2).toUpperCase() : <User className="h-8 w-8" />}
-                </AvatarFallback>
-              </Avatar>
+              <OptimizedAvatar
+                src={avatarUrl}
+                username={username}
+                size="lg"
+                priority={true}
+                className="relative w-20 h-20 border-4 border-luxury-dark/80 shadow-luxury"
+              />
               
               {/* Online indicator */}
               <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-luxury-success border-3 border-luxury-dark rounded-full animate-pulse" />

@@ -4,7 +4,7 @@ import { DatingAd } from '@/components/ads/types/dating';
 import { supabase } from '@/integrations/supabase/client';
 import { useSession } from '@supabase/auth-helpers-react';
 import { useToast } from '@/hooks/use-toast';
-import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { OptimizedAvatar } from "@/components/ui/OptimizedImage";
 import { Button } from '@/components/ui/button';
 import { Heart, Trash2, MessageCircle, Clock } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
@@ -163,12 +163,12 @@ export const FavoritesView = ({ userProfile }: FavoritesViewProps) => {
                 onClick={() => setSelectedProfile(profile)}
               >
                 <div className="relative h-40 bg-gradient-to-b from-luxury-primary/5 to-luxury-dark/30">
-                  <Avatar className="absolute top-4 left-4 w-20 h-20 border-2 border-luxury-primary/20">
-                    <AvatarImage src={profile.avatar_url || undefined} alt={profile.title} />
-                    <AvatarFallback className="bg-luxury-primary/20 text-luxury-primary text-xl">
-                      {profile.title?.charAt(0).toUpperCase()}
-                    </AvatarFallback>
-                  </Avatar>
+                  <OptimizedAvatar
+                    src={profile.avatar_url}
+                    username={profile.title}
+                    size="xl"
+                    className="absolute top-4 left-4 w-20 h-20 border-2 border-luxury-primary/20"
+                  />
                 </div>
                 
                 <div className="p-4">
