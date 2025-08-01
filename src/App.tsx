@@ -44,6 +44,8 @@ import { Godmode } from "@/pages/Godmode";
 const queryClient = new QueryClient();
 
 function App() {
+  console.log("🚀 App component starting to render...");
+  
   return (
     <QueryClientProvider client={queryClient}>
       <PlatformErrorBoundary>

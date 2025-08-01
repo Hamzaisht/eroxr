@@ -124,12 +124,12 @@ export default {
         '9xl': '96rem',
       },
       backgroundImage: {
-        'luxury-gradient': 'linear-gradient(135deg, var(--tw-colors-luxury-dark) 0%, var(--tw-colors-luxury-darker) 100%)',
-        'button-gradient': 'linear-gradient(90deg, var(--tw-colors-luxury-primary) 0%, var(--tw-colors-luxury-secondary) 100%)',
-        'hover-gradient': 'linear-gradient(90deg, var(--tw-colors-luxury-secondary) 0%, var(--tw-colors-luxury-primary) 100%)',
-        'neon-glow': 'linear-gradient(90deg, rgba(155,135,245,0.15) 0%, rgba(217,70,239,0.15) 100%)',
-        'premium-gradient': 'linear-gradient(225deg, rgba(155,135,245,0.15) 0%, rgba(217,70,239,0.35) 50%, rgba(155,135,245,0.15) 100%)',
-        'cta-gradient': 'linear-gradient(135deg, rgba(155,135,245,0.85) 0%, rgba(217,70,239,0.85) 100%)'
+        'luxury-gradient': 'linear-gradient(135deg, hsl(0 0% 6%) 0%, hsl(215 16% 13%) 100%)',
+        'button-gradient': 'linear-gradient(90deg, hsl(271 91% 74%) 0%, hsl(256 39% 54%) 100%)',
+        'hover-gradient': 'linear-gradient(90deg, hsl(256 39% 54%) 0%, hsl(271 91% 74%) 100%)',
+        'neon-glow': 'linear-gradient(90deg, hsl(271 91% 74% / 0.15) 0%, hsl(296 85% 68% / 0.15) 100%)',
+        'premium-gradient': 'linear-gradient(225deg, hsl(271 91% 74% / 0.15) 0%, hsl(296 85% 68% / 0.35) 50%, hsl(271 91% 74% / 0.15) 100%)',
+        'cta-gradient': 'linear-gradient(135deg, hsl(271 91% 74% / 0.85) 0%, hsl(296 85% 68% / 0.85) 100%)'
       },
       boxShadow: {
         'luxury': '0 0 20px rgba(155, 135, 245, 0.15)',
