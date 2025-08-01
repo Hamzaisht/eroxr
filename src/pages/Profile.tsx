@@ -1,5 +1,6 @@
 
 import { useParams, useNavigate } from "react-router-dom";
+import { useEffect } from "react";
 import { QuantumProfileViewer } from "@/components/profile/modern/QuantumProfileViewer";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -22,6 +23,13 @@ export default function Profile() {
     const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
     return uuidRegex.test(str);
   };
+
+  // Handle redirect for /profile route without userId
+  useEffect(() => {
+    if (!userId && !isNewProfileRoute && user?.id) {
+      navigate(`/profile/${user.id}`);
+    }
+  }, [userId, isNewProfileRoute, user?.id, navigate]);
 
   // Determine the profile ID to use
   let profileId: string | null = null;
@@ -67,12 +75,13 @@ export default function Profile() {
     if (isNewProfileRoute) {
       profileId = user?.id || null;
     } else {
-      // For /profile route without userId, redirect to user's profile
-      if (user?.id) {
-        navigate(`/profile/${user.id}`);
+      // For /profile route without userId, will be handled by useEffect redirect
+      if (!user?.id) {
+        profileId = null;
+      } else {
+        // Show loading while redirect happens
         return null;
       }
-      profileId = null;
     }
   }
 
