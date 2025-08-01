@@ -60,7 +60,6 @@ function App() {
               <Routes>
                 <Route path="/" element={<Landing />} />
                 <Route path="/home" element={<Home />} />
-                <Route path="/login" element={<Login />} />
                 <Route path="/auth" element={<Login />} />
                 <Route path="/register" element={<Register />} />
                 <Route path="/profile" element={<Profile />} />
