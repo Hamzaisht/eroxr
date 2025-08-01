@@ -49,12 +49,16 @@ export const QuantumProfileViewer = ({ profileId, onBack }: QuantumProfileViewer
   }, []);
 
   if (loading) {
+    console.log('🎯 QuantumProfileViewer - Rendering skeleton');
     return <QuantumProfileSkeleton />;
   }
 
   if (error || !profile) {
+    console.log('🎯 QuantumProfileViewer - Rendering not found, error:', error, 'profile:', profile);
     return <QuantumProfileNotFound error={error} onBack={onBack} />;
   }
+
+  console.log('🎯 QuantumProfileViewer - Rendering main component');
 
   return (
     <div className="min-h-screen bg-black relative overflow-hidden">

@@ -15,8 +15,11 @@ export default function Profile() {
   // Handle both /profile/:userId and /new-profile/:userId routes
   const isNewProfileRoute = window.location.pathname.includes('/new-profile');
 
-  console.log('Profile - userId:', userId);
-  console.log('Profile - user:', user?.id);
+  console.log('🚀 Profile component mounted');
+  console.log('🚀 Profile - userId:', userId);
+  console.log('🚀 Profile - user:', user?.id);
+  console.log('🚀 Profile - isNewProfileRoute:', isNewProfileRoute);
+  console.log('🚀 Profile - window.location.pathname:', window.location.pathname);
 
   // Function to check if string is a valid UUID
   const isValidUUID = (str: string) => {
@@ -114,6 +117,8 @@ export default function Profile() {
     );
   }
 
+  console.log('🎯 Profile: About to render QuantumProfileViewer with profileId:', profileId);
+  
   return (
     <QuantumProfileViewer 
       profileId={profileId}
