@@ -14,13 +14,16 @@ export default function Profile() {
   const { user } = useAuth();
   const navigate = useNavigate();
   
-  // Handle both /profile/:userId and /new-profile/:userId routes
-  const isNewProfileRoute = window.location.pathname.includes('/new-profile');
+  // Add simple render test
+  console.log('🎯 PROFILE RENDER TEST - Component is mounting');
+  console.log('🎯 PROFILE RENDER TEST - userId from params:', userId);
+  console.log('🎯 PROFILE RENDER TEST - user from auth:', user?.id);
+  
+  // Handle /profile and /profile/:userId routes
 
   console.log('🚀 Profile component mounted');
   console.log('🚀 Profile - userId:', userId);
   console.log('🚀 Profile - user:', user?.id);
-  console.log('🚀 Profile - isNewProfileRoute:', isNewProfileRoute);
   console.log('🚀 Profile - window.location.pathname:', window.location.pathname);
 
   // Function to check if string is a valid UUID
@@ -31,10 +34,10 @@ export default function Profile() {
 
   // Handle redirect for /profile route without userId
   useEffect(() => {
-    if (!userId && !isNewProfileRoute && user?.id) {
+    if (!userId && user?.id) {
       navigate(`/profile/${user.id}`);
     }
-  }, [userId, isNewProfileRoute, user?.id, navigate]);
+  }, [userId, user?.id, navigate]);
 
   // Determine the profile ID to use
   let profileId: string | null = null;
@@ -76,17 +79,12 @@ export default function Profile() {
       );
     }
   } else {
-    // No identifier provided, use current user's ID (only for new-profile route)
-    if (isNewProfileRoute) {
-      profileId = user?.id || null;
+    // For /profile route without userId, will be handled by useEffect redirect
+    if (!user?.id) {
+      profileId = null;
     } else {
-      // For /profile route without userId, will be handled by useEffect redirect
-      if (!user?.id) {
-        profileId = null;
-      } else {
-        // Show loading while redirect happens
-        return null;
-      }
+      // Show loading while redirect happens
+      return null;
     }
   }
 
@@ -137,10 +135,20 @@ export default function Profile() {
   }
   
   console.log('✅ Profile: Rendering QuantumProfileViewer');
+  
+  // Add debug render info
   return (
-    <QuantumProfileViewer 
-      profileId={profileId}
-      onBack={() => navigate('/')}
-    />
+    <div className="min-h-screen bg-background">
+      <div className="p-4 bg-red-500 text-white">
+        DEBUG: Profile Component Rendered
+        <br />profileId: {profileId}
+        <br />userId: {userId}
+        <br />userAuthId: {user?.id}
+      </div>
+      <QuantumProfileViewer 
+        profileId={profileId}
+        onBack={() => navigate('/')}
+      />
+    </div>
   );
 }

@@ -18,9 +18,9 @@ export const ProfileNavigationHelper = ({
 
   const navigateToProfile = (userId?: string) => {
     if (userId) {
-      navigate(`/new-profile/${userId}`);
+      navigate(`/profile/${userId}`);
     } else if (user?.id) {
-      navigate('/new-profile');
+      navigate(`/profile/${user.id}`);
     } else {
       navigate('/login');
     }
@@ -53,7 +53,7 @@ export const ProfileNavigationHelper = ({
       
       {user?.id && (
         <p className="text-slate-500 text-sm">
-          Your profile URL: /new-profile/{user.id}
+          Your profile URL: /profile/{user.id}
         </p>
       )}
     </div>
