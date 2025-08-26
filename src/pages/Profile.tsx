@@ -8,6 +8,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { User, ArrowLeft } from "lucide-react";
 
 export default function Profile() {
+  console.log('🚀🚀🚀 Profile component STARTING to mount');
+  
   const { userId } = useParams();
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -119,6 +121,22 @@ export default function Profile() {
 
   console.log('🎯 Profile: About to render QuantumProfileViewer with profileId:', profileId);
   
+  // Add a simple fallback div to ensure something renders
+  if (!profileId) {
+    console.log('❌ Profile: No profileId, showing fallback');
+    return (
+      <div className="min-h-screen bg-background text-foreground flex items-center justify-center">
+        <div className="text-center p-8">
+          <h2 className="text-2xl font-bold mb-4">Profile Loading...</h2>
+          <p className="text-muted-foreground">Profile ID: {profileId || 'undefined'}</p>
+          <p className="text-muted-foreground">User ID: {user?.id || 'undefined'}</p>
+          <p className="text-muted-foreground">Route: {window.location.pathname}</p>
+        </div>
+      </div>
+    );
+  }
+  
+  console.log('✅ Profile: Rendering QuantumProfileViewer');
   return (
     <QuantumProfileViewer 
       profileId={profileId}

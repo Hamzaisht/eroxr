@@ -26,6 +26,10 @@ interface QuantumProfileViewerProps {
 }
 
 export const QuantumProfileViewer = ({ profileId, onBack }: QuantumProfileViewerProps) => {
+  console.log('🌟🌟🌟 QuantumProfileViewer STARTING to mount');
+  console.log('🌟 QuantumProfileViewer - profileId:', profileId);
+  console.log('🌟 QuantumProfileViewer - onBack:', !!onBack);
+  
   const { profile, loading, error } = useProfile(profileId);
   const { user } = useAuth();
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
