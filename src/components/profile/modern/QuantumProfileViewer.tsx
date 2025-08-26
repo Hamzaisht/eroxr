@@ -61,7 +61,7 @@ export const QuantumProfileViewer = ({ profileId, onBack }: QuantumProfileViewer
   console.log('🎯 QuantumProfileViewer - Rendering main component');
 
   return (
-    <div className="min-h-screen bg-black relative overflow-hidden">
+    <div className="min-h-screen bg-background relative overflow-hidden">
       {/* Subtle background elements */}
       <div className="fixed inset-0 opacity-[0.02]">
         <div className="absolute top-20 left-20 w-96 h-96 bg-primary/20 rounded-full blur-3xl" />
@@ -73,14 +73,14 @@ export const QuantumProfileViewer = ({ profileId, onBack }: QuantumProfileViewer
         <motion.div
           initial={{ y: -20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
-          className="fixed top-0 left-0 right-0 z-50 bg-black/80 backdrop-blur-xl"
+          className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-xl"
         >
           <div className="container mx-auto px-8 py-6">
             <Button 
               variant="ghost" 
               size="sm" 
               onClick={onBack}
-              className="text-white/60 hover:text-primary transition-colors"
+              className="text-muted-foreground hover:text-primary transition-colors"
             >
               <ArrowLeft className="w-4 h-4 mr-2" />
               Back
@@ -110,11 +110,11 @@ export const QuantumProfileViewer = ({ profileId, onBack }: QuantumProfileViewer
             )}
           </div>
         ) : (
-          <div className="absolute inset-0 bg-gradient-to-br from-black via-primary/5 to-black" />
+          <div className="absolute inset-0 bg-gradient-to-br from-background via-primary/5 to-background" />
         )}
         
         {/* Gradient overlay */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-background via-background/50 to-transparent" />
       </div>
 
       {/* Profile Content - Seamless Layout */}
@@ -132,7 +132,7 @@ export const QuantumProfileViewer = ({ profileId, onBack }: QuantumProfileViewer
               whileHover={{ scale: 1.02 }}
               className="relative"
             >
-              <div className="w-48 h-48 rounded-full overflow-hidden bg-black/20 backdrop-blur-xl border border-white/10">
+              <div className="w-48 h-48 rounded-full overflow-hidden bg-background/20 backdrop-blur-xl border border-border">
                 <Avatar className="w-full h-full">
                   <AvatarImage src={profile.avatar_url || undefined} className="object-cover" />
                   <AvatarFallback className="bg-primary/10 text-4xl">
@@ -142,15 +142,15 @@ export const QuantumProfileViewer = ({ profileId, onBack }: QuantumProfileViewer
               </div>
               
               {/* Status */}
-              <div className="absolute -bottom-2 -right-2 w-12 h-12 bg-primary rounded-full flex items-center justify-center border-4 border-black">
-                <div className="w-4 h-4 bg-white rounded-full animate-pulse" />
+              <div className="absolute -bottom-2 -right-2 w-12 h-12 bg-primary rounded-full flex items-center justify-center border-4 border-background">
+                <div className="w-4 h-4 bg-foreground rounded-full animate-pulse" />
               </div>
               
               {isOwnProfile && (
                 <motion.button
                   whileHover={{ scale: 1.1 }}
                   onClick={() => setIsEditDialogOpen(true)}
-                  className="absolute top-4 right-4 w-12 h-12 bg-black/60 backdrop-blur-xl rounded-full flex items-center justify-center text-white hover:bg-primary/20 transition-colors"
+                  className="absolute top-4 right-4 w-12 h-12 bg-background/60 backdrop-blur-xl rounded-full flex items-center justify-center text-foreground hover:bg-primary/20 transition-colors"
                 >
                   <Camera className="w-5 h-5" />
                 </motion.button>
@@ -163,7 +163,7 @@ export const QuantumProfileViewer = ({ profileId, onBack }: QuantumProfileViewer
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.2 }}
-                className="text-6xl font-light text-white mb-2 tracking-tight"
+                className="text-6xl font-light text-foreground mb-2 tracking-tight"
               >
                 {profile.username || 'Anonymous'}
               </motion.h1>
@@ -173,7 +173,7 @@ export const QuantumProfileViewer = ({ profileId, onBack }: QuantumProfileViewer
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.3 }}
-                  className="text-xl text-white/60 mb-6 max-w-2xl leading-relaxed"
+                  className="text-xl text-muted-foreground mb-6 max-w-2xl leading-relaxed"
                 >
                   {profile.bio}
                 </motion.p>
@@ -184,7 +184,7 @@ export const QuantumProfileViewer = ({ profileId, onBack }: QuantumProfileViewer
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.4 }}
-                className="flex flex-wrap gap-6 text-white/40 mb-8"
+                className="flex flex-wrap gap-6 text-muted-foreground/80 mb-8"
               >
                 {profile.location && (
                   <div className="flex items-center gap-2">
@@ -208,17 +208,17 @@ export const QuantumProfileViewer = ({ profileId, onBack }: QuantumProfileViewer
                 {isOwnProfile ? (
                   <button
                     onClick={() => setIsEditDialogOpen(true)}
-                    className="px-8 py-3 bg-white text-black font-medium rounded-full hover:bg-white/90 transition-colors"
+                    className="px-8 py-3 bg-foreground text-background font-medium rounded-full hover:bg-foreground/90 transition-colors"
                   >
                     Edit Profile
                   </button>
                 ) : (
                   <>
                     <FollowButton profileId={profileId} />
-                    <button className="px-8 py-3 bg-primary text-white font-medium rounded-full hover:bg-primary/90 transition-colors">
+                    <button className="px-8 py-3 bg-primary text-primary-foreground font-medium rounded-full hover:bg-primary/90 transition-colors">
                       Message
                     </button>
-                    <button className="p-3 bg-white/10 backdrop-blur-xl text-white rounded-full hover:bg-white/20 transition-colors">
+                    <button className="p-3 bg-foreground/10 backdrop-blur-xl text-foreground rounded-full hover:bg-foreground/20 transition-colors">
                       <Share className="w-5 h-5" />
                     </button>
                   </>
@@ -248,7 +248,7 @@ export const QuantumProfileViewer = ({ profileId, onBack }: QuantumProfileViewer
           className="mb-8"
         >
           <div className="flex justify-center mb-12">
-            <div className="flex gap-1 bg-white/5 backdrop-blur-xl rounded-full p-2">
+            <div className="flex gap-1 bg-foreground/5 backdrop-blur-xl rounded-full p-2">
               {[
                 { key: 'posts', label: 'Posts', icon: Grid },
                 { key: 'eros', label: 'Eros', icon: Video },
@@ -259,8 +259,8 @@ export const QuantumProfileViewer = ({ profileId, onBack }: QuantumProfileViewer
                   onClick={() => setActiveTab(tab.key)}
                   className={`px-6 py-3 rounded-full transition-all capitalize flex items-center gap-2 ${
                     activeTab === tab.key 
-                      ? 'bg-primary text-white' 
-                      : 'text-white/60 hover:text-white hover:bg-white/5'
+                      ? 'bg-primary text-primary-foreground' 
+                      : 'text-muted-foreground hover:text-foreground hover:bg-foreground/5'
                   }`}
                 >
                   <tab.icon className="w-4 h-4" />
@@ -409,18 +409,17 @@ const QuantumEmptyState = ({
     >
       <Icon className="w-16 h-16 text-primary/60" />
     </motion.div>
-    <h3 className="text-2xl font-bold text-white mb-3">{title}</h3>
-    <p className="text-white/60 text-lg">{description}</p>
+    <h3 className="text-2xl font-bold text-foreground mb-3">{title}</h3>
+    <p className="text-muted-foreground text-lg">{description}</p>
   </motion.div>
 );
 
 // Quantum Loading Skeleton
 const QuantumProfileSkeleton = () => (
-  <div className="min-h-screen quantum-profile-container">
-    <div className="neural-mesh" />
+  <div className="min-h-screen bg-background">
     <div className="h-96 bg-gradient-to-br from-primary/10 to-secondary/10 animate-pulse" />
     <div className="container mx-auto px-6 -mt-20 relative z-10">
-      <div className="holographic-card p-8">
+      <div className="bg-card border border-border rounded-lg p-8">
         <div className="flex gap-8">
           <div className="w-40 h-40 bg-primary/20 rounded-3xl animate-pulse" />
           <div className="flex-1 space-y-6">
@@ -441,12 +440,11 @@ const QuantumProfileSkeleton = () => (
 
 // Quantum Not Found Component
 const QuantumProfileNotFound = ({ error, onBack }: { error: string; onBack?: () => void }) => (
-  <div className="min-h-screen quantum-profile-container flex items-center justify-center">
-    <div className="neural-mesh" />
+  <div className="min-h-screen bg-background flex items-center justify-center">
     <motion.div
       initial={{ opacity: 0, scale: 0.9 }}
       animate={{ opacity: 1, scale: 1 }}
-      className="holographic-card p-12 text-center max-w-md relative z-10"
+      className="bg-card border border-border rounded-lg p-12 text-center max-w-md relative z-10"
     >
       <motion.div
         animate={{ rotate: [0, 360] }}
@@ -455,16 +453,16 @@ const QuantumProfileNotFound = ({ error, onBack }: { error: string; onBack?: () 
       >
         <User className="w-20 h-20 text-primary/60" />
       </motion.div>
-      <h3 className="text-2xl font-bold text-white mb-3">Profile Lost in Space</h3>
-      <p className="text-white/60 mb-8">{error || 'This profile exists in another dimension'}</p>
+      <h3 className="text-2xl font-bold text-foreground mb-3">Profile Lost in Space</h3>
+      <p className="text-muted-foreground mb-8">{error || 'This profile exists in another dimension'}</p>
       {onBack && (
         <motion.button
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
           onClick={onBack}
-          className="neural-button"
+          className="px-6 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors flex items-center gap-2"
         >
-          <ArrowLeft className="w-4 h-4 mr-2" />
+          <ArrowLeft className="w-4 h-4" />
           Return to Reality
         </motion.button>
       )}
