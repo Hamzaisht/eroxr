@@ -65,6 +65,9 @@ function App() {
                 <Route path="/auth" element={<Login />} />
                 <Route path="/register" element={<Register />} />
                 <Route path="/profile" element={<Profile />} />
+                <Route path="/profile/:userId" element={<Profile />} />
+                <Route path="/new-profile" element={<Profile />} />
+                <Route path="/new-profile/:userId" element={<Profile />} />
                 <Route path="/profile/edit" element={<Settings />} />
                 <Route path="/messages" element={<Messages />} />
                 <Route path="/discover" element={<Discover />} />
