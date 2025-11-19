@@ -7,7 +7,7 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instanciate createClient with right options
+  // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "12.2.3 (519615d)"
@@ -22,7 +22,7 @@ export type Database = {
           created_at: string
           details: Json | null
           id: string
-          ip_address: unknown | null
+          ip_address: unknown
           target_data: Json | null
           target_id: string | null
           target_type: string | null
@@ -35,7 +35,7 @@ export type Database = {
           created_at?: string
           details?: Json | null
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           target_data?: Json | null
           target_id?: string | null
           target_type?: string | null
@@ -48,7 +48,7 @@ export type Database = {
           created_at?: string
           details?: Json | null
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           target_data?: Json | null
           target_id?: string | null
           target_type?: string | null
@@ -63,7 +63,7 @@ export type Database = {
           created_at: string
           ghost_mode: boolean
           id: string
-          ip_address: unknown | null
+          ip_address: unknown
           last_active_at: string
           session_data: Json | null
           user_agent: string | null
@@ -74,7 +74,7 @@ export type Database = {
           created_at?: string
           ghost_mode?: boolean
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           last_active_at?: string
           session_data?: Json | null
           user_agent?: string | null
@@ -85,7 +85,7 @@ export type Database = {
           created_at?: string
           ghost_mode?: boolean
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           last_active_at?: string
           session_data?: Json | null
           user_agent?: string | null
@@ -1054,7 +1054,7 @@ export type Database = {
           message_count: number | null
           moderation_status: string | null
           occupation: string | null
-          preferred_age_range: unknown | null
+          preferred_age_range: unknown
           profile_completion_score: number | null
           relationship_status: Database["public"]["Enums"]["relationship_status"]
           seeking_description: string | null
@@ -1094,7 +1094,7 @@ export type Database = {
           message_count?: number | null
           moderation_status?: string | null
           occupation?: string | null
-          preferred_age_range?: unknown | null
+          preferred_age_range?: unknown
           profile_completion_score?: number | null
           relationship_status: Database["public"]["Enums"]["relationship_status"]
           seeking_description?: string | null
@@ -1134,7 +1134,7 @@ export type Database = {
           message_count?: number | null
           moderation_status?: string | null
           occupation?: string | null
-          preferred_age_range?: unknown | null
+          preferred_age_range?: unknown
           profile_completion_score?: number | null
           relationship_status?: Database["public"]["Enums"]["relationship_status"]
           seeking_description?: string | null
@@ -2887,7 +2887,7 @@ export type Database = {
           activity_type: string
           created_at: string
           id: string
-          ip_address: unknown | null
+          ip_address: unknown
           session_id: string | null
           user_agent: string | null
           user_id: string | null
@@ -2897,7 +2897,7 @@ export type Database = {
           activity_type: string
           created_at?: string
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           session_id?: string | null
           user_agent?: string | null
           user_id?: string | null
@@ -2907,7 +2907,7 @@ export type Database = {
           activity_type?: string
           created_at?: string
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           session_id?: string | null
           user_agent?: string | null
           user_id?: string | null
@@ -3027,7 +3027,7 @@ export type Database = {
           creator_id: string
           device_type: string | null
           id: string
-          ip_address: unknown | null
+          ip_address: unknown
           latitude: number | null
           longitude: number | null
           page_views: number | null
@@ -3044,7 +3044,7 @@ export type Database = {
           creator_id: string
           device_type?: string | null
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           latitude?: number | null
           longitude?: number | null
           page_views?: number | null
@@ -3061,7 +3061,7 @@ export type Database = {
           creator_id?: string
           device_type?: string | null
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           latitude?: number | null
           longitude?: number | null
           page_views?: number | null
@@ -3643,20 +3643,11 @@ export type Database = {
       }
     }
     Functions: {
-      assign_super_admin: {
-        Args: { target_user_id: string }
-        Returns: boolean
-      }
-      can_change_dob: {
-        Args: { user_id: string }
-        Returns: boolean
-      }
-      can_change_username: {
-        Args: { user_id: string }
-        Returns: boolean
-      }
+      assign_super_admin: { Args: { target_user_id: string }; Returns: boolean }
+      can_change_dob: { Args: { user_id: string }; Returns: boolean }
+      can_change_username: { Args: { user_id: string }; Returns: boolean }
       check_column_exists: {
-        Args: { p_table_name: string; p_column_name: string }
+        Args: { p_column_name: string; p_table_name: string }
         Returns: boolean
       }
       check_monthly_export_limit: {
@@ -3671,41 +3662,36 @@ export type Database = {
         Args: { username_to_check: string }
         Returns: boolean
       }
-      cleanup_expired_demo_content: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
+      cleanup_expired_demo_content: { Args: never; Returns: undefined }
+      cleanup_orphaned_media: { Args: never; Returns: undefined }
       create_sample_analytics_data_for_user: {
         Args: { p_user_id: string }
         Returns: undefined
       }
-      detect_stack_depth: {
-        Args: Record<PropertyKey, never>
-        Returns: number
-      }
+      detect_stack_depth: { Args: never; Returns: number }
       get_content_analytics: {
         Args: { p_creator_id: string; p_days?: number }
         Returns: {
-          total_posts: number
-          total_views: number
           avg_engagement_rate: number
-          top_performing_content: Json
           content_type_breakdown: Json
           posting_schedule_analysis: Json
+          top_performing_content: Json
+          total_posts: number
+          total_views: number
         }[]
       }
       get_content_performance: {
         Args: { p_creator_id: string; p_limit?: number }
         Returns: {
-          post_id: string
-          content: string
-          created_at: string
-          views: number
-          likes: number
           comments: number
+          content: string
+          content_type: string
+          created_at: string
           earnings: number
           engagement_score: number
-          content_type: string
+          likes: number
+          post_id: string
+          views: number
         }[]
       }
       get_content_view_count: {
@@ -3715,196 +3701,166 @@ export type Database = {
       get_conversion_funnel: {
         Args: { p_creator_id: string; p_days?: number }
         Returns: {
-          stage: string
           count: number
           percentage: number
+          stage: string
         }[]
       }
       get_creator_analytics: {
         Args: {
           p_creator_id: string
-          p_start_date?: string
           p_end_date?: string
+          p_start_date?: string
         }
         Returns: {
-          total_earnings: number
-          total_views: number
-          total_likes: number
-          total_comments: number
-          total_posts: number
           engagement_rate: number
-          top_post_id: string
           top_post_earnings: number
+          top_post_id: string
+          total_comments: number
+          total_earnings: number
+          total_likes: number
+          total_posts: number
+          total_views: number
         }[]
       }
-      get_current_user_id: {
-        Args: Record<PropertyKey, never>
-        Returns: string
-      }
-      get_current_user_role: {
-        Args: Record<PropertyKey, never>
-        Returns: string
-      }
+      get_current_user_id: { Args: never; Returns: string }
+      get_current_user_role: { Args: never; Returns: string }
       get_earnings_timeline: {
         Args: { p_creator_id: string; p_days?: number }
         Returns: {
-          date: string
           amount: number
+          date: string
         }[]
       }
       get_geographic_analytics: {
         Args: { p_creator_id: string; p_days?: number }
         Returns: {
-          country: string
-          region: string
-          city: string
-          session_count: number
-          unique_users: number
-          total_page_views: number
           avg_latitude: number
           avg_longitude: number
+          city: string
+          country: string
+          region: string
+          session_count: number
+          total_page_views: number
+          unique_users: number
         }[]
       }
       get_growth_analytics: {
         Args: { p_creator_id: string; p_days?: number }
         Returns: {
-          follower_growth_rate: number
-          subscription_rate: number
-          retention_rate: number
           churn_rate: number
-          new_followers_today: number
           daily_growth_data: Json
-          retention_data: Json
+          follower_growth_rate: number
           geographic_breakdown: Json
+          new_followers_today: number
+          retention_data: Json
+          retention_rate: number
+          subscription_rate: number
         }[]
       }
-      get_monthly_export_count: {
-        Args: { p_user_id: string }
-        Returns: number
-      }
+      get_monthly_export_count: { Args: { p_user_id: string }; Returns: number }
       get_most_engaged_fans: {
         Args: { p_creator_id: string; p_limit?: number }
         Returns: {
-          user_id: string
-          total_spent: number
-          total_purchases: number
-          total_likes: number
-          total_comments: number
           engagement_score: number
           last_interaction: string
+          total_comments: number
+          total_likes: number
+          total_purchases: number
+          total_spent: number
+          user_id: string
         }[]
       }
       get_platform_subscription_status: {
         Args: { p_user_id: string }
         Returns: {
+          current_period_end: string
           has_premium: boolean
           status: string
-          current_period_end: string
         }[]
       }
       get_streaming_analytics: {
         Args: { p_creator_id: string; p_days?: number }
         Returns: {
-          total_stream_time: unknown
           avg_viewers: number
           peak_viewers: number
-          total_revenue: number
           recent_streams: Json
+          total_revenue: number
+          total_stream_time: unknown
           viewer_activity: Json
         }[]
       }
       get_top_trending_hashtags: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: {
-          tag: string
           count: number
           percentageincrease: number
+          tag: string
         }[]
       }
       get_user_bookmarks: {
         Args: { p_user_id: string }
         Returns: {
           bookmark_type: string
-          post_id: string
           content: string
+          created_at: string
+          creator_avatar_url: string
           creator_id: string
           creator_username: string
-          creator_avatar_url: string
-          created_at: string
-          saved_at: string
           media_count: number
+          post_id: string
+          saved_at: string
         }[]
       }
       get_user_profiles_batch: {
         Args: { user_ids: string[] }
         Returns: {
-          id: string
-          username: string
           avatar_url: string
           display_name: string
+          id: string
+          username: string
         }[]
       }
-      get_user_role: {
-        Args: { user_id: string }
-        Returns: string
-      }
+      get_user_role: { Args: { user_id: string }; Returns: string }
       increment_counter: {
-        Args: { row_id: string; counter_name: string; table_name?: string }
+        Args: { counter_name: string; row_id: string; table_name?: string }
         Returns: undefined
       }
       is_admin_user: {
-        Args: { user_id: string; min_role?: string }
+        Args: { min_role?: string; user_id: string }
         Returns: boolean
       }
-      is_age_valid: {
-        Args: { birth_date: string }
-        Returns: boolean
-      }
-      is_super_admin: {
-        Args: { user_id?: string }
-        Returns: boolean
-      }
-      is_verified_creator: {
-        Args: { user_id: string }
-        Returns: boolean
-      }
+      is_age_valid: { Args: { birth_date: string }; Returns: boolean }
+      is_super_admin: { Args: { user_id?: string }; Returns: boolean }
+      is_verified_creator: { Args: { user_id: string }; Returns: boolean }
       rls_bypass_profile_update: {
         Args: {
-          p_user_id: string
-          p_username?: string
-          p_bio?: string
-          p_location?: string
           p_avatar_url?: string
           p_banner_url?: string
+          p_bio?: string
           p_interests?: string[]
+          p_location?: string
           p_profile_visibility?: boolean
           p_status?: string
+          p_user_id: string
+          p_username?: string
         }
         Returns: Json
       }
-      sync_uploaded_videos: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
+      sync_uploaded_videos: { Args: never; Returns: undefined }
       update_profile_service: {
         Args: {
-          p_user_id: string
           p_avatar_url?: string
           p_banner_url?: string
-          p_username?: string
           p_bio?: string
           p_location?: string
+          p_user_id: string
+          p_username?: string
         }
         Returns: Json
       }
-      update_trending_score: {
-        Args: { p_post_id: string }
-        Returns: undefined
-      }
-      user_has_premium_access: {
-        Args: { p_user_id: string }
-        Returns: boolean
-      }
+      update_trending_score: { Args: { p_post_id: string }; Returns: undefined }
+      user_has_premium_access: { Args: { p_user_id: string }; Returns: boolean }
       validate_password_strength: {
         Args: { password: string }
         Returns: boolean
